@@ -69,6 +69,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
 		final var blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
         blockEntities.forEach((blockPos, entity) -> {
             matrices.push();
+	        matrices.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 			var state = blockEntityDispatcher.getRenderState(entity, tickDelta, null);
 	        blockEntityDispatcher.render(state, matrices, commandQueue, cameraRenderState);
             matrices.pop();
