@@ -24,11 +24,12 @@ import io.wispforest.owo.ui.core.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.option.Perspective;
 import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
@@ -264,7 +265,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 try (var builder = IsometricUI.row(rightColumn)) {
                     this.exportAnimationButton = Components.button(Translate.gui("export_animation"), button -> {
-                        if (this.memoryGuard.canFit(this.estimateMemoryUsage(exportFrames)) || Screen.hasShiftDown()) {
+                        if (this.memoryGuard.canFit(this.estimateMemoryUsage(exportFrames)) || this.client.isCtrlPressed()) {
                             this.remainingAnimationFrames = exportFrames;
 
                             this.client.getInactivityFpsLimiter().setMaxFps(Integer.parseInt(framerateField.getText()));
@@ -282,17 +283,16 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     }).horizontalSizing(Sizing.fixed(35)));
                 }
 
-                IsometricUI.dynamicLabel(rightColumn, () -> {
-                    return this.remainingAnimationFrames == 0
-                        ? Text.empty()
-                        : Translate.gui("export_remaining_frames", this.remainingAnimationFrames);
-                });
+                IsometricUI.dynamicLabel(rightColumn, () ->
+		                this.remainingAnimationFrames == 0
+				                ? Text.empty()
+				                : Translate.gui("export_remaining_frames", this.remainingAnimationFrames));
             } else {
                 IsometricUI.sectionHeader(rightColumn, "no_ffmpeg_1", true);
                 IsometricUI.sectionHeader(rightColumn, "no_ffmpeg_2", false);
                 IsometricUI.sectionHeader(rightColumn, "no_ffmpeg_3", false)
                     .cursorStyle(CursorStyle.HAND)
-                    .mouseDown().subscribe((mouseX, mouseY, button) -> {
+                    .mouseDown().subscribe((click, doubled) -> {
                         this.client.setScreen(new ConfirmLinkScreen(confirmed -> {
                             if (confirmed) {
                                 Util.getOperatingSystem().open("https://ffmpeg.org/download.html");
@@ -305,9 +305,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }
         } else {
             IsometricUI.sectionHeader(rightColumn, "detecting_ffmpeg", false);
-            FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> {
-                this.guiRebuildScheduled = true;
-            });
+            FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> this.guiRebuildScheduled = true);
         }
     }
 
@@ -459,34 +457,36 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) return super.mouseDragged(click, offsetX, offsetY);
 
-        if (this.isInViewport(mouseX)) {
+        if (this.isInViewport(click.x())) {
+	        var button = click.button();
             if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
                 double xScaling = (100d / properties.scale.get()) * (this.client.getWindow().getWidth() / (float) this.client.getWindow().getScaledWidth());
                 double yScaling = (100d / properties.scale.get()) * (this.client.getWindow().getHeight() / (float) this.client.getWindow().getScaledHeight());
 
-                properties.xOffset.modify((int) (50 * deltaX * xScaling));
-                properties.yOffset.modify((int) (50 * deltaY * yScaling));
+                properties.xOffset.modify((int) (50 * offsetX * xScaling));
+                properties.yOffset.modify((int) (50 * offsetY * yScaling));
                 return true;
             } else if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                properties.rotation.modify((int) (deltaX * 2));
+                properties.rotation.modify((int) (offsetX * 2));
                 return true;
             } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                properties.slant.modify((int) (deltaY * 2));
+                properties.slant.modify((int) (offsetY * 2));
                 return true;
             }
         }
 
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) return super.mouseClicked(click, doubled);
 
-        if (this.isInViewport(mouseX) && Screen.hasControlDown()) {
+        if (this.isInViewport(click.x()) && click.hasCtrl()) {
+			var button = click.button();
             if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
                 properties.xOffset.setToDefault();
                 properties.yOffset.setToDefault();
@@ -498,7 +498,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             return true;
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
@@ -516,8 +516,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (super.keyPressed(keyCode, scanCode, modifiers)) return true;
+    public boolean keyPressed(KeyInput input) {
+        if (super.keyPressed(input)) return true;
+
+		var keyCode = input.key();
 
         if (keyCode == GLFW.GLFW_KEY_F12) {
             this.captureScheduled = true;

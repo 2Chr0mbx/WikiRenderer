@@ -15,6 +15,7 @@ import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.worldmesher.WorldMesh;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
@@ -62,11 +63,14 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         matrices.loadIdentity();
         matrices.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
-        final var blockEntities = mesh.renderInfo().blockEntities();
+		final var commandQueue = client.gameRenderer.getEntityRenderCommandQueue();
+	    final var cameraRenderState = new CameraRenderState();
+	    final var blockEntities = mesh.renderInfo().blockEntities();
+		final var blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
         blockEntities.forEach((blockPos, entity) -> {
             matrices.push();
-            matrices.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-            client.getBlockEntityRenderDispatcher().render(entity, 0, matrices, vertexConsumers);
+			var state = blockEntityDispatcher.getRenderState(entity, tickDelta, null);
+	        blockEntityDispatcher.render(state, matrices, commandQueue, cameraRenderState);
             matrices.pop();
         });
 
@@ -75,16 +79,18 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
 
         final var effectiveDelta = mesh.entitiesFrozen() ? 0 : client.getRenderTickCounter().getTickProgress(false);
         final var entities = mesh.renderInfo().entities();
+	    final var entityDispatcher = client.getEntityRenderDispatcher();
         entities.forEach((vec3d, entry) -> {
             if (!mesh.entitiesFrozen()) {
                 vec3d = entry.entity().getLerpedPos(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
             }
-
-            client.getEntityRenderDispatcher().render(entry.entity(), vec3d.x, vec3d.y, vec3d.z, effectiveDelta, matrices, vertexConsumers, entry.light());
+	        var state = entityDispatcher.getAndUpdateRenderState(entry.entity(), tickDelta);
+	        state.light = entry.light();
+	        entityDispatcher.render(state, cameraRenderState, vec3d.x, vec3d.y, vec3d.z, matrices, commandQueue);
             super.draw(RenderSystem.getModelViewMatrix());
         });
 
-        var diff = Vec3d.of(mesh.startPos()).subtract(client.player.getPos());
+        var diff = Vec3d.of(mesh.startPos()).subtract(client.player.getSyncedPos());
         matrices.translate(-diff.x, -diff.y + 1.65, -diff.z);
 
         this.renderParticles(matrices.peek().getPositionMatrix(), tickDelta);
@@ -156,9 +162,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
             });
 
             IsometricUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-            this.freezeEntities.listen((booleanProperty, aBoolean) -> {
-                mesh.setFreezeEntities(aBoolean);
-            });
+            this.freezeEntities.listen((booleanProperty, aBoolean) -> mesh.setFreezeEntities(aBoolean));
 
             container.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
                     .horizontalSizing(Sizing.fixed(80))

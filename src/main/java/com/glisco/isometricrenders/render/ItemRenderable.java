@@ -59,7 +59,7 @@ public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
     @Override
     public void emitVertices(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float tickDelta) {
         ((ItemRenderStateAccessor) RENDER_STATE).isometric$setDisplayContext(ItemDisplayContext.NONE);
-        RENDER_STATE.render(matrices, vertexConsumers, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
+        RENDER_STATE.render(matrices, MinecraftClient.getInstance().gameRenderer.getEntityRenderCommandQueue(), LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV, 0);
     }
 
     @Override

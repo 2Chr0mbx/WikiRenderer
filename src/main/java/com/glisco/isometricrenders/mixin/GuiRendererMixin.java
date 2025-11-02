@@ -29,7 +29,7 @@ public class GuiRendererMixin {
 			return original.call(instance,
 					RenderSystem.getModelViewMatrix(),
 					new Vector4f(1.0F, 1.0F, 1.0F, 1.0F),
-					RenderSystem.getModelOffset(),
+					new Vector3f(0),
 					RenderSystem.getTextureMatrix(),
 					RenderSystem.getShaderLineWidth());
 		return original.call(instance, modelView, colorModulator, modelOffset, textureMatrix, lineWidth);

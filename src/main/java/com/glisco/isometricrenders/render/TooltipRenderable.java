@@ -39,19 +39,24 @@ public class TooltipRenderable extends DefaultRenderable<TooltipRenderable.Toolt
         var client = MinecraftClient.getInstance();
 
 		var imm = client.getBufferBuilders().getEntityVertexConsumers();
-		var state = new GuiRenderState();
-		var renderer = new GuiRenderer(state, imm, List.of(
-				new EntityGuiElementRenderer(imm, client.getEntityRenderDispatcher()),
-				new PlayerSkinGuiElementRenderer(imm),
-				new BookModelGuiElementRenderer(imm),
-				new BannerResultGuiElementRenderer(imm),
-				new SignGuiElementRenderer(imm),
-				new ProfilerChartGuiElementRenderer(imm)
+	    var state = new GuiRenderState();
+		var atlasManager = client.getAtlasManager();
+		var renderer = new GuiRenderer(state, imm,
+				client.gameRenderer.getEntityRenderCommandQueue(),
+				client.gameRenderer.getEntityRenderDispatcher(),
+				List.of(
+						new EntityGuiElementRenderer(imm, client.getEntityRenderDispatcher()),
+						new PlayerSkinGuiElementRenderer(imm),
+						new BookModelGuiElementRenderer(imm),
+						new BannerResultGuiElementRenderer(imm, atlasManager),
+						new SignGuiElementRenderer(imm, atlasManager),
+						new ProfilerChartGuiElementRenderer(imm)
 		));
 
 	    List<TooltipComponent> list = Screen.getTooltipFromItem(client, this.stack).stream().map(Text::asOrderedText).map(TooltipComponent::of).collect(Util.toArrayList());
 	    this.stack.getTooltipData().ifPresent(datax -> list.add(list.isEmpty() ? 0 : 1, TooltipComponent.of(datax)));
-	    new DrawContext(client, state).drawTooltipImmediately(client.textRenderer, list, 0, 0,
+	    new DrawContext(client, state)
+			    .drawTooltipImmediately(client.textRenderer, list, 0, 0,
 				(screenWidth, screenHeight, x, y, width, height) -> new Vector2i(HoveredTooltipPositioner.INSTANCE.getPosition(screenWidth, screenHeight, x, y, width, height)).add(-12 - width / 2, 12 - height / 2),
 				this.stack.get(DataComponentTypes.TOOLTIP_STYLE));
 

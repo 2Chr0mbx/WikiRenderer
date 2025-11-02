@@ -5,6 +5,7 @@ import com.glisco.isometricrenders.mixin.access.BlockEntityAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockRenderType;
@@ -15,6 +16,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
@@ -67,15 +69,17 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
         matrices.push();
         matrices.translate(-0.5, -0.5, -0.5);
 
-	    if (this.entity != null && this.client.getBlockEntityRenderDispatcher().get(this.entity) != null) {
-		    this.client.getBlockEntityRenderDispatcher().get(this.entity).render(entity, tickDelta, matrices, vertexConsumers, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV, MinecraftClient.getInstance().gameRenderer.getCamera().getPos());
-	    } else if (this.state.getRenderType() != BlockRenderType.INVISIBLE) {
-            this.client.getBlockRenderManager().renderBlockAsEntity(this.state, matrices, vertexConsumers, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
+        if (this.entity != null) {
+	        var state = this.client.getBlockEntityRenderDispatcher().getRenderState(entity, tickDelta, null);
+	        if (state != null) {
+		        state.lightmapCoordinates = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+		        this.client.getBlockEntityRenderDispatcher().render(state, matrices, this.client.gameRenderer.getEntityRenderCommandQueue(), new CameraRenderState());
+	        }
+        } else if (this.state.getRenderType() != BlockRenderType.INVISIBLE) {
+	        this.client.getBlockRenderManager().renderBlockAsEntity(this.state, matrices, vertexConsumers, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
         }
 
-        if (vertexConsumers instanceof VertexConsumerProvider.Immediate immediate) {
-            immediate.draw();
-        }
+		super.draw(RenderSystem.getModelViewMatrix());
 
         double xOffset = this.client.player.getX() % 1d;
         double zOffset = this.client.player.getZ() % 1d;
@@ -90,7 +94,6 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void tick() {
         if (this.entity != null && this.state.getBlockEntityTicker(client.world, this.entity.getType()) != null) {
             final var ticker = this.state.getBlockEntityTicker(client.world, (BlockEntityType<BlockEntity>) this.entity.getType());

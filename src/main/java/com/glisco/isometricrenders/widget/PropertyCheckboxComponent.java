@@ -2,8 +2,7 @@ package com.glisco.isometricrenders.widget;
 
 import com.glisco.isometricrenders.property.Property;
 import io.wispforest.owo.ui.component.CheckboxComponent;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.CheckboxWidget;
+import net.minecraft.client.input.AbstractInput;
 import net.minecraft.text.Text;
 
 public class PropertyCheckboxComponent extends CheckboxComponent {
@@ -18,8 +17,8 @@ public class PropertyCheckboxComponent extends CheckboxComponent {
     }
 
     @Override
-    public void onPress() {
-        super.onPress();
+    public void onPress(AbstractInput input) {
+        super.onPress(input);
         property.set(this.isChecked());
     }
 }

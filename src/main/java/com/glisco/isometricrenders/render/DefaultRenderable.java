@@ -1,12 +1,17 @@
 package com.glisco.isometricrenders.render;
 
+import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.CameraInvoker;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.mojang.blaze3d.buffers.*;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.Frustum;
+import net.minecraft.client.render.SubmittableBatch;
+import net.minecraft.client.render.state.CameraRenderState;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
@@ -52,6 +57,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 	@Override
     public void draw(Matrix4f modelViewMatrix) {
         // Draw all buffers
+		MinecraftClient.getInstance().gameRenderer.getEntityRenderDispatcher().render();
         MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers().draw();
     }
 
@@ -62,11 +68,28 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 
         var client = MinecraftClient.getInstance();
         this.withParticleCamera(camera -> {
-            client.particleManager.renderParticles(
-                camera,
-                tickDelta,
-                MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers()
+	        var particleBatch = new SubmittableBatch();
+			var pos = camera.getPos();
+			var frustum = new Frustum(transform, IsometricRenders.renderableDrawProjectionMatrix);
+	        frustum.setPosition(pos.x, pos.y, pos.z);
+			frustum.offset(-3.0F); // present in vanilla
+            client.particleManager.addToBatch(
+					particleBatch,
+		            frustum,
+		            camera,
+		            tickDelta
             );
+			/* create render state from camera object; (mostly) mirrors GameRenderer.updateCameraState */
+	        var cameraRenderState = new CameraRenderState();
+			cameraRenderState.initialized = true;
+			cameraRenderState.pos = camera.getPos();
+			cameraRenderState.blockPos = camera.getBlockPos();
+			cameraRenderState.entityPos = camera.getFocusedEntity().getLerpedPos(tickDelta);
+			cameraRenderState.orientation = new Quaternionf(camera.getRotation());
+			/* submit and render to vertexconsumers */
+			particleBatch.submit(client.gameRenderer.getEntityRenderCommandQueue(), cameraRenderState);
+	        client.gameRenderer.getEntityRenderDispatcher().render();
+			particleBatch.onFrameEnd();
         });
 
         modelView.popMatrix();

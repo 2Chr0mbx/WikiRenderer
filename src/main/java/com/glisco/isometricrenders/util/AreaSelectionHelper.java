@@ -6,6 +6,7 @@ import com.glisco.isometricrenders.screen.ScreenScheduler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -26,7 +27,7 @@ public class AreaSelectionHelper {
         Translate.actionBar("selection_cleared");
     }
 
-    public static void renderSelectionBox(MatrixStack matrices, Camera camera) {
+    public static void renderSelectionBox(MatrixStack matrices, CameraRenderState camera) {
         if (!AreaSelectionHelper.shouldDraw()) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
@@ -44,9 +45,9 @@ public class AreaSelectionHelper {
         matrices.push();
 
         VertexConsumer consumer = client.getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayer.getLines());
-        matrices.translate(origin.getX() - camera.getPos().x, origin.getY() - camera.getPos().y, origin.getZ() - camera.getPos().z);
+        matrices.translate(origin.getX() - camera.pos.x, origin.getY() - camera.pos.y, origin.getZ() - camera.pos.z);
 
-        VertexRendering.drawBox(matrices, consumer, 0, 0, 0, size.getX(), size.getY(), size.getZ(), 1, 1, 1, 1, 0, 0, 0);
+        VertexRendering.drawBox(matrices.peek(), consumer, 0, 0, 0, size.getX(), size.getY(), size.getZ(), 1, 1, 1, 1, 0, 0, 0);
 
         matrices.pop();
     }

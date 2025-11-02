@@ -137,7 +137,7 @@ public class IsorenderCommand {
             return 0;
         }
 
-        final var gameProfile = server.getUserCache().findByName(StringArgumentType.getString(context, "player"));
+        final var gameProfile = server.getApiServices().profileResolver().getProfileByName(StringArgumentType.getString(context, "player"));
         if (gameProfile.isEmpty()) {
             Translate.commandError(context, "no_such_player");
             return 0;
@@ -163,7 +163,7 @@ public class IsorenderCommand {
             return 0;
         }
 
-        final var gameProfile = server.getUserCache().findByName(StringArgumentType.getString(context, "player"));
+        final var gameProfile = server.getApiServices().profileResolver().getProfileByName(StringArgumentType.getString(context, "player"));
         if (gameProfile.isEmpty()) {
             Translate.commandError(context, "no_such_player");
             return 0;
@@ -250,7 +250,6 @@ public class IsorenderCommand {
         return 0;
     }
 
-    @SuppressWarnings("unchecked")
     private static int renderEntityWithNbt(CommandContext<FabricClientCommandSource> context) {
         final var entityNbt = NbtCompoundArgumentType.getNbtCompound(context, "nbt");
         final var entityReference = (RegistryEntry.Reference<EntityType<?>>) context.getArgument("entity", RegistryEntry.Reference.class);
@@ -262,7 +261,6 @@ public class IsorenderCommand {
         return 0;
     }
 
-    @SuppressWarnings("unchecked")
     private static int renderEntityWithoutNbt(CommandContext<FabricClientCommandSource> context) {
         final var entityReference = (RegistryEntry.Reference<EntityType<?>>) context.getArgument("entity", RegistryEntry.Reference.class);
 
@@ -346,8 +344,8 @@ public class IsorenderCommand {
 
     public static BlockPos getPosFromArgument(DefaultPosArgument argument, FabricClientCommandSource source) {
 
-        DefaultPosArgumentAccessor accessor = (DefaultPosArgumentAccessor) argument;
-        Vec3d pos = source.getPlayer().getPos();
+        DefaultPosArgumentAccessor accessor = (DefaultPosArgumentAccessor) (Object) argument;
+        Vec3d pos = source.getPlayer().getSyncedPos();
 
         return BlockPos.ofFloored(accessor.isometric$getX().toAbsoluteCoordinate(pos.x), accessor.isometric$getY().toAbsoluteCoordinate(pos.y), accessor.isometric$getZ().toAbsoluteCoordinate(pos.z));
     }

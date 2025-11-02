@@ -10,6 +10,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -70,11 +71,6 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
     }
 
     @Override
-    public void prepare() {
-        client.getEntityRenderDispatcher().setRenderShadows(false);
-    }
-
-    @Override
     public void emitVertices(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float tickDelta) {
         matrices.push();
 
@@ -91,21 +87,24 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 
         final MutableObject<Vec3d> offset = new MutableObject<>(Vec3d.ZERO);
 
+		final var renderDispatcher = client.getEntityRenderDispatcher();
+		final var commandQueue = client.gameRenderer.getEntityRenderCommandQueue();
         applyToEntityAndPassengers(this.entity, entity -> {
             entity.setPos(client.player.getX(), client.player.getY(), client.player.getZ());
             if (entity.hasVehicle()) {
-                offset.setValue(offset.getValue().add(entity.getVehicle().getPassengerRidingPos(entity).subtract(entity.getPos())));
+                offset.setValue(offset.getValue().add(entity.getVehicle().getPassengerRidingPos(entity).subtract(entity.getSyncedPos())));
             }
 
             var offsetPos = offset.getValue();
             matrices.push();
-            client.getEntityRenderDispatcher().render(entity, offsetPos.getX(), offsetPos.getY(), offsetPos.getZ(), tickDelta, matrices, vertexConsumers, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+			var state = renderDispatcher.getAndUpdateRenderState(entity, tickDelta);
+			state.shadowPieces.clear(); // remove shadows
+	        state.light = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+	        renderDispatcher.render(state, new CameraRenderState(), offsetPos.getX(), offsetPos.getY(), offsetPos.getZ(), matrices, commandQueue);
             matrices.pop();
         });
 
-        if (vertexConsumers instanceof VertexConsumerProvider.Immediate immediate) {
-            immediate.draw();
-        }
+		client.gameRenderer.getEntityRenderDispatcher().render();
 
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-180));
         matrices.translate(0, 1.65, 0);
@@ -113,11 +112,6 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         this.renderParticles(matrices.peek().getPositionMatrix(), tickDelta);
 
         matrices.pop();
-    }
-
-    @Override
-    public void cleanUp() {
-        client.getEntityRenderDispatcher().setRenderShadows(true);
     }
 
     @Override

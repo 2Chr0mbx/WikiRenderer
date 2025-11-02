@@ -4,7 +4,9 @@ import com.glisco.isometricrenders.mixin.SliderWidgetInvoker;
 import com.glisco.isometricrenders.property.IntProperty;
 import io.wispforest.owo.ui.component.SliderComponent;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.client.gui.Click;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 public class PropertySliderComponent extends SliderComponent {
 
@@ -23,12 +25,12 @@ public class PropertySliderComponent extends SliderComponent {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 2) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (click.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
             this.setting.setToDefault();
             return true;
         } else {
-            return super.mouseClicked(mouseX, mouseY, button);
+            return super.mouseClicked(click, doubled);
         }
     }
 

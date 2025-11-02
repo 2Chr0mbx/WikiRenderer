@@ -1,6 +1,9 @@
 {
   "required": true,
   "minVersion": "0.8",
+  "mixinextras": {
+    "minVersion": "0.5.0"
+  },
   "package": "com.glisco.isometricrenders.mixin",
   "compatibilityLevel": "JAVA_16",
   "plugin": "com.glisco.isometricrenders.mixin.IsometricMixinPlugin",
@@ -10,6 +13,7 @@
     "LivingEntityRendererMixin",
     "MinecraftClientMixin",
     "ParticleManagerMixin",
+    "RenderPipelinesMixin",
     "SectionRenderStateMixin",
     "SliderWidgetInvoker",
     "TextureManagerMixin",

@@ -9,6 +9,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.item.ItemRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
@@ -20,6 +21,7 @@ import java.util.List;
 
 public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.ItemAtlasPropertyBundle> {
 
+	private static final ItemRenderState RENDER_STATE = new ItemRenderState();
     private final MinecraftClient client = MinecraftClient.getInstance();
     private final List<ItemStack> items;
     private final String atlasSource;
@@ -39,7 +41,9 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
         matrices.scale(.1f, .1f, .1f);
         matrices.translate((-columns / 2f) * spacing - spacing / 2, (rows / 2f) * spacing + spacing / 2, 0);
 
-        for (int row = 0; row < rows; row++) {
+		final var commandQueue = this.client.gameRenderer.getEntityRenderCommandQueue();
+	    final var itemModelManager = this.client.getItemModelManager();
+	    for (int row = 0; row < rows; row++) {
             matrices.translate(0, -spacing, 0);
             matrices.push();
             for (int column = 0; column < columns; column++) {
@@ -47,16 +51,21 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
                 final var index = row * columns + column;
                 if (index >= this.items.size()) continue;
 
-                this.client.getItemRenderer().renderItem(
-                        this.items.get(index),
-                        ItemDisplayContext.GUI,
-                        LightmapTextureManager.MAX_LIGHT_COORDINATE,
-                        OverlayTexture.DEFAULT_UV,
-                        matrices,
-                        vertexConsumers,
-                        this.client.world,
-                        0
-                );
+	            itemModelManager.clearAndUpdate(
+			            RENDER_STATE,
+			            this.items.get(index),
+			            ItemDisplayContext.GUI,
+			            this.client.world,
+			            null,
+			            0
+	            );
+	            RENDER_STATE.render(
+						matrices,
+			            commandQueue,
+			            LightmapTextureManager.MAX_LIGHT_COORDINATE,
+			            OverlayTexture.DEFAULT_UV,
+			            0
+	            );
             }
             matrices.pop();
         }
