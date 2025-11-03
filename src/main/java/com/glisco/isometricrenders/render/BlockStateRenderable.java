@@ -69,12 +69,11 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
         matrices.push();
         matrices.translate(-0.5, -0.5, -0.5);
 
-        if (this.entity != null) {
-	        var state = this.client.getBlockEntityRenderDispatcher().getRenderState(entity, tickDelta, null);
-	        if (state != null) {
-		        state.lightmapCoordinates = LightmapTextureManager.MAX_LIGHT_COORDINATE;
-		        this.client.getBlockEntityRenderDispatcher().render(state, matrices, this.client.gameRenderer.getEntityRenderCommandQueue(), new CameraRenderState());
-	        }
+		var renderState = this.entity == null ? null : this.client.getBlockEntityRenderDispatcher().getRenderState(entity, tickDelta, null);
+
+		if (renderState != null) {
+			renderState.lightmapCoordinates = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+			this.client.getBlockEntityRenderDispatcher().render(renderState, matrices, this.client.gameRenderer.getEntityRenderCommandQueue(), new CameraRenderState());
         } else if (this.state.getRenderType() != BlockRenderType.INVISIBLE) {
 	        this.client.getBlockRenderManager().renderBlockAsEntity(this.state, matrices, vertexConsumers, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
         }

@@ -71,7 +71,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
             matrices.push();
 	        matrices.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 			var state = blockEntityDispatcher.getRenderState(entity, tickDelta, null);
-	        blockEntityDispatcher.render(state, matrices, commandQueue, cameraRenderState);
+	        if (state != null) blockEntityDispatcher.render(state, matrices, commandQueue, cameraRenderState);
             matrices.pop();
         });
 
