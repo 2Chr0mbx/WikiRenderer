@@ -369,9 +369,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.captureScheduled) {
-	        RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution)
-					        .thenCompose(img -> ImageIO.save(img, this.renderable.exportPath()).whenComplete((f, t) -> img.close()))
-            .whenComplete((file, throwable) -> {
+            final ExportPathSpec exportPath = this.renderable.exportPath();
+            RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution)
+                    .thenCompose(img -> ImageIO.save(img, exportPath).whenComplete((f, t) -> img.close()))
+                .whenComplete((file, throwable) -> {
                 exportCallback.accept(file);
                 this.client.execute(() -> this.notify(
                     () -> Util.getOperatingSystem().open(file),
@@ -405,6 +406,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 this.renderedFrames.clear();
 
+                final ExportPathSpec animationTarget = this.renderable.exportPath();
                 exportFuture.whenComplete((file, throwable) -> {
                     overwriteLatest.set(overwriteValue);
                     if (throwable != null) return;
@@ -413,7 +415,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     this.client.execute(() -> this.notify(Translate.gui("converting_image_sequence")));
 
                     FFmpegDispatcher.assemble(
-                        this.renderable.exportPath(),
+                        animationTarget,
                         ExportPathSpec.exportRoot().resolve("sequence/"),
                         animationFormat
                     ).whenComplete((animationFile, animationThrowable) -> {
