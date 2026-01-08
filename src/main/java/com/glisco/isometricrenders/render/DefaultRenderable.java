@@ -69,9 +69,9 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         var client = MinecraftClient.getInstance();
         this.withParticleCamera(camera -> {
 	        var particleBatch = new SubmittableBatch();
-			var pos = camera.getPos();
+			var pos = camera.getCameraPos();
 			var frustum = new Frustum(transform, IsometricRenders.renderableDrawProjectionMatrix);
-	        frustum.setPosition(pos.x, pos.y, pos.z);
+	        frustum.setPosition(pos.getX(), pos.getY(), pos.getZ());
 			frustum.offset(-3.0F); // present in vanilla
             client.particleManager.addToBatch(
 					particleBatch,
@@ -82,7 +82,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 			/* create render state from camera object; (mostly) mirrors GameRenderer.updateCameraState */
 	        var cameraRenderState = new CameraRenderState();
 			cameraRenderState.initialized = true;
-			cameraRenderState.pos = camera.getPos();
+			cameraRenderState.pos = camera.getCameraPos();
 			cameraRenderState.blockPos = camera.getBlockPos();
 			cameraRenderState.entityPos = camera.getFocusedEntity().getLerpedPos(tickDelta);
 			cameraRenderState.orientation = new Quaternionf(camera.getRotation());

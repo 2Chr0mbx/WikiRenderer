@@ -4,28 +4,36 @@ import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.screen.IsometricUI;
+import com.glisco.isometricrenders.screen.RenderScreen;
+import com.glisco.isometricrenders.screen.ScreenScheduler;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
+import io.wispforest.owo.ui.component.EntityComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.*;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
+import net.minecraft.storage.NbtReadView;
 import net.minecraft.storage.NbtWriteView;
+import net.minecraft.text.Text;
 import net.minecraft.util.ErrorReporter;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -47,27 +55,50 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 
         nbt.putString("id", EntityType.getId(type).toString());
 
-        final var entity = EntityType.loadEntityWithPassengers(nbt, client.world, SpawnReason.LOAD, Function.identity());
+        final var entity = EntityType.loadEntityWithPassengers(nbt, client.world, SpawnReason.LOAD, LoadedEntityProcessor.NOOP);
         entity.updatePosition(client.player.getX(), client.player.getY(), client.player.getZ());
 
         return new EntityRenderable(entity);
     }
 
     public static EntityRenderable copyOf(Entity source) {
+        MinecraftClient.getInstance().player.sendMessage(Text.literal("Test"), false);
+        if (source instanceof OtherClientPlayerEntity player) {
+            return copyOfPlayer(player);
+        }
+
         final var client = MinecraftClient.getInstance();
 
-		var logging = new ErrorReporter.Logging(source.getErrorReporterContext(), IsometricRenders.LOGGER);
-	    var view = NbtWriteView.create(logging, source.getRegistryManager());
-		source.writeData(view);
-		var nbt = view.getNbt();
-	    logging.close();
-		nbt.putString("id", EntityType.getId(source.getType()).toString());
+        var logging = new ErrorReporter.Logging(source.getErrorReporterContext(), IsometricRenders.LOGGER);
+        var view = NbtWriteView.create(logging, source.getRegistryManager());
+        source.writeData(view);
+        var nbt = view.getNbt();
+        logging.close();
+        nbt.putString("id", EntityType.getId(source.getType()).toString());
 
-
-        final var entity = EntityType.loadEntityWithPassengers(nbt, client.world, SpawnReason.LOAD, Function.identity());
+        Entity entity = EntityType.loadEntityWithPassengers(nbt, client.world, SpawnReason.LOAD, LoadedEntityProcessor.NOOP);
         applyToEntityAndPassengers(entity, Entity::tick);
 
         return new EntityRenderable(entity);
+    }
+
+    public static EntityRenderable copyOfPlayer(AbstractClientPlayerEntity originalPlayer) {
+        GameProfile originalProfile = originalPlayer.getGameProfile();
+        GameProfile fakeProfile = new GameProfile(originalProfile.id(), originalProfile.name(), new PropertyMap(originalProfile.properties()));
+
+        final var player = EntityComponent.createRenderablePlayer(fakeProfile);
+
+        ErrorReporter.Logging loggingWrite = new ErrorReporter.Logging(originalPlayer.getErrorReporterContext(), IsometricRenders.LOGGER);
+        var view = NbtWriteView.create(loggingWrite, originalPlayer.getRegistryManager());
+        originalPlayer.writeData(view);
+        var nbt = view.getNbt();
+        loggingWrite.close();
+
+        try (ErrorReporter.Logging loggingRead = new ErrorReporter.Logging(player.getErrorReporterContext(), IsometricRenders.LOGGER)) {
+            player.readData(NbtReadView.create(loggingRead, player.getRegistryManager(), nbt));
+        }
+
+       return new EntityRenderable(player);
     }
 
     @Override

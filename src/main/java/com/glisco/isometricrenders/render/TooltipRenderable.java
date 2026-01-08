@@ -6,6 +6,7 @@ import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Mouse;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.render.*;
 import net.minecraft.client.gui.render.state.GuiRenderState;
@@ -55,7 +56,12 @@ public class TooltipRenderable extends DefaultRenderable<TooltipRenderable.Toolt
 
 	    List<TooltipComponent> list = Screen.getTooltipFromItem(client, this.stack).stream().map(Text::asOrderedText).map(TooltipComponent::of).collect(Util.toArrayList());
 	    this.stack.getTooltipData().ifPresent(datax -> list.add(list.isEmpty() ? 0 : 1, TooltipComponent.of(datax)));
-	    new DrawContext(client, state)
+
+        Mouse mouse = client.mouse;
+        int xScale = (int) mouse.getScaledX(client.getWindow());
+        int yScale = (int) mouse.getScaledY(client.getWindow());
+
+	    new DrawContext(client, state, xScale, yScale)
 			    .drawTooltipImmediately(client.textRenderer, list, 0, 0,
 				(screenWidth, screenHeight, x, y, width, height) -> new Vector2i(HoveredTooltipPositioner.INSTANCE.getPosition(screenWidth, screenHeight, x, y, width, height)).add(-12 - width / 2, 12 - height / 2),
 				this.stack.get(DataComponentTypes.TOOLTIP_STYLE));

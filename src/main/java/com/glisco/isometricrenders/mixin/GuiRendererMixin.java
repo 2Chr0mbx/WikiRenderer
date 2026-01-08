@@ -23,16 +23,15 @@ public class GuiRendererMixin {
 	}
 
 	// If it works, it's not stupid.
-	@WrapOperation(method = "renderPreparedDraws", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/DynamicUniforms;write(Lorg/joml/Matrix4fc;Lorg/joml/Vector4fc;Lorg/joml/Vector3fc;Lorg/joml/Matrix4fc;F)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;"))
-	private GpuBufferSlice overrideDynamicTransforms(DynamicUniforms instance, Matrix4fc modelView, Vector4fc colorModulator, Vector3fc modelOffset, Matrix4fc textureMatrix, float lineWidth, Operation<GpuBufferSlice> original) {
+	@WrapOperation(method = "renderPreparedDraws", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/DynamicUniforms;write(Lorg/joml/Matrix4fc;Lorg/joml/Vector4fc;Lorg/joml/Vector3fc;Lorg/joml/Matrix4fc;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;"))
+	private GpuBufferSlice overrideDynamicTransforms(DynamicUniforms instance, Matrix4fc modelView, Vector4fc colorModulator, Vector3fc modelOffset, Matrix4fc textureMatrix, Operation<GpuBufferSlice> original) {
 		if (IsometricRenders.inRenderableDraw)
 			return original.call(instance,
 					RenderSystem.getModelViewMatrix(),
 					new Vector4f(1.0F, 1.0F, 1.0F, 1.0F),
 					new Vector3f(0),
-					RenderSystem.getTextureMatrix(),
-					RenderSystem.getShaderLineWidth());
-		return original.call(instance, modelView, colorModulator, modelOffset, textureMatrix, lineWidth);
+					new Matrix4f());
+		return original.call(instance, modelView, colorModulator, modelOffset, textureMatrix);
 	}
 
 	@WrapOperation(method = "renderPreparedDraws", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setProjectionMatrix(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/systems/ProjectionType;)V"))

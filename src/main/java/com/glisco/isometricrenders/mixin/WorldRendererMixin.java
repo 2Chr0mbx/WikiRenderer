@@ -29,8 +29,14 @@ public class WorldRendererMixin {
         ci.cancel();
     }
 
-    @Inject(method = "method_62214", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;renderTargetBlockOutline(Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/util/math/MatrixStack;ZLnet/minecraft/client/render/state/WorldRenderState;)V"))
-    public void drawAreaSelection(GpuBufferSlice gpuBufferSlice, WorldRenderState worldRenderState, Profiler profiler, Matrix4f matrix4f, Handle<Framebuffer> handle, Handle<Framebuffer> handle2, boolean bl, Frustum frustum, Handle<Framebuffer> handle3, Handle<Framebuffer> handle4, CallbackInfo ci, @Local(ordinal = 0) MatrixStack matrices) {
+    @Inject(method = "method_62214", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;" +
+                                                                         "renderTargetBlockOutline(" +
+                                                                         "Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;" +
+                                                                         "Lnet/minecraft/client/util/math/MatrixStack;" +
+                                                                         "Z" +
+                                                                         "Lnet/minecraft/client/render/state/WorldRenderState;" +
+                                                                         ")V"))
+    public void drawAreaSelection(GpuBufferSlice gpuBufferSlice, WorldRenderState worldRenderState, Profiler profiler, Matrix4f matrix4f, Handle<Framebuffer> handle, Handle<Framebuffer> handle2, boolean bl, Handle<Framebuffer> handle3, Handle<Framebuffer> handle4, CallbackInfo ci, @Local(ordinal = 0) MatrixStack matrices) {
         AreaSelectionHelper.renderSelectionBox(matrices, worldRenderState.cameraRenderState);
     }
 }

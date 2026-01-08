@@ -11,6 +11,12 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.shape.SimpleVoxelShape;
+import net.minecraft.util.shape.SlicedVoxelShape;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.debug.gizmo.GizmoDrawing;
 
 public class AreaSelectionHelper {
 
@@ -44,10 +50,11 @@ public class AreaSelectionHelper {
 
         matrices.push();
 
-        VertexConsumer consumer = client.getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayer.getLines());
+        VertexConsumer consumer = client.getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayers.lines());
         matrices.translate(origin.getX() - camera.pos.x, origin.getY() - camera.pos.y, origin.getZ() - camera.pos.z);
 
-        VertexRendering.drawBox(matrices.peek(), consumer, 0, 0, 0, size.getX(), size.getY(), size.getZ(), 1, 1, 1, 1, 0, 0, 0);
+        // VertexRendering.drawOutline(matrices, consumer, VoxelShape, 1, 1, 1, 1, 0, 0, 0);
+        VertexRendering.drawOutline(matrices, consumer, VoxelShapes.cuboid(new Box(size)), 0, 0, 0, 1, 1);
 
         matrices.pop();
     }
