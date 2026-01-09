@@ -5,23 +5,29 @@ import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import io.wispforest.owo.ui.container.FlowLayout;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.Mouse;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.MouseHandler;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.render.*;
+import net.minecraft.client.gui.render.pip.GuiBannerResultRenderer;
+import net.minecraft.client.gui.render.pip.GuiBookModelRenderer;
+import net.minecraft.client.gui.render.pip.GuiEntityRenderer;
+import net.minecraft.client.gui.render.pip.GuiProfilerChartRenderer;
+import net.minecraft.client.gui.render.pip.GuiSignRenderer;
+import net.minecraft.client.gui.render.pip.GuiSkinRenderer;
 import net.minecraft.client.gui.render.state.GuiRenderState;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
-import net.minecraft.client.gui.tooltip.TooltipComponent;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.fog.FogRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.fog.FogRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.RotationAxis;
+import com.mojang.math.Axis;
 import org.joml.Matrix4fStack;
 import org.joml.Vector2i;
 
@@ -36,37 +42,37 @@ public class TooltipRenderable extends DefaultRenderable<TooltipRenderable.Toolt
     }
 
     @Override
-    public void emitVertices(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float tickDelta) {
-        var client = MinecraftClient.getInstance();
+    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+        var client = Minecraft.getInstance();
 
-		var imm = client.getBufferBuilders().getEntityVertexConsumers();
+		var imm = client.renderBuffers().bufferSource();
 	    var state = new GuiRenderState();
 		var atlasManager = client.getAtlasManager();
 		var renderer = new GuiRenderer(state, imm,
-				client.gameRenderer.getEntityRenderCommandQueue(),
-				client.gameRenderer.getEntityRenderDispatcher(),
+				client.gameRenderer.getSubmitNodeStorage(),
+				client.gameRenderer.getFeatureRenderDispatcher(),
 				List.of(
-						new EntityGuiElementRenderer(imm, client.getEntityRenderDispatcher()),
-						new PlayerSkinGuiElementRenderer(imm),
-						new BookModelGuiElementRenderer(imm),
-						new BannerResultGuiElementRenderer(imm, atlasManager),
-						new SignGuiElementRenderer(imm, atlasManager),
-						new ProfilerChartGuiElementRenderer(imm)
+						new GuiEntityRenderer(imm, client.getEntityRenderDispatcher()),
+						new GuiSkinRenderer(imm),
+						new GuiBookModelRenderer(imm),
+						new GuiBannerResultRenderer(imm, atlasManager),
+						new GuiSignRenderer(imm, atlasManager),
+						new GuiProfilerChartRenderer(imm)
 		));
 
-	    List<TooltipComponent> list = Screen.getTooltipFromItem(client, this.stack).stream().map(Text::asOrderedText).map(TooltipComponent::of).collect(Util.toArrayList());
-	    this.stack.getTooltipData().ifPresent(datax -> list.add(list.isEmpty() ? 0 : 1, TooltipComponent.of(datax)));
+	    List<ClientTooltipComponent> list = Screen.getTooltipFromItem(client, this.stack).stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).collect(Util.toMutableList());
+	    this.stack.getTooltipImage().ifPresent(datax -> list.add(list.isEmpty() ? 0 : 1, ClientTooltipComponent.create(datax)));
 
-        Mouse mouse = client.mouse;
-        int xScale = (int) mouse.getScaledX(client.getWindow());
-        int yScale = (int) mouse.getScaledY(client.getWindow());
+        MouseHandler mouse = client.mouseHandler;
+        int xScale = (int) mouse.getScaledXPos(client.getWindow());
+        int yScale = (int) mouse.getScaledYPos(client.getWindow());
 
-	    new DrawContext(client, state, xScale, yScale)
-			    .drawTooltipImmediately(client.textRenderer, list, 0, 0,
-				(screenWidth, screenHeight, x, y, width, height) -> new Vector2i(HoveredTooltipPositioner.INSTANCE.getPosition(screenWidth, screenHeight, x, y, width, height)).add(-12 - width / 2, 12 - height / 2),
-				this.stack.get(DataComponentTypes.TOOLTIP_STYLE));
+	    new GuiGraphics(client, state, xScale, yScale)
+			    .renderTooltip(client.font, list, 0, 0,
+				(screenWidth, screenHeight, x, y, width, height) -> new Vector2i(DefaultTooltipPositioner.INSTANCE.positionTooltip(screenWidth, screenHeight, x, y, width, height)).add(-12 - width / 2, 12 - height / 2),
+				this.stack.get(DataComponents.TOOLTIP_STYLE));
 
-		renderer.render(((GameRendererAccessor)client.gameRenderer).isometric$getFogRenderer().getFogBuffer(FogRenderer.FogType.NONE));
+		renderer.render(((GameRendererAccessor)client.gameRenderer).isometric$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
 		renderer.close();
     }
 
@@ -77,7 +83,7 @@ public class TooltipRenderable extends DefaultRenderable<TooltipRenderable.Toolt
 
     @Override
     public ExportPathSpec exportPath() {
-        return ExportPathSpec.of("tooltip", Registries.ITEM.getId(stack.getItem()).getPath());
+        return ExportPathSpec.of("tooltip", BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath());
     }
 
     public static class TooltipPropertyBundle extends DefaultPropertyBundle {
@@ -95,8 +101,8 @@ public class TooltipRenderable extends DefaultRenderable<TooltipRenderable.Toolt
             modelViewStack.scale(scale, scale, -scale);
 
             modelViewStack.translate(this.xOffset.get() / 260f, this.yOffset.get() / -260f, 0);
-            modelViewStack.rotate(RotationAxis.POSITIVE_Y.rotationDegrees(180));
-            modelViewStack.rotate(RotationAxis.POSITIVE_Z.rotationDegrees(180));
+            modelViewStack.rotate(Axis.YP.rotationDegrees(180));
+            modelViewStack.rotate(Axis.ZP.rotationDegrees(180));
         }
     }
 }

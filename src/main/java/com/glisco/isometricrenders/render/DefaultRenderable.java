@@ -5,11 +5,11 @@ import com.glisco.isometricrenders.mixin.access.CameraInvoker;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.mojang.blaze3d.buffers.*;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.SubmittableBatch;
-import net.minecraft.client.render.state.CameraRenderState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.state.ParticlesRenderState;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -57,8 +57,8 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 	@Override
     public void draw(Matrix4f modelViewMatrix) {
         // Draw all buffers
-		MinecraftClient.getInstance().gameRenderer.getEntityRenderDispatcher().render();
-        MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers().draw();
+		Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
     }
 
     protected void renderParticles(Matrix4f transform, float tickDelta) {
@@ -66,14 +66,14 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         modelView.pushMatrix();
         modelView.mul(transform);
 
-        var client = MinecraftClient.getInstance();
+        var client = Minecraft.getInstance();
         this.withParticleCamera(camera -> {
-	        var particleBatch = new SubmittableBatch();
-			var pos = camera.getCameraPos();
+	        var particleBatch = new ParticlesRenderState();
+			var pos = camera.position();
 			var frustum = new Frustum(transform, IsometricRenders.renderableDrawProjectionMatrix);
-	        frustum.setPosition(pos.getX(), pos.getY(), pos.getZ());
+	        frustum.prepare(pos.x(), pos.y(), pos.z());
 			frustum.offset(-3.0F); // present in vanilla
-            client.particleManager.addToBatch(
+            client.particleEngine.extract(
 					particleBatch,
 		            frustum,
 		            camera,
@@ -82,22 +82,22 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 			/* create render state from camera object; (mostly) mirrors GameRenderer.updateCameraState */
 	        var cameraRenderState = new CameraRenderState();
 			cameraRenderState.initialized = true;
-			cameraRenderState.pos = camera.getCameraPos();
-			cameraRenderState.blockPos = camera.getBlockPos();
-			cameraRenderState.entityPos = camera.getFocusedEntity().getLerpedPos(tickDelta);
-			cameraRenderState.orientation = new Quaternionf(camera.getRotation());
+			cameraRenderState.pos = camera.position();
+			cameraRenderState.blockPos = camera.blockPosition();
+			cameraRenderState.entityPos = camera.entity().getPosition(tickDelta);
+			cameraRenderState.orientation = new Quaternionf(camera.rotation());
 			/* submit and render to vertexconsumers */
-			particleBatch.submit(client.gameRenderer.getEntityRenderCommandQueue(), cameraRenderState);
-	        client.gameRenderer.getEntityRenderDispatcher().render();
-			particleBatch.onFrameEnd();
+			particleBatch.submit(client.gameRenderer.getSubmitNodeStorage(), cameraRenderState);
+	        client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+			particleBatch.reset();
         });
 
         modelView.popMatrix();
     }
 
     protected void withParticleCamera(Consumer<Camera> action) {
-        Camera camera = MinecraftClient.getInstance().getEntityRenderDispatcher().camera;
-        float previousYaw = camera.getYaw(), previousPitch = camera.getPitch();
+        Camera camera = Minecraft.getInstance().getEntityRenderDispatcher().camera;
+        float previousYaw = camera.yRot(), previousPitch = camera.xRot();
 
         ((CameraInvoker) camera).isometric$setRotation(this.properties().rotation.get() + 180 + this.properties().rotationOffset(), this.properties().slant.get());
         action.accept(camera);

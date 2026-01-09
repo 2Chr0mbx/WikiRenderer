@@ -5,24 +5,24 @@ import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import io.wispforest.owo.ui.container.FlowLayout;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.ItemRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RotationAxis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.Mth;
+import com.mojang.math.Axis;
 import org.joml.Matrix4fStack;
 
 import java.util.List;
 
 public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.ItemAtlasPropertyBundle> {
 
-	private static final ItemRenderState RENDER_STATE = new ItemRenderState();
-    private final MinecraftClient client = MinecraftClient.getInstance();
+	private static final ItemStackRenderState RENDER_STATE = new ItemStackRenderState();
+    private final Minecraft client = Minecraft.getInstance();
     private final List<ItemStack> items;
     private final String atlasSource;
 
@@ -32,42 +32,42 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
     }
 
     @Override
-    public void emitVertices(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float tickDelta) {
+    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
         final int columns = this.properties().columns.get();
-        final int rows = MathHelper.ceilDiv(this.items.size(), columns);
+        final int rows = Mth.positiveCeilDiv(this.items.size(), columns);
 
         final float spacing = 1.25f;
 
         matrices.scale(.1f, .1f, .1f);
         matrices.translate((-columns / 2f) * spacing - spacing / 2, (rows / 2f) * spacing + spacing / 2, 0);
 
-		final var commandQueue = this.client.gameRenderer.getEntityRenderCommandQueue();
-	    final var itemModelManager = this.client.getItemModelManager();
+		final var commandQueue = this.client.gameRenderer.getSubmitNodeStorage();
+	    final var itemModelManager = this.client.getItemModelResolver();
 	    for (int row = 0; row < rows; row++) {
             matrices.translate(0, -spacing, 0);
-            matrices.push();
+            matrices.pushPose();
             for (int column = 0; column < columns; column++) {
                 matrices.translate(spacing, 0, 0);
                 final var index = row * columns + column;
                 if (index >= this.items.size()) continue;
 
-	            itemModelManager.clearAndUpdate(
+	            itemModelManager.updateForTopItem(
 			            RENDER_STATE,
 			            this.items.get(index),
 			            ItemDisplayContext.GUI,
-			            this.client.world,
+			            this.client.level,
 			            null,
 			            0
 	            );
-	            RENDER_STATE.render(
+	            RENDER_STATE.submit(
 						matrices,
 			            commandQueue,
-			            LightmapTextureManager.MAX_LIGHT_COORDINATE,
-			            OverlayTexture.DEFAULT_UV,
+			            LightTexture.FULL_BRIGHT,
+			            OverlayTexture.NO_OVERLAY,
 			            0
 	            );
             }
-            matrices.pop();
+            matrices.popPose();
         }
     }
 
@@ -98,8 +98,8 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
         @Override
         public void applyToViewMatrix(Matrix4fStack modelViewStack) {
             super.applyToViewMatrix(modelViewStack);
-            modelViewStack.rotate(RotationAxis.POSITIVE_Y.rotationDegrees(-this.rotation.get()));
-            modelViewStack.rotate(RotationAxis.POSITIVE_X.rotationDegrees(-this.slant.get()));
+            modelViewStack.rotate(Axis.YP.rotationDegrees(-this.rotation.get()));
+            modelViewStack.rotate(Axis.XP.rotationDegrees(-this.slant.get()));
         }
 
     }

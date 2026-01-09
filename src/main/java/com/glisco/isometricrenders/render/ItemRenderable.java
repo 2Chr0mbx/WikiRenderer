@@ -1,23 +1,23 @@
 package com.glisco.isometricrenders.render;
 
-import com.glisco.isometricrenders.mixin.access.ItemRenderStateAccessor;
+import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.util.ExportPathSpec;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.ItemRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.math.RotationAxis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import com.mojang.math.Axis;
 import org.joml.Matrix4fStack;
 
 public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
 
-    private static final ItemRenderState RENDER_STATE = new ItemRenderState();
+    private static final ItemStackRenderState RENDER_STATE = new ItemStackRenderState();
     private static final DefaultPropertyBundle PROPERTIES = new DefaultPropertyBundle() {
         @Override
         public void applyToViewMatrix(Matrix4fStack modelViewStack) {
@@ -26,8 +26,8 @@ public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
 
             modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
 
-            modelViewStack.rotate(RotationAxis.POSITIVE_X.rotationDegrees(this.slant.get()));
-            modelViewStack.rotate(RotationAxis.POSITIVE_Y.rotationDegrees(this.rotation.get()));
+            modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get()));
+            modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
 
             this.updateAndApplyRotationOffset(modelViewStack);
         }
@@ -46,20 +46,20 @@ public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
 
     @Override
     public void prepare() {
-        MinecraftClient.getInstance().getItemModelManager().update(
+        Minecraft.getInstance().getItemModelResolver().appendItemLayers(
             RENDER_STATE,
             this.stack,
             ItemDisplayContext.GUI,
-            MinecraftClient.getInstance().world,
+            Minecraft.getInstance().level,
             null,
             0
         );
     }
 
     @Override
-    public void emitVertices(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float tickDelta) {
-        ((ItemRenderStateAccessor) RENDER_STATE).isometric$setDisplayContext(ItemDisplayContext.NONE);
-        RENDER_STATE.render(matrices, MinecraftClient.getInstance().gameRenderer.getEntityRenderCommandQueue(), LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV, 0);
+    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+        ((ItemStackRenderStateAccessor) RENDER_STATE).isometric$setDisplayContext(ItemDisplayContext.NONE);
+        RENDER_STATE.submit(matrices, Minecraft.getInstance().gameRenderer.getSubmitNodeStorage(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
     @Override
     public ExportPathSpec exportPath() {
         return ExportPathSpec.ofIdentified(
-            Registries.ITEM.getId(this.stack.getItem()),
+            BuiltInRegistries.ITEM.getKey(this.stack.getItem()),
             "item"
         );
     }

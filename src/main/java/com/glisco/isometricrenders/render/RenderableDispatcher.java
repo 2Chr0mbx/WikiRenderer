@@ -7,11 +7,11 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.SimpleFramebuffer;
-import net.minecraft.client.render.RawProjectionMatrix;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.pipeline.TextureTarget;
+import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 public class RenderableDispatcher {
 
-	private static final RawProjectionMatrix projMatrix = new RawProjectionMatrix("RenderableDispatcher");
+	private static final PerspectiveProjectionMatrixBuffer projMatrix = new PerspectiveProjectionMatrixBuffer("RenderableDispatcher");
 
     /**
      * Renders the given renderable into the current framebuffer,
@@ -55,8 +55,8 @@ public class RenderableDispatcher {
 //        RenderSystem.runAsFancy(() -> {
             // Emit untransformed vertices
             renderable.emitVertices(
-                    new MatrixStack(),
-                    MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(),
+                    new PoseStack(),
+                    Minecraft.getInstance().renderBuffers().bufferSource(),
                     tickDelta
             );
 
@@ -94,13 +94,13 @@ public class RenderableDispatcher {
      */
     @SuppressWarnings("ConstantConditions")
     public static GpuTexture drawIntoTexture(Renderable<?> renderable, float tickDelta, int size) {
-        final var framebuffer = new SimpleFramebuffer("Isometric Renders RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
+        final var framebuffer = new TextureTarget("Isometric Renders RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
 	    RenderSystem.getDevice().createCommandEncoder()
-			    .clearColorAndDepthTextures(framebuffer.getColorAttachment(), 0, framebuffer.getDepthAttachment(), 1.0);
+			    .clearColorAndDepthTextures(framebuffer.getColorTexture(), 0, framebuffer.getDepthTexture(), 1.0);
 
 	    IsometricRenders.mainTargetOverride = framebuffer;
-		RenderSystem.outputColorTextureOverride = framebuffer.getColorAttachmentView();
-		RenderSystem.outputDepthTextureOverride = framebuffer.getDepthAttachmentView();
+		RenderSystem.outputColorTextureOverride = framebuffer.getColorTextureView();
+		RenderSystem.outputDepthTextureOverride = framebuffer.getDepthTextureView();
 
         drawIntoActiveFramebuffer(renderable, 1, tickDelta, matrixStack -> {});
 
@@ -111,7 +111,7 @@ public class RenderableDispatcher {
 
 	    // Release depth attachment and FBO to save on VRAM - we only need
 	    // the color attachment texture to later turn into an image
-		framebuffer.delete();
+		framebuffer.destroyBuffers();
 
         return texture;
     }
@@ -146,7 +146,7 @@ public class RenderableDispatcher {
 				// Skip redundant safety checks, do the memory copies directly.
 				final long stride = 4L * width;
 				final long srcBuf = MemoryUtil.memAddress(mappedView.data());
-				final long dstBuf = nativeImage.imageId();
+				final long dstBuf = nativeImage.getPointer();
 
 				long src = srcBuf;
 				long dst = dstBuf + stride * (height - 1);

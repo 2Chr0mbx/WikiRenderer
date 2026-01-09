@@ -2,15 +2,15 @@ package com.glisco.isometricrenders.mixin;
 
 import com.glisco.isometricrenders.screen.ScreenScheduler;
 import com.glisco.isometricrenders.util.ClientRenderCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(MinecraftClient.class)
-public class MinecraftClientMixin {
+@Mixin(Minecraft.class)
+public class MinecraftMixin {
 
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void openScheduled(Screen screen, CallbackInfo ci) {
@@ -20,9 +20,9 @@ public class MinecraftClientMixin {
         ci.cancel();
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/RenderTickCounter$Dynamic;beginRenderTick(JZ)I"))
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/DeltaTracker$Timer;advanceTime(JZ)I"))
     private void onRenderStart(boolean tick, CallbackInfo ci) {
-        ClientRenderCallback.EVENT.invoker().onRenderStart((MinecraftClient) (Object) this);
+        ClientRenderCallback.EVENT.invoker().onRenderStart((Minecraft) (Object) this);
     }
 
 }

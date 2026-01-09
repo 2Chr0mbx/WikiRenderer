@@ -9,23 +9,23 @@
   "plugin": "com.glisco.isometricrenders.mixin.IsometricMixinPlugin",
   "client": [
     "GuiRendererMixin",
-    "HandledScreenMixin",
+    "AbstractContainerScreenMixin",
     "LivingEntityRendererMixin",
-    "MinecraftClientMixin",
-    "ParticleManagerMixin",
+    "MinecraftMixin",
+    "ParticleEngineMixin",
     "RenderPipelinesMixin",
-    "SectionRenderStateMixin",
-    "SliderWidgetInvoker",
+    "ChunkSectionsToRenderMixin",
+    "AbstractSliderButtonInvoker",
     "TextureManagerMixin",
-    "WorldRendererMixin",
+    "LevelRendererMixin",
     "access.BlockEntityAccessor",
-    "access.BlockStateArgumentAccessor",
+    "access.BlockInputAccessor",
     "access.CameraInvoker",
-    "access.DefaultPosArgumentAccessor",
+    "access.WorldCoordinatesAccessor",
     "access.GameRendererAccessor",
-    "access.ItemRenderStateAccessor",
+    "access.ItemStackRenderStateAccessor",
     "access.NativeImageInvoker",
-    "access.ParticleManagerAccessor"
+    "access.ParticleEngineAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

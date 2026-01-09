@@ -4,145 +4,148 @@ import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.screen.IsometricUI;
-import com.glisco.isometricrenders.screen.RenderScreen;
-import com.glisco.isometricrenders.screen.ScreenScheduler;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import io.wispforest.owo.ui.component.EntityComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.OtherClientPlayerEntity;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.state.CameraRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.storage.NbtReadView;
-import net.minecraft.storage.NbtWriteView;
-import net.minecraft.text.Text;
-import net.minecraft.util.ErrorReporter;
-import net.minecraft.util.math.RotationAxis;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityProcessor;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.ProblemReporter;
+import com.mojang.math.Axis;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> implements TickingRenderable<DefaultPropertyBundle> {
 
-    private final MinecraftClient client = MinecraftClient.getInstance();
+    private final Minecraft client = Minecraft.getInstance();
     private final Entity entity;
 
     public EntityRenderable(Entity entity) {
         this.entity = entity;
     }
 
-    public static EntityRenderable of(EntityType<?> type, @Nullable NbtCompound nbt) {
-        final var client = MinecraftClient.getInstance();
+    public static EntityRenderable of(EntityType<?> type, @Nullable CompoundTag nbt) {
+        final var client = Minecraft.getInstance();
 
         if (nbt == null) {
-            nbt = new NbtCompound();
+            nbt = new CompoundTag();
         }
 
-        nbt.putString("id", EntityType.getId(type).toString());
+        nbt.putString("id", EntityType.getKey(type).toString());
 
-        final var entity = EntityType.loadEntityWithPassengers(nbt, client.world, SpawnReason.LOAD, LoadedEntityProcessor.NOOP);
-        entity.updatePosition(client.player.getX(), client.player.getY(), client.player.getZ());
+        final var entity = EntityType.loadEntityRecursive(nbt, client.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
+        entity.absSnapTo(client.player.getX(), client.player.getY(), client.player.getZ());
 
         return new EntityRenderable(entity);
     }
 
-    public static EntityRenderable copyOf(Entity source) {
-        MinecraftClient.getInstance().player.sendMessage(Text.literal("Test"), false);
-        if (source instanceof OtherClientPlayerEntity player) {
-            return copyOfPlayer(player);
+    public static EntityRenderable copyAsRenderable(Entity source) {
+        return new EntityRenderable(copy(source));
+    }
+
+    public static Entity copy(Entity source) {
+        Minecraft.getInstance().player.displayClientMessage(Component.literal("Test"), false);
+        if (source instanceof AbstractClientPlayer player) {
+            return copyPlayer(player);
         }
 
-        final var client = MinecraftClient.getInstance();
+        final var client = Minecraft.getInstance();
 
-        var logging = new ErrorReporter.Logging(source.getErrorReporterContext(), IsometricRenders.LOGGER);
-        var view = NbtWriteView.create(logging, source.getRegistryManager());
-        source.writeData(view);
-        var nbt = view.getNbt();
+        var logging = new ProblemReporter.ScopedCollector(source.problemPath(), IsometricRenders.LOGGER);
+        var view = TagValueOutput.createWithContext(logging, source.registryAccess());
+        source.saveWithoutId(view);
+        var nbt = view.buildResult();
         logging.close();
-        nbt.putString("id", EntityType.getId(source.getType()).toString());
+        nbt.putString("id", EntityType.getKey(source.getType()).toString());
 
-        Entity entity = EntityType.loadEntityWithPassengers(nbt, client.world, SpawnReason.LOAD, LoadedEntityProcessor.NOOP);
+        Entity entity = EntityType.loadEntityRecursive(nbt, client.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
         applyToEntityAndPassengers(entity, Entity::tick);
 
-        return new EntityRenderable(entity);
+        return entity;
     }
 
-    public static EntityRenderable copyOfPlayer(AbstractClientPlayerEntity originalPlayer) {
+    public static EntityComponent.RenderablePlayerEntity copyPlayer(AbstractClientPlayer originalPlayer) {
         GameProfile originalProfile = originalPlayer.getGameProfile();
         GameProfile fakeProfile = new GameProfile(originalProfile.id(), originalProfile.name(), new PropertyMap(originalProfile.properties()));
 
         final var player = EntityComponent.createRenderablePlayer(fakeProfile);
 
-        ErrorReporter.Logging loggingWrite = new ErrorReporter.Logging(originalPlayer.getErrorReporterContext(), IsometricRenders.LOGGER);
-        var view = NbtWriteView.create(loggingWrite, originalPlayer.getRegistryManager());
-        originalPlayer.writeData(view);
-        var nbt = view.getNbt();
+        ProblemReporter.ScopedCollector loggingWrite = new ProblemReporter.ScopedCollector(originalPlayer.problemPath(), IsometricRenders.LOGGER);
+        var view = TagValueOutput.createWithContext(loggingWrite, originalPlayer.registryAccess());
+        originalPlayer.saveWithoutId(view);
+        var nbt = view.buildResult();
         loggingWrite.close();
 
-        try (ErrorReporter.Logging loggingRead = new ErrorReporter.Logging(player.getErrorReporterContext(), IsometricRenders.LOGGER)) {
-            player.readData(NbtReadView.create(loggingRead, player.getRegistryManager(), nbt));
+        try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
+            player.load(TagValueInput.create(loggingRead, player.registryAccess(), nbt));
         }
 
-       return new EntityRenderable(player);
+        return player;
     }
 
     @Override
-    public void emitVertices(MatrixStack matrices, VertexConsumerProvider vertexConsumers, float tickDelta) {
-        matrices.push();
+    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+        matrices.pushPose();
 
-        matrices.translate(0, -.5 * this.entity.getHeight(), 0);
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180));
+        matrices.translate(0, -.5 * this.entity.getBbHeight(), 0);
+        matrices.mulPose(Axis.YP.rotationDegrees(180));
 
         var properties = this.properties();
-        this.entity.setHeadYaw(properties.yaw.get());
-        if (entity instanceof LivingEntity living) living.lastHeadYaw = properties.yaw.get();
-        this.entity.lastYaw = properties.yaw.get();
+        this.entity.setYHeadRot(properties.yaw.get());
+        if (entity instanceof LivingEntity living) living.yHeadRotO = properties.yaw.get();
+        this.entity.yRotO = properties.yaw.get();
 
-        this.entity.setPitch(properties.pitch.get());
-        this.entity.lastPitch = properties.pitch.get();
+        this.entity.setXRot(properties.pitch.get());
+        this.entity.xRotO = properties.pitch.get();
 
-        final MutableObject<Vec3d> offset = new MutableObject<>(Vec3d.ZERO);
+        final MutableObject<Vec3> offset = new MutableObject<>(Vec3.ZERO);
 
 		final var renderDispatcher = client.getEntityRenderDispatcher();
-		final var commandQueue = client.gameRenderer.getEntityRenderCommandQueue();
+		final var commandQueue = client.gameRenderer.getSubmitNodeStorage();
         applyToEntityAndPassengers(this.entity, entity -> {
-            entity.setPos(client.player.getX(), client.player.getY(), client.player.getZ());
-            if (entity.hasVehicle()) {
-                offset.setValue(offset.getValue().add(entity.getVehicle().getPassengerRidingPos(entity).subtract(entity.getSyncedPos())));
+            entity.setPosRaw(client.player.getX(), client.player.getY(), client.player.getZ());
+            if (entity.isPassenger()) {
+                offset.setValue(offset.getValue().add(entity.getVehicle().getPassengerRidingPosition(entity).subtract(entity.trackingPosition())));
             }
 
             var offsetPos = offset.getValue();
-            matrices.push();
-			var state = renderDispatcher.getAndUpdateRenderState(entity, tickDelta);
+            matrices.pushPose();
+			var state = renderDispatcher.extractEntity(entity, tickDelta);
 			state.shadowPieces.clear(); // remove shadows
-	        state.light = LightmapTextureManager.MAX_LIGHT_COORDINATE;
-	        renderDispatcher.render(state, new CameraRenderState(), offsetPos.getX(), offsetPos.getY(), offsetPos.getZ(), matrices, commandQueue);
-            matrices.pop();
+	        state.lightCoords = LightTexture.FULL_BRIGHT;
+	        renderDispatcher.submit(state, new CameraRenderState(), offsetPos.x(), offsetPos.y(), offsetPos.z(), matrices, commandQueue);
+            matrices.popPose();
         });
 
-		client.gameRenderer.getEntityRenderDispatcher().render();
+		client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
 
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-180));
+        matrices.mulPose(Axis.YP.rotationDegrees(-180));
         matrices.translate(0, 1.65, 0);
 
-        this.renderParticles(matrices.peek().getPositionMatrix(), tickDelta);
+        this.renderParticles(matrices.last().pose(), tickDelta);
 
-        matrices.pop();
+        matrices.popPose();
     }
 
     @Override
@@ -158,7 +161,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
     @Override
     public ExportPathSpec exportPath() {
         return ExportPathSpec.ofIdentified(
-                Registries.ENTITY_TYPE.getId(this.entity.getType()),
+                BuiltInRegistries.ENTITY_TYPE.getKey(this.entity.getType()),
                 "entity"
         );
     }
@@ -166,15 +169,15 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
     @Override
     public void tick() {
         applyToEntityAndPassengers(this.entity, entity -> {
-            if (entity instanceof PlayerEntity) return;
-            client.world.tickEntity(entity);
+            if (entity instanceof Player) return;
+            client.level.tickNonPassenger(entity);
         });
     }
 
     private static void applyToEntityAndPassengers(Entity entity, Consumer<Entity> action) {
         action.accept(entity);
-        if (entity.getPassengerList().isEmpty()) return;
-        for (Entity e : entity.getPassengerList()) applyToEntityAndPassengers(e, action);
+        if (entity.getPassengers().isEmpty()) return;
+        for (Entity e : entity.getPassengers()) applyToEntityAndPassengers(e, action);
     }
 
     public static class EntityPropertyBundle extends DefaultPropertyBundle {

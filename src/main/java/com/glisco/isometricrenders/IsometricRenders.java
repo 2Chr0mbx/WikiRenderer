@@ -7,7 +7,7 @@ import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.widget.AreaSelectionComponent;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.systems.ProjectionType;
+import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -22,11 +22,11 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.RawProjectionMatrix;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
+import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -45,7 +45,7 @@ public class IsometricRenders implements ClientModInitializer {
     public static boolean inRenderableTick = false;
     public static boolean skipWorldRender = false;
 
-    public static Framebuffer mainTargetOverride = null;
+    public static RenderTarget mainTargetOverride = null;
 
 	public static ProjectionType prevProjectionType = null;
 	public static GpuBufferSlice prevProjectionMatrix = null;
@@ -53,7 +53,7 @@ public class IsometricRenders implements ClientModInitializer {
 	public static Matrix4f renderableDrawProjectionMatrix = null;
 	public static GpuBufferSlice renderableDrawProjectionBuffer = null;
 
-    public static final KeyBinding SELECT = new KeyBinding("key.isometric-renders.area_select", GLFW.GLFW_KEY_C, KeyBinding.Category.MISC);
+    public static final KeyMapping SELECT = new KeyMapping("key.isometric-renders.area_select", GLFW.GLFW_KEY_C, KeyMapping.Category.MISC);
 
     @Override
     public void onInitializeClient() {
@@ -64,16 +64,16 @@ public class IsometricRenders implements ClientModInitializer {
         final var ioStateId = "io-state";
         final var areaSelectionHintId = "area-selection-hint";
 
-        var hudId = Identifier.of(MOD_ID, "hud");
+        var hudId = Identifier.fromNamespaceAndPath(MOD_ID, "hud");
         Hud.add(hudId, () -> Containers.verticalFlow(Sizing.content(), Sizing.content()).positioning(Positioning.absolute(20, 20)));
 
         HudElementRegistry.addLast(hudId, (matrixStack, tickDelta) -> {
-            var client = MinecraftClient.getInstance();
+            var client = Minecraft.getInstance();
             var isometricHud = (FlowLayout) Hud.getComponent(hudId);
 
             final var ioState = isometricHud.childById(IOStateComponent.class, ioStateId);
-            if ((ioState == null) == (ImageIO.taskCount() > 0 && client.currentScreen == null)) {
-                if (ImageIO.taskCount() > 0 && client.currentScreen == null) {
+            if ((ioState == null) == (ImageIO.taskCount() > 0 && client.screen == null)) {
+                if (ImageIO.taskCount() > 0 && client.screen == null) {
                     isometricHud.child(new IOStateComponent().positioning(Positioning.absolute(20, 20)).id(ioStateId));
                 } else {
                     isometricHud.removeChild(ioState);
@@ -91,8 +91,8 @@ public class IsometricRenders implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (SELECT.wasPressed()) {
-                if (client.player.isSneaking()) {
+            if (SELECT.consumeClick()) {
+                if (client.player.isShiftKeyDown()) {
                     AreaSelectionHelper.clear();
                 } else {
                     AreaSelectionHelper.select();
@@ -105,11 +105,11 @@ public class IsometricRenders implements ClientModInitializer {
         skipWorldRender = true;
     }
 
-	public static void beginRenderableDraw(RawProjectionMatrix matrixStore, Matrix4f projectionMatrix) {
+	public static void beginRenderableDraw(PerspectiveProjectionMatrixBuffer matrixStore, Matrix4f projectionMatrix) {
 		prevProjectionType = RenderSystem.getProjectionType();
 		prevProjectionMatrix = RenderSystem.getProjectionMatrixBuffer();
 		renderableDrawProjectionMatrix = projectionMatrix;
-		renderableDrawProjectionBuffer = matrixStore.set(projectionMatrix);
+		renderableDrawProjectionBuffer = matrixStore.getBuffer(projectionMatrix);
 		RenderSystem.setProjectionMatrix(renderableDrawProjectionBuffer, ProjectionType.ORTHOGRAPHIC);
 		inRenderableDraw = true;
 	}

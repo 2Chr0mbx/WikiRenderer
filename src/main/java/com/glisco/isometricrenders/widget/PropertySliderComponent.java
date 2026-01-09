@@ -1,11 +1,11 @@
 package com.glisco.isometricrenders.widget;
 
-import com.glisco.isometricrenders.mixin.SliderWidgetInvoker;
+import com.glisco.isometricrenders.mixin.AbstractSliderButtonInvoker;
 import com.glisco.isometricrenders.property.IntProperty;
 import io.wispforest.owo.ui.component.SliderComponent;
 import io.wispforest.owo.ui.core.Sizing;
-import net.minecraft.client.gui.Click;
-import net.minecraft.text.Text;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 public class PropertySliderComponent extends SliderComponent {
@@ -13,7 +13,7 @@ public class PropertySliderComponent extends SliderComponent {
     private final IntProperty setting;
     private final int scrollIncrement;
 
-    public PropertySliderComponent(Sizing horizontalSizing, Text text, int scrollIncrement, IntProperty setting) {
+    public PropertySliderComponent(Sizing horizontalSizing, Component text, int scrollIncrement, IntProperty setting) {
         super(horizontalSizing);
         this.setting = setting;
         this.scrollIncrement = scrollIncrement;
@@ -21,11 +21,11 @@ public class PropertySliderComponent extends SliderComponent {
         this.message(s -> text);
 
         this.onChanged().subscribe(this.setting::setFromProgress);
-        setting.listen((intSetting, integer) -> ((SliderWidgetInvoker) this).isometric$setValue(setting.progress()));
+        setting.listen((intSetting, integer) -> ((AbstractSliderButtonInvoker) this).isometric$setValue(setting.progress()));
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         if (click.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
             this.setting.setToDefault();
             return true;

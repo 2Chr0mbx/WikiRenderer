@@ -45,7 +45,7 @@ public class FFmpegDispatcher {
                 IsometricRenders.LOGGER.info("Did not detect FFmpeg for reason: {}", exception.getMessage());
                 return false;
             }
-        }, Util.getMainWorkerExecutor()).whenComplete((result, throwable) -> {
+        }, Util.backgroundExecutor()).whenComplete((result, throwable) -> {
             if (throwable != null) {
                 ffmpegDetected = false;
                 IsometricRenders.LOGGER.warn("Could not complete FFmpeg detection", throwable);

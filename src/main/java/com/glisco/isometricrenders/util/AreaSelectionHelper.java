@@ -3,20 +3,22 @@ package com.glisco.isometricrenders.util;
 import com.glisco.isometricrenders.render.AreaRenderable;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.screen.ScreenScheduler;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.state.CameraRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.shape.SimpleVoxelShape;
-import net.minecraft.util.shape.SlicedVoxelShape;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.ShapeRenderer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.Shapes;
 
 public class AreaSelectionHelper {
 
@@ -33,37 +35,29 @@ public class AreaSelectionHelper {
         Translate.actionBar("selection_cleared");
     }
 
-    public static void renderSelectionBox(MatrixStack matrices, CameraRenderState camera) {
+    public static void renderSelectionBox() {
         if (!AreaSelectionHelper.shouldDraw()) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        ClientPlayerEntity player = client.player;
+        Minecraft client = Minecraft.getInstance();
+        LocalPlayer player = client.player;
 
-        BlockPos origin = AreaSelectionHelper.pos1;
+        BlockPos pos1 = AreaSelectionHelper.pos1;
 
-        HitResult result = player.raycast(player.getAbilities().creativeMode ? 5.0F : 4.5F, 0, false);
-        BlockPos size = AreaSelectionHelper.pos2 != null ? AreaSelectionHelper.pos2 : (result.getType() == HitResult.Type.BLOCK ? ((BlockHitResult) result).getBlockPos() : BlockPos.ofFloored(result.getPos()));
-        size = size.subtract(origin);
+        HitResult result = player.pick(player.getAbilities().instabuild ? 5.0F : 4.5F, 0, false);
+        BlockPos pos2 = AreaSelectionHelper.pos2 != null ? AreaSelectionHelper.pos2 : (result.getType() == HitResult.Type.BLOCK ? ((BlockHitResult) result).getBlockPos() : BlockPos.containing(result.getLocation()));
+        BlockPos size = pos2.subtract(pos1);
 
-        origin = origin.add(size.getX() < 0 ? 1 : 0, size.getY() < 0 ? 1 : 0, size.getZ() < 0 ? 1 : 0);
-        size = size.add(size.getX() >= 0 ? 1 : -1, size.getY() >= 0 ? 1 : -1, size.getZ() >= 0 ? 1 : -1);
+        pos1 = pos1.offset(size.getX() < 0 ? 1 : 0, size.getY() < 0 ? 1 : 0, size.getZ() < 0 ? 1 : 0);
+        pos2 = pos2.offset(size.getX() >= 0 ? 1 : -1, size.getY() >= 0 ? 1 : -1, size.getZ() >= 0 ? 1 : -1);
 
-        matrices.push();
-
-        VertexConsumer consumer = client.getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayers.lines());
-        matrices.translate(origin.getX() - camera.pos.x, origin.getY() - camera.pos.y, origin.getZ() - camera.pos.z);
-
-        // VertexRendering.drawOutline(matrices, consumer, VoxelShape, 1, 1, 1, 1, 0, 0, 0);
-        VertexRendering.drawOutline(matrices, consumer, VoxelShapes.cuboid(new Box(size)), 0, 0, 0, 1, 1);
-
-        matrices.pop();
+        Gizmos.cuboid(new AABB(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ()), GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 1)));
     }
 
     public static void select() {
-        final MinecraftClient client = MinecraftClient.getInstance();
-        final HitResult target = client.crosshairTarget;
+        final Minecraft client = Minecraft.getInstance();
+        final HitResult target = client.hitResult;
         if ((target == null)) return;
-        BlockPos targetPos = new BlockPos(target.getType() == HitResult.Type.BLOCK ? ((BlockHitResult) target).getBlockPos() : BlockPos.ofFloored(target.getPos()));
+        BlockPos targetPos = new BlockPos(target.getType() == HitResult.Type.BLOCK ? ((BlockHitResult) target).getBlockPos() : BlockPos.containing(target.getLocation()));
 
         if (pos1 == null) {
             pos1 = targetPos;

@@ -1,10 +1,9 @@
-
 package com.glisco.isometricrenders.util;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.property.GlobalProperties;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.text.Text;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.network.chat.Component;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +27,7 @@ public class ImageIO {
             imageFile.getParentFile().mkdirs();
 
             try {
-                image.writeTo(imageFile);
+                image.writeToFile(imageFile);
                 IsometricRenders.LOGGER.info("Image " + imageFile.getAbsolutePath() + " saved");
                 future.complete(imageFile);
             } catch (IOException e) {
@@ -46,7 +45,7 @@ public class ImageIO {
         return TASK_COUNT.get();
     }
 
-    public static Text progressText() {
+    public static Component progressText() {
         int jobs = taskCount();
         if (jobs == 0) return Translate.gui("exporter.idle");
         return Translate.gui("exporter.jobs", jobs);
