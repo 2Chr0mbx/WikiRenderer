@@ -346,7 +346,7 @@ public class WorldMesh {
         var entitiesList = this.entitySupplier.apply(client.player, this.from, this.to.offset(1, 1, 1))
                 .stream()
                 .map(entity -> {
-                    Minecraft.getInstance().player.displayClientMessage(Component.literal("entity = " + entity.getType().getDescriptionId()), false);
+                    Minecraft.getInstance().player.displayClientMessage(Component.literal("entity2 = " + entity.getType().getDescriptionId()), false);
                     if (this.freezeEntities) {
                         var originalEntity = entity;
                         if (entity instanceof Player) {

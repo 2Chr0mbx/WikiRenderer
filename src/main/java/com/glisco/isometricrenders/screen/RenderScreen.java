@@ -13,7 +13,10 @@ import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.glisco.isometricrenders.widget.NotificationComponent;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
@@ -24,6 +27,9 @@ import io.wispforest.owo.ui.core.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.render.TextureSetup;
+import net.minecraft.client.gui.render.state.BlitRenderState;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
@@ -31,10 +37,12 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix3x2f;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -72,7 +80,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private final MemoryGuard memoryGuard = new MemoryGuard(0.75f);
 
     private final Renderable<?> renderable;
-    private Consumer<File> exportCallback = (file) -> {};
+    private Consumer<File> exportCallback = (file) -> {
+    };
 
     public final Property<Boolean> playAnimations = Property.of(false);
     public final Property<Boolean> tickParticles = Property.of(true);
@@ -126,11 +135,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.rightAnchor.positioning(Positioning.absolute(viewportEndX, 0)).horizontalSizing(Sizing.fixed(this.width - this.viewportEndX)).verticalSizing(Sizing.fixed(this.height));
 
             this.rightAnchor.child(
-                Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content())
-                    .child(leftColumn)
-                    .child(Components.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
-                    .child(rightColumn)
-                    .horizontalAlignment(HorizontalAlignment.CENTER))
+                    Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content())
+                            .child(leftColumn)
+                            .child(Components.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
+                            .child(rightColumn)
+                            .horizontalAlignment(HorizontalAlignment.CENTER))
 
             );
         } else {
@@ -162,10 +171,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         rootComponent.child(rightAnchor.padding(Insets.left(10)));
 
         rootComponent.child(
-            this.notificationArea.child(this.ioStateComponent.positioning(Positioning.relative(0, 100)))
-                .horizontalAlignment(HorizontalAlignment.RIGHT)
-                .verticalAlignment(VerticalAlignment.BOTTOM)
-                .padding(Insets.of(5))
+                this.notificationArea.child(this.ioStateComponent.positioning(Positioning.relative(0, 100)))
+                        .horizontalAlignment(HorizontalAlignment.RIGHT)
+                        .verticalAlignment(VerticalAlignment.BOTTOM)
+                        .padding(Insets.of(5))
         );
 
         this.renderable.properties().buildGuiControls(this.renderable, this.leftColumn);
@@ -187,6 +196,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
 
         IsometricUI.sectionHeader(rightColumn, "export_options", true);
+        IsometricUI.booleanControl(rightColumn, crop, "crop");
         IsometricUI.booleanControl(rightColumn, saveIntoRoot, "dump_into_root");
         IsometricUI.booleanControl(rightColumn, overwriteLatest, "overwrite_latest");
 
@@ -205,20 +215,20 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 this.notify(Translate.gui("copied_to_clipboard"));
 
-	            RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution)
-			            .whenComplete((image, t) -> {
-							try (image) {
-								var stream = new ByteArrayOutputStream();
-								var channel = Channels.newChannel(stream);
+                RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get())
+                        .whenComplete((image, t) -> {
+                            try (image) {
+                                var stream = new ByteArrayOutputStream();
+                                var channel = Channels.newChannel(stream);
 
-								((NativeImageInvoker) (Object) image).isometric$write(channel);
+                                ((NativeImageInvoker) (Object) image).isometric$write(channel);
 
-								final var transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
-								Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
-							} catch (IOException e) {
-								IsometricRenders.LOGGER.error("mfw", e);
-							}
-			            });
+                                final var transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
+                                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+                            } catch (IOException e) {
+                                IsometricRenders.LOGGER.error("mfw", e);
+                            }
+                        });
 
             }).horizontalSizing(Sizing.fixed(75)));
         }
@@ -284,24 +294,24 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 }
 
                 IsometricUI.dynamicLabel(rightColumn, () ->
-		                this.remainingAnimationFrames == 0
-				                ? Component.empty()
-				                : Translate.gui("export_remaining_frames", this.remainingAnimationFrames));
+                        this.remainingAnimationFrames == 0
+                                ? Component.empty()
+                                : Translate.gui("export_remaining_frames", this.remainingAnimationFrames));
             } else {
                 IsometricUI.sectionHeader(rightColumn, "no_ffmpeg_1", true);
                 IsometricUI.sectionHeader(rightColumn, "no_ffmpeg_2", false);
                 IsometricUI.sectionHeader(rightColumn, "no_ffmpeg_3", false)
-                    .cursorStyle(CursorStyle.HAND)
-                    .mouseDown().subscribe((click, doubled) -> {
-                        this.minecraft.setScreen(new ConfirmLinkScreen(confirmed -> {
-                            if (confirmed) {
-                                Util.getPlatform().openUri("https://ffmpeg.org/download.html");
-                            }
+                        .cursorStyle(CursorStyle.HAND)
+                        .mouseDown().subscribe((click, doubled) -> {
+                            this.minecraft.setScreen(new ConfirmLinkScreen(confirmed -> {
+                                if (confirmed) {
+                                    Util.getPlatform().openUri("https://ffmpeg.org/download.html");
+                                }
 
-                            this.minecraft.setScreen(this);
-                        }, "https://ffmpeg.org/download.html", true));
-                        return true;
-                    });
+                                this.minecraft.setScreen(this);
+                            }, "https://ffmpeg.org/download.html", true));
+                            return true;
+                        });
             }
         } else {
             IsometricUI.sectionHeader(rightColumn, "detecting_ffmpeg", false);
@@ -330,14 +340,45 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         final var window = minecraft.getWindow();
         final var effectiveTickDelta = playAnimations.get() ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
-        RenderableDispatcher.drawIntoActiveFramebuffer(
-            this.renderable,
-                window.getWidth() / (float) window.getHeight(),
-            effectiveTickDelta,
-            this.hasBothColumns
-                ? matrixStack -> {}
-                : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0)
-        );
+        if (true) {
+            RenderableDispatcher.drawIntoActiveFramebuffer(
+                    this.renderable,
+                    window.getWidth() / (float) window.getHeight(),
+                    effectiveTickDelta,
+                    this.hasBothColumns
+                            ? matrixStack -> {
+                    }
+                            : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0)
+            );
+        } else {
+            // todo: try this later
+            GpuTexture texture = RenderableDispatcher.drawIntoTexture(
+                    this.renderable,
+                    effectiveTickDelta,
+                    exportResolution
+            );
+            // idk
+            GpuTextureView textureView = RenderSystem.getDevice().createTextureView(texture);
+            context.scissorStack.push(new ScreenRectangle(0, 0, 1000, 1000));
+            context.guiRenderState.submitBlitToCurrentLayer(new BlitRenderState(
+                    RenderPipelines.GUI_TEXTURED,
+                    TextureSetup.singleTexture(textureView, RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST)),
+                    new Matrix3x2f(context.pose()),
+                    0,
+                    0,
+                    1000,
+                    1000,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    context.scissorStack.peek()
+            ));
+            textureView.close();
+            texture.close();
+        }
+
 
         if (!this.drawOnlyBackground && this.uiAdapter != null) {
             drawFramingHint(context);
@@ -370,16 +411,16 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         if (this.captureScheduled) {
             final ExportPathSpec exportPath = this.renderable.exportPath();
-            RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution)
+            RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get())
                     .thenCompose(img -> ImageIO.save(img, exportPath).whenComplete((f, t) -> img.close()))
-                .whenComplete((file, throwable) -> {
-                exportCallback.accept(file);
-                this.minecraft.execute(() -> this.notify(
-                    () -> Util.getPlatform().openFile(file),
-                    Translate.gui("exported_as"),
-                    Component.literal(ExportPathSpec.exportRoot().relativize(file.toPath()).toString())
-                ));
-            });
+                    .whenComplete((file, throwable) -> {
+                        exportCallback.accept(file);
+                        this.minecraft.execute(() -> this.notify(
+                                () -> Util.getPlatform().openFile(file),
+                                Translate.gui("exported_as"),
+                                Component.literal(ExportPathSpec.exportRoot().relativize(file.toPath()).toString())
+                        ));
+                    });
 
             this.captureScheduled = false;
         }
@@ -398,9 +439,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 CompletableFuture<File> exportFuture = null;
 
                 for (int i = 0; i < this.renderedFrames.size(); i++) {
-	                final int _i = i;
-	                exportFuture = RenderableDispatcher.copyTextureIntoImage(this.renderedFrames.get(i))
-			                .thenCompose(img -> ImageIO.save(img, ExportPathSpec.forced("sequence", "seq_" + _i)).whenComplete((f, t) -> img.close()));
+                    final int _i = i;
+                    exportFuture = RenderableDispatcher.copyTextureIntoImage(this.renderedFrames.get(i), false)
+                            .thenCompose(img -> ImageIO.save(img, ExportPathSpec.forced("sequence", "seq_" + _i)).whenComplete((f, t) -> img.close()));
                     this.renderedFrames.get(i).close();
                 }
 
@@ -415,17 +456,17 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     this.minecraft.execute(() -> this.notify(Translate.gui("converting_image_sequence")));
 
                     FFmpegDispatcher.assemble(
-                        animationTarget,
-                        ExportPathSpec.exportRoot().resolve("sequence/"),
-                        animationFormat
+                            animationTarget,
+                            ExportPathSpec.exportRoot().resolve("sequence/"),
+                            animationFormat
                     ).whenComplete((animationFile, animationThrowable) -> {
                         this.exportAnimationButton.active = true;
                         this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
 
                         this.minecraft.execute(() -> this.notify(
-                            () -> Util.getPlatform().openFile(animationFile),
-                            Translate.gui("animation_saved"),
-                            Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
+                                () -> Util.getPlatform().openFile(animationFile),
+                                Translate.gui("animation_saved"),
+                                Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
                         ));
                     });
                 });
@@ -460,10 +501,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
-        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) return super.mouseDragged(click, offsetX, offsetY);
+        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties))
+            return super.mouseDragged(click, offsetX, offsetY);
 
         if (this.isInViewport(click.x())) {
-	        var button = click.button();
+            var button = click.button();
             if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
                 double xScaling = (100d / properties.scale.get()) * (this.minecraft.getWindow().getScreenWidth() / (float) this.minecraft.getWindow().getGuiScaledWidth());
                 double yScaling = (100d / properties.scale.get()) * (this.minecraft.getWindow().getScreenHeight() / (float) this.minecraft.getWindow().getGuiScaledHeight());
@@ -485,10 +527,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) return super.mouseClicked(click, doubled);
+        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties))
+            return super.mouseClicked(click, doubled);
 
         if (this.isInViewport(click.x()) && click.hasControlDown()) {
-			var button = click.button();
+            var button = click.button();
             if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
                 properties.xOffset.setToDefault();
                 properties.yOffset.setToDefault();
@@ -521,7 +564,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public boolean keyPressed(KeyEvent input) {
         if (super.keyPressed(input)) return true;
 
-		var keyCode = input.key();
+        var keyCode = input.key();
 
         if (keyCode == GLFW.GLFW_KEY_F12) {
             this.captureScheduled = true;

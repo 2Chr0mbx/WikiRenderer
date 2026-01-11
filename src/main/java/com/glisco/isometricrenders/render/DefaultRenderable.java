@@ -31,6 +31,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         final var lightTransform = new Matrix4f(modelViewMatrix);
         lightTransform.invert();
         lightDirection.mul(lightTransform);
+		lightDirection.normalize(); // this line fixes inconsistent lighting with scale
 
         final var transformedLightDirection = new Vector3f(lightDirection.x, lightDirection.y, lightDirection.z);
 

@@ -3,6 +3,7 @@ package com.glisco.isometricrenders.render;
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.IntProperty;
+import com.glisco.isometricrenders.property.Property;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
@@ -15,8 +16,10 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityProcessor;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -25,6 +28,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.network.chat.Component;
@@ -134,6 +139,18 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 			var state = renderDispatcher.extractEntity(entity, tickDelta);
 			state.shadowPieces.clear(); // remove shadows
 	        state.lightCoords = LightTexture.FULL_BRIGHT;
+
+            // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
+            if (state instanceof AvatarRenderState avatarRenderState) {
+                avatarRenderState.capeFlap = 0;
+                avatarRenderState.capeLean = 0;
+                avatarRenderState.capeLean2 = 0;
+
+                if (properties.useSteveSkin.get()) {
+                    avatarRenderState.skin = DefaultPlayerSkin.getDefaultSkin();
+                }
+            }
+
 	        renderDispatcher.submit(state, new CameraRenderState(), offsetPos.x(), offsetPos.y(), offsetPos.z(), matrices, commandQueue);
             matrices.popPose();
         });
@@ -186,6 +203,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 
         public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
         public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
+        public final Property<Boolean> useSteveSkin = Property.of(false);
 
         private EntityPropertyBundle() {}
 
@@ -193,10 +211,13 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         public void buildGuiControls(Renderable<?> renderable, FlowLayout container) {
             super.buildGuiControls(renderable, container);
 
-            IsometricUI.sectionHeader(container, "entity_pose", true);
+            IsometricUI.sectionHeader(container, "entity_data", true);
 
-            IsometricUI.intControl(container, yaw, "entity_pose.yaw", 15);
-            IsometricUI.intControl(container, pitch, "entity_pose.pitch", 5);
+            IsometricUI.intControl(container, yaw, "entity_data.yaw", 15);
+            IsometricUI.intControl(container, pitch, "entity_data.pitch", 5);
+            if (renderable instanceof EntityRenderable entityRenderable && entityRenderable.entity instanceof Player) {
+                IsometricUI.booleanControl(container, useSteveSkin, "entity_data.steve");
+            }
         }
     }
 }

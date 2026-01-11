@@ -12,6 +12,7 @@
   "gui.isometric-renders.animations": "Run Animations (Tick)",
   "gui.isometric-renders.particles": "Show Particles (requires ticking)",
   "gui.isometric-renders.use_external_renderer": "Use External Renderer",
+  "gui.isometric-renders.crop": "Crop",
   "gui.isometric-renders.dump_into_root": "Dump into root",
   "gui.isometric-renders.overwrite_latest": "Overwrite latest file",
   "gui.isometric-renders.export": "Export",
@@ -65,9 +66,10 @@
   "gui.isometric-renders.presets": "Presets",
   "gui.isometric-renders.lighting_profile": "Lighting Profile",
 
-  "gui.isometric-renders.entity_pose": "Entity Pose",
-  "gui.isometric-renders.entity_pose.yaw": "Yaw",
-  "gui.isometric-renders.entity_pose.pitch": "Pitch",
+  "gui.isometric-renders.entity_data": "Entity Data",
+  "gui.isometric-renders.entity_data.yaw": "Yaw",
+  "gui.isometric-renders.entity_data.pitch": "Pitch",
+  "gui.isometric-renders.entity_data.steve": "Use Steve Skin",
 
   "gui.isometric-renders.render_options": "Render Options",
   "gui.isometric-renders.background_color": "Background Color",

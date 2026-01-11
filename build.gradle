@@ -16,6 +16,8 @@ repositories {
 
     // TEMP: Experimental World Mesher
     mavenLocal()
+
+    maven { url = "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
 }
 
 loom {
@@ -32,9 +34,10 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     modImplementation "io.wispforest:exo:${project.exo_version}"
-
     modImplementation "io.wispforest:owo-lib:${project.owo_version}"
     include "io.wispforest:owo-sentinel:${project.owo_version}"
+
+    modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
 }
 
 processResources {

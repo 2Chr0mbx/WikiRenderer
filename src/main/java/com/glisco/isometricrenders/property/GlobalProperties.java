@@ -13,6 +13,7 @@ public class GlobalProperties {
     public static Property<Boolean> overwriteLatest = Property.of(false);
 
     public static int exportResolution = 1000;
+    public static Property<Boolean> crop = Property.of(true);
 
     // Animation Options
     public static int exportFramerate = 30;

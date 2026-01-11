@@ -45,10 +45,17 @@ public class AreaSelectionHelper {
 
         HitResult result = player.pick(player.getAbilities().instabuild ? 5.0F : 4.5F, 0, false);
         BlockPos pos2 = AreaSelectionHelper.pos2 != null ? AreaSelectionHelper.pos2 : (result.getType() == HitResult.Type.BLOCK ? ((BlockHitResult) result).getBlockPos() : BlockPos.containing(result.getLocation()));
-        BlockPos size = pos2.subtract(pos1);
 
-        pos1 = pos1.offset(size.getX() < 0 ? 1 : 0, size.getY() < 0 ? 1 : 0, size.getZ() < 0 ? 1 : 0);
-        pos2 = pos2.offset(size.getX() >= 0 ? 1 : -1, size.getY() >= 0 ? 1 : -1, size.getZ() >= 0 ? 1 : -1);
+        // recalibrate to make math easier
+        int minX = Math.min(pos1.getX(), pos2.getX());
+        int minY = Math.min(pos1.getY(), pos2.getY());
+        int minZ = Math.min(pos1.getZ(), pos2.getZ());
+        int maxX = Math.max(pos1.getX(), pos2.getX());
+        int maxY = Math.max(pos1.getY(), pos2.getY());
+        int maxZ = Math.max(pos1.getZ(), pos2.getZ());
+
+        pos1 = new BlockPos(minX, minY, minZ);
+        pos2 = new BlockPos(maxX + 1, maxY + 1, maxZ + 1);
 
         Gizmos.cuboid(new AABB(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ()), GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 1)));
     }

@@ -18,6 +18,7 @@
     "AbstractSliderButtonInvoker",
     "TextureManagerMixin",
     "LevelRendererMixin",
+    "DefaultPlayerSkinMixin",
     "access.BlockEntityAccessor",
     "access.BlockInputAccessor",
     "access.CameraInvoker",

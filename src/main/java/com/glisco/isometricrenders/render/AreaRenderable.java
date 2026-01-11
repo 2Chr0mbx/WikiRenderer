@@ -8,19 +8,20 @@ import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.util.Translate;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
-import com.mojang.math.Axis;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -78,7 +79,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
 
         super.draw(RenderSystem.getModelViewMatrix());
 
-        final var effectiveDelta = mesh.entitiesFrozen() ? 0 : client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        final var effectiveDelta = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         final var entities = mesh.renderInfo().entities();
 	    final var entityDispatcher = client.getEntityRenderDispatcher();
         entities.forEach((vec3d, entry) -> {
@@ -87,6 +88,14 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
             }
 	        var state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
 	        state.lightCoords = entry.light();
+
+            if (mesh.entitiesFrozen() && (state instanceof AvatarRenderState avatarRenderState)) {
+                // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
+                avatarRenderState.capeFlap = 0;
+                avatarRenderState.capeLean = 0;
+                avatarRenderState.capeLean2 = 0;
+            }
+
 	        entityDispatcher.submit(state, cameraRenderState, vec3d.x, vec3d.y, vec3d.z, matrices, commandQueue);
             super.draw(RenderSystem.getModelViewMatrix());
         });
