@@ -1,4 +1,4 @@
-package com.glisco.isometricrenders.render.mesh;
+package com.glisco.isometricrenders.render.area;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.joml.Matrix4f;

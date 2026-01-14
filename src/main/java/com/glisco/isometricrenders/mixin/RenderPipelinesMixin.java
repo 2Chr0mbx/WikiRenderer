@@ -25,8 +25,6 @@ public class RenderPipelinesMixin {
 		return instance;
 	}
 
-	// TODO(Ravel): remapper for com.llamalad7.mixinextras.expression.Expression is not implemented
-// TODO(Ravel): remapper for com.llamalad7.mixinextras.expression.Expression is not implemented
 // POSITION_TEX_COLOR_SNIPPET
 	@Definition(id = "withFragmentShader", method = "Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;withFragmentShader(Ljava/lang/String;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;", remap = false)
 	@Definition(id = "withDepthTestFunction", method = "Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;withDepthTestFunction(Lcom/mojang/blaze3d/platform/DepthTestFunction;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;", remap = false)
@@ -36,8 +34,6 @@ public class RenderPipelinesMixin {
 		return instance;
 	}
 
-	// TODO(Ravel): remapper for com.llamalad7.mixinextras.expression.Expression is not implemented
-// TODO(Ravel): remapper for com.llamalad7.mixinextras.expression.Expression is not implemented
 // GUI_TEXT_SNIPPET
 	@Definition(id = "builder", method = "Lcom/mojang/blaze3d/pipeline/RenderPipeline;builder([Lcom/mojang/blaze3d/pipeline/RenderPipeline$Snippet;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;", remap = false)
 	@Definition(id = "withDepthTestFunction", method = "Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;withDepthTestFunction(Lcom/mojang/blaze3d/platform/DepthTestFunction;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;", remap = false)
@@ -48,8 +44,6 @@ public class RenderPipelinesMixin {
 		return instance;
 	}
 
-	// TODO(Ravel): remapper for com.llamalad7.mixinextras.expression.Expression is not implemented
-// TODO(Ravel): remapper for com.llamalad7.mixinextras.expression.Expression is not implemented
 // GUI_TEXT (why does it disable depth test again after the snippet? that's annoying)
 	@Definition(id = "withLocation", method = "Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;withLocation(Ljava/lang/String;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;", remap = false)
 	@Definition(id = "withDepthTestFunction", method = "Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;withDepthTestFunction(Lcom/mojang/blaze3d/platform/DepthTestFunction;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;", remap = false)

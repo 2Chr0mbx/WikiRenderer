@@ -1,4 +1,4 @@
-package com.glisco.isometricrenders.render.mesh;
+package com.glisco.isometricrenders.render.area;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;

@@ -4,6 +4,7 @@ import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.property.PropertyBundle;
 import com.glisco.isometricrenders.screen.IsometricUI;
+import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ImageIO;
 import com.glisco.isometricrenders.util.ParticleRestriction;
@@ -147,10 +148,10 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         }
 
         @Override
-        public void buildGuiControls(Renderable<?> renderable, FlowLayout container) {
+        public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
             final BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
 
-            this.delegate.buildGuiControls(batchRenderable.currentDelegate, container);
+            this.delegate.buildGuiControls(batchRenderable.currentDelegate, screen, container);
 
             IsometricUI.sectionHeader(container, "batch.controls", true);
             try (var builder = IsometricUI.row(container)) {
@@ -173,8 +174,8 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         }
 
         @Override
-        public void applyToViewMatrix(Matrix4fStack modelViewStack) {
-            this.delegate.applyToViewMatrix(modelViewStack);
+        public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
+            this.delegate.applyToViewMatrix(renderable, modelViewStack);
         }
 
     }

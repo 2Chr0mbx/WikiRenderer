@@ -14,6 +14,7 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -39,13 +40,16 @@ public class RenderableDispatcher {
 
         renderable.prepare();
 
+        // view matrix = position/rotation/scale of camera
+        // model/object matrix = position/rotation/scale of the model/object
+
         // Prepare model view matrix
         Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
         modelViewStack.pushMatrix();
         modelViewStack.identity();
         transformer.accept(modelViewStack);
 
-        renderable.properties().applyToViewMatrix(modelViewStack);
+        renderable.properties().applyToViewMatrix(renderable, modelViewStack);
 
         Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -1000, 3000);
         IsometricRenders.beginRenderableDraw(projMatrix, projectionMatrix);
@@ -79,12 +83,13 @@ public class RenderableDispatcher {
             // resize image to target height by regenerating it with an increased size
             image = image.thenApply(ImageCropper::cropTransparent).thenCompose(i -> {
                 int height = i.getHeight();
-                if (height < size) {
-                    double multiplier = (double) size / height;
-                    return drawIntoImage(renderable, tickDelta, (int) Math.floor(size * multiplier), false).thenApply(ImageCropper::cropTransparent);
-                } else {
-                    // resizing would be pointless in this case
+                if (height >= size || (renderable instanceof AreaRenderable areaRenderable && areaRenderable.properties().perPixel90DegreeRendering.get())) {
+                    // resizing would be pointless with this size, or if per pixel rendering is on dont do it
                     return CompletableFuture.completedFuture(i);
+                } else {
+                    double multiplier = (double) size / (double) height;
+                    int newSize = (int) Math.round(size * multiplier);
+                    return drawIntoImage(renderable, tickDelta, newSize, false).thenApply(ImageCropper::cropTransparent);
                 }
             });
         }
@@ -102,7 +107,8 @@ public class RenderableDispatcher {
      */
     @SuppressWarnings("ConstantConditions")
     public static GpuTexture drawIntoTexture(Renderable<?> renderable, float tickDelta, int size) {
-        final var framebuffer = new TextureTarget("Isometric Renders RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
+        Minecraft.getInstance().player.displayClientMessage(Component.literal("size="+size), false);
+        TextureTarget framebuffer = new TextureTarget("Isometric Renders RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
         RenderSystem.getDevice().createCommandEncoder()
                 .clearColorAndDepthTextures(framebuffer.getColorTexture(), 0, framebuffer.getDepthTexture(), 1.0);
 
@@ -110,8 +116,7 @@ public class RenderableDispatcher {
         RenderSystem.outputColorTextureOverride = framebuffer.getColorTextureView();
         RenderSystem.outputDepthTextureOverride = framebuffer.getDepthTextureView();
 
-        drawIntoActiveFramebuffer(renderable, 1, tickDelta, matrixStack -> {
-        });
+        drawIntoActiveFramebuffer(renderable, 1, tickDelta, matrixStack -> {});
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
@@ -146,7 +151,7 @@ public class RenderableDispatcher {
         if (gpuTexture.getFormat() != TextureFormat.RGBA8)
             throw new IllegalStateException("Tried to copy non-compatible texture into image");
 
-        GpuBuffer gpuBuffer = RenderSystem.getDevice().createBuffer(() -> "Isometric Renders RenderableDispatcher.copyTextureIntoImage buffer", GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST, 4 * width * height);
+        GpuBuffer gpuBuffer = RenderSystem.getDevice().createBuffer(() -> "Isometric Renders RenderableDispatcher.copyTextureIntoImage buffer", GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST, 4L * width * height);
         CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
         RenderSystem.getDevice().createCommandEncoder().copyTextureToBuffer(gpuTexture, gpuBuffer, 0, () -> {
             try (GpuBuffer.MappedView mappedView = commandEncoder.mapBuffer(gpuBuffer, true, false)) {

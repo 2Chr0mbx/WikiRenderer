@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.property;
 
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.screen.IsometricUI;
+import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ClientRenderCallback;
 import com.glisco.isometricrenders.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -36,20 +37,16 @@ public class DefaultPropertyBundle implements PropertyBundle {
     }
 
     @Override
-    public void buildGuiControls(Renderable<?> renderable, FlowLayout container) {
+    public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         IsometricUI.sectionHeader(container, "transform_options", false);
-
         IsometricUI.intControl(container, scale, "scale", 10);
         IsometricUI.intControl(container, rotation, "rotation", 45);
         IsometricUI.intControl(container, slant, "slant", 30);
         IsometricUI.intControl(container, lightAngle, "light_angle", 15);
         IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
 
-        // -------
-
         IsometricUI.sectionHeader(container, "presets", true);
-
-        try (var builder = IsometricUI.row(container)) {
+        try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
             builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(30);
@@ -63,7 +60,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     }
 
     @Override
-    public void applyToViewMatrix(Matrix4fStack modelViewStack) {
+    public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
         final float scale = this.scale.get() / 100f;
         modelViewStack.scale(scale, scale, scale);
 

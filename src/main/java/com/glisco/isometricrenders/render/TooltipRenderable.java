@@ -3,6 +3,7 @@ package com.glisco.isometricrenders.render;
 import com.glisco.isometricrenders.mixin.access.GameRendererAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.screen.IsometricUI;
+import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.Minecraft;
@@ -90,13 +91,13 @@ public class TooltipRenderable extends DefaultRenderable<TooltipRenderable.Toolt
         public static final TooltipPropertyBundle INSTANCE = new TooltipPropertyBundle();
 
         @Override
-        public void buildGuiControls(Renderable<?> renderable, FlowLayout container) {
+        public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
             IsometricUI.sectionHeader(container, "transform_options", false);
             IsometricUI.intControl(container, this.scale, "scale", 10);
         }
 
         @Override
-        public void applyToViewMatrix(Matrix4fStack modelViewStack) {
+        public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
             final float scale = this.scale.get() / 10000f;
             modelViewStack.scale(scale, scale, -scale);
 

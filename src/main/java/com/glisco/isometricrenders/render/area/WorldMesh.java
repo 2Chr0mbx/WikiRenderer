@@ -1,7 +1,8 @@
-package com.glisco.isometricrenders.render.mesh;
+package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.render.EntityRenderable;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.platform.Lighting;
@@ -30,15 +31,18 @@ import net.minecraft.client.renderer.chunk.SectionBuffers;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -50,29 +54,28 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
 
 public class WorldMesh {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldMesh.class);
     private static GpuSampler terrainSampler;
 
-
     // Render setup data
     private final BlockAndTintGetter world;
-    private final BlockPos from, to;
+    private final BlockPos from;
+    private final BlockPos to;
+    @Nullable private final Set<MiniChunk> chunksToGrabBlocksFrom;
+
     private final AABB dimensions;
 
     private final boolean cull;
-
-    // TODO: figure out a viable replacement for this
-    private final Runnable renderStartAction;
-    private final Runnable renderEndAction;
 
     private final TriFunction<Player, BlockPos, BlockPos, List<Entity>> entitySupplier;
     private DynamicRenderInfo renderInfo = DynamicRenderInfo.EMPTY;
     private boolean entitiesFrozen;
     private boolean freezeEntities;
+    private boolean entitiesHidden;
+    private boolean hideEntities;
 
     // Build process data
     private WorldMesh.MeshState state = WorldMesh.MeshState.NEW;
@@ -83,9 +86,22 @@ public class WorldMesh {
     // Vertex storage
     private final Map<ChunkSectionLayer, SectionBuffers> bufferStorage = new HashMap<>();
 
-    private WorldMesh(BlockAndTintGetter world, BlockPos from, BlockPos to, boolean cull, boolean useGlobalNeighbors, boolean freezeEntities, Runnable renderStartAction, Runnable renderEndAction, TriFunction<Player, BlockPos, BlockPos, List<Entity>> entitySupplier) {
+    private WorldMesh(
+            BlockAndTintGetter world,
+            BlockPos from,
+            BlockPos to,
+            @Nullable Set<MiniChunk> chunks,
+            boolean cull,
+            boolean useGlobalNeighbors,
+            boolean freezeEntities,
+            TriFunction<Player,
+                    BlockPos,
+                    BlockPos,
+                    List<Entity>> entitySupplier
+    ) {
         this.from = from;
         this.to = to;
+        this.chunksToGrabBlocksFrom = chunks;
 
         this.world = useGlobalNeighbors
                 ? world
@@ -95,9 +111,6 @@ public class WorldMesh {
         this.freezeEntities = freezeEntities;
         this.dimensions = AABB.encapsulatingFullBlocks(this.from, this.to);
         this.entitySupplier = entitySupplier;
-
-        this.renderStartAction = renderStartAction;
-        this.renderEndAction = renderEndAction;
 
         this.scheduleRebuild();
     }
@@ -254,6 +267,14 @@ public class WorldMesh {
         this.freezeEntities = freezeEntities;
     }
 
+    public boolean entitiesHidden() {
+        return this.entitiesHidden;
+    }
+
+    public void setHideEntities(boolean hideEntities) {
+        this.hideEntities = hideEntities;
+    }
+
     /**
      * @return The dimensions of this mesh's entire area
      */
@@ -343,26 +364,31 @@ public class WorldMesh {
         }
 
         this.entitiesFrozen = this.freezeEntities;
-        var entitiesList = this.entitySupplier.apply(client.player, this.from, this.to.offset(1, 1, 1))
-                .stream()
-                .map(entity -> {
-                    Minecraft.getInstance().player.displayClientMessage(Component.literal("entity2 = " + entity.getType().getDescriptionId()), false);
-                    if (this.freezeEntities) {
-                        var originalEntity = entity;
-                        if (entity instanceof Player) {
-                            entity = EntityRenderable.copy(originalEntity);
+        this.entitiesHidden = this.hideEntities;
+        List<DynamicRenderInfo.EntityEntry> entitiesList;
+        if (this.hideEntities) {
+            entitiesList = List.of();
+        } else {
+            entitiesList = this.entitySupplier.apply(client.player, this.from, this.to.offset(1, 1, 1))
+                    .stream()
+                    .map(entity -> {
+                        if (this.freezeEntities) {
+                            var originalEntity = entity;
+                            if (entity instanceof Player) {
+                                entity = EntityRenderable.copy(originalEntity);
+                            }
+
+                            entity.restoreFrom(originalEntity);
+                            entity.copyPosition(originalEntity);
+                            entity.tick();
                         }
 
-                        entity.restoreFrom(originalEntity);
-                        entity.copyPosition(originalEntity);
-                        entity.tick();
-                    }
-
-                    return new DynamicRenderInfo.EntityEntry(
-                            entity,
-                            client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0)
-                    );
-                }).toList();
+                        return new DynamicRenderInfo.EntityEntry(
+                                entity,
+                                client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0)
+                        );
+                    }).toList();
+        }
 
         var blockEntities = new HashMap<BlockPos, BlockEntity>();
 
@@ -371,12 +397,39 @@ public class WorldMesh {
                             * (this.to.getY() - this.from.getY() + 1)
                             * (this.to.getZ() - this.from.getZ() + 1);
 
-        for (var pos : BlockPos.betweenClosed(this.from, this.to)) {
+        Iterable<BlockPos> positions;
+        if (this.chunksToGrabBlocksFrom == null) {
+            positions = BlockPos.betweenClosed(this.from, this.to);
+        } else {
+            List<Iterable<BlockPos>> allRanges = new ArrayList<>();
+            for (MiniChunk chunk : this.chunksToGrabBlocksFrom) {
+                allRanges.add(BlockPos.betweenClosed(chunk.startX, 0, chunk.startZ, chunk.endX, 255, chunk.endZ));
+            }
+            positions = Iterables.concat(allRanges);
+        }
+
+        for (var pos : positions) {
             currentBlockIndex++;
             this.buildProgress = currentBlockIndex / (float) blocksToBuild;
 
             var state = world.getBlockState(pos);
             if (state.isAir()) continue;
+
+            boolean shouldRenderOnAnyFace = false;
+            for (Direction direction : Direction.values()) {
+                BlockPos neighborPos = pos.relative(direction);
+                BlockState neighborState = world.getBlockState(neighborPos);
+
+                // Check if the face is obscured by the neighbor
+                if (neighborState.isSolidRender()) {
+                    shouldRenderOnAnyFace = true;
+                    break;
+                }
+            }
+
+            if (!shouldRenderOnAnyFace) {
+                continue;
+            }
 
             var renderPos = pos.subtract(from);
             if (world.getBlockEntity(pos) != null) {
@@ -417,6 +470,7 @@ public class WorldMesh {
             if (built == null) return;
 
             if (renderLayer.sortOnUpload()) {
+                // todo look into this
                 var camera = client.gameRenderer.getMainCamera();
                 built.sortQuads(allocatorStorage.buffer(renderLayer), VertexSorting.byDistance((float) camera.position().x - (float) from.getX(), (float) camera.position().y - (float) from.getY(), (float) camera.position().z - (float) from.getZ()));
             }
@@ -438,14 +492,14 @@ public class WorldMesh {
                     )
                     : null;
 
-            var discardedBuffer = this.bufferStorage.put(renderLayer, new SectionBuffers(vertexBuffer, indexBuffer, built.drawState().indexCount(), built.drawState().indexType()));
+            SectionBuffers discardedBuffer = this.bufferStorage.put(renderLayer, new SectionBuffers(vertexBuffer, indexBuffer, built.drawState().indexCount(), built.drawState().indexType()));
             if (discardedBuffer != null) {
                 discardedBuffer.close();
             }
         });
 
-        var entities = HashMultimap.<Vec3, DynamicRenderInfo.EntityEntry>create();
-        for (var entityEntry : entitiesList) {
+        HashMultimap<Vec3, DynamicRenderInfo.EntityEntry> entities = HashMultimap.create();
+        for (DynamicRenderInfo.EntityEntry entityEntry : entitiesList) {
             entities.put(
                     entityEntry.entity().trackingPosition().subtract(this.from.getX(), this.from.getY(), this.from.getZ()),
                     entityEntry
@@ -453,15 +507,15 @@ public class WorldMesh {
         }
 
         allocatorStorage.close();
-        this.renderInfo = new DynamicRenderInfo(
-                blockEntities, entities
-        );
+        this.renderInfo = new DynamicRenderInfo(blockEntities, entities);
     }
 
     private VertexConsumer getOrCreateBuilder(SectionBufferBuilderPack allocatorStorage, Map<ChunkSectionLayer, BufferBuilder> builderStorage, ChunkSectionLayer layer) {
         return builderStorage.computeIfAbsent(layer, renderLayer ->
                 new BufferBuilder(allocatorStorage.buffer(layer), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK));
     }
+
+
 
     public static class Builder {
 
@@ -473,19 +527,7 @@ public class WorldMesh {
         private boolean cull = true;
         private boolean useGlobalNeighbors = false;
         private boolean freezeEntities = false;
-
-        private Runnable startAction = () -> {
-        };
-        private Runnable endAction = () -> {
-        };
-
-        @Deprecated(forRemoval = true)
-        public Builder(BlockAndTintGetter world, BlockPos origin, BlockPos end, Function<Player, List<Entity>> entitySupplier) {
-            this.world = world;
-            this.origin = origin;
-            this.end = end;
-            this.entitySupplier = (player, $, $$) -> entitySupplier.apply(player);
-        }
+        private Set<MiniChunk> chunks = null;
 
         public Builder(BlockAndTintGetter world, BlockPos origin, BlockPos end, TriFunction<Player, BlockPos, BlockPos, List<Entity>> entitySupplier) {
             this.world = world;
@@ -495,11 +537,12 @@ public class WorldMesh {
         }
 
         public Builder(Level world, BlockPos origin, BlockPos end) {
-            this(world, origin, end, (except, min, max) -> world.getEntities((Entity) null, AABB.encapsulatingFullBlocks(min, max), Objects::nonNull));
+            this(world, origin, end, (except, min, max) -> world.getEntities((Entity) null, AABB.encapsulatingFullBlocks(min, max), obj -> true));
         }
 
-        public Builder(BlockAndTintGetter world, BlockPos origin, BlockPos end) {
-            this(world, origin, end, (except, min, max) -> List.of());
+        public Builder(Level world, Set<MiniChunk> chunks, BlockPos origin, BlockPos end) {
+            this(world, origin, end);
+            this.chunks = chunks;
         }
 
         public WorldMesh.Builder disableCulling() {
@@ -517,17 +560,11 @@ public class WorldMesh {
             return this;
         }
 
-        public WorldMesh.Builder renderActions(Runnable startAction, Runnable endAction) {
-            this.startAction = startAction;
-            this.endAction = endAction;
-            return this;
-        }
-
         public WorldMesh build() {
             BlockPos start = new BlockPos(Math.min(origin.getX(), end.getX()), Math.min(origin.getY(), end.getY()), Math.min(origin.getZ(), end.getZ()));
             BlockPos target = new BlockPos(Math.max(origin.getX(), end.getX()), Math.max(origin.getY(), end.getY()), Math.max(origin.getZ(), end.getZ()));
 
-            return new WorldMesh(world, start, target, cull, useGlobalNeighbors, freezeEntities, startAction, endAction, entitySupplier);
+            return new WorldMesh(world, start, target, chunks, cull, useGlobalNeighbors, freezeEntities, entitySupplier);
         }
     }
 

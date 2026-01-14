@@ -1,9 +1,14 @@
 package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
+import com.glisco.isometricrenders.property.GlobalProperties;
+import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
-import com.glisco.isometricrenders.render.mesh.WorldMesh;
+import com.glisco.isometricrenders.render.area.MiniChunkScanner;
+import com.glisco.isometricrenders.render.area.MiniChunk;
+import com.glisco.isometricrenders.render.area.WorldMesh;
 import com.glisco.isometricrenders.screen.IsometricUI;
+import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.util.Translate;
@@ -17,14 +22,19 @@ import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Set;
 
 public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropertyBundle> {
 
@@ -49,6 +59,32 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         if (AreaPropertyBundle.INSTANCE.freezeEntities.get()) {
             builder.freezeEntities();
         }
+        return new AreaRenderable(builder.build());
+    }
+
+    @Nullable
+    public static AreaRenderable of(BlockPos origin, int chunkSize) {
+        ClientLevel level = Minecraft.getInstance().level;
+        assert level != null;
+
+        Set<MiniChunk> chunks = MiniChunkScanner.getConnectedChunks(level, origin, chunkSize);
+        if (chunks.isEmpty()) {
+            return null;
+        }
+        Minecraft.getInstance().player.displayClientMessage(Component.literal("chunk count = " + chunks.size()), false);
+
+        int minX = chunks.stream().mapToInt(c -> c.startX).min().getAsInt();
+        int maxX = chunks.stream().mapToInt(c -> c.endX).max().getAsInt();
+        int minZ = chunks.stream().mapToInt(c -> c.startZ).min().getAsInt();
+        int maxZ = chunks.stream().mapToInt(c -> c.endZ).max().getAsInt();
+        BlockPos firstPos = new BlockPos(minX, 0, minZ);
+        BlockPos secondPos = new BlockPos(maxX, level.getMaxY(), maxZ);
+
+        final WorldMesh.Builder builder = new WorldMesh.Builder(level, chunks, firstPos, secondPos);
+        if (AreaPropertyBundle.INSTANCE.freezeEntities.get()) {
+            builder.freezeEntities();
+        }
+
         return new AreaRenderable(builder.build());
     }
 
@@ -82,23 +118,28 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         final var effectiveDelta = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         final var entities = mesh.renderInfo().entities();
 	    final var entityDispatcher = client.getEntityRenderDispatcher();
-        entities.forEach((vec3d, entry) -> {
-            if (!mesh.entitiesFrozen()) {
-                vec3d = entry.entity().getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
-            }
-	        var state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
-	        state.lightCoords = entry.light();
 
-            if (mesh.entitiesFrozen() && (state instanceof AvatarRenderState avatarRenderState)) {
-                // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
-                avatarRenderState.capeFlap = 0;
-                avatarRenderState.capeLean = 0;
-                avatarRenderState.capeLean2 = 0;
-            }
+        if (!properties().hideEntities.get()) {
+            entities.forEach((vec3d, entry) -> {
+                if (!mesh.entitiesFrozen()) {
+                    vec3d = entry.entity().getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
+                }
+                var state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
+                state.lightCoords = entry.light();
 
-	        entityDispatcher.submit(state, cameraRenderState, vec3d.x, vec3d.y, vec3d.z, matrices, commandQueue);
-            super.draw(RenderSystem.getModelViewMatrix());
-        });
+                if (mesh.entitiesFrozen() && (state instanceof AvatarRenderState avatarRenderState)) {
+                    // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
+                    // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
+                    avatarRenderState.capeFlap = 0;
+                    avatarRenderState.capeLean = 0;
+                    avatarRenderState.capeLean2 = 0;
+                }
+
+                entityDispatcher.submit(state, cameraRenderState, vec3d.x, vec3d.y, vec3d.z, matrices, commandQueue);
+                super.draw(RenderSystem.getModelViewMatrix());
+            });
+        }
+
 
         var diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
         matrices.translate(-diff.x, -diff.y + 1.65, -diff.z);
@@ -159,15 +200,67 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
 
         private static final AreaPropertyBundle INSTANCE = new AreaPropertyBundle();
 
-        public final Property<Boolean> freezeEntities = Property.of(true);
+        public final Property<Boolean> hideEntities = Property.of(false);
+        public final Property<Boolean> freezeEntities = Property.of(false);
+        public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
+
+        public final IntProperty alternativeRotation = IntProperty.of(0, 0, 360).withRollover();
+        public final IntProperty alternativeSlant = IntProperty.of(90, -90, 90);
 
         @Override
-        public void buildGuiControls(Renderable<?> renderable, FlowLayout container) {
-            super.buildGuiControls(renderable, container);
-            final var mesh = ((AreaRenderable) renderable).mesh;
+        public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+            IsometricUI.sectionHeader(container, "transform_options", false);
+
+            IsometricUI.booleanControl(container, this.perPixel90DegreeRendering, "per_pixel_90_degree_rendering");
+            this.perPixel90DegreeRendering.listen((booleanProperty, value) -> {
+                if (value) {
+                    this.alternativeRotation.set(0);
+                    this.alternativeSlant.set(90);
+                }
+                screen.guiRebuildScheduled = true;
+            }, false);
+
+            if (!this.perPixel90DegreeRendering.get()) {
+                try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
+                    builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
+                        this.rotation.setToDefault();
+                        this.slant.set(30);
+                    }).horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
+
+                    builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+                        this.rotation.setToDefault();
+                        this.slant.set(36);
+                    }).horizontalSizing(Sizing.fixed(60)));
+                }
+                IsometricUI.intControl(container, scale, "scale", 10);
+                IsometricUI.intControl(container, rotation, "rotation", 45);
+                IsometricUI.intControl(container, slant, "slant", 30);
+                IsometricUI.intControl(container, lightAngle, "light_angle", 15);
+                IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+            } else {
+                try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
+                    builder.row.child(Components.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
+                        this.alternativeRotation.set((this.alternativeRotation.get() + 90) % 360);
+                    }).horizontalSizing(Sizing.fixed(130)).margins(Insets.right(5)));
+
+                    builder.row.child(Components.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
+                        switch (this.alternativeSlant.get()) {
+                            case -90 -> this.alternativeSlant.set(0);
+                            case 0 -> this.alternativeSlant.set(90);
+                            case 90 -> this.alternativeSlant.set(-90);
+                        }
+                    }).horizontalSizing(Sizing.fixed(130)).margins(Insets.right(5)));
+                }
+                container.child(Components.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
+                    this.alternativeRotation.set(0);
+                    this.alternativeSlant.set(90);
+                }).horizontalSizing(Sizing.fixed(130)).margins(Insets.right(5)));
+
+            }
+
+            WorldMesh mesh = ((AreaRenderable) renderable).mesh;
 
             IsometricUI.sectionHeader(container, "mesh_controls", true);
-
             IsometricUI.dynamicLabel(container, () -> {
                 var meshStatus = Translate.gui("mesh_status");
                 if (!mesh.state().isBuildStage) {
@@ -185,8 +278,12 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 return meshStatus;
             });
 
+            IsometricUI.booleanControl(container, this.hideEntities, "hide_entities");
+            // todo: probably not needed since emitVerticies checks for hidden entities
+            this.hideEntities.listen((booleanProperty, hidden) -> mesh.setHideEntities(hidden));
+
             IsometricUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-            this.freezeEntities.listen((booleanProperty, aBoolean) -> mesh.setFreezeEntities(aBoolean));
+            this.freezeEntities.listen((booleanProperty, frozen) -> mesh.setFreezeEntities(frozen));
 
             container.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
                     .horizontalSizing(Sizing.fixed(80))
@@ -194,14 +291,41 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         }
 
         @Override
-        public void applyToViewMatrix(Matrix4fStack modelViewStack) {
-            final float scale = this.scale.get() / 1000f;
-            modelViewStack.scale(scale, scale, scale);
+        public void applyToViewMatrix(Renderable<?> r, Matrix4fStack modelViewStack) {
+            AreaRenderable renderable = (AreaRenderable) r;
 
-            modelViewStack.translate(this.xOffset.get() / 2600f, this.yOffset.get() / -2600f, 0);
+            if (renderable.properties().perPixel90DegreeRendering.get()) {
+                WorldMesh mesh = renderable.mesh;
+                BlockPos cornerOne = mesh.startPos();
+                BlockPos cornerTwo = mesh.endPos();
 
-            modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get()));
-            modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
+                int totalBlocksX = cornerTwo.getX() - cornerOne.getX() + 1;
+                int totalBlocksY = cornerTwo.getY() - cornerOne.getY() + 1;
+                int totalBlocksZ = cornerTwo.getZ() - cornerOne.getZ() + 1;
+
+                int highest = Math.max(totalBlocksY, Math.max(totalBlocksX, totalBlocksZ));
+
+                // force pixel count per blocks without blurriness
+                double pixelsPerBlock = 16.0;
+                double bufferSize = highest * pixelsPerBlock;
+                GlobalProperties.exportResolution = (int) bufferSize;
+                double orthoWidth = 2.0; // Because your ortho is -1 to 1
+
+                float pixelPerfectScale = (float)(pixelsPerBlock / (bufferSize / orthoWidth));
+
+                modelViewStack.scale(pixelPerfectScale, pixelPerfectScale, pixelPerfectScale);
+                modelViewStack.rotate(Axis.XP.rotationDegrees(this.alternativeSlant.get()));
+                modelViewStack.rotate(Axis.YP.rotationDegrees(this.alternativeRotation.get()));
+            } else {
+                final float scale = this.scale.get() / 1000f;
+                modelViewStack.scale(scale, scale, scale);
+
+                // offsets arent needed for side rendering because they're already perfectly aligned
+                modelViewStack.translate(this.xOffset.get() / 2600f, this.yOffset.get() / -2600f, 0);
+
+                modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get()));
+                modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
+            }
 
             this.updateAndApplyRotationOffset(modelViewStack);
         }

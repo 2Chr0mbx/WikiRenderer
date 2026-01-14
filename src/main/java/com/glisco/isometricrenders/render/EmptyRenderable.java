@@ -1,6 +1,7 @@
 package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.property.PropertyBundle;
+import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -12,10 +13,10 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
 
     private static final PropertyBundle EMPTY_BUNDLE = new PropertyBundle() {
         @Override
-        public void buildGuiControls(Renderable<?> renderable, FlowLayout container) {}
+        public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {}
 
         @Override
-        public void applyToViewMatrix(Matrix4fStack modelViewStack) {}
+        public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {}
     };
 
     @Override

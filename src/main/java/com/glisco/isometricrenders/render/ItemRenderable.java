@@ -20,7 +20,7 @@ public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
     private static final ItemStackRenderState RENDER_STATE = new ItemStackRenderState();
     private static final DefaultPropertyBundle PROPERTIES = new DefaultPropertyBundle() {
         @Override
-        public void applyToViewMatrix(Matrix4fStack modelViewStack) {
+        public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
             final float scale = (this.scale.get() / 100f) * 2f;
             modelViewStack.scale(scale, scale, scale);
 

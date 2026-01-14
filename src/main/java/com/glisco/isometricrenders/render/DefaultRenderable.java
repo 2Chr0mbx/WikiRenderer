@@ -10,6 +10,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.state.ParticlesRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.network.chat.Component;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -33,14 +34,18 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         lightDirection.mul(lightTransform);
 		lightDirection.normalize(); // this line fixes inconsistent lighting with scale
 
-        final var transformedLightDirection = new Vector3f(lightDirection.x, lightDirection.y, lightDirection.z);
+		Vector3f transformedLightDirection = new Vector3f(lightDirection.x, lightDirection.y, lightDirection.z);
 
 		// Lazily create the lighting UBO buffer when it's actually needed.
 		if (this.lightingBuffer == null)
 			this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders DefaultRenderable Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
 
 	    try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-		    ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, LIGHTING_UBO_SIZE).putVec3(transformedLightDirection).putVec3(transformedLightDirection).get();
+		    ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, LIGHTING_UBO_SIZE)
+					.putVec3(transformedLightDirection)
+					.putVec3(transformedLightDirection)
+					.get();
+
 		    RenderSystem.getDevice().createCommandEncoder().writeToBuffer(this.lightingBuffer.slice(), byteBuffer);
 	    }
 

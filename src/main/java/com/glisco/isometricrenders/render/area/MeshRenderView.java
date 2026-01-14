@@ -1,4 +1,4 @@
-package com.glisco.isometricrenders.render.mesh;
+package com.glisco.isometricrenders.render.area;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

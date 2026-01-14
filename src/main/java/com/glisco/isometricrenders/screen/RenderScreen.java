@@ -6,10 +6,7 @@ import com.glisco.isometricrenders.mixin.access.ParticleEngineAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.property.Property;
-import com.glisco.isometricrenders.render.DefaultRenderable;
-import com.glisco.isometricrenders.render.Renderable;
-import com.glisco.isometricrenders.render.RenderableDispatcher;
-import com.glisco.isometricrenders.render.TickingRenderable;
+import com.glisco.isometricrenders.render.*;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.glisco.isometricrenders.widget.NotificationComponent;
@@ -90,7 +87,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private boolean drawOnlyBackground = false;
     private boolean captureScheduled = false;
-    private boolean guiRebuildScheduled = false;
+    public boolean guiRebuildScheduled = false;
 
     private int viewportBeginX;
     private int viewportEndX;
@@ -157,6 +154,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         super.init();
     }
 
+    public void refresh() {
+        super.clearWidgets();
+        this.build(this.uiAdapter.rootComponent);
+    }
+
     @Override
     protected void build(FlowLayout rootComponent) {
         this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
@@ -177,7 +179,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         .padding(Insets.of(5))
         );
 
-        this.renderable.properties().buildGuiControls(this.renderable, this.leftColumn);
+        this.renderable.properties().buildGuiControls(this.renderable, this, this.leftColumn);
 
         // ---
 
@@ -233,27 +235,26 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }).horizontalSizing(Sizing.fixed(75)));
         }
 
-        var resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), "renderer_resolution", Sizing.fixed(50));
+        if (!(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.properties().perPixel90DegreeRendering.get()) {
+            var resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), "renderer_resolution", Sizing.fixed(50));
+            resolutionField.setTextColor(0x00FF00);
+            resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
+            resolutionField.setResponder(s -> {
+                if (s.isBlank()) return;
+                int resolution = Integer.parseInt(s);
 
-        resolutionField.setTextColor(0x00FF00);
-        resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
-        resolutionField.setResponder(s -> {
-            if (s.isBlank()) return;
-            int resolution = Integer.parseInt(s);
+                if ((resolution < 16 || resolution > 16384) && !unsafe.get()) {
+                    resolutionField.setTextColor(0xFF0000);
+                    exportButton.active = false;
+                } else {
+                    resolutionField.setTextColor(0x00FF00);
+                    exportResolution = resolution;
+                    exportButton.active = true;
+                }
+            });
+        }
 
-            // Exhibit A
-            // ((resolution & (resolution - 1)) != 0)
-            // what?
 
-            if ((resolution < 16 || resolution > 16384) && !unsafe.get()) {
-                resolutionField.setTextColor(0xFF0000);
-                exportButton.active = false;
-            } else {
-                resolutionField.setTextColor(0x00FF00);
-                exportResolution = resolution;
-                exportButton.active = true;
-            }
-        });
 
         IsometricUI.sectionHeader(rightColumn, "animation_options", true);
 

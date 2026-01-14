@@ -5,6 +5,7 @@ import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
 import com.glisco.isometricrenders.screen.IsometricUI;
+import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.authlib.GameProfile;
@@ -70,7 +71,6 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
     }
 
     public static Entity copy(Entity source) {
-        Minecraft.getInstance().player.displayClientMessage(Component.literal("Test"), false);
         if (source instanceof AbstractClientPlayer player) {
             return copyPlayer(player);
         }
@@ -208,8 +208,8 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         private EntityPropertyBundle() {}
 
         @Override
-        public void buildGuiControls(Renderable<?> renderable, FlowLayout container) {
-            super.buildGuiControls(renderable, container);
+        public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+            super.buildGuiControls(renderable, screen, container);
 
             IsometricUI.sectionHeader(container, "entity_data", true);
 

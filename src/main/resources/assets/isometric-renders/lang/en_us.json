@@ -30,6 +30,11 @@
   "gui.isometric-renders.rotation_speed": "Rotation Speed",
   "gui.isometric-renders.dimetric": "Dimetric",
   "gui.isometric-renders.isometric": "Isometric",
+  "gui.isometric-renders.cycle_rotation": "Cycle Rotation 90°",
+  "gui.isometric-renders.cycle_slant": "Cycle Slant 90°",
+  "gui.isometric-renders.reset_rotation_and_slant": "North & Above",
+  "gui.isometric-renders.per_pixel_90_degree_rendering": "Toggle Pixel-Precision Face Rendering",
+
 
   "gui.isometric-renders.atlas_options": "Atlas Options",
   "gui.isometric-renders.columns": "Columns",
@@ -90,6 +95,7 @@
   "gui.isometric-renders.mesh_corrupt": {"text": "Corrupted - report this", "color": "red"},
   "gui.isometric-renders.mesh_ready": "Ready",
   "gui.isometric-renders.freeze_entities": "Freeze Entities",
+  "gui.isometric-renders.hide_entities": "Hide Entities",
   "gui.isometric-renders.rebuild_mesh": "Rebuild Mesh",
 
   "gui.isometric-renders.exporter.idle": "Exporter Idle",
@@ -124,6 +130,7 @@
   "message.isometric-renders.no_block": "You're not looking at a block",
   "message.isometric-renders.no_entity": "You're not looking at an entity",
   "message.isometric-renders.incomplete_selection": "You do not have a completed area",
+  "message.isometric-renders.no_valid_chunks": "Couldn't find any blocks in this chunk or any adjacent chunks. Make sure you're standing on a block!",
   "message.isometric-renders.no_such_namespace": "Unknown namespace",
 
   "message.isometric-renders.player_rendering_in_multiplayer": "Rendering players by names is only supported in Singleplayer",

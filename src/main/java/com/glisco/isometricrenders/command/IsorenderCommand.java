@@ -10,6 +10,7 @@ import com.glisco.isometricrenders.screen.ScreenScheduler;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
 import com.glisco.isometricrenders.util.Translate;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -17,6 +18,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import io.wispforest.owo.ui.component.EntityComponent;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.CompoundTagArgument;
@@ -63,10 +65,14 @@ public class IsorenderCommand {
         dispatcher.register(literal("isorender")
                 .executes(IsorenderCommand::showRootNodeHelp)
                 .then(literal("area")
-                        .executes(IsorenderCommand::renderAreaSelection)
-                        .then(argument("start", BlockPosArgument.blockPos())
-                                .then(argument("end", BlockPosArgument.blockPos())
-                                        .executes(IsorenderCommand::renderAreaWithArguments))))
+                        .then(literal("island")
+                                .then(argument("chunk_size", IntegerArgumentType.integer(4, 16))
+                                        .executes(IsorenderCommand::renderSurroundingConnectedMiniChunks)))
+                        .then(literal("pos")
+                                .then(argument("start", BlockPosArgument.blockPos())
+                                        .then(argument("end", BlockPosArgument.blockPos())
+                                                .executes(IsorenderCommand::renderAreaWithArguments))))
+                        .executes(IsorenderCommand::renderAreaSelection))
                 .then(literal("block")
                         .executes(IsorenderCommand::renderTargetedBlock)
                         .then(argument("block", BlockStateArgument.block(access))
@@ -151,9 +157,9 @@ public class IsorenderCommand {
 
         final var playerNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
         final var player = EntityComponent.createRenderablePlayer(gameProfile.get());
-		try (var logging = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
-			player.load(TagValueInput.create(logging, server.registryAccess(), playerNbt));
-		}
+        try (var logging = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
+            player.load(TagValueInput.create(logging, server.registryAccess(), playerNbt));
+        }
 
         ScreenScheduler.schedule(new RenderScreen(
                 new EntityRenderable(player)
@@ -183,18 +189,18 @@ public class IsorenderCommand {
     }
 
     private static int renderSelf(CommandContext<FabricClientCommandSource> context) {
-		final var clientPlayer = Minecraft.getInstance().player;
+        final var clientPlayer = Minecraft.getInstance().player;
         final var player = EntityComponent.createRenderablePlayer(clientPlayer.getGameProfile());
 
-	    ProblemReporter.ScopedCollector loggingWrite = new ProblemReporter.ScopedCollector(clientPlayer.problemPath(), IsometricRenders.LOGGER);
-	    var view = TagValueOutput.createWithContext(loggingWrite, clientPlayer.registryAccess());
-		clientPlayer.saveWithoutId(view);
-	    var nbt = view.buildResult();
-		loggingWrite.close();
+        ProblemReporter.ScopedCollector loggingWrite = new ProblemReporter.ScopedCollector(clientPlayer.problemPath(), IsometricRenders.LOGGER);
+        var view = TagValueOutput.createWithContext(loggingWrite, clientPlayer.registryAccess());
+        clientPlayer.saveWithoutId(view);
+        var nbt = view.buildResult();
+        loggingWrite.close();
 
-	    try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
-		    player.load(TagValueInput.create(loggingRead, player.registryAccess(), nbt));
-	    }
+        try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
+            player.load(TagValueInput.create(loggingRead, player.registryAccess(), nbt));
+        }
 
         ScreenScheduler.schedule(new RenderScreen(
                 new EntityRenderable(player)
@@ -331,6 +337,24 @@ public class IsorenderCommand {
                 AreaRenderable.of(pos1, pos2)
         ));
 
+        return 0;
+    }
+
+    private static int renderSurroundingConnectedMiniChunks(CommandContext<FabricClientCommandSource> context) {
+        final var chunkSize = context.getArgument("chunk_size", Integer.class);
+
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return 0;
+        }
+
+        AreaRenderable area = AreaRenderable.of(player.blockPosition(), chunkSize);
+        if (area == null) {
+            Translate.commandError(context, "no_valid_chunks");
+            return 0;
+        }
+
+        ScreenScheduler.schedule(new RenderScreen(area));
         return 0;
     }
 
