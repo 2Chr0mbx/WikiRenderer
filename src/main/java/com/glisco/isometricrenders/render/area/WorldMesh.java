@@ -1,11 +1,15 @@
 package com.glisco.isometricrenders.render.area;
 
+import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.render.EntityRenderable;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterables;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.platform.SourceFactor;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
@@ -16,13 +20,12 @@ import com.mojang.blaze3d.vertex.*;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.impl.client.indigo.renderer.IndigoRenderer;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.WorldMesherRenderContext;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.renderer.DynamicUniforms;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
@@ -31,18 +34,14 @@ import net.minecraft.client.renderer.chunk.SectionBuffers;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.Shapes;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -50,21 +49,34 @@ import org.joml.Matrix4fc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+// todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldMesh {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldMesh.class);
-    private static GpuSampler terrainSampler;
+
+    public static final RenderPipeline CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
+            .withLocation("pipeline/iso_cutout_terrain")
+            .withFragmentShader(Identifier.fromNamespaceAndPath(IsometricRenders.MOD_ID, "cutout_layer_no_transparency"))
+            .withBlend(new BlendFunction(
+                    SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA,
+                    SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA
+            ))
+            .withShaderDefine("ALPHA_CUTOUT", 0.5f)
+            .build();
+
+    public static boolean overrideCutoutRenderPipeline = false;
+    private static GpuSampler terrainSampler = null;
 
     // Render setup data
     private final BlockAndTintGetter world;
     private final BlockPos from;
     private final BlockPos to;
-    @Nullable private final Set<MiniChunk> chunksToGrabBlocksFrom;
+    @Nullable
+    private final Set<MiniChunk> chunksToGrabBlocksFrom;
 
     private final AABB dimensions;
 
@@ -84,7 +96,8 @@ public class WorldMesh {
     private @Nullable CompletableFuture<Void> buildFuture = null;
 
     // Vertex storage
-    private final Map<ChunkSectionLayer, SectionBuffers> bufferStorage = new HashMap<>();
+    // private final Map<ChunkSectionLayer, SectionBuffers> bufferStorage = new HashMap<>();
+    private final List<Map<ChunkSectionLayer, SectionBuffers>> subMeshes = new ArrayList<>();
 
     private WorldMesh(
             BlockAndTintGetter world,
@@ -125,17 +138,26 @@ public class WorldMesh {
             throw new IllegalStateException("World mesh not prepared!");
         }
 
-        ChunkSectionsToRender sections = renderBlockLayers(bufferStorage, matrices.last().pose());
         if (terrainSampler == null) {
             Options options = Minecraft.getInstance().options;
             int maxAnisotropy = options.textureFiltering().get() == TextureFilteringMethod.ANISOTROPIC ? options.maxAnisotropyValue() : 1;
-            terrainSampler = RenderSystem.getDevice().createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.LINEAR, FilterMode.LINEAR, maxAnisotropy, OptionalDouble.empty());
+            terrainSampler = RenderSystem.getDevice().createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST, maxAnisotropy, OptionalDouble.empty());
         }
 
         Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
-        sections.renderGroup(ChunkSectionLayerGroup.OPAQUE, terrainSampler);
-        sections.renderGroup(ChunkSectionLayerGroup.TRANSLUCENT, terrainSampler);
-        sections.renderGroup(ChunkSectionLayerGroup.TRIPWIRE, terrainSampler);
+
+        List<ChunkSectionsToRender> preparedSections = new ArrayList<>();
+        for (Map<ChunkSectionLayer, SectionBuffers> storage : subMeshes) {
+            preparedSections.add(renderBlockLayers(storage, matrices.last().pose()));
+        }
+
+        // opaque runs first
+        for (ChunkSectionLayerGroup sectionLayer : new ChunkSectionLayerGroup[]{ChunkSectionLayerGroup.OPAQUE, ChunkSectionLayerGroup.TRANSLUCENT, ChunkSectionLayerGroup.TRIPWIRE}) {
+            overrideCutoutRenderPipeline = sectionLayer == ChunkSectionLayerGroup.OPAQUE;
+            for (ChunkSectionsToRender sections : preparedSections) {
+                sections.renderGroup(sectionLayer, terrainSampler);
+            }
+        }
     }
 
     private ChunkSectionsToRender renderBlockLayers(Map<ChunkSectionLayer, SectionBuffers> bufferStorage, Matrix4fc posMatrix) {
@@ -152,8 +174,6 @@ public class WorldMesh {
         int height = gpuTextureView.getHeight(0);
 
         int infoIndex = -1;
-
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
 
         for (ChunkSectionLayer layer : ChunkSectionLayer.values()) {
             SectionBuffers buffers = bufferStorage.get(layer);
@@ -221,14 +241,6 @@ public class WorldMesh {
     }
 
     /**
-     * Renamed to {@link #buildProgress()}
-     */
-    @Deprecated(forRemoval = true)
-    public float getBuildProgress() {
-        return this.buildProgress();
-    }
-
-    /**
      * @return An object describing the entities and block
      * entities in the area this mesh is covering, with positions
      * relative to the mesh
@@ -287,8 +299,8 @@ public class WorldMesh {
      * all vertex buffers in the process
      */
     public void reset() {
-        this.bufferStorage.forEach((renderLayer, buffers) -> buffers.close());
-        this.bufferStorage.clear();
+        this.subMeshes.forEach(map -> map.values().forEach(SectionBuffers::close));
+        this.subMeshes.clear();
 
         this.state = WorldMesh.MeshState.NEW;
     }
@@ -340,163 +352,145 @@ public class WorldMesh {
 
     private void build() {
         RenderSystem.assertOnRenderThread(); // Everything in here must be run in the render thread, so enforce that.
-        var allocatorStorage = new SectionBufferBuilderPack();
-
-        var client = Minecraft.getInstance();
-        var blockRenderManager = client.getBlockRenderer();
-
-        var matrices = new PoseStack();
-        var builderStorage = new HashMap<ChunkSectionLayer, BufferBuilder>();
-
-        WorldMesherRenderContext renderContext = null;
-        try {
-            //noinspection UnstableApiUsage
-            renderContext = Renderer.get() instanceof IndigoRenderer
-                    ? new WorldMesherRenderContext(this.world, layer -> this.getOrCreateBuilder(allocatorStorage, builderStorage, layer))
-                    : null;
-        } catch (Throwable throwable) {
-            var fabricApiVersion = FabricLoader.getInstance().getModContainer("worldmesher").get().getMetadata().getCustomValue("worldmesher:fabric_api_build_version").getAsString();
-            LOGGER.error(
-                    "Could not create a context for rendering Fabric API models. This is most likely due to an incompatible Fabric API version - this build of WorldMesher was compiled against '{}', try that instead",
-                    fabricApiVersion,
-                    throwable
-            );
-        }
 
         this.entitiesFrozen = this.freezeEntities;
         this.entitiesHidden = this.hideEntities;
-        List<DynamicRenderInfo.EntityEntry> entitiesList;
-        if (this.hideEntities) {
-            entitiesList = List.of();
-        } else {
-            entitiesList = this.entitySupplier.apply(client.player, this.from, this.to.offset(1, 1, 1))
-                    .stream()
-                    .map(entity -> {
-                        if (this.freezeEntities) {
-                            var originalEntity = entity;
-                            if (entity instanceof Player) {
-                                entity = EntityRenderable.copy(originalEntity);
-                            }
 
-                            entity.restoreFrom(originalEntity);
-                            entity.copyPosition(originalEntity);
-                            entity.tick();
+        Minecraft client = Minecraft.getInstance();
+
+        HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
+        List<DynamicRenderInfo.EntityEntry> entitiesList = this.entitySupplier.apply(client.player, this.from, this.to.offset(1, 1, 1))
+                .stream()
+                .map(entity -> {
+                    if (this.freezeEntities) {
+                        var originalEntity = entity;
+                        if (entity instanceof Player) {
+                            entity = EntityRenderable.copy(originalEntity);
                         }
 
-                        return new DynamicRenderInfo.EntityEntry(
-                                entity,
-                                client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0)
-                        );
-                    }).toList();
+                        entity.restoreFrom(originalEntity);
+                        entity.copyPosition(originalEntity);
+                        entity.tick();
+                    }
+
+                    return new DynamicRenderInfo.EntityEntry(
+                            entity,
+                            client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0)
+                    );
+                })
+                .toList();
+
+
+        // large islands like the crimson isle hit a verticies limit, therefore we split into smaller (but still fairly large) meshes
+        record SubMesh(List<Iterable<BlockPos>> positions) { }
+        List<SubMesh> subMeshes = new ArrayList<>();
+        int regionSize = 64;
+        if (this.chunksToGrabBlocksFrom != null) {
+            MiniChunk firstChunk = chunksToGrabBlocksFrom.stream().findAny().orElseThrow();
+            int chunkSize = (firstChunk.endX - firstChunk.startX) + 1;
+            // the region size needs to be an interval of the mini chunk size, otherwise certain mini chunks can be missing
+            while (chunkSize < 64) {
+                chunkSize *= 2;
+            }
+            regionSize = chunkSize;
         }
 
-        var blockEntities = new HashMap<BlockPos, BlockEntity>();
+        for (int x = from.getX(); x <= to.getX(); x += regionSize) {
+            for (int z = from.getZ(); z <= to.getZ(); z += regionSize) {
+                // Calculate bounds for this specific sub-mesh
+                BlockPos subFrom = new BlockPos(x, from.getY(), z);
+                BlockPos subTo = new BlockPos(
+                        Math.min(x + regionSize - 1, to.getX()),
+                        to.getY(),
+                        Math.min(z + regionSize - 1, to.getZ())
+                );
+
+                if (this.chunksToGrabBlocksFrom == null) {
+                    subMeshes.add(new SubMesh(List.of(BlockPos.betweenClosed(subFrom, subTo))));
+                } else {
+                    // combine the mini chunks (between 4x4-16x16, based on the user command input) into one bigger 64x64 section
+                    List<Iterable<BlockPos>> miniChunkBlocksForThisMesh = new ArrayList<>();
+                    for (MiniChunk chunk : this.chunksToGrabBlocksFrom) {
+                        if (chunk.isWithin(subFrom.getX(), subFrom.getZ(), subTo.getX(), subTo.getZ())) {
+                            miniChunkBlocksForThisMesh.add(BlockPos.betweenClosed(chunk.startX, from.getY(), chunk.startZ, chunk.endX, to.getY(), chunk.endZ));
+                        }
+                    }
+
+                    subMeshes.add(new SubMesh(miniChunkBlocksForThisMesh));
+                }
+            }
+        }
 
         int currentBlockIndex = 0;
         int blocksToBuild = (this.to.getX() - this.from.getX() + 1)
                             * (this.to.getY() - this.from.getY() + 1)
                             * (this.to.getZ() - this.from.getZ() + 1);
 
-        Iterable<BlockPos> positions;
-        if (this.chunksToGrabBlocksFrom == null) {
-            positions = BlockPos.betweenClosed(this.from, this.to);
-        } else {
-            List<Iterable<BlockPos>> allRanges = new ArrayList<>();
-            for (MiniChunk chunk : this.chunksToGrabBlocksFrom) {
-                allRanges.add(BlockPos.betweenClosed(chunk.startX, 0, chunk.startZ, chunk.endX, 255, chunk.endZ));
-            }
-            positions = Iterables.concat(allRanges);
-        }
+        for (SubMesh data : subMeshes) {
 
-        for (var pos : positions) {
-            currentBlockIndex++;
-            this.buildProgress = currentBlockIndex / (float) blocksToBuild;
+            var allocatorStorage = new SectionBufferBuilderPack();
+            var blockRenderManager = client.getBlockRenderer();
+            var matrices = new PoseStack();
+            var builderStorage = new HashMap<ChunkSectionLayer, BufferBuilder>();
 
-            var state = world.getBlockState(pos);
-            if (state.isAir()) continue;
+            WorldMesherRenderContext renderContext = Renderer.get() instanceof IndigoRenderer
+                    ? new WorldMesherRenderContext(this.world, layer -> this.getOrCreateBuilder(allocatorStorage, builderStorage, layer))
+                    : null;
 
-            boolean shouldRenderOnAnyFace = false;
-            for (Direction direction : Direction.values()) {
-                BlockPos neighborPos = pos.relative(direction);
-                BlockState neighborState = world.getBlockState(neighborPos);
+            for (Iterable<BlockPos> positions : data.positions) {
+                for (BlockPos pos : positions) {
+                    currentBlockIndex++;
+                    this.buildProgress = currentBlockIndex / (float) blocksToBuild;
 
-                // Check if the face is obscured by the neighbor
-                if (neighborState.isSolidRender()) {
-                    shouldRenderOnAnyFace = true;
-                    break;
+                    var state = world.getBlockState(pos);
+                    if (state.isAir()) continue;
+
+                    var renderPos = pos.subtract(from);
+                    if (world.getBlockEntity(pos) != null) {
+                        blockEntities.put(renderPos, world.getBlockEntity(pos));
+                    }
+
+                    if (!world.getFluidState(pos).isEmpty()) {
+                        var fluidState = world.getFluidState(pos);
+                        var fluidLayer = ItemBlockRenderTypes.getRenderLayer(fluidState);
+
+                        matrices.pushPose();
+                        matrices.translate(-(pos.getX() & 15), -(pos.getY() & 15), -(pos.getZ() & 15));
+                        matrices.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
+
+                        blockRenderManager.renderLiquid(pos, world, new FluidVertexConsumer(this.getOrCreateBuilder(allocatorStorage, builderStorage, fluidLayer), matrices.last().pose()), state, fluidState);
+
+                        matrices.popPose();
+                    }
+
+                    matrices.pushPose();
+                    matrices.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
+
+                    final var model = blockRenderManager.getBlockModel(state);
+                    if (renderContext != null) {
+                        renderContext.tessellateBlock(state, pos, model, matrices);
+                    } else {
+                        blockRenderManager.getModelRenderer().render(this.world, model, state, pos, matrices, blockLayer -> this.getOrCreateBuilder(allocatorStorage, builderStorage, blockLayer), cull, state.getSeed(pos), OverlayTexture.NO_OVERLAY);
+                    }
+
+                    matrices.popPose();
                 }
             }
 
-            if (!shouldRenderOnAnyFace) {
-                continue;
-            }
+            Map<ChunkSectionLayer, SectionBuffers> regionBuffers = new HashMap<>();
+            builderStorage.forEach((layer, bufferBuilder) -> {
+                var built = bufferBuilder.build();
+                if (built == null) return;
 
-            var renderPos = pos.subtract(from);
-            if (world.getBlockEntity(pos) != null) {
-                blockEntities.put(renderPos, world.getBlockEntity(pos));
-            }
+                GpuBuffer vBuf = RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-VBuf", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, built.vertexBuffer());
+                GpuBuffer iBuf = built.indexBuffer() != null ? RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-IBuf", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST, built.indexBuffer()) : null;
 
-            if (!world.getFluidState(pos).isEmpty()) {
-                var fluidState = world.getFluidState(pos);
-                var fluidLayer = ItemBlockRenderTypes.getRenderLayer(fluidState);
+                regionBuffers.put(layer, new SectionBuffers(vBuf, iBuf, built.drawState().indexCount(), built.drawState().indexType()));
+            });
+            this.subMeshes.add(regionBuffers);
 
-                matrices.pushPose();
-                matrices.translate(-(pos.getX() & 15), -(pos.getY() & 15), -(pos.getZ() & 15));
-                matrices.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
-
-                blockRenderManager.renderLiquid(pos, world, new FluidVertexConsumer(this.getOrCreateBuilder(allocatorStorage, builderStorage, fluidLayer), matrices.last().pose()), state, fluidState);
-
-                matrices.popPose();
-            }
-
-            matrices.pushPose();
-            matrices.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
-
-            final var model = blockRenderManager.getBlockModel(state);
-            if (renderContext != null) {
-                renderContext.tessellateBlock(state, pos, model, matrices);
-            } else {
-                blockRenderManager.getModelRenderer().render(this.world, model, state, pos, matrices, blockLayer -> this.getOrCreateBuilder(allocatorStorage, builderStorage, blockLayer), cull, state.getSeed(pos), OverlayTexture.NO_OVERLAY);
-            }
-
-            matrices.popPose();
+            allocatorStorage.close();
         }
-
-        this.bufferStorage.forEach((renderLayer, buffers) -> buffers.close());
-        this.bufferStorage.clear();
-
-        builderStorage.forEach((renderLayer, bufferBuilder) -> {
-            var built = bufferBuilder.build();
-            if (built == null) return;
-
-            if (renderLayer.sortOnUpload()) {
-                // todo look into this
-                var camera = client.gameRenderer.getMainCamera();
-                built.sortQuads(allocatorStorage.buffer(renderLayer), VertexSorting.byDistance((float) camera.position().x - (float) from.getX(), (float) camera.position().y - (float) from.getY(), (float) camera.position().z - (float) from.getZ()));
-            }
-
-            GpuBuffer vertexBuffer = RenderSystem.getDevice()
-                    .createBuffer(
-                            () -> "WorldMesher vertex buffer",
-                            GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST,
-                            built.vertexBuffer()
-                    );
-
-            ByteBuffer indices = built.indexBuffer();
-            GpuBuffer indexBuffer = indices != null
-                    ? RenderSystem.getDevice()
-                    .createBuffer(
-                            () -> "WorldMesher index buffer",
-                            GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST,
-                            indices
-                    )
-                    : null;
-
-            SectionBuffers discardedBuffer = this.bufferStorage.put(renderLayer, new SectionBuffers(vertexBuffer, indexBuffer, built.drawState().indexCount(), built.drawState().indexType()));
-            if (discardedBuffer != null) {
-                discardedBuffer.close();
-            }
-        });
 
         HashMultimap<Vec3, DynamicRenderInfo.EntityEntry> entities = HashMultimap.create();
         for (DynamicRenderInfo.EntityEntry entityEntry : entitiesList) {
@@ -506,7 +500,6 @@ public class WorldMesh {
             );
         }
 
-        allocatorStorage.close();
         this.renderInfo = new DynamicRenderInfo(blockEntities, entities);
     }
 
@@ -516,7 +509,6 @@ public class WorldMesh {
     }
 
 
-
     public static class Builder {
 
         private final BlockAndTintGetter world;
@@ -524,7 +516,7 @@ public class WorldMesh {
 
         private final BlockPos origin;
         private final BlockPos end;
-        private boolean cull = true;
+        private boolean cull = false;
         private boolean useGlobalNeighbors = false;
         private boolean freezeEntities = false;
         private Set<MiniChunk> chunks = null;
@@ -583,5 +575,4 @@ public class WorldMesh {
             this.canRender = canRender;
         }
     }
-
 }

@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -109,8 +110,7 @@ public class RenderableDispatcher {
     public static GpuTexture drawIntoTexture(Renderable<?> renderable, float tickDelta, int size) {
         Minecraft.getInstance().player.displayClientMessage(Component.literal("size="+size), false);
         TextureTarget framebuffer = new TextureTarget("Isometric Renders RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
-        RenderSystem.getDevice().createCommandEncoder()
-                .clearColorAndDepthTextures(framebuffer.getColorTexture(), 0, framebuffer.getDepthTexture(), 1.0);
+        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(framebuffer.getColorTexture(), 0, framebuffer.getDepthTexture(), 1.0);
 
         IsometricRenders.mainTargetOverride = framebuffer;
         RenderSystem.outputColorTextureOverride = framebuffer.getColorTextureView();

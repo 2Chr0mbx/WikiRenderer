@@ -10,10 +10,7 @@ import com.glisco.isometricrenders.render.*;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.glisco.isometricrenders.widget.NotificationComponent;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.GpuTextureView;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
@@ -24,9 +21,6 @@ import io.wispforest.owo.ui.core.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.navigation.ScreenRectangle;
-import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.gui.render.state.BlitRenderState;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
@@ -34,12 +28,10 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.CameraType;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Matrix3x2f;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -237,24 +229,33 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         if (!(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.properties().perPixel90DegreeRendering.get()) {
             var resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), "renderer_resolution", Sizing.fixed(50));
-            resolutionField.setTextColor(0x00FF00);
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
                 int resolution = Integer.parseInt(s);
 
                 if ((resolution < 16 || resolution > 16384) && !unsafe.get()) {
-                    resolutionField.setTextColor(0xFF0000);
                     exportButton.active = false;
                 } else {
-                    resolutionField.setTextColor(0x00FF00);
                     exportResolution = resolution;
                     exportButton.active = true;
                 }
             });
+        } else {
+            var resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(sideViewPixelsPerBlockResolution), "per_pixel_resolution", Sizing.fixed(50));
+            resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
+            resolutionField.setResponder(s -> {
+                if (s.isBlank()) return;
+                int resolution = Integer.parseInt(s);
+
+                if ((resolution < 4 || resolution > 64) && !unsafe.get()) {
+                    exportButton.active = false;
+                } else {
+                    sideViewPixelsPerBlockResolution = resolution;
+                    exportButton.active = true;
+                }
+            });
         }
-
-
 
         IsometricUI.sectionHeader(rightColumn, "animation_options", true);
 
@@ -341,45 +342,15 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         final var window = minecraft.getWindow();
         final var effectiveTickDelta = playAnimations.get() ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
-        if (true) {
-            RenderableDispatcher.drawIntoActiveFramebuffer(
-                    this.renderable,
-                    window.getWidth() / (float) window.getHeight(),
-                    effectiveTickDelta,
-                    this.hasBothColumns
-                            ? matrixStack -> {
-                    }
-                            : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0)
-            );
-        } else {
-            // todo: try this later
-            GpuTexture texture = RenderableDispatcher.drawIntoTexture(
-                    this.renderable,
-                    effectiveTickDelta,
-                    exportResolution
-            );
-            // idk
-            GpuTextureView textureView = RenderSystem.getDevice().createTextureView(texture);
-            context.scissorStack.push(new ScreenRectangle(0, 0, 1000, 1000));
-            context.guiRenderState.submitBlitToCurrentLayer(new BlitRenderState(
-                    RenderPipelines.GUI_TEXTURED,
-                    TextureSetup.singleTexture(textureView, RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST)),
-                    new Matrix3x2f(context.pose()),
-                    0,
-                    0,
-                    1000,
-                    1000,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    context.scissorStack.peek()
-            ));
-            textureView.close();
-            texture.close();
-        }
-
+        RenderableDispatcher.drawIntoActiveFramebuffer(
+                this.renderable,
+                window.getWidth() / (float) window.getHeight(),
+                effectiveTickDelta,
+                this.hasBothColumns
+                        ? matrixStack -> {
+                }
+                        : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0)
+        );
 
         if (!this.drawOnlyBackground && this.uiAdapter != null) {
             drawFramingHint(context);

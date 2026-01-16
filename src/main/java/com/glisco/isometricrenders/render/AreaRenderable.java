@@ -71,7 +71,6 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         if (chunks.isEmpty()) {
             return null;
         }
-        Minecraft.getInstance().player.displayClientMessage(Component.literal("chunk count = " + chunks.size()), false);
 
         int minX = chunks.stream().mapToInt(c -> c.startX).min().getAsInt();
         int maxX = chunks.stream().mapToInt(c -> c.endX).max().getAsInt();
@@ -100,42 +99,43 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         matrices.setIdentity();
         matrices.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
-		final var commandQueue = client.gameRenderer.getSubmitNodeStorage();
-	    final var cameraRenderState = new CameraRenderState();
-	    final var blockEntities = mesh.renderInfo().blockEntities();
-		final var blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
+        final var commandQueue = client.gameRenderer.getSubmitNodeStorage();
+        final var cameraRenderState = new CameraRenderState();
+        final var blockEntities = mesh.renderInfo().blockEntities();
+        final var blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
         blockEntities.forEach((blockPos, entity) -> {
             matrices.pushPose();
-	        matrices.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-			var state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
-	        if (state != null) blockEntityDispatcher.submit(state, matrices, commandQueue, cameraRenderState);
+            matrices.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+            var state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
+            if (state != null) blockEntityDispatcher.submit(state, matrices, commandQueue, cameraRenderState);
             matrices.popPose();
         });
 
-
+        // todo: this is called here but also in the other draw call, but emitVerticies is called before and then this draw is called, which also calls super, so draws is called twice?
         super.draw(RenderSystem.getModelViewMatrix());
+        // todo 2: this impacts entity positions, somehow
 
         final var effectiveDelta = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         final var entities = mesh.renderInfo().entities();
-	    final var entityDispatcher = client.getEntityRenderDispatcher();
+        final var entityDispatcher = client.getEntityRenderDispatcher();
 
         if (!properties().hideEntities.get()) {
-            entities.forEach((vec3d, entry) -> {
+            entities.forEach((entityPos, entry) -> {
                 if (!mesh.entitiesFrozen()) {
-                    vec3d = entry.entity().getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
+                    entityPos = entry.entity().getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
                 }
                 var state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
                 state.lightCoords = entry.light();
 
                 if (mesh.entitiesFrozen() && (state instanceof AvatarRenderState avatarRenderState)) {
                     // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
-                    // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
                     avatarRenderState.capeFlap = 0;
                     avatarRenderState.capeLean = 0;
                     avatarRenderState.capeLean2 = 0;
                 }
 
-                entityDispatcher.submit(state, cameraRenderState, vec3d.x, vec3d.y, vec3d.z, matrices, commandQueue);
+                // +0.01 fixes z-fighting
+                entityDispatcher.submit(state, cameraRenderState, entityPos.x, entityPos.y + 0.01, entityPos.z, matrices, commandQueue);
                 super.draw(RenderSystem.getModelViewMatrix());
             });
         }
@@ -164,8 +164,6 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 new net.minecraft.client.Camera(), // Passing a new/empty camera sets pos to 0,0,0
                 false
         );
-
-        super.draw(modelViewMatrix);
 
         final var meshStack = new PoseStack();
         meshStack.mulPose(modelViewMatrix);
@@ -241,7 +239,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
                     builder.row.child(Components.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
                         this.alternativeRotation.set((this.alternativeRotation.get() + 90) % 360);
-                    }).horizontalSizing(Sizing.fixed(130)).margins(Insets.right(5)));
+                    }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
 
                     builder.row.child(Components.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
                         switch (this.alternativeSlant.get()) {
@@ -249,18 +247,25 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                             case 0 -> this.alternativeSlant.set(90);
                             case 90 -> this.alternativeSlant.set(-90);
                         }
-                    }).horizontalSizing(Sizing.fixed(130)).margins(Insets.right(5)));
+                    }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
                 }
                 container.child(Components.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
                     this.alternativeRotation.set(0);
                     this.alternativeSlant.set(90);
                 }).horizontalSizing(Sizing.fixed(130)).margins(Insets.right(5)));
-
             }
 
-            WorldMesh mesh = ((AreaRenderable) renderable).mesh;
+            container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
+                        this.xOffset.setToDefault();
+                        this.yOffset.setToDefault();
+                        this.scale.setToDefault();
+                    })
+                    .horizontalSizing(Sizing.fixed(140))
+                    .margins(Insets.top(5)));
 
+            WorldMesh mesh = ((AreaRenderable) renderable).mesh;
             IsometricUI.sectionHeader(container, "mesh_controls", true);
+
             IsometricUI.dynamicLabel(container, () -> {
                 var meshStatus = Translate.gui("mesh_status");
                 if (!mesh.state().isBuildStage) {
@@ -306,12 +311,12 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 int highest = Math.max(totalBlocksY, Math.max(totalBlocksX, totalBlocksZ));
 
                 // force pixel count per blocks without blurriness
-                double pixelsPerBlock = 16.0;
+                double pixelsPerBlock = GlobalProperties.sideViewPixelsPerBlockResolution;
                 double bufferSize = highest * pixelsPerBlock;
                 GlobalProperties.exportResolution = (int) bufferSize;
                 double orthoWidth = 2.0; // Because your ortho is -1 to 1
 
-                float pixelPerfectScale = (float)(pixelsPerBlock / (bufferSize / orthoWidth));
+                float pixelPerfectScale = (float) (pixelsPerBlock / (bufferSize / orthoWidth));
 
                 modelViewStack.scale(pixelPerfectScale, pixelPerfectScale, pixelPerfectScale);
                 modelViewStack.rotate(Axis.XP.rotationDegrees(this.alternativeSlant.get()));

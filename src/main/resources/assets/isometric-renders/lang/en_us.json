@@ -80,6 +80,7 @@
   "gui.isometric-renders.background_color": "Background Color",
   "gui.isometric-renders.export_options": "Export Options",
   "gui.isometric-renders.renderer_resolution": "Export Resolution",
+  "gui.isometric-renders.per_pixel_resolution": "Block Resolution",
   "gui.isometric-renders.hotkeys": "F10: Toggle UI  F12: Export",
 
   "gui.isometric-renders.memory_warning1": "Warning: Unless you have at least 6GB ",
@@ -97,6 +98,7 @@
   "gui.isometric-renders.freeze_entities": "Freeze Entities",
   "gui.isometric-renders.hide_entities": "Hide Entities",
   "gui.isometric-renders.rebuild_mesh": "Rebuild Mesh",
+  "gui.isometric-renders.reset_offset_and_scale": "Resets Offset & Scale",
 
   "gui.isometric-renders.exporter.idle": "Exporter Idle",
   "gui.isometric-renders.exporter.jobs": "Export Jobs: %s",

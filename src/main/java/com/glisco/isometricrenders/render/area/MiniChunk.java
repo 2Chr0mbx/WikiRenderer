@@ -40,7 +40,6 @@ public class MiniChunk {
             for (BlockPos pos : BlockPos.betweenClosed(startX, startingY, startZ, endX, endingY, endZ)) {
                 BlockState state = level.getBlockState(pos);
                 if (!state.isAir()) {
-                    Minecraft.getInstance().player.displayClientMessage(Component.literal("found block at " + pos.getX() + "/" + pos.getY() + "/" + pos.getZ() + ", its " + state), false);
                     return true;
                 }
             }
@@ -57,6 +56,10 @@ public class MiniChunk {
                 new MiniChunk(startX - size, startZ, size),
                 new MiniChunk(startX, startZ - size, size)
         );
+    }
+
+    public boolean isWithin(int startX, int startZ, int endX, int endZ) {
+        return this.startX >= startX && this.endX <= endX && this.startZ >= startZ && this.endZ <= endZ;
     }
 
     @Override

@@ -8,25 +8,26 @@
   "compatibilityLevel": "JAVA_16",
   "plugin": "com.glisco.isometricrenders.mixin.IsometricMixinPlugin",
   "client": [
-    "GuiRendererMixin",
     "AbstractContainerScreenMixin",
+    "AbstractSliderButtonInvoker",
+    "ChunkSectionsToRenderMixin",
+    "DefaultPlayerSkinMixin",
+    "GuiRendererMixin",
+    "LevelRendererMixin",
     "LivingEntityRendererMixin",
     "MinecraftMixin",
+    "MixinChunkSectionLayer",
     "ParticleEngineMixin",
     "RenderPipelinesMixin",
-    "ChunkSectionsToRenderMixin",
-    "AbstractSliderButtonInvoker",
     "TextureManagerMixin",
-    "LevelRendererMixin",
-    "DefaultPlayerSkinMixin",
     "access.BlockEntityAccessor",
     "access.BlockInputAccessor",
     "access.CameraInvoker",
-    "access.WorldCoordinatesAccessor",
     "access.GameRendererAccessor",
     "access.ItemStackRenderStateAccessor",
     "access.NativeImageInvoker",
-    "access.ParticleEngineAccessor"
+    "access.ParticleEngineAccessor",
+    "access.WorldCoordinatesAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

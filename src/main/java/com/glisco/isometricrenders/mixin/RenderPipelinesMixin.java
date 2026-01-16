@@ -52,4 +52,20 @@ public class RenderPipelinesMixin {
 	private static RenderPipeline.Builder noSetGuiText(RenderPipeline.Builder instance, DepthTestFunction depthTestFunction, Operation<RenderPipeline.Builder> original) {
 		return instance;
 	}
+
+	/*
+	// CUTOUT_TERRAIN: Apply withBlend(TRANSLUCENT) during the static init chain
+	@Definition(id = "withLocation", method = "Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;withLocation(Ljava/lang/String;)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;", remap = false)
+	@Definition(id = "withShaderDefine", method = "Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;withShaderDefine(Ljava/lang/String;F)Lcom/mojang/blaze3d/pipeline/RenderPipeline$Builder;", remap = false)
+	@Expression("?.withLocation('pipeline/cutout_terrain').withShaderDefine(?, ?)")
+	@WrapOperation(method = "<clinit>", at = @At(value = "MIXINEXTRAS:EXPRESSION"))
+	private static RenderPipeline.Builder applyTranslucentToCutout(RenderPipeline.Builder instance, String define, float value, Operation<RenderPipeline.Builder> original) {
+		// 1. Let the original call (.withShaderDefine) happen
+		RenderPipeline.Builder builder = original.call(instance, define, 0f);
+
+		// 2. Return the builder with the extra withBlend() call attached
+		// This follows your "return instance" style but actually modifies the pipeline DNA
+		return builder.withBlend(BlendFunction.TRANSLUCENT);
+	}
+	 */
 }
