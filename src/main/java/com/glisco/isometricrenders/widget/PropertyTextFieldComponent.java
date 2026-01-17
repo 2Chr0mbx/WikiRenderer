@@ -28,7 +28,7 @@ public class PropertyTextFieldComponent extends EditBox {
         });
 
         this.setResponder(s -> {
-            if (Objects.equals(s, content) || s.length() < 1 || s.equals("-")) {
+            if (Objects.equals(s, content) || s.isEmpty() || s.equals("-")) {
                 return;
             }
 

@@ -42,7 +42,7 @@ public class RenderTaskArgumentType implements ArgumentType<RenderTask> {
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         String input = builder.getRemaining();
 
-        if (input.codePoints().filter(value -> value == ' ').count() > 0 && input.contains("batch")) {
+        if (input.codePoints().filter(value -> value == ' ').findAny().isPresent() && input.contains("batch")) {
             return SharedSuggestionProvider.suggest(new String[]{"items", "blocks", "tooltips"}, builder.createOffset(builder.getStart() + 6));
         } else {
             return SharedSuggestionProvider.suggest(new String[]{"atlas", "batch"}, builder);

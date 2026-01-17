@@ -3,19 +3,20 @@ package com.glisco.isometricrenders.render;
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.CameraInvoker;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
-import com.mojang.blaze3d.buffers.*;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.culling.Frustum;
-import net.minecraft.client.renderer.state.ParticlesRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.ParticlesRenderState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
-import java.util.function.Consumer;
 
 public abstract class DefaultRenderable<P extends DefaultPropertyBundle> implements Renderable<P> {
 

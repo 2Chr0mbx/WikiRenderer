@@ -3,10 +3,9 @@ package com.glisco.isometricrenders.render;
 import com.glisco.isometricrenders.property.PropertyBundle;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.renderer.MultiBufferSource;
-import com.mojang.blaze3d.vertex.PoseStack;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
 public class EmptyRenderable implements Renderable<PropertyBundle> {
