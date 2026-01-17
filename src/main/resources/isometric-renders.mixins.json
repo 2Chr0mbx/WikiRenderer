@@ -19,6 +19,7 @@
     "MixinChunkSectionLayer",
     "ParticleEngineMixin",
     "ParticleFeatureRendererMixin",
+    "QuadParticleGroupMixin",
     "RenderPipelinesMixin",
     "TextureManagerMixin",
     "access.BlockEntityAccessor",
@@ -26,6 +27,7 @@
     "access.CameraInvoker",
     "access.GameRendererAccessor",
     "access.ItemStackRenderStateAccessor",
+    "access.LevelRendererAccessor",
     "access.NativeImageInvoker",
     "access.ParticleEngineAccessor",
     "access.WorldCoordinatesAccessor"

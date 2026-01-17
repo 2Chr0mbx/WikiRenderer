@@ -20,8 +20,10 @@ import java.nio.ByteBuffer;
 
 public abstract class DefaultRenderable<P extends DefaultPropertyBundle> implements Renderable<P> {
 
-	private static final int LIGHTING_UBO_SIZE = new Std140SizeCalculator().putVec3().putVec3().get();
-	private GpuBuffer lightingBuffer;
+    private static final int LIGHTING_UBO_SIZE = new Std140SizeCalculator().putVec3().putVec3().get();
+    public static final Frustum ALWAYS_TRUE_PARTICLE_FRUSTUM = new Frustum(new Matrix4f(), new Matrix4f());
+
+    private GpuBuffer lightingBuffer;
 
     @Override
     public void setupLighting(Matrix4f modelViewMatrix) {
@@ -30,38 +32,38 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         Matrix4f lightTransform = new Matrix4f(modelViewMatrix);
         lightTransform.invert();
         lightDirection.mul(lightTransform);
-		lightDirection.normalize(); // this line fixes inconsistent lighting with scale
+        lightDirection.normalize(); // this line fixes inconsistent lighting with scale
 
-		Vector3f transformedLightDirection = new Vector3f(lightDirection.x, lightDirection.y, lightDirection.z);
+        Vector3f transformedLightDirection = new Vector3f(lightDirection.x, lightDirection.y, lightDirection.z);
 
-		// Lazily create the lighting UBO buffer when it's actually needed.
-		if (this.lightingBuffer == null)
-			this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders DefaultRenderable Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
+        // Lazily create the lighting UBO buffer when it's actually needed.
+        if (this.lightingBuffer == null)
+            this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders DefaultRenderable Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
 
-	    try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-		    ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, LIGHTING_UBO_SIZE)
-					.putVec3(transformedLightDirection)
-					.putVec3(transformedLightDirection)
-					.get();
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, LIGHTING_UBO_SIZE)
+                    .putVec3(transformedLightDirection)
+                    .putVec3(transformedLightDirection)
+                    .get();
 
-		    RenderSystem.getDevice().createCommandEncoder().writeToBuffer(this.lightingBuffer.slice(), byteBuffer);
-	    }
+            RenderSystem.getDevice().createCommandEncoder().writeToBuffer(this.lightingBuffer.slice(), byteBuffer);
+        }
 
         RenderSystem.setShaderLights(this.lightingBuffer.slice());
     }
 
-	@Override
-	public void dispose() {
-		if (this.lightingBuffer != null) {
-			this.lightingBuffer.close();
-			this.lightingBuffer = null;
-		}
-	}
+    @Override
+    public void dispose() {
+        if (this.lightingBuffer != null) {
+            this.lightingBuffer.close();
+            this.lightingBuffer = null;
+        }
+    }
 
-	@Override
+    @Override
     public void drawSubmittedRenderFeatures() {
         // Draw all buffers
-		Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+        Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
         Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
     }
 
@@ -71,26 +73,23 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         modelView.mul(transform);
 
         Minecraft client = Minecraft.getInstance();
-		// present in vanilla
+        // present in vanilla
 
-		Camera camera = Minecraft.getInstance().getEntityRenderDispatcher().camera;
-		float previousYaw = camera.yRot();
-		float previousPitch = camera.xRot();
+        Camera camera = Minecraft.getInstance().getEntityRenderDispatcher().camera;
+        float previousYaw = camera.yRot();
+        float previousPitch = camera.xRot();
 
-		((CameraInvoker) camera).isometric$setRotation(this.properties().rotation.get() + 180 + this.properties().rotationOffset(), this.properties().slant.get());
-		ParticlesRenderState particleBatch = new ParticlesRenderState();
-        Vec3 pos = camera.position();
-        Frustum frustum = new Frustum(transform, IsometricRenders.renderableDrawProjectionMatrix);
-        frustum.prepare(pos.x(), pos.y(), pos.z());
-        frustum.offset(-3.0F); // present in vanilla
+        ((CameraInvoker) camera).isometric$setRotation(this.properties().rotation.get() + 180 + this.properties().rotationOffset(), this.properties().slant.get());
+        ParticlesRenderState particleBatch = new ParticlesRenderState();
+
         client.particleEngine.extract(
                 particleBatch,
-                frustum,
+                ALWAYS_TRUE_PARTICLE_FRUSTUM,
                 camera,
                 tickDelta
         );
         /* create render state from camera object; (mostly) mirrors GameRenderer.updateCameraState */
-		CameraRenderState cameraRenderState = new CameraRenderState();
+        CameraRenderState cameraRenderState = new CameraRenderState();
         cameraRenderState.initialized = true;
         cameraRenderState.pos = camera.position();
         cameraRenderState.blockPos = camera.blockPosition();
@@ -103,10 +102,10 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 
         ((CameraInvoker) camera).isometric$setRotation(previousYaw, previousPitch);
 
-		modelView.popMatrix();
+        modelView.popMatrix();
     }
 
-	protected Vector4f getLightDirection() {
+    protected Vector4f getLightDirection() {
         return new Vector4f(this.properties().lightAngle.get() / 90f, .35f, 1, 0);
     }
 }

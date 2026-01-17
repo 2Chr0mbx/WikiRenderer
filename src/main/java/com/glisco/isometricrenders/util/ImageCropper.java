@@ -1,9 +1,26 @@
 package com.glisco.isometricrenders.util;
 
+import com.glisco.isometricrenders.property.GlobalProperties;
 import com.mojang.blaze3d.platform.NativeImage;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class ImageCropper {
     public static NativeImage cropTransparent(NativeImage source) {
+
+        CropData cropData = getCropData(source);
+        if (cropData == null) return source;
+
+        int croppedWidth = cropData.maxX - cropData.minX + 1;
+        int croppedHeight = cropData.maxY - cropData.minY + 1;
+        NativeImage cropped = new NativeImage(source.format(), croppedWidth, croppedHeight, false);
+        source.copyRect(cropped, cropData.minX, cropData.minY, 0, 0, croppedWidth, croppedHeight, false, false);
+        return cropped;
+    }
+
+    @Nullable
+    public static CropData getCropData(NativeImage source) {
         int width = source.getWidth();
         int height = source.getHeight();
 
@@ -26,13 +43,27 @@ public class ImageCropper {
             }
         }
 
-        if (maxX == -1) return source;
-
-        int croppedWidth = maxX - minX + 1;
-        int croppedHeight = maxY - minY + 1;
-        NativeImage cropped = new NativeImage(source.format(), croppedWidth, croppedHeight, false);
-        source.copyRect(cropped, minX, minY, 0, 0, croppedWidth, croppedHeight, false, false);
-        return cropped;
+        if (maxX == -1) return null;
+        return new CropData(minX, maxX, minY, maxY);
     }
+
+    public static String getFfmpegCropSize(List<CropData> dataList) {
+        int offsetFromLeft = dataList.stream().mapToInt(CropData::minX).min().orElseThrow();
+        int offsetFromRight = GlobalProperties.exportResolution - dataList.stream().mapToInt(CropData::maxX).max().orElseThrow();
+        // min y is a little confusing since to my brain it implies from the bottom, but its from the top instead
+        int offsetFromTop = dataList.stream().mapToInt(CropData::minY).min().orElseThrow();
+        int offsetFromBottom = GlobalProperties.exportResolution - dataList.stream().mapToInt(CropData::maxY).max().orElseThrow();
+
+        int width = GlobalProperties.exportResolution - offsetFromRight - offsetFromLeft;
+        int height = GlobalProperties.exportResolution - offsetFromBottom - offsetFromTop;
+
+        if (width % 2 != 0) width++;
+        if (height % 2 != 0) height++;
+
+        // fFmpeg syntax: crop=w:h:x:y
+        return "crop="+ width + ":" + height + ":" + offsetFromLeft + ":" + offsetFromTop;
+    }
+
+    public record CropData(int minX, int maxX, int minY, int maxY) {}
 
 }

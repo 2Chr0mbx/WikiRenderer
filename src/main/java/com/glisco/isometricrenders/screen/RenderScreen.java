@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -346,7 +347,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 window.getWidth() / (float) window.getHeight(),
                 effectiveTickDelta,
                 this.hasBothColumns
-                        ? matrixStack -> {}
+                        ? matrixStack -> {
+                }
                         : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0)
         );
 
@@ -406,40 +408,51 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 Boolean overwriteValue = overwriteLatest.get();
                 overwriteLatest.set(false);
 
-                CompletableFuture<File> exportFuture = null;
+                List<CompletableFuture<File>> exportFutures = new ArrayList<>();
+                List<ImageCropper.CropData> collectedCropData = Collections.synchronizedList(new ArrayList<>());
 
                 for (int i = 0; i < this.renderedFrames.size(); i++) {
-                    final int _i = i;
-                    exportFuture = RenderableDispatcher.copyTextureIntoImage(this.renderedFrames.get(i))
-                            .thenCompose(img -> ImageIO.save(img, ExportPathSpec.forced("sequence", "seq_" + _i)).whenComplete((f, t) -> img.close()));
-                    this.renderedFrames.get(i).close();
+                    int sequenceIndex = i;
+                    GpuTexture frame = this.renderedFrames.get(i);
+                    CompletableFuture<File> future = RenderableDispatcher.copyTextureIntoImage(frame)
+                            .thenApply(image -> {
+                                collectedCropData.add(ImageCropper.getCropData(image));
+                                return image;
+                            })
+                            .thenCompose(img -> ImageIO.save(img, ExportPathSpec.forced("sequence", "seq_" + sequenceIndex))
+                                    .whenComplete((f, t) -> img.close()));
+
+                    exportFutures.add(future);
+                    frame.close();
                 }
 
                 this.renderedFrames.clear();
 
                 final ExportPathSpec animationTarget = this.renderable.exportPath();
-                exportFuture.whenComplete((file, throwable) -> {
-                    overwriteLatest.set(overwriteValue);
-                    if (throwable != null) return;
+                CompletableFuture.allOf(exportFutures.toArray(CompletableFuture[]::new))
+                        .whenComplete((file, throwable) -> {
+                            overwriteLatest.set(overwriteValue);
+                            if (throwable != null) return;
 
-                    this.exportAnimationButton.setMessage(Translate.gui("converting"));
-                    this.minecraft.execute(() -> this.notify(Translate.gui("converting_image_sequence")));
+                            this.exportAnimationButton.setMessage(Translate.gui("converting"));
+                            this.minecraft.execute(() -> this.notify(Translate.gui("converting_image_sequence")));
 
-                    FFmpegDispatcher.assemble(
-                            animationTarget,
-                            ExportPathSpec.exportRoot().resolve("sequence/"),
-                            animationFormat
-                    ).whenComplete((animationFile, animationThrowable) -> {
-                        this.exportAnimationButton.active = true;
-                        this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
+                            FFmpegDispatcher.assemble(
+                                    animationTarget,
+                                    ExportPathSpec.exportRoot().resolve("sequence/"),
+                                    animationFormat,
+                                    ImageCropper.getFfmpegCropSize(collectedCropData)
+                            ).whenComplete((animationFile, animationThrowable) -> {
+                                this.exportAnimationButton.active = true;
+                                this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
 
-                        this.minecraft.execute(() -> this.notify(
-                                () -> Util.getPlatform().openFile(animationFile),
-                                Translate.gui("animation_saved"),
-                                Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
-                        ));
-                    });
-                });
+                                this.minecraft.execute(() -> this.notify(
+                                        () -> Util.getPlatform().openFile(animationFile),
+                                        Translate.gui("animation_saved"),
+                                        Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
+                                ));
+                            });
+                        });
             }
         }
     }

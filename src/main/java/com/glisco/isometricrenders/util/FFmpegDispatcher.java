@@ -56,24 +56,36 @@ public class FFmpegDispatcher {
     }
 
     @SuppressWarnings("resource")
-    public static CompletableFuture<File> assemble(ExportPathSpec target, Path sourcePath, Format format) {
+    public static CompletableFuture<File> assemble(ExportPathSpec target, Path sourcePath, Format format, String cropFilter) {
         target.resolveOffset().toFile().mkdirs();
 
-        List<String> defaultArgs = new ArrayList<>(List.of(new String[]{
+        List<String> args = new ArrayList<>(List.of(new String[]{
                 "ffmpeg",
                 "-y",
                 "-f", "image2",
                 "-framerate", String.valueOf(GlobalProperties.exportFramerate),
-                "-i", "seq_%d.png"}));
+                "-i", "seq_%d.png"
+        }));
+
+        if (format == Format.GIF) {
+            args.add("-filter_complex");
+            args.add("[0:v]" + cropFilter + ",split[v1][v2];" +
+                     "[v1]palettegen=reserve_transparent=1:stats_mode=full[p];" +
+                     "[v2][p]paletteuse=alpha_threshold=128:dither=bayer:bayer_scale=5");
+        } else {
+            // standard cropping for other formats
+            args.add("-vf");
+            args.add(cropFilter);
+        }
 
         if (format.arguments.length != 0) {
-            defaultArgs.addAll(Arrays.asList(format.arguments));
+            args.addAll(Arrays.asList(format.arguments));
         }
 
         File animationFile = target.resolveFile(format.extension);
-        defaultArgs.add(animationFile.getAbsolutePath());
+        args.add(animationFile.getAbsolutePath());
 
-        ProcessBuilder process = new ProcessBuilder(defaultArgs)
+        ProcessBuilder process = new ProcessBuilder(args)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                 .directory(sourcePath.toFile());
@@ -103,9 +115,9 @@ public class FFmpegDispatcher {
     }
 
     public enum Format {
-        APNG("apng", new String[]{"-plays", "0"}),
-	    WEBP("webp", new String[]{"-plays", "0"}),
-        GIF("gif", new String[]{"-plays", "0", "-pix_fmt", "yuv420p"}),
+        APNG("apng", new String[]{"-plays", "0", "-pix_fmt", "rgba"}),
+	    WEBP("webp", new String[]{"-plays", "0", "-loop", "0", "-pix_fmt", "rgba"}),
+        GIF("gif", new String[]{"-plays", "0"}),
         MP4("mp4", new String[]{"-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p"});
 
         public final String extension;

@@ -195,9 +195,9 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 dimensions.minX,
                 dimensions.minY,
                 dimensions.minZ,
-                dimensions.maxX + 1,
-                dimensions.maxY + 1,
-                dimensions.maxZ + 1
+                dimensions.maxX,
+                dimensions.maxY,
+                dimensions.maxZ
         ));
     }
 
