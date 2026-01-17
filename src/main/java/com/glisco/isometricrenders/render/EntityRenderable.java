@@ -18,10 +18,9 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
-import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -32,10 +31,11 @@ import net.minecraft.world.entity.EntityProcessor;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.parrot.Parrot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
@@ -44,7 +44,9 @@ import com.mojang.math.Axis;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fStack;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> implements TickingRenderable<DefaultPropertyBundle> {
@@ -57,7 +59,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
     }
 
     public static EntityRenderable of(EntityType<?> type, @Nullable CompoundTag nbt) {
-        final var client = Minecraft.getInstance();
+        Minecraft minecraft = Minecraft.getInstance();
 
         if (nbt == null) {
             nbt = new CompoundTag();
@@ -65,8 +67,8 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 
         nbt.putString("id", EntityType.getKey(type).toString());
 
-        final var entity = EntityType.loadEntityRecursive(nbt, client.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
-        entity.absSnapTo(client.player.getX(), client.player.getY(), client.player.getZ());
+        Entity entity = EntityType.loadEntityRecursive(nbt, minecraft.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
+        entity.absSnapTo(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
 
         return new EntityRenderable(entity);
     }
@@ -80,12 +82,13 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             return copyPlayer(player);
         }
 
-        final var client = Minecraft.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
-        var logging = new ProblemReporter.ScopedCollector(source.problemPath(), IsometricRenders.LOGGER);
-        var view = TagValueOutput.createWithContext(logging, source.registryAccess());
+        ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(source.problemPath(), IsometricRenders.LOGGER);
+        TagValueOutput view = TagValueOutput.createWithContext(logging, source.registryAccess());
         source.saveWithoutId(view);
-        var nbt = view.buildResult();
+
+        CompoundTag nbt = view.buildResult();
         logging.close();
         nbt.putString("id", EntityType.getKey(source.getType()).toString());
 
@@ -99,13 +102,15 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         GameProfile originalProfile = originalPlayer.getGameProfile();
         GameProfile fakeProfile = new GameProfile(originalProfile.id(), originalProfile.name(), new PropertyMap(originalProfile.properties()));
 
-        final var player = EntityComponent.createRenderablePlayer(fakeProfile);
+        EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(fakeProfile);
 
-        ProblemReporter.ScopedCollector loggingWrite = new ProblemReporter.ScopedCollector(originalPlayer.problemPath(), IsometricRenders.LOGGER);
-        var view = TagValueOutput.createWithContext(loggingWrite, originalPlayer.registryAccess());
+        ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(originalPlayer.problemPath(), IsometricRenders.LOGGER);
+
+        TagValueOutput view = TagValueOutput.createWithContext(problemReporter, originalPlayer.registryAccess());
         originalPlayer.saveWithoutId(view);
-        var nbt = view.buildResult();
-        loggingWrite.close();
+        CompoundTag nbt = view.buildResult();
+
+        problemReporter.close();
 
         try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
             player.load(TagValueInput.create(loggingRead, player.registryAccess(), nbt));
@@ -115,14 +120,14 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
     }
 
     @Override
-    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
         matrices.pushPose();
 
         double verticalOffset = -.5 * this.entity.getBbHeight();
         matrices.translate(0, verticalOffset, 0); // this fits it into the default frame
         matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
 
-        var properties = this.properties();
+        EntityPropertyBundle properties = this.properties();
         this.entity.setYHeadRot(properties.yaw.get());
         if (entity instanceof LivingEntity living) living.yHeadRotO = properties.yaw.get();
         this.entity.yRotO = properties.yaw.get();
@@ -132,16 +137,18 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 
         final MutableObject<Vec3> offset = new MutableObject<>(Vec3.ZERO);
 
-        final var renderDispatcher = client.getEntityRenderDispatcher();
-        final var commandQueue = client.gameRenderer.getSubmitNodeStorage();
+        EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
+        SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
+
         applyToEntityAndPassengers(this.entity, entity -> {
             entity.setPosRaw(client.player.getX(), client.player.getY(), client.player.getZ());
             if (entity.isPassenger()) {
                 offset.setValue(offset.getValue().add(entity.getVehicle().getPassengerRidingPosition(entity).subtract(entity.trackingPosition())));
             }
 
-            var offsetPos = offset.getValue();
-            var state = renderDispatcher.extractEntity(entity, tickDelta);
+            Vec3 offsetPos = offset.getValue();
+            EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
+
             state.shadowPieces.clear(); // remove shadows
             state.lightCoords = LightTexture.FULL_BRIGHT;
 
@@ -153,6 +160,14 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 
                 if (properties.useSteveSkin.get()) {
                     avatarRenderState.skin = DefaultPlayerSkin.getDefaultSkin();
+                }
+                if (properties.forceSmallArms.get()) {
+                    avatarRenderState.skin = avatarRenderState.skin.with(PlayerSkin.Patch.create(
+                            Optional.empty(),
+                            Optional.empty(),
+                            Optional.empty(),
+                            Optional.of(PlayerModelType.SLIM))
+                    );
                 }
             }
 
@@ -198,7 +213,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             }
 
             matrices.pushPose();
-            renderDispatcher.submit(state, new CameraRenderState(), 0, 0, 0, matrices, commandQueue);
+            renderDispatcher.submit(state, new CameraRenderState(), offsetPos.x(), offsetPos.y(), offsetPos.z(), matrices, nodeStorage);
             matrices.popPose();
         });
 
@@ -206,10 +221,9 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         // if these aren't undone them the bottom of certain armor boots look weird (for some reason, and despite popPose(), idk)
         matrices.mulPose(Axis.YP.rotationDegrees(-180));
         matrices.translate(0, -verticalOffset, 0);
-
-        this.renderParticles(matrices.last().pose(), tickDelta);
-
         matrices.popPose();
+
+        this.drawParticles(matrices.last().pose(), tickDelta);
     }
 
     @Override
@@ -271,7 +285,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             if (renderable instanceof EntityRenderable entityRenderable) {
                 if (entityRenderable.entity instanceof Player) {
                     IsometricUI.booleanControl(container, useSteveSkin, "entity_data.steve");
-                    // IsometricUI.booleanControl(container, forceSmallArms, "entity_data.small_arms");
+                    IsometricUI.booleanControl(container, forceSmallArms, "entity_data.small_arms");
                 }
                 if (entityRenderable.entity instanceof LivingEntity) {
                     IsometricUI.booleanControl(container, hideHeldItems, "entity_data.hide_held_items");

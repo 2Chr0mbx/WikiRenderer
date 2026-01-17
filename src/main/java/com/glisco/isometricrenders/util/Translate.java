@@ -44,7 +44,7 @@ public class Translate {
         int hueSpan = endHue - startHue;
         char[] chars = text.toCharArray();
 
-        var prefixText = Component.empty();
+        MutableComponent prefixText = Component.empty();
 
         for (int i = 0; i < chars.length; i++) {
             float index = i;

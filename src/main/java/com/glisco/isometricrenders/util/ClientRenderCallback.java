@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 public interface ClientRenderCallback {
 
     Event<ClientRenderCallback> EVENT = EventFactory.createArrayBacked(ClientRenderCallback.class, clientRenderCallbacks -> client -> {
-        for (var callback : clientRenderCallbacks) {
+        for (ClientRenderCallback callback : clientRenderCallbacks) {
             callback.onRenderStart(client);
         }
     });

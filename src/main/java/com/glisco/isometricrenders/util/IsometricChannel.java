@@ -21,15 +21,15 @@ public class IsometricChannel extends ExoCommandChannel {
         addCommand("render-item", (port, arguments) -> {
             if (arguments.length < 1) return Exo.join("error", "missing item id");
 
-            final var id = Identifier.parse(arguments[0]);
-            final var client = Minecraft.getInstance();
+            Identifier id = Identifier.parse(arguments[0]);
+            Minecraft client = Minecraft.getInstance();
 
             if (BuiltInRegistries.ITEM.containsKey(id)) {
                 Minecraft.getInstance().execute(() -> {
-                    final var stack = new ItemStack(BuiltInRegistries.ITEM.getValue(id));
-                    final var renderable = new ItemRenderable(stack);
+                    ItemStack stack = new ItemStack(BuiltInRegistries.ITEM.getValue(id));
+                    ItemRenderable renderable = new ItemRenderable(stack);
 
-                    var screen = new RenderScreen(renderable);
+                    RenderScreen screen = new RenderScreen(renderable);
 //                    setupItem(renderable, client.getItemRenderer().getModel(stack, null, null, 0).hasDepth());
 
                     screen.setExportCallback(file -> send(Exo.join("exported", id.toString(), file.getAbsolutePath()), port));

@@ -9,6 +9,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -34,8 +35,8 @@ public class NamespaceArgumentType implements ArgumentType<NamespaceArgumentType
 
     @Override
     public Namespace parse(StringReader reader) throws CommandSyntaxException {
-        final var input = reader.readString();
-        final var namespaces = getNamespaces();
+        String input = reader.readString();
+        Set<String> namespaces = getNamespaces();
 
         if (!namespaces.contains(input)) {
             throw NO_SUCH_NAMESPACE.create();
@@ -50,8 +51,8 @@ public class NamespaceArgumentType implements ArgumentType<NamespaceArgumentType
     }
 
     private Set<String> getNamespaces() {
-        final var set = new HashSet<String>();
-        for (var id : BuiltInRegistries.ITEM.keySet()) {
+        Set<String> set = new HashSet<>();
+        for (Identifier id : BuiltInRegistries.ITEM.keySet()) {
             set.add(id.getNamespace());
         }
         return set;

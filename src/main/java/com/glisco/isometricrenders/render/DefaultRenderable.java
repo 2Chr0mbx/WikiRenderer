@@ -10,11 +10,8 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.state.ParticlesRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import net.minecraft.network.chat.Component;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import net.minecraft.world.phys.Vec3;
+import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
@@ -28,8 +25,8 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     @Override
     public void setupLighting(Matrix4f modelViewMatrix) {
         // Apply inverse transform to lighting to keep it consistent
-        final var lightDirection = getLightDirection();
-        final var lightTransform = new Matrix4f(modelViewMatrix);
+        Vector4f lightDirection = getLightDirection();
+        Matrix4f lightTransform = new Matrix4f(modelViewMatrix);
         lightTransform.invert();
         lightDirection.mul(lightTransform);
 		lightDirection.normalize(); // this line fixes inconsistent lighting with scale
@@ -61,57 +58,54 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 	}
 
 	@Override
-    public void draw(Matrix4f modelViewMatrix) {
+    public void drawSubmittedRenderFeatures() {
         // Draw all buffers
 		Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
         Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
     }
 
-    protected void renderParticles(Matrix4f transform, float tickDelta) {
-        var modelView = RenderSystem.getModelViewStack();
+    protected void drawParticles(Matrix4f transform, float tickDelta) {
+        Matrix4fStack modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
         modelView.mul(transform);
 
-        var client = Minecraft.getInstance();
-        this.withParticleCamera(camera -> {
-	        var particleBatch = new ParticlesRenderState();
-			var pos = camera.position();
-			var frustum = new Frustum(transform, IsometricRenders.renderableDrawProjectionMatrix);
-	        frustum.prepare(pos.x(), pos.y(), pos.z());
-			frustum.offset(-3.0F); // present in vanilla
-            client.particleEngine.extract(
-					particleBatch,
-		            frustum,
-		            camera,
-		            tickDelta
-            );
-			/* create render state from camera object; (mostly) mirrors GameRenderer.updateCameraState */
-	        var cameraRenderState = new CameraRenderState();
-			cameraRenderState.initialized = true;
-			cameraRenderState.pos = camera.position();
-			cameraRenderState.blockPos = camera.blockPosition();
-			cameraRenderState.entityPos = camera.entity().getPosition(tickDelta);
-			cameraRenderState.orientation = new Quaternionf(camera.rotation());
-			/* submit and render to vertexconsumers */
-			particleBatch.submit(client.gameRenderer.getSubmitNodeStorage(), cameraRenderState);
-	        client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
-			particleBatch.reset();
-        });
+        Minecraft client = Minecraft.getInstance();
+		// present in vanilla
 
-        modelView.popMatrix();
-    }
+		Camera camera = Minecraft.getInstance().getEntityRenderDispatcher().camera;
+		float previousYaw = camera.yRot();
+		float previousPitch = camera.xRot();
 
-    protected void withParticleCamera(Consumer<Camera> action) {
-        Camera camera = Minecraft.getInstance().getEntityRenderDispatcher().camera;
-        float previousYaw = camera.yRot(), previousPitch = camera.xRot();
-
-        ((CameraInvoker) camera).isometric$setRotation(this.properties().rotation.get() + 180 + this.properties().rotationOffset(), this.properties().slant.get());
-        action.accept(camera);
+		((CameraInvoker) camera).isometric$setRotation(this.properties().rotation.get() + 180 + this.properties().rotationOffset(), this.properties().slant.get());
+		ParticlesRenderState particleBatch = new ParticlesRenderState();
+        Vec3 pos = camera.position();
+        Frustum frustum = new Frustum(transform, IsometricRenders.renderableDrawProjectionMatrix);
+        frustum.prepare(pos.x(), pos.y(), pos.z());
+        frustum.offset(-3.0F); // present in vanilla
+        client.particleEngine.extract(
+                particleBatch,
+                frustum,
+                camera,
+                tickDelta
+        );
+        /* create render state from camera object; (mostly) mirrors GameRenderer.updateCameraState */
+		CameraRenderState cameraRenderState = new CameraRenderState();
+        cameraRenderState.initialized = true;
+        cameraRenderState.pos = camera.position();
+        cameraRenderState.blockPos = camera.blockPosition();
+        cameraRenderState.entityPos = camera.entity().getPosition(tickDelta);
+        cameraRenderState.orientation = new Quaternionf(camera.rotation());
+        /* submit and render to vertexconsumers */
+        particleBatch.submit(client.gameRenderer.getSubmitNodeStorage(), cameraRenderState);
+        drawSubmittedRenderFeatures();
+        particleBatch.reset();
 
         ((CameraInvoker) camera).isometric$setRotation(previousYaw, previousPitch);
+
+		modelView.popMatrix();
     }
 
-    protected Vector4f getLightDirection() {
+	protected Vector4f getLightDirection() {
         return new Vector4f(this.properties().lightAngle.get() / 90f, .35f, 1, 0);
     }
 }

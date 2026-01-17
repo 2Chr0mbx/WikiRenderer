@@ -32,12 +32,12 @@ public class FFmpegDispatcher {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                final var process = new ProcessBuilder("ffmpeg", "-version")
+                Process process = new ProcessBuilder("ffmpeg", "-version")
                         .redirectError(ProcessBuilder.Redirect.DISCARD)
                         .start();
 
                 process.onExit().join();
-                final var output = new String(process.getInputStream().readAllBytes());
+                String output = new String(process.getInputStream().readAllBytes());
 
                 IsometricRenders.LOGGER.info("FFmpeg detected, version: {}", output.split(" ")[2]);
                 return true;
@@ -59,7 +59,7 @@ public class FFmpegDispatcher {
     public static CompletableFuture<File> assemble(ExportPathSpec target, Path sourcePath, Format format) {
         target.resolveOffset().toFile().mkdirs();
 
-        final var defaultArgs = new ArrayList<>(List.of(new String[]{
+        List<String> defaultArgs = new ArrayList<>(List.of(new String[]{
                 "ffmpeg",
                 "-y",
                 "-f", "image2",
@@ -70,10 +70,10 @@ public class FFmpegDispatcher {
             defaultArgs.addAll(Arrays.asList(format.arguments));
         }
 
-        final var animationFile = target.resolveFile(format.extension);
+        File animationFile = target.resolveFile(format.extension);
         defaultArgs.add(animationFile.getAbsolutePath());
 
-        final var process = new ProcessBuilder(defaultArgs)
+        ProcessBuilder process = new ProcessBuilder(defaultArgs)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                 .directory(sourcePath.toFile());

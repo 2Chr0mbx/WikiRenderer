@@ -20,10 +20,10 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
     };
 
     @Override
-    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {}
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {}
 
     @Override
-    public void draw(Matrix4f modelViewMatrix) {}
+    public void drawSubmittedRenderFeatures() {}
 
     @Override
     public PropertyBundle properties() {

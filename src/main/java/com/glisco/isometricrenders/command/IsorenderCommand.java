@@ -9,6 +9,7 @@ import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.screen.ScreenScheduler;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
 import com.glisco.isometricrenders.util.Translate;
+import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -20,6 +21,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.CompoundTagArgument;
@@ -33,13 +35,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.Util;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
@@ -50,6 +56,7 @@ import net.minecraft.world.phys.Vec3;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
@@ -118,7 +125,7 @@ public class IsorenderCommand {
     }
 
     private static int showRootNodeHelp(CommandContext<FabricClientCommandSource> context) {
-        final var source = context.getSource();
+        FabricClientCommandSource source = context.getSource();
 
         source.sendFeedback(Translate.prefixed(Translate.make("version", Component.literal(IsometricRenders.VERSION).withStyle(ChatFormatting.DARK_GRAY)).withStyle(ChatFormatting.GRAY)));
         source.sendFeedback(Translate.prefixed(Translate.make("command_hint").withStyle(
@@ -143,21 +150,21 @@ public class IsorenderCommand {
     }
 
     private static int renderPlayerWithNbt(CommandContext<FabricClientCommandSource> context) {
-        final var server = Minecraft.getInstance().getSingleplayerServer();
+        IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
         if (server == null) {
             Translate.commandError(context, "player_rendering_in_multiplayer");
             return 0;
         }
 
-        final var gameProfile = server.services().profileResolver().fetchByName(StringArgumentType.getString(context, "player"));
+        Optional<GameProfile> gameProfile = server.services().profileResolver().fetchByName(StringArgumentType.getString(context, "player"));
         if (gameProfile.isEmpty()) {
             Translate.commandError(context, "no_such_player");
             return 0;
         }
 
-        final var playerNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
-        final var player = EntityComponent.createRenderablePlayer(gameProfile.get());
-        try (var logging = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
+        CompoundTag playerNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
+        EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(gameProfile.get());
+        try (ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
             player.load(TagValueInput.create(logging, server.registryAccess(), playerNbt));
         }
 
@@ -169,13 +176,13 @@ public class IsorenderCommand {
     }
 
     private static int renderPlayerWithoutNbt(CommandContext<FabricClientCommandSource> context) {
-        final var server = Minecraft.getInstance().getSingleplayerServer();
+        IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
         if (server == null) {
             Translate.commandError(context, "player_rendering_in_multiplayer");
             return 0;
         }
 
-        final var gameProfile = server.services().profileResolver().fetchByName(StringArgumentType.getString(context, "player"));
+        Optional<GameProfile> gameProfile = server.services().profileResolver().fetchByName(StringArgumentType.getString(context, "player"));
         if (gameProfile.isEmpty()) {
             Translate.commandError(context, "no_such_player");
             return 0;
@@ -189,13 +196,13 @@ public class IsorenderCommand {
     }
 
     private static int renderSelf(CommandContext<FabricClientCommandSource> context) {
-        final var clientPlayer = Minecraft.getInstance().player;
-        final var player = EntityComponent.createRenderablePlayer(clientPlayer.getGameProfile());
+        LocalPlayer clientPlayer = Minecraft.getInstance().player;
+        EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(clientPlayer.getGameProfile());
 
         ProblemReporter.ScopedCollector loggingWrite = new ProblemReporter.ScopedCollector(clientPlayer.problemPath(), IsometricRenders.LOGGER);
-        var view = TagValueOutput.createWithContext(loggingWrite, clientPlayer.registryAccess());
+        TagValueOutput view = TagValueOutput.createWithContext(loggingWrite, clientPlayer.registryAccess());
         clientPlayer.saveWithoutId(view);
-        var nbt = view.buildResult();
+        CompoundTag nbt = view.buildResult();
         loggingWrite.close();
 
         try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
@@ -209,7 +216,7 @@ public class IsorenderCommand {
     }
 
     private static int renderTagContents(CommandContext<FabricClientCommandSource> context) {
-        final var tag = TagArgumentType.getTag("tag", context);
+        TagArgumentType.TagArgument tag = TagArgumentType.getTag("tag", context);
         RenderTaskArgumentType.getTask("task", context).action.accept(
                 "tag_" + tag.id().getNamespace() + "/" + tag.id().getPath(),
                 tag.entries().stream()
@@ -221,7 +228,7 @@ public class IsorenderCommand {
     }
 
     private static int renderCreativeTab(CommandContext<FabricClientCommandSource> context) {
-        final var task = RenderTaskArgumentType.getTask("task", context);
+        RenderTask task = RenderTaskArgumentType.getTask("task", context);
         withItemGroupFromContext(context, (itemStacks, name) -> {
             task.action.accept(name, itemStacks);
         });
@@ -229,7 +236,7 @@ public class IsorenderCommand {
     }
 
     private static int renderNamespace(CommandContext<FabricClientCommandSource> context) {
-        final var namespace = NamespaceArgumentType.getNamespace("namespace", context);
+        NamespaceArgumentType.Namespace namespace = NamespaceArgumentType.getNamespace("namespace", context);
         RenderTaskArgumentType.getTask("task", context).action.accept("namespace_" + namespace.name(), namespace.getContent());
         return 0;
     }
@@ -263,8 +270,8 @@ public class IsorenderCommand {
     }
 
     private static int renderEntityWithNbt(CommandContext<FabricClientCommandSource> context) {
-        final var entityNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
-        final var entityReference = (Holder.Reference<EntityType<?>>) context.getArgument("entity", Holder.Reference.class);
+        CompoundTag entityNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
+        Holder.Reference<EntityType<?>> entityReference = context.getArgument("entity", Holder.Reference.class);
 
         ScreenScheduler.schedule(new RenderScreen(
                 EntityRenderable.of(entityReference.value(), entityNbt)
@@ -274,7 +281,7 @@ public class IsorenderCommand {
     }
 
     private static int renderEntityWithoutNbt(CommandContext<FabricClientCommandSource> context) {
-        final var entityReference = (Holder.Reference<EntityType<?>>) context.getArgument("entity", Holder.Reference.class);
+        Holder.Reference<EntityType<?>> entityReference = context.getArgument("entity", Holder.Reference.class);
 
         ScreenScheduler.schedule(new RenderScreen(
                 EntityRenderable.of(entityReference.value(), null)
@@ -284,14 +291,14 @@ public class IsorenderCommand {
     }
 
     private static int renderTargetedEntity(CommandContext<FabricClientCommandSource> context) {
-        final var client = Minecraft.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         if (client.hitResult.getType() != HitResult.Type.ENTITY) {
             Translate.commandError(context, "no_entity");
             return 0;
         }
 
-        final var targetEntity = ((EntityHitResult) client.hitResult).getEntity();
+        Entity targetEntity = ((EntityHitResult) client.hitResult).getEntity();
         ScreenScheduler.schedule(new RenderScreen(
                 EntityRenderable.copyAsRenderable(targetEntity)
         ));
@@ -300,9 +307,9 @@ public class IsorenderCommand {
     }
 
     private static int renderBlockWithArgument(CommandContext<FabricClientCommandSource> context) {
-        final var stateArg = context.getArgument("block", BlockInput.class);
-        final var state = stateArg.getState();
-        final var data = ((BlockInputAccessor) stateArg).isometric$getTag();
+        BlockInput stateArg = context.getArgument("block", BlockInput.class);
+        BlockState state = stateArg.getState();
+        CompoundTag data = ((BlockInputAccessor) stateArg).isometric$getTag();
 
         ScreenScheduler.schedule(new RenderScreen(
                 BlockStateRenderable.of(state, data)
@@ -311,14 +318,14 @@ public class IsorenderCommand {
     }
 
     private static int renderTargetedBlock(CommandContext<FabricClientCommandSource> context) {
-        final var client = Minecraft.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         if (client.hitResult.getType() != HitResult.Type.BLOCK) {
             Translate.commandError(context, "no_block");
             return 0;
         }
 
-        final var hitPos = ((BlockHitResult) client.hitResult).getBlockPos();
+        BlockPos hitPos = ((BlockHitResult) client.hitResult).getBlockPos();
         ScreenScheduler.schedule(new RenderScreen(
                 BlockStateRenderable.copyOf(client.level, hitPos)
         ));
@@ -327,11 +334,11 @@ public class IsorenderCommand {
     }
 
     private static int renderAreaWithArguments(CommandContext<FabricClientCommandSource> context) {
-        final var startArg = context.getArgument("start", WorldCoordinates.class);
-        final var endArg = context.getArgument("end", WorldCoordinates.class);
+        WorldCoordinates startArg = context.getArgument("start", WorldCoordinates.class);
+        WorldCoordinates endArg = context.getArgument("end", WorldCoordinates.class);
 
-        final var pos1 = getPosFromArgument(startArg, context.getSource());
-        final var pos2 = getPosFromArgument(endArg, context.getSource());
+        BlockPos pos1 = getPosFromArgument(startArg, context.getSource());
+        BlockPos pos2 = getPosFromArgument(endArg, context.getSource());
 
         ScreenScheduler.schedule(new RenderScreen(
                 AreaRenderable.of(pos1, pos2)
@@ -341,7 +348,7 @@ public class IsorenderCommand {
     }
 
     private static int renderSurroundingConnectedMiniChunks(CommandContext<FabricClientCommandSource> context) {
-        final var chunkSize = context.getArgument("chunk_size", Integer.class);
+        Integer chunkSize = context.getArgument("chunk_size", Integer.class);
 
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
@@ -367,8 +374,8 @@ public class IsorenderCommand {
     }
 
     private static <S> void withItemGroupFromContext(CommandContext<S> context, BiConsumer<List<ItemStack>, String> action) {
-        final var itemGroup = ItemGroupArgumentType.getItemGroup("itemgroup", context);
-        final var stacks = new ArrayList<>(itemGroup.getDisplayItems());
+        CreativeModeTab itemGroup = ItemGroupArgumentType.getItemGroup("itemgroup", context);
+        List<ItemStack> stacks = new ArrayList<>(itemGroup.getDisplayItems());
         action.accept(stacks, "creative-tab_" + BuiltInRegistries.CREATIVE_MODE_TAB.getKey(itemGroup).toShortLanguageKey());
     }
 

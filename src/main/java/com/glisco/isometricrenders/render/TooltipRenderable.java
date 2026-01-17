@@ -10,12 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.render.*;
-import net.minecraft.client.gui.render.pip.GuiBannerResultRenderer;
-import net.minecraft.client.gui.render.pip.GuiBookModelRenderer;
-import net.minecraft.client.gui.render.pip.GuiEntityRenderer;
-import net.minecraft.client.gui.render.pip.GuiProfilerChartRenderer;
-import net.minecraft.client.gui.render.pip.GuiSignRenderer;
-import net.minecraft.client.gui.render.pip.GuiSkinRenderer;
+import net.minecraft.client.gui.render.pip.*;
 import net.minecraft.client.gui.render.state.GuiRenderState;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
@@ -23,6 +18,7 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.resources.model.AtlasManager;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -43,23 +39,23 @@ public class TooltipRenderable extends DefaultRenderable<TooltipRenderable.Toolt
     }
 
     @Override
-    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
-        var client = Minecraft.getInstance();
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+        Minecraft client = Minecraft.getInstance();
 
-		var imm = client.renderBuffers().bufferSource();
-	    var state = new GuiRenderState();
-		var atlasManager = client.getAtlasManager();
-		var renderer = new GuiRenderer(state, imm,
-				client.gameRenderer.getSubmitNodeStorage(),
-				client.gameRenderer.getFeatureRenderDispatcher(),
-				List.of(
-						new GuiEntityRenderer(imm, client.getEntityRenderDispatcher()),
-						new GuiSkinRenderer(imm),
-						new GuiBookModelRenderer(imm),
-						new GuiBannerResultRenderer(imm, atlasManager),
-						new GuiSignRenderer(imm, atlasManager),
-						new GuiProfilerChartRenderer(imm)
-		));
+		MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
+	    GuiRenderState state = new GuiRenderState();
+		AtlasManager atlasManager = client.getAtlasManager();
+
+        List<PictureInPictureRenderer<?>> renderers = List.of(
+                new GuiEntityRenderer(bufferSource, client.getEntityRenderDispatcher()),
+                new GuiSkinRenderer(bufferSource),
+                new GuiBookModelRenderer(bufferSource),
+                new GuiBannerResultRenderer(bufferSource, atlasManager),
+                new GuiSignRenderer(bufferSource, atlasManager),
+                new GuiProfilerChartRenderer(bufferSource)
+        );
+
+        GuiRenderer renderer = new GuiRenderer(state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);
 
 	    List<ClientTooltipComponent> list = Screen.getTooltipFromItem(client, this.stack).stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).collect(Util.toMutableList());
 	    this.stack.getTooltipImage().ifPresent(datax -> list.add(list.isEmpty() ? 0 : 1, ClientTooltipComponent.create(datax)));

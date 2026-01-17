@@ -22,7 +22,7 @@ public class ParticleEngineMixin {
             return;
         }
 
-        final var restriction = IsometricRenders.particleRestriction;
+        ParticleRestriction<?> restriction = IsometricRenders.particleRestriction;
 
         if (restriction.is(ParticleRestriction.ALLOW_NEVER)) {
             return;

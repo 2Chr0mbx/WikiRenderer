@@ -1,7 +1,6 @@
 package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.IsometricRenders;
-import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.util.FramebufferUtils;
 import com.glisco.isometricrenders.util.ImageCropper;
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -15,7 +14,6 @@ import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -26,7 +24,7 @@ import java.util.function.Consumer;
 
 public class RenderableDispatcher {
 
-    private static final PerspectiveProjectionMatrixBuffer projMatrix = new PerspectiveProjectionMatrixBuffer("RenderableDispatcher");
+    private static final PerspectiveProjectionMatrixBuffer PROJECTION_MATRIX_BUFFER = new PerspectiveProjectionMatrixBuffer("RenderableDispatcher");
 
     /**
      * Renders the given renderable into the current framebuffer,
@@ -53,15 +51,16 @@ public class RenderableDispatcher {
         renderable.properties().applyToViewMatrix(renderable, modelViewStack);
 
         Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -1000, 3000);
-        IsometricRenders.beginRenderableDraw(projMatrix, projectionMatrix);
+        IsometricRenders.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
 
         renderable.setupLighting(modelViewStack);
-        renderable.draw(modelViewStack); // --> Draw
-        renderable.emitVertices(
+        renderable.emitVerticesThenDraw(
+                modelViewStack,
                 new PoseStack(),
                 Minecraft.getInstance().renderBuffers().bufferSource(),
                 tickDelta
         );
+        renderable.drawSubmittedRenderFeatures();
 
         IsometricRenders.endRenderableDraw();
         modelViewStack.popMatrix();
@@ -78,7 +77,7 @@ public class RenderableDispatcher {
      */
     public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, boolean crop) {
         GpuTexture texture = drawIntoTexture(renderable, tickDelta, size);
-        CompletableFuture<NativeImage> image = copyTextureIntoImage(texture, crop).whenComplete((i, t) -> texture.close());
+        CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).whenComplete((i, t) -> texture.close());
 
         if (crop) {
             // resize image to target height by regenerating it with an increased size
@@ -121,7 +120,7 @@ public class RenderableDispatcher {
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
         IsometricRenders.mainTargetOverride = null;
-        var texture = FramebufferUtils.cloneColorAttachment(framebuffer);
+        GpuTexture texture = FramebufferUtils.cloneColorAttachment(framebuffer);
 
         // Release depth attachment and FBO to save on VRAM - we only need
         // the color attachment texture to later turn into an image
@@ -138,8 +137,8 @@ public class RenderableDispatcher {
      * @return The created image
      */
 
-    public static CompletableFuture<NativeImage> copyTextureIntoImage(@NotNull GpuTexture gpuTexture, boolean crop) {
-        final var future = new CompletableFuture<NativeImage>();
+    public static CompletableFuture<NativeImage> copyTextureIntoImage(@NotNull GpuTexture gpuTexture) {
+        CompletableFuture<NativeImage> future = new CompletableFuture<>();
 
         final int width = gpuTexture.getWidth(0);
         final int height = gpuTexture.getHeight(0);

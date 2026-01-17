@@ -18,11 +18,11 @@ public class ImageIO {
     private static final AtomicInteger TASK_COUNT = new AtomicInteger(0);
 
     public static CompletableFuture<File> save(NativeImage image, ExportPathSpec path) {
-        final var future = new CompletableFuture<File>();
+        CompletableFuture<File> future = new CompletableFuture<>();
 
         TASK_COUNT.incrementAndGet();
         ForkJoinPool.commonPool().submit(() -> {
-            final var imageFile = path.resolveFile("png");
+            File imageFile = path.resolveFile("png");
 
             imageFile.getParentFile().mkdirs();
 
@@ -52,18 +52,18 @@ public class ImageIO {
     }
 
     public static Path next(Path input) {
-        final var filename = input.getFileName().toString();
+        String filename = input.getFileName().toString();
 
-        var separatorIndex = filename.lastIndexOf('.');
+        int separatorIndex = filename.lastIndexOf('.');
         if (separatorIndex == -1) separatorIndex = filename.length();
 
-        final var name = filename.substring(0, separatorIndex);
-        final var extension = filename.substring(separatorIndex);
+        String name = filename.substring(0, separatorIndex);
+        String extension = filename.substring(separatorIndex);
 
-        final var path = input.getParent();
+        Path path = input.getParent();
 
-        var currentPath = path.resolve(join(name, extension, 0));
-        var lastPath = currentPath;
+        Path currentPath = path.resolve(join(name, extension, 0));
+        Path lastPath = currentPath;
 
         for (int i = 1; Files.exists(currentPath); i++) {
             lastPath = currentPath;

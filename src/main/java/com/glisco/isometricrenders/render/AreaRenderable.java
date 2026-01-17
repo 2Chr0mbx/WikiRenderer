@@ -4,6 +4,7 @@ import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
+import com.glisco.isometricrenders.render.area.DynamicRenderInfo;
 import com.glisco.isometricrenders.render.area.MiniChunk;
 import com.glisco.isometricrenders.render.area.MiniChunkScanner;
 import com.glisco.isometricrenders.render.area.WorldMesh;
@@ -12,7 +13,7 @@ import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.util.Translate;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -23,16 +24,24 @@ import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.GlobalSettingsUniform;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 
 public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropertyBundle> {
@@ -47,7 +56,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
     public AreaRenderable(WorldMesh mesh) {
         this.mesh = mesh;
 
-        final var dimensions = mesh.dimensions();
+        AABB dimensions = mesh.dimensions();
         this.xSize = (int) dimensions.getXsize();
         this.ySize = (int) dimensions.getYsize();
         this.zSize = (int) dimensions.getZsize();
@@ -87,7 +96,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
     }
 
     @Override
-    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack standardStack, MultiBufferSource vertexConsumers, float tickDelta) {
         if (!mesh.canRender()) {
             if (mesh.state() == WorldMesh.MeshState.CORRUPT) return;
 
@@ -95,35 +104,53 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
             return;
         }
 
-        matrices.setIdentity();
-        matrices.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
+        GlobalSettingsUniform globalSettings = Minecraft.getInstance().gameRenderer.getGlobalSettingsUniform();
+        globalSettings.update(
+                client.getWindow().getGuiScaledWidth(),
+                client.getWindow().getGuiScaledHeight(),
+                1.0, 0, client.getDeltaTracker(), 0,
+                new net.minecraft.client.Camera(), // Passing a new/empty camera sets pos to 0,0,0
+                false
+        );
 
-        final var commandQueue = client.gameRenderer.getSubmitNodeStorage();
-        final var cameraRenderState = new CameraRenderState();
-        final var blockEntities = mesh.renderInfo().blockEntities();
-        final var blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
+        PoseStack meshStack = new PoseStack();
+        meshStack.mulPose(modelViewStack);
+        meshStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
+        this.mesh.draw(meshStack);
+
+        standardStack.setIdentity();
+        standardStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
+
+        SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
+        CameraRenderState cameraRenderState = new CameraRenderState();
+
+        Map<BlockPos, BlockEntity> blockEntities = mesh.renderInfo().blockEntities();
+        BlockEntityRenderDispatcher blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
+
         blockEntities.forEach((blockPos, entity) -> {
-            matrices.pushPose();
-            matrices.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-            var state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
-            if (state != null) blockEntityDispatcher.submit(state, matrices, commandQueue, cameraRenderState);
-            matrices.popPose();
+            standardStack.pushPose();
+            standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+
+            BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
+            if (state != null) {
+                blockEntityDispatcher.submit(state, standardStack, nodeStorage, cameraRenderState);
+            }
+
+            standardStack.popPose();
         });
+        super.drawSubmittedRenderFeatures();
 
-        // todo: this is called here but also in the other draw call, but emitVerticies is called before and then this draw is called, which also calls super, so draws is called twice?
-        super.draw(RenderSystem.getModelViewMatrix());
-        // todo 2: this impacts entity positions, somehow
+        float effectiveDelta = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
 
-        final var effectiveDelta = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        final var entities = mesh.renderInfo().entities();
-        final var entityDispatcher = client.getEntityRenderDispatcher();
+        Multimap<Vec3, DynamicRenderInfo.EntityEntry> entities = mesh.renderInfo().entities();
+        EntityRenderDispatcher entityDispatcher = client.getEntityRenderDispatcher();
 
         if (!properties().hideEntities.get()) {
             entities.forEach((entityPos, entry) -> {
                 if (!mesh.entitiesFrozen()) {
                     entityPos = entry.entity().getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
                 }
-                var state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
+                EntityRenderState state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
                 state.lightCoords = entry.light();
 
                 if (mesh.entitiesFrozen() && (state instanceof AvatarRenderState avatarRenderState)) {
@@ -143,41 +170,18 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 }
 
                 // +0.01 fixes z-fighting
-                entityDispatcher.submit(state, newState, entityPos.x, entityPos.y + 0.01, entityPos.z, matrices, commandQueue);
-                super.draw(RenderSystem.getModelViewMatrix());
+                entityDispatcher.submit(state, newState, entityPos.x, entityPos.y + 0.01, entityPos.z, standardStack, nodeStorage);
             });
         }
+        super.drawSubmittedRenderFeatures();
 
+        Vec3 diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
+        standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
+        this.drawParticles(standardStack.last().pose(), tickDelta);
 
-        var diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
-        matrices.translate(-diff.x, -diff.y + 1.65, -diff.z);
-
-        this.renderParticles(matrices.last().pose(), tickDelta);
+        super.drawSubmittedRenderFeatures();
     }
 
-    @Override
-    public void draw(Matrix4f modelViewMatrix) {
-        if (!mesh.canRender()) return;
-
-        // 1. Save the "Real" Globals if necessary, or just override them
-        // You need to call the method we found in your GlobalSettingsUniform class
-        var globalSettings = Minecraft.getInstance().gameRenderer.getGlobalSettingsUniform();
-
-        // We "Zero Out" the camera so the shader math:
-        // (Position + ChunkPos - CameraPos) becomes (Position + 0 - 0)
-        globalSettings.update(
-                client.getWindow().getGuiScaledWidth(),
-                client.getWindow().getGuiScaledHeight(),
-                1.0, 0, client.getDeltaTracker(), 0,
-                new net.minecraft.client.Camera(), // Passing a new/empty camera sets pos to 0,0,0
-                false
-        );
-
-        final var meshStack = new PoseStack();
-        meshStack.mulPose(modelViewMatrix);
-        meshStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
-        this.mesh.render(meshStack);
-    }
 
     @Override
     public AreaPropertyBundle properties() {
@@ -186,7 +190,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
 
     @Override
     public ParticleRestriction<?> particleRestriction() {
-        final var dimensions = this.mesh.dimensions();
+        AABB dimensions = this.mesh.dimensions();
         return ParticleRestriction.inArea(new AABB(
                 dimensions.minX,
                 dimensions.minY,
@@ -275,11 +279,11 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
             IsometricUI.sectionHeader(container, "mesh_controls", true);
 
             IsometricUI.dynamicLabel(container, () -> {
-                var meshStatus = Translate.gui("mesh_status");
+                MutableComponent meshStatusText = Translate.gui("mesh_status");
                 if (!mesh.state().isBuildStage) {
-                    meshStatus.append(Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN));
+                    meshStatusText.append(Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN));
                 } else {
-                    meshStatus.append(Translate.gui(
+                    meshStatusText.append(Translate.gui(
                             switch (mesh.state()) {
                                 case BUILDING -> "mesh_building";
                                 case CORRUPT -> "mesh_corrupt";
@@ -288,7 +292,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                             (int) (mesh.buildProgress() * 100)
                     ).withStyle(ChatFormatting.RED));
                 }
-                return meshStatus;
+                return meshStatusText;
             });
 
             IsometricUI.booleanControl(container, this.hideEntities, "hide_entities");
@@ -342,5 +346,15 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
 
             this.updateAndApplyRotationOffset(modelViewStack);
         }
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        mesh.subMeshes.forEach(map -> {
+            map.forEach((layer, buffers) -> buffers.close());
+            map.clear();
+        });
+        mesh.subMeshes.clear();
     }
 }

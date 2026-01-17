@@ -62,8 +62,8 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     @Override
-    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
-        this.currentDelegate.emitVertices(matrices, vertexConsumers, tickDelta);
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+        this.currentDelegate.emitVerticesThenDraw(matrix4fStack, matrices, vertexConsumers, tickDelta);
 
     if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && ImageIO.taskCount() <= 5) {
         final ExportPathSpec exportPath = this.exportPath();
@@ -77,8 +77,8 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     @Override
-    public void draw(Matrix4f modelViewMatrix) {
-        this.currentDelegate.draw(modelViewMatrix);
+    public void drawSubmittedRenderFeatures() {
+        this.currentDelegate.drawSubmittedRenderFeatures();
     }
 
     @Override
@@ -154,8 +154,8 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
             this.delegate.buildGuiControls(batchRenderable.currentDelegate, screen, container);
 
             IsometricUI.sectionHeader(container, "batch.controls", true);
-            try (var builder = IsometricUI.row(container)) {
-                final var startButton = Components.button(Translate.gui("batch.start"), (ButtonComponent button) -> {
+            try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
+                ButtonComponent startButton = Components.button(Translate.gui("batch.start"), (ButtonComponent button) -> {
                     batchRenderable.start();
                     button.active = false;
                 });

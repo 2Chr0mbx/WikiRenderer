@@ -38,14 +38,14 @@ public class PropertyTextFieldComponent extends EditBox {
     }
 
     private Predicate<String> makeMatcher() {
-        final var builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         if (this.setting.min() < 0) builder.append("-?");
 
         builder.append("\\d{0,");
         builder.append(String.valueOf(Math.max(Math.abs(this.setting.min()), Math.abs(this.setting.max()))).length());
         builder.append("}");
 
-        final var regex = builder.toString();
+        String regex = builder.toString();
         return s -> s.matches(regex);
     }
 }

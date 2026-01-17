@@ -8,6 +8,8 @@ import com.glisco.isometricrenders.util.ExportPathSpec;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -33,7 +35,7 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
     }
 
     @Override
-    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
         final int columns = this.properties().columns.get();
         final int rows = Mth.positiveCeilDiv(this.items.size(), columns);
 
@@ -42,14 +44,14 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
         matrices.scale(.1f, .1f, .1f);
         matrices.translate((-columns / 2f) * spacing - spacing / 2, (rows / 2f) * spacing + spacing / 2, 0);
 
-		final var commandQueue = this.client.gameRenderer.getSubmitNodeStorage();
-	    final var itemModelManager = this.client.getItemModelResolver();
+		SubmitNodeStorage nodeStorage = this.client.gameRenderer.getSubmitNodeStorage();
+	    ItemModelResolver itemModelManager = this.client.getItemModelResolver();
 	    for (int row = 0; row < rows; row++) {
             matrices.translate(0, -spacing, 0);
             matrices.pushPose();
             for (int column = 0; column < columns; column++) {
                 matrices.translate(spacing, 0, 0);
-                final var index = row * columns + column;
+                int index = row * columns + column;
                 if (index >= this.items.size()) continue;
 
 	            itemModelManager.updateForTopItem(
@@ -62,7 +64,7 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
 	            );
 	            RENDER_STATE.submit(
 						matrices,
-			            commandQueue,
+			            nodeStorage,
 			            LightTexture.FULL_BRIGHT,
 			            OverlayTexture.NO_OVERLAY,
 			            0

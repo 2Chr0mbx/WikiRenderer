@@ -10,6 +10,7 @@ import com.glisco.isometricrenders.render.*;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.glisco.isometricrenders.widget.NotificationComponent;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.textures.GpuTexture;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
@@ -21,6 +22,7 @@ import io.wispforest.owo.ui.core.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
@@ -40,6 +42,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -177,7 +180,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         IsometricUI.sectionHeader(rightColumn, "render_options", false);
 
-        var colorField = IsometricUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
+        EditBox colorField = IsometricUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
         colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
         colorField.setValue("#" + String.format("%02X", backgroundColor >> 16) + String.format("%02X", backgroundColor >> 8 & 0xFF) + String.format("%02X", backgroundColor & 0xFF));
         colorField.moveCursorToStart(false);
@@ -195,7 +198,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         IsometricUI.booleanControl(rightColumn, overwriteLatest, "overwrite_latest");
 
         final Button exportButton;
-        try (var builder = IsometricUI.row(rightColumn)) {
+        try (IsometricUI.RowBuilder builder = IsometricUI.row(rightColumn)) {
             exportButton = Components.button(Translate.gui("export"), button -> this.captureScheduled = true);
             builder.row.child(exportButton.horizontalSizing(Sizing.fixed(75)));
 
@@ -212,12 +215,12 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get())
                         .whenComplete((image, t) -> {
                             try (image) {
-                                var stream = new ByteArrayOutputStream();
-                                var channel = Channels.newChannel(stream);
+                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                WritableByteChannel channel = Channels.newChannel(stream);
 
                                 ((NativeImageInvoker) (Object) image).isometric$write(channel);
 
-                                final var transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
+                                ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
                                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
                             } catch (IOException e) {
                                 IsometricRenders.LOGGER.error("mfw", e);
@@ -228,8 +231,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (!(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.properties().perPixel90DegreeRendering.get()) {
-            var key = crop.get() ? "renderer_resolution_crop" : "renderer_resolution";
-            var resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), key, Sizing.fixed(50));
+            String key = crop.get() ? "renderer_resolution_crop" : "renderer_resolution";
+            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), key, Sizing.fixed(50));
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
@@ -243,7 +246,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 }
             });
         } else {
-            var resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(sideViewPixelsPerBlockResolution), "per_pixel_resolution", Sizing.fixed(50));
+            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(sideViewPixelsPerBlockResolution), "per_pixel_resolution", Sizing.fixed(50));
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
@@ -262,21 +265,21 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         if (FFmpegDispatcher.wasFFmpegDetected()) {
             if (FFmpegDispatcher.ffmpegAvailable()) {
-                var framesField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportFrames), "animation_frames", Sizing.fixed(30));
+                EditBox framesField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportFrames), "animation_frames", Sizing.fixed(30));
                 framesField.setFilter(s -> s.matches("\\d*"));
                 framesField.setResponder(s -> {
                     if (s.isBlank()) return;
                     exportFrames = Integer.parseInt(s);
                 });
 
-                var framerateField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportFramerate), "animation_framerate", Sizing.fixed(30));
+                EditBox framerateField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportFramerate), "animation_framerate", Sizing.fixed(30));
                 framerateField.setFilter(s -> s.matches("\\d*"));
                 framerateField.setResponder(s -> {
                     if (s.isBlank()) return;
                     exportFramerate = Integer.parseInt(s);
                 });
 
-                try (var builder = IsometricUI.row(rightColumn)) {
+                try (IsometricUI.RowBuilder builder = IsometricUI.row(rightColumn)) {
                     this.exportAnimationButton = Components.button(Translate.gui("export_animation"), button -> {
                         if (this.memoryGuard.canFit(this.estimateMemoryUsage(exportFrames)) || this.minecraft.hasControlDown()) {
                             this.remainingAnimationFrames = exportFrames;
@@ -341,15 +344,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.renderTransparentBackground(context);
         }
 
-        final var window = minecraft.getWindow();
-        final var effectiveTickDelta = playAnimations.get() ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
+        Window window = minecraft.getWindow();
+        float effectiveTickDelta = playAnimations.get() ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
         RenderableDispatcher.drawIntoActiveFramebuffer(
                 this.renderable,
                 window.getWidth() / (float) window.getHeight(),
                 effectiveTickDelta,
                 this.hasBothColumns
-                        ? matrixStack -> {
-                }
+                        ? matrixStack -> {}
                         : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0)
         );
 
@@ -406,14 +408,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             if (--this.remainingAnimationFrames == 0) {
                 this.minecraft.getFramerateLimitTracker().setFramerateLimit(this.minecraft.options.framerateLimit().get());
 
-                final var overwriteValue = overwriteLatest.get();
+                Boolean overwriteValue = overwriteLatest.get();
                 overwriteLatest.set(false);
 
                 CompletableFuture<File> exportFuture = null;
 
                 for (int i = 0; i < this.renderedFrames.size(); i++) {
                     final int _i = i;
-                    exportFuture = RenderableDispatcher.copyTextureIntoImage(this.renderedFrames.get(i), false)
+                    exportFuture = RenderableDispatcher.copyTextureIntoImage(this.renderedFrames.get(i))
                             .thenCompose(img -> ImageIO.save(img, ExportPathSpec.forced("sequence", "seq_" + _i)).whenComplete((f, t) -> img.close()));
                     this.renderedFrames.get(i).close();
                 }
@@ -478,7 +480,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             return super.mouseDragged(click, offsetX, offsetY);
 
         if (this.isInViewport(click.x())) {
-            var button = click.button();
+            int button = click.button();
             if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
                 double xScaling = (100d / properties.scale.get()) * (this.minecraft.getWindow().getScreenWidth() / (float) this.minecraft.getWindow().getGuiScaledWidth());
                 double yScaling = (100d / properties.scale.get()) * (this.minecraft.getWindow().getScreenHeight() / (float) this.minecraft.getWindow().getGuiScaledHeight());
@@ -504,7 +506,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             return super.mouseClicked(click, doubled);
 
         if (this.isInViewport(click.x()) && click.hasControlDown()) {
-            var button = click.button();
+            int button = click.button();
             if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
                 properties.xOffset.setToDefault();
                 properties.yOffset.setToDefault();
@@ -537,7 +539,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public boolean keyPressed(KeyEvent input) {
         if (super.keyPressed(input)) return true;
 
-        var keyCode = input.key();
+        int keyCode = input.key();
 
         if (keyCode == GLFW.GLFW_KEY_F12) {
             this.captureScheduled = true;

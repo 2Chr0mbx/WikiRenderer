@@ -6,9 +6,11 @@ import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -25,6 +27,7 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fStack;
 
 public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundle> implements TickingRenderable<DefaultPropertyBundle> {
 
@@ -43,7 +46,7 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
     }
 
     public static BlockStateRenderable of(BlockState state, @Nullable CompoundTag nbt) {
-        final var client = Minecraft.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         BlockEntity blockEntity = null;
 
@@ -56,8 +59,8 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
     }
 
     public static BlockStateRenderable copyOf(Level world, BlockPos pos) {
-        final var state = world.getBlockState(pos);
-        final var data = world.getBlockEntity(pos) != null
+        BlockState state = world.getBlockState(pos);
+        CompoundTag data = world.getBlockEntity(pos) != null
                 ? world.getBlockEntity(pos).saveWithoutMetadata(world.registryAccess())
                 : null;
 
@@ -65,11 +68,11 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
     }
 
     @Override
-    public void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
         matrices.pushPose();
         matrices.translate(-0.5, -0.5, -0.5);
 
-		var renderState = this.entity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(entity, tickDelta, null);
+		BlockEntityRenderState renderState = this.entity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(entity, tickDelta, null);
 
 		if (renderState != null) {
 			renderState.lightCoords = LightTexture.FULL_BRIGHT;
@@ -78,7 +81,7 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
 	        this.client.getBlockRenderer().renderSingleBlock(this.state, matrices, vertexConsumers, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
         }
 
-		super.draw(RenderSystem.getModelViewMatrix());
+		super.drawSubmittedRenderFeatures();
 
         double xOffset = this.client.player.getX() % 1d;
         double zOffset = this.client.player.getZ() % 1d;
@@ -87,7 +90,7 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
         if (zOffset < 0) zOffset += 1;
 
         matrices.translate(xOffset, 1.65 + this.client.player.getY() % 1d, zOffset);
-        this.renderParticles(matrices.last().pose(), tickDelta);
+        this.drawParticles(matrices.last().pose(), tickDelta);
 
         matrices.popPose();
     }
@@ -95,7 +98,7 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
     @Override
     public void tick() {
         if (this.entity != null && this.state.getTicker(client.level, this.entity.getType()) != null) {
-            final var ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.entity.getType());
+            BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.entity.getType());
             if (ticker == null) return;
 
             ticker.tick(client.level, client.player.blockPosition(), this.state, this.entity);
@@ -132,7 +135,7 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
 
         if (nbt == null) return;
 
-        final var nbtCopy = nbt.copy();
+        CompoundTag nbtCopy = nbt.copy();
 
         nbtCopy.putInt("x", 0);
         nbtCopy.putInt("y", 0);

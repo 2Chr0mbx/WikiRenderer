@@ -23,12 +23,12 @@ public class RenderTaskArgumentType implements ArgumentType<RenderTask> {
 
     @Override
     public RenderTask parse(StringReader reader) throws CommandSyntaxException {
-        final var first = reader.readString();
+        String first = reader.readString();
         if (first.equals("atlas")) return RenderTask.ATLAS;
 
         if (first.equals("batch")) {
             reader.expect(' ');
-            final var second = reader.readString();
+            String second = reader.readString();
 
             if (second.equals("items")) return RenderTask.BATCH_ITEM;
             if (second.equals("blocks")) return RenderTask.BATCH_BLOCK;
@@ -40,7 +40,7 @@ public class RenderTaskArgumentType implements ArgumentType<RenderTask> {
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        final var input = builder.getRemaining();
+        String input = builder.getRemaining();
 
         if (input.codePoints().filter(value -> value == ' ').count() > 0 && input.contains("batch")) {
             return SharedSuggestionProvider.suggest(new String[]{"items", "blocks", "tooltips"}, builder.createOffset(builder.getStart() + 6));

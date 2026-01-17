@@ -6,6 +6,7 @@ import com.glisco.isometricrenders.util.ParticleRestriction;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 
 public interface Renderable<P extends PropertyBundle> {
 
@@ -15,9 +16,9 @@ public interface Renderable<P extends PropertyBundle> {
 
     default void setupLighting(Matrix4f modelViewMatrix) {}
 
-    void emitVertices(PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta);
+    void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta);
 
-    void draw(Matrix4f modelViewMatrix);
+    void drawSubmittedRenderFeatures();
 
     default void cleanUp() {}
 

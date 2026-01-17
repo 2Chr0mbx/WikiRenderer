@@ -13,6 +13,7 @@ import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 public class SelectRenderTaskScreen extends BaseOwoScreen<FlowLayout> {
 
@@ -34,12 +35,12 @@ public class SelectRenderTaskScreen extends BaseOwoScreen<FlowLayout> {
                 .horizontalAlignment(HorizontalAlignment.CENTER)
                 .verticalAlignment(VerticalAlignment.CENTER);
 
-        var mainPanel = Containers.verticalFlow(Sizing.content(), Sizing.content());
+        FlowLayout mainPanel = Containers.verticalFlow(Sizing.content(), Sizing.content());
         mainPanel.surface(Surface.DARK_PANEL).padding(Insets.of(5)).horizontalAlignment(HorizontalAlignment.CENTER);
 
         mainPanel.child(Components.label(Translate.gui("select_batch_operation")).shadow(true).margins(Insets.of(5).withBottom(10)));
 
-        var contentPanel = Containers.horizontalFlow(Sizing.content(), Sizing.content());
+        FlowLayout contentPanel = Containers.horizontalFlow(Sizing.content(), Sizing.content());
         contentPanel.verticalAlignment(VerticalAlignment.CENTER);
 
         contentPanel.child(Containers.verticalFlow(Sizing.content(), Sizing.content())
@@ -62,22 +63,22 @@ public class SelectRenderTaskScreen extends BaseOwoScreen<FlowLayout> {
                 .padding(Insets.of(5))
         );
 
-        var itemPreviewPanel = Containers.verticalFlow(Sizing.content(), Sizing.content());
+        FlowLayout itemPreviewPanel = Containers.verticalFlow(Sizing.content(), Sizing.content());
 
         itemPreviewPanel.child(Components.label(Translate.gui("render_task_size", this.items.size())).margins(Insets.of(7)))
                 .horizontalAlignment(HorizontalAlignment.CENTER).padding(Insets.of(3))
                 .surface(Surface.flat(0x77000000).and(Surface.outline(0x77000000)))
                 .margins(Insets.left(10));
 
-        final var itemContainer = Containers.verticalFlow(Sizing.content(), Sizing.content());
+        FlowLayout itemContainer = Containers.verticalFlow(Sizing.content(), Sizing.content());
 
-        final var itemList = this.items.stream().toList();
-        final var rows = Mth.positiveCeilDiv(itemList.size(), 9);
+        List<ItemStack> itemList = this.items.stream().toList();
+        int rows = Mth.positiveCeilDiv(itemList.size(), 9);
         for (int row = 0; row < rows; row++) {
-            var rowContainer = Containers.horizontalFlow(Sizing.content(), Sizing.content());
+            FlowLayout rowContainer = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
             for (int column = 0; column < 9; column++) {
-                final var index = row * 9 + column;
+                int index = row * 9 + column;
                 if (index >= itemList.size()) break;
 
                 rowContainer.child(Components.item(itemList.get(index)));

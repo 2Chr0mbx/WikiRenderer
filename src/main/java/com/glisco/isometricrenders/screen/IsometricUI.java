@@ -9,6 +9,7 @@ import com.glisco.isometricrenders.widget.PropertySliderComponent;
 import com.glisco.isometricrenders.widget.PropertyTextFieldComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.LabelComponent;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
@@ -23,8 +24,8 @@ import java.util.function.Supplier;
 public class IsometricUI {
 
     public static EditBox labelledTextField(FlowLayout container, String content, String key, Sizing sizing) {
-        try (var builder = row(container)) {
-            final var textBox = Components.textBox(sizing, content);
+        try (RowBuilder builder = row(container)) {
+            TextBoxComponent textBox = Components.textBox(sizing, content);
 
             builder.row.child(textBox);
             builder.row.child(Components.label(Translate.gui(key)).margins(Insets.left(8)));
@@ -34,7 +35,7 @@ public class IsometricUI {
     }
 
     public static LabelComponent sectionHeader(FlowLayout container, String key, boolean separate) {
-        final var label = Components.label(Translate.gui(key)).shadow(true);
+        LabelComponent label = Components.label(Translate.gui(key)).shadow(true);
         if (separate) label.margins(Insets.top(20));
         label.margins(label.margins().get().withBottom(5));
 
@@ -43,7 +44,7 @@ public class IsometricUI {
     }
 
     public static DynamicLabelComponent dynamicLabel(FlowLayout container, Supplier<Component> content) {
-        final var label = new DynamicLabelComponent(content).shadow(false);
+        DynamicLabelComponent label = new DynamicLabelComponent(content).shadow(false);
         label.margins(Insets.bottom(5));
 
         container.child(label);
@@ -55,7 +56,7 @@ public class IsometricUI {
     }
 
     public static void intControl(FlowLayout container, IntProperty property, String name, int step) {
-        try (var builder = row(container)) {
+        try (RowBuilder builder = row(container)) {
             builder.row.child(new PropertyTextFieldComponent(Sizing.fill(15), property));
             builder.row.child(new PropertySliderComponent(Sizing.fill(80), Translate.gui(name), step, property).margins(Insets.left(5)));
         }
@@ -73,9 +74,9 @@ public class IsometricUI {
     }
 
     public static RowBuilder row(FlowLayout container) {
-        var component = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
-        component.margins(Insets.vertical(5)).verticalAlignment(VerticalAlignment.CENTER);
-        return new RowBuilder(component, container);
+        FlowLayout layout = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
+        layout.margins(Insets.vertical(5)).verticalAlignment(VerticalAlignment.CENTER);
+        return new RowBuilder(layout, container);
     }
 
     public static class RowBuilder implements AutoCloseable {

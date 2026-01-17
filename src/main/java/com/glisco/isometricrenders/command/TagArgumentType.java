@@ -38,7 +38,7 @@ public class TagArgumentType implements ArgumentType<TagArgumentType.TagArgument
     @Override
     public TagArgument parse(StringReader reader) throws CommandSyntaxException {
         reader.expect('#');
-        final var tagId = Identifier.read(reader);
+        Identifier tagId = Identifier.read(reader);
         return registryWrapper.get(TagKey.create(Registries.ITEM, tagId))
                 .map(entryList -> new TagArgument(tagId, entryList))
                 .orElseThrow(() -> UNKNOWN_TAG_EXCEPTION.createWithContext(reader, tagId));

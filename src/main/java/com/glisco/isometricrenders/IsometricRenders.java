@@ -61,17 +61,17 @@ public class IsometricRenders implements ClientModInitializer {
 
         KeyBindingHelper.registerKeyBinding(SELECT);
 
-        final var ioStateId = "io-state";
-        final var areaSelectionHintId = "area-selection-hint";
+        String ioStateId = "io-state";
+        String areaSelectionHintId = "area-selection-hint";
 
-        var hudId = Identifier.fromNamespaceAndPath(MOD_ID, "hud");
+        Identifier hudId = Identifier.fromNamespaceAndPath(MOD_ID, "hud");
         Hud.add(hudId, () -> Containers.verticalFlow(Sizing.content(), Sizing.content()).positioning(Positioning.absolute(20, 20)));
 
         HudElementRegistry.addLast(hudId, (matrixStack, tickDelta) -> {
-            var client = Minecraft.getInstance();
-            var isometricHud = (FlowLayout) Hud.getComponent(hudId);
+            Minecraft client = Minecraft.getInstance();
+            FlowLayout isometricHud = (FlowLayout) Hud.getComponent(hudId);
 
-            final var ioState = isometricHud.childById(IOStateComponent.class, ioStateId);
+            IOStateComponent ioState = isometricHud.childById(IOStateComponent.class, ioStateId);
             if ((ioState == null) == (ImageIO.taskCount() > 0 && client.screen == null)) {
                 if (ImageIO.taskCount() > 0 && client.screen == null) {
                     isometricHud.child(new IOStateComponent().positioning(Positioning.absolute(20, 20)).id(ioStateId));
@@ -80,7 +80,7 @@ public class IsometricRenders implements ClientModInitializer {
                 }
             }
 
-            final var selectionHint = isometricHud.childById(AreaSelectionComponent.class, areaSelectionHintId);
+            AreaSelectionComponent selectionHint = isometricHud.childById(AreaSelectionComponent.class, areaSelectionHintId);
             if ((selectionHint == null) == AreaSelectionHelper.shouldDraw()) {
                 if (AreaSelectionHelper.shouldDraw()) {
                     isometricHud.child(new AreaSelectionComponent().id(areaSelectionHintId));

@@ -22,7 +22,7 @@ public class MemoryGuard {
     }
 
     public void update() {
-        var data = new int[4];
+        int[] data = new int[4];
 
         GL11.glGetIntegerv(ATIMeminfo.GL_VBO_FREE_MEMORY_ATI, data);
         GL11.glGetIntegerv(NVXGPUMemoryInfo.GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, data);
@@ -36,7 +36,7 @@ public class MemoryGuard {
     }
 
     public List<Component> getStatusTooltip(int memoryMB) {
-        final var tooltip = new ArrayList<Component>();
+        List<Component> tooltip = new ArrayList<>();
 
         tooltip.add(this.usageText("vram", memoryMB, this.availableVramMB(), this.canFitInVram(memoryMB)));
         tooltip.add(this.usageText("ram", memoryMB, this.availableRamMB(), this.canFitInRam(memoryMB)));

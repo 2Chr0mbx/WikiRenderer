@@ -27,6 +27,8 @@ import net.minecraft.client.renderer.DynamicUniforms;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
@@ -40,6 +42,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.function.TriFunction;
@@ -96,8 +100,7 @@ public class WorldMesh {
     private @Nullable CompletableFuture<Void> buildFuture = null;
 
     // Vertex storage
-    // private final Map<ChunkSectionLayer, SectionBuffers> bufferStorage = new HashMap<>();
-    private final List<Map<ChunkSectionLayer, SectionBuffers>> subMeshes = new ArrayList<>();
+    public final List<Map<ChunkSectionLayer, SectionBuffers>> subMeshes = new ArrayList<>();
 
     private WorldMesh(
             BlockAndTintGetter world,
@@ -133,7 +136,7 @@ public class WorldMesh {
      *
      * @param matrices The translation matrices. This is applied to the entire mesh
      */
-    public void render(PoseStack matrices) {
+    public void draw(PoseStack matrices) {
         if (!this.canRender()) {
             throw new IllegalStateException("World mesh not prepared!");
         }
@@ -355,6 +358,11 @@ public class WorldMesh {
 
         this.entitiesFrozen = this.freezeEntities;
         this.entitiesHidden = this.hideEntities;
+        this.subMeshes.forEach(map -> {
+            map.forEach((layer, buffers) -> buffers.close());
+            map.clear();
+        });
+        this.subMeshes.clear();
 
         Minecraft client = Minecraft.getInstance();
 
@@ -363,7 +371,7 @@ public class WorldMesh {
                 .stream()
                 .map(entity -> {
                     if (this.freezeEntities) {
-                        var originalEntity = entity;
+                        Entity originalEntity = entity;
                         if (entity instanceof Player) {
                             entity = EntityRenderable.copy(originalEntity);
                         }
@@ -428,13 +436,13 @@ public class WorldMesh {
 
         for (SubMesh data : subMeshes) {
 
-            var allocatorStorage = new SectionBufferBuilderPack();
-            var blockRenderManager = client.getBlockRenderer();
-            var matrices = new PoseStack();
-            var builderStorage = new HashMap<ChunkSectionLayer, BufferBuilder>();
+            SectionBufferBuilderPack bufferBuilderPack = new SectionBufferBuilderPack();
+            BlockRenderDispatcher blockRenderDispatcher = client.getBlockRenderer();
+            PoseStack poseStack = new PoseStack();
+            HashMap<ChunkSectionLayer, BufferBuilder> builderStorage = new HashMap<>();
 
             WorldMesherRenderContext renderContext = Renderer.get() instanceof IndigoRenderer
-                    ? new WorldMesherRenderContext(this.world, layer -> this.getOrCreateBuilder(allocatorStorage, builderStorage, layer))
+                    ? new WorldMesherRenderContext(this.world, layer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, layer))
                     : null;
 
             for (Iterable<BlockPos> positions : data.positions) {
@@ -442,54 +450,54 @@ public class WorldMesh {
                     currentBlockIndex++;
                     this.buildProgress = currentBlockIndex / (float) blocksToBuild;
 
-                    var state = world.getBlockState(pos);
+                    BlockState state = world.getBlockState(pos);
                     if (state.isAir()) continue;
 
-                    var renderPos = pos.subtract(from);
+                    BlockPos renderPos = pos.subtract(from);
                     if (world.getBlockEntity(pos) != null) {
                         blockEntities.put(renderPos, world.getBlockEntity(pos));
                     }
 
                     if (!world.getFluidState(pos).isEmpty()) {
-                        var fluidState = world.getFluidState(pos);
-                        var fluidLayer = ItemBlockRenderTypes.getRenderLayer(fluidState);
+                        FluidState fluidState = world.getFluidState(pos);
+                        ChunkSectionLayer fluidLayer = ItemBlockRenderTypes.getRenderLayer(fluidState);
 
-                        matrices.pushPose();
-                        matrices.translate(-(pos.getX() & 15), -(pos.getY() & 15), -(pos.getZ() & 15));
-                        matrices.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
+                        poseStack.pushPose();
+                        poseStack.translate(-(pos.getX() & 15), -(pos.getY() & 15), -(pos.getZ() & 15));
+                        poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
 
-                        blockRenderManager.renderLiquid(pos, world, new FluidVertexConsumer(this.getOrCreateBuilder(allocatorStorage, builderStorage, fluidLayer), matrices.last().pose()), state, fluidState);
+                        blockRenderDispatcher.renderLiquid(pos, world, new FluidVertexConsumer(this.getOrCreateBuilder(bufferBuilderPack, builderStorage, fluidLayer), poseStack.last().pose()), state, fluidState);
 
-                        matrices.popPose();
+                        poseStack.popPose();
                     }
 
-                    matrices.pushPose();
-                    matrices.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
+                    poseStack.pushPose();
+                    poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
 
-                    final var model = blockRenderManager.getBlockModel(state);
+                    BlockStateModel model = blockRenderDispatcher.getBlockModel(state);
                     if (renderContext != null) {
-                        renderContext.tessellateBlock(state, pos, model, matrices);
+                        renderContext.tessellateBlock(state, pos, model, poseStack);
                     } else {
-                        blockRenderManager.getModelRenderer().render(this.world, model, state, pos, matrices, blockLayer -> this.getOrCreateBuilder(allocatorStorage, builderStorage, blockLayer), cull, state.getSeed(pos), OverlayTexture.NO_OVERLAY);
+                        blockRenderDispatcher.getModelRenderer().render(this.world, model, state, pos, poseStack, blockLayer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, blockLayer), cull, state.getSeed(pos), OverlayTexture.NO_OVERLAY);
                     }
 
-                    matrices.popPose();
+                    poseStack.popPose();
                 }
             }
 
             Map<ChunkSectionLayer, SectionBuffers> regionBuffers = new HashMap<>();
             builderStorage.forEach((layer, bufferBuilder) -> {
-                var built = bufferBuilder.build();
-                if (built == null) return;
+                MeshData builtData = bufferBuilder.build();
+                if (builtData == null) return;
 
-                GpuBuffer vBuf = RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-VBuf", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, built.vertexBuffer());
-                GpuBuffer iBuf = built.indexBuffer() != null ? RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-IBuf", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST, built.indexBuffer()) : null;
+                GpuBuffer vBuf = RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-VBuf", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, builtData.vertexBuffer());
+                GpuBuffer iBuf = builtData.indexBuffer() != null ? RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-IBuf", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST, builtData.indexBuffer()) : null;
 
-                regionBuffers.put(layer, new SectionBuffers(vBuf, iBuf, built.drawState().indexCount(), built.drawState().indexType()));
+                regionBuffers.put(layer, new SectionBuffers(vBuf, iBuf, builtData.drawState().indexCount(), builtData.drawState().indexType()));
             });
             this.subMeshes.add(regionBuffers);
 
-            allocatorStorage.close();
+            bufferBuilderPack.close();
         }
 
         HashMultimap<Vec3, DynamicRenderInfo.EntityEntry> entities = HashMultimap.create();

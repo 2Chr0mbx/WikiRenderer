@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.widget;
 
 import com.glisco.isometricrenders.util.Translate;
 import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.UISounds;
@@ -32,8 +33,8 @@ public class NotificationComponent extends FlowLayout {
             });
         }
 
-        for (var message : messages) {
-            final var label = Components.label(message);
+        for (Component message : messages) {
+            LabelComponent label = Components.label(message);
             if (onClick != null) {
                 label.tooltip(Translate.gui("click_to_open")).cursorStyle(this.cursorStyle);
             }
