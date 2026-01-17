@@ -56,12 +56,12 @@ public class RenderableDispatcher {
         IsometricRenders.beginRenderableDraw(projMatrix, projectionMatrix);
 
         renderable.setupLighting(modelViewStack);
+        renderable.draw(modelViewStack); // --> Draw
         renderable.emitVertices(
                 new PoseStack(),
                 Minecraft.getInstance().renderBuffers().bufferSource(),
                 tickDelta
         );
-        renderable.draw(modelViewStack); // --> Draw
 
         IsometricRenders.endRenderableDraw();
         modelViewStack.popMatrix();

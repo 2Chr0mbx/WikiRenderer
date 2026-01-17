@@ -359,7 +359,7 @@ public class WorldMesh {
         Minecraft client = Minecraft.getInstance();
 
         HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
-        List<DynamicRenderInfo.EntityEntry> entitiesList = this.entitySupplier.apply(client.player, this.from, this.to.offset(1, 1, 1))
+        List<DynamicRenderInfo.EntityEntry> entitiesList = this.entitySupplier.apply(client.player, this.from, this.to)
                 .stream()
                 .map(entity -> {
                     if (this.freezeEntities) {

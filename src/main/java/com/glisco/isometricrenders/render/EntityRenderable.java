@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -191,6 +192,9 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 
             if (properties.invisible.get()) {
                 state.isInvisible = true;
+                if (state instanceof LivingEntityRenderState livingEntityRenderState) {
+                    livingEntityRenderState.isInvisibleToPlayer = true;
+                }
             }
 
             matrices.pushPose();

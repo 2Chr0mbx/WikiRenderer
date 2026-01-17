@@ -136,11 +136,10 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 // fix nametag rotations to look at the camera (i think this looks better)
                 CameraRenderState newState = new CameraRenderState();
                 if (state.nameTagAttachment != null) {
-                    newState.orientation.rotationX((float) -Math.toRadians(this.properties().slant.get()));
-                    newState.orientation.rotationY((float) -Math.toRadians(this.properties().rotation.get() + this.properties().rotationOffset));
-                    if (this.properties().rotationSpeed.get() != 0) {
-                        // newState.orientation.rotationY((float) -Math.toRadians(this.properties().rotationOffset));
-                    }
+                    newState.orientation.rotationYXZ(
+                            (float) Math.PI - (float) Math.toRadians(this.properties().rotation.get() + this.properties().rotationOffset),
+                            (float) Math.PI + (float) Math.toRadians(this.properties().slant.get()),
+                            (float) Math.PI);
                 }
 
                 // +0.01 fixes z-fighting
