@@ -20,5 +20,5 @@ public class GlobalProperties {
     public static int exportFramerate = 30;
     public static int exportFrames = 60;
 
-    public static FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.APNG;
+    public static FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
 }

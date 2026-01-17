@@ -66,7 +66,7 @@ public class IsorenderCommand {
                 .executes(IsorenderCommand::showRootNodeHelp)
                 .then(literal("area")
                         .then(literal("island")
-                                .then(argument("chunk_size", IntegerArgumentType.integer(4, 16))
+                                .then(argument("chunk_size", IntegerArgumentType.integer(4, 64))
                                         .executes(IsorenderCommand::renderSurroundingConnectedMiniChunks)))
                         .then(literal("pos")
                                 .then(argument("start", BlockPosArgument.blockPos())

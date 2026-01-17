@@ -4,8 +4,8 @@ import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
-import com.glisco.isometricrenders.render.area.MiniChunkScanner;
 import com.glisco.isometricrenders.render.area.MiniChunk;
+import com.glisco.isometricrenders.render.area.MiniChunkScanner;
 import com.glisco.isometricrenders.render.area.WorldMesh;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.screen.RenderScreen;
@@ -27,7 +27,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -134,8 +133,18 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                     avatarRenderState.capeLean2 = 0;
                 }
 
+                // fix nametag rotations to look at the camera (i think this looks better)
+                CameraRenderState newState = new CameraRenderState();
+                if (state.nameTagAttachment != null) {
+                    newState.orientation.rotationX((float) -Math.toRadians(this.properties().slant.get()));
+                    newState.orientation.rotationY((float) -Math.toRadians(this.properties().rotation.get() + this.properties().rotationOffset));
+                    if (this.properties().rotationSpeed.get() != 0) {
+                        // newState.orientation.rotationY((float) -Math.toRadians(this.properties().rotationOffset));
+                    }
+                }
+
                 // +0.01 fixes z-fighting
-                entityDispatcher.submit(state, cameraRenderState, entityPos.x, entityPos.y + 0.01, entityPos.z, matrices, commandQueue);
+                entityDispatcher.submit(state, newState, entityPos.x, entityPos.y + 0.01, entityPos.z, matrices, commandQueue);
                 super.draw(RenderSystem.getModelViewMatrix());
             });
         }

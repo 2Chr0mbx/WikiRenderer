@@ -27,7 +27,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public final IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
 
     public final IntProperty rotationSpeed = IntProperty.of(0, 0, 100);
-    protected float rotationOffset = 0;
+    public float rotationOffset = 0;
     protected boolean rotationOffsetUpdated = false;
 
     public DefaultPropertyBundle() {

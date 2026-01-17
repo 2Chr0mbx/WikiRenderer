@@ -228,7 +228,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (!(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.properties().perPixel90DegreeRendering.get()) {
-            var resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), "renderer_resolution", Sizing.fixed(50));
+            var key = crop.get() ? "renderer_resolution_crop" : "renderer_resolution";
+            var resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), key, Sizing.fixed(50));
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
