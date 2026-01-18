@@ -164,6 +164,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 }
                 EntityRenderState state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
                 state.lightCoords = entry.light();
+                state.outlineColor = 0; // remove glow
 
                 if (mesh.entitiesFrozen() && (state instanceof AvatarRenderState avatarRenderState)) {
                     // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
@@ -290,8 +291,8 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         public final Property<Boolean> hideEntities = Property.of(false);
         public final Property<Boolean> freezeEntities = Property.of(false);
         public final Property<Boolean> hideText = Property.of(false);
-        public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
 
+        public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
         public final IntProperty alternativeRotation = IntProperty.of(0, 0, 360).withRollover();
         public final IntProperty alternativeSlant = IntProperty.of(90, -90, 90);
 

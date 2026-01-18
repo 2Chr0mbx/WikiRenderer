@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
+import com.glisco.isometricrenders.mixin.access.ModelPartAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
@@ -9,17 +10,27 @@ import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
+import com.glisco.isometricrenders.util.Translate;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
+import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.EntityComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Insets;
+import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
@@ -46,7 +57,11 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> implements TickingRenderable<DefaultPropertyBundle> {
@@ -123,13 +138,17 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
     public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
         matrices.pushPose();
 
-        double verticalOffset = -.5 * this.entity.getBbHeight();
+        double verticalOffset = -this.entity.getBbHeight() * (this.properties().spriteRendering.get() ? 1 : 0.5);
         matrices.translate(0, verticalOffset, 0); // this fits it into the default frame
         matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
 
         EntityPropertyBundle properties = this.properties();
         this.entity.setYHeadRot(properties.yaw.get());
-        if (entity instanceof LivingEntity living) living.yHeadRotO = properties.yaw.get();
+        if (entity instanceof LivingEntity living) {
+            living.yHeadRotO = properties.yaw.get();
+            living.yBodyRotO = properties.entityRotation.get();
+            living.yBodyRot = properties.entityRotation.get();
+        }
         this.entity.yRotO = properties.yaw.get();
 
         this.entity.setXRot(properties.pitch.get());
@@ -149,6 +168,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             Vec3 offsetPos = offset.getValue();
             EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
 
+            state.outlineColor = 0; // remove glow
             state.shadowPieces.clear(); // remove shadows
             state.lightCoords = LightTexture.FULL_BRIGHT;
 
@@ -190,10 +210,12 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             }
 
             if (state instanceof HumanoidRenderState humanoidRenderState) {
-                if (properties.hideArmor.get()) {
-                    humanoidRenderState.headItem.clear();
-                    humanoidRenderState.wornHeadType = null;
-                    humanoidRenderState.headEquipment = ItemStack.EMPTY;
+                if (properties.hideArmor.get() || properties.spriteRendering.get()) {
+                    if (properties.hideArmor.get()) {
+                        humanoidRenderState.headItem.clear();
+                        humanoidRenderState.wornHeadType = null;
+                        humanoidRenderState.headEquipment = ItemStack.EMPTY;
+                    }
                     humanoidRenderState.chestEquipment = ItemStack.EMPTY;
                     humanoidRenderState.legsEquipment = ItemStack.EMPTY;
                     humanoidRenderState.feetEquipment = ItemStack.EMPTY;
@@ -213,11 +235,27 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             }
 
             matrices.pushPose();
+
+            List<Runnable> toggleCallbacks = new ArrayList<>();
+            if (properties.spriteRendering.get()) {
+                if (state instanceof AvatarRenderState avatarRenderState) {
+                    avatarRenderState.isSpectator = true;
+                }
+                EntityRenderer<?,?> renderer = renderDispatcher.getRenderer(entity);
+                if (renderer instanceof LivingEntityRenderer<?,?,?> livingEntityRenderer) {
+                    EntityModel<?> model = livingEntityRenderer.getModel();
+                    ModelPart root = model.root();
+                    this.hideNonHeadParts(toggleCallbacks, root);
+                }
+            }
+
             renderDispatcher.submit(state, new CameraRenderState(), offsetPos.x(), offsetPos.y(), offsetPos.z(), matrices, nodeStorage);
+            client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+
             matrices.popPose();
+            toggleCallbacks.forEach(Runnable::run);
         });
 
-        client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
         // if these aren't undone them the bottom of certain armor boots look weird (for some reason, and despite popPose(), idk)
         matrices.mulPose(Axis.YP.rotationDegrees(-180));
         matrices.translate(0, -verticalOffset, 0);
@@ -262,8 +300,11 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
 
         public static final EntityPropertyBundle INSTANCE = new EntityPropertyBundle();
 
+        public final Property<Boolean> spriteRendering = Property.of(false);
+
         public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
         public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
+        public final IntProperty entityRotation = IntProperty.of(0, -90, 90).withRollover();
         public final Property<Boolean> useSteveSkin = Property.of(false);
         public final Property<Boolean> hideHeldItems = Property.of(false);
         public final Property<Boolean> hideArmor = Property.of(false);
@@ -271,17 +312,50 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         public final Property<Boolean> invisible = Property.of(false); // idk what this is for but its a requested option
         public final Property<Boolean> forceSmallArms = Property.of(false);
 
-        private EntityPropertyBundle() {
-        }
-
         @Override
         public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-            super.buildGuiControls(renderable, screen, container);
+            IsometricUI.sectionHeader(container, "transform_options", false);
+            IsometricUI.booleanControl(container, spriteRendering, "sprite_rendering");
+            this.spriteRendering.listen(((booleanProperty, value) -> {
+                screen.guiRebuildScheduled = true;
+                this.yaw.set(0);
+                this.pitch.set(0);
+            }), false);
+
+            IsometricUI.intControl(container, scale, "scale", 10);
+            if (!spriteRendering.get()) {
+                IsometricUI.intControl(container, rotation, "rotation", 45);
+                IsometricUI.intControl(container, slant, "slant", 30);
+                IsometricUI.intControl(container, lightAngle, "light_angle", 15);
+                IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+            }
+
+            IsometricUI.sectionHeader(container, "presets", true);
+            try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
+                builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
+                    this.rotation.setToDefault();
+                    this.slant.set(30);
+                }).horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
+
+                builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+                    this.rotation.setToDefault();
+                    this.slant.set(36);
+                }).horizontalSizing(Sizing.fixed(60)));
+            }
+
+            container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
+                        this.xOffset.setToDefault();
+                        this.yOffset.setToDefault();
+                        this.scale.setToDefault();
+                    })
+                    .horizontalSizing(Sizing.fixed(140))
+                    .margins(Insets.top(5)));
 
             IsometricUI.sectionHeader(container, "entity_data", true);
 
             IsometricUI.intControl(container, yaw, "entity_data.yaw", 15);
             IsometricUI.intControl(container, pitch, "entity_data.pitch", 5);
+            IsometricUI.intControl(container, entityRotation, "entity_data.rotation", 5);
             if (renderable instanceof EntityRenderable entityRenderable) {
                 if (entityRenderable.entity instanceof Player) {
                     IsometricUI.booleanControl(container, useSteveSkin, "entity_data.steve");
@@ -295,5 +369,41 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
                 }
             }
         }
+
+        @Override
+        public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
+            final float scale = this.scale.get() / 100f;
+            modelViewStack.scale(scale, scale, scale);
+
+            modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
+
+            if (!this.spriteRendering.get()) {
+                modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get()));
+                modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
+            } else {
+                modelViewStack.rotate(Axis.YP.rotationDegrees(180));
+            }
+
+            this.updateAndApplyRotationOffset(modelViewStack);
+        }
+
+        @Override
+        protected void updateAndApplyRotationOffset(Matrix4fStack modelViewStack) {
+            if (!this.spriteRendering.get()) {
+                super.updateAndApplyRotationOffset(modelViewStack);
+            }
+        }
+    }
+
+    private void hideNonHeadParts(List<Runnable> toggleCallbacks, ModelPart part) {
+        Map<String, ModelPart> childParts = ((ModelPartAccessor) (Object) part).isometric$getChildren();
+        childParts.forEach((identifier, modelPart) -> {
+            if (!identifier.equals("head")) {
+                boolean previouslySkippedDraw = modelPart.skipDraw;
+                modelPart.skipDraw = true;
+                toggleCallbacks.add(() -> modelPart.skipDraw = previouslySkippedDraw);
+                hideNonHeadParts(toggleCallbacks, modelPart);
+            }
+        });
     }
 }

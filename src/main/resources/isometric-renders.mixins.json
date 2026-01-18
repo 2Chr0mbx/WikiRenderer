@@ -30,6 +30,7 @@
     "access.ItemStackRenderStateAccessor",
     "access.LevelRendererAccessor",
     "access.LightTextureAccessor",
+    "access.ModelPartAccessor",
     "access.NativeImageInvoker",
     "access.ParticleEngineAccessor",
     "access.WorldCoordinatesAccessor"
