@@ -1,7 +1,7 @@
 package com.glisco.isometricrenders.render;
 
-import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.CameraInvoker;
+import com.glisco.isometricrenders.mixin.access.LightTextureAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
@@ -9,11 +9,14 @@ import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.state.ParticlesRenderState;
-import net.minecraft.world.phys.Vec3;
-import org.joml.*;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
@@ -50,6 +53,10 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         }
 
         RenderSystem.setShaderLights(this.lightingBuffer.slice());
+
+        LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
+        ((LightTextureAccessor) lightTexture).isometric$setUpdateLightTexture(true);
+        lightTexture.updateLightTexture(1.0F);
     }
 
     @Override
@@ -58,6 +65,10 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
             this.lightingBuffer.close();
             this.lightingBuffer = null;
         }
+
+        LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
+        ((LightTextureAccessor) lightTexture).isometric$setUpdateLightTexture(true);
+        lightTexture.updateLightTexture(1.0F);
     }
 
     @Override
@@ -88,13 +99,18 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
                 camera,
                 tickDelta
         );
+
         /* create render state from camera object; (mostly) mirrors GameRenderer.updateCameraState */
         CameraRenderState cameraRenderState = new CameraRenderState();
         cameraRenderState.initialized = true;
         cameraRenderState.pos = camera.position();
         cameraRenderState.blockPos = camera.blockPosition();
         cameraRenderState.entityPos = camera.entity().getPosition(tickDelta);
-        cameraRenderState.orientation = new Quaternionf(camera.rotation());
+        cameraRenderState.orientation.rotationYXZ(
+                (float) Math.PI - (float) Math.toRadians(this.properties().rotation.get() + this.properties().rotationOffset),
+                (float) Math.PI + (float) Math.toRadians(this.properties().slant.get()),
+                (float) Math.PI);
+
         /* submit and render to vertexconsumers */
         particleBatch.submit(client.gameRenderer.getSubmitNodeStorage(), cameraRenderState);
         drawSubmittedRenderFeatures();

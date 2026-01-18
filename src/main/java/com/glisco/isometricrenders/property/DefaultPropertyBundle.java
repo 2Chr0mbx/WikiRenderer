@@ -18,7 +18,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
 
     private static final DefaultPropertyBundle INSTANCE = new DefaultPropertyBundle();
 
-    public final IntProperty scale = IntProperty.of(100, 0, 500);
+    public final IntProperty scale = IntProperty.of(100, 0, 1000);
     public final IntProperty rotation = IntProperty.of(135, 0, 360).withRollover();
     public final IntProperty slant = IntProperty.of(30, -90, 90);
     public final IntProperty lightAngle = IntProperty.of(-45, -45, 45);
@@ -26,7 +26,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public final IntProperty xOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
     public final IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
 
-    public final IntProperty rotationSpeed = IntProperty.of(0, 0, 100);
+    public final IntProperty rotationSpeed = IntProperty.of(0, 0, 720);
     public float rotationOffset = 0;
     protected boolean rotationOffsetUpdated = false;
 
@@ -79,7 +79,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     protected void updateAndApplyRotationOffset(Matrix4fStack modelViewStack) {
         if (rotationSpeed.get() != 0) {
             if (!this.rotationOffsetUpdated) {
-                rotationOffset += Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() * rotationSpeed.get() * .1f;
+                rotationOffset += Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() * rotationSpeed.get() * .05f;
                 this.rotationOffsetUpdated = true;
             }
             modelViewStack.rotate(Axis.YP.rotationDegrees(rotationOffset));

@@ -1,5 +1,6 @@
 package com.glisco.isometricrenders.render;
 
+import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.property.IntProperty;
@@ -23,6 +24,7 @@ import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GlobalSettingsUniform;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -30,18 +32,22 @@ import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
-import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.*;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropertyBundle> {
@@ -122,12 +128,18 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         standardStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
         SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
+
+        AreaPropertyBundle properties = properties();
+
         CameraRenderState cameraRenderState = new CameraRenderState();
+        // this makes certain things face the camera, like text, fishing bobbers, etc, see what uses the orientation field
+        cameraRenderState.orientation.rotationYXZ(
+                (float) Math.PI - (float) Math.toRadians(properties.rotation.get() + properties.rotationOffset),
+                (float) Math.PI + (float) Math.toRadians(properties.slant.get()),
+                (float) Math.PI);
 
-        Map<BlockPos, BlockEntity> blockEntities = mesh.renderInfo().blockEntities();
         BlockEntityRenderDispatcher blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
-
-        blockEntities.forEach((blockPos, entity) -> {
+        mesh.renderInfo().blockEntities().forEach((blockPos, entity) -> {
             standardStack.pushPose();
             standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
@@ -145,7 +157,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         Multimap<Vec3, DynamicRenderInfo.EntityEntry> entities = mesh.renderInfo().entities();
         EntityRenderDispatcher entityDispatcher = client.getEntityRenderDispatcher();
 
-        if (!properties().hideEntities.get()) {
+        if (!properties.hideEntities.get()) {
             entities.forEach((entityPos, entry) -> {
                 if (!mesh.entitiesFrozen()) {
                     entityPos = entry.entity().getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
@@ -158,19 +170,84 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                     avatarRenderState.capeFlap = 0;
                     avatarRenderState.capeLean = 0;
                     avatarRenderState.capeLean2 = 0;
+                    // todo remove this?
                 }
 
-                // fix nametag rotations to look at the camera (i think this looks better)
-                CameraRenderState newState = new CameraRenderState();
-                if (state.nameTagAttachment != null) {
-                    newState.orientation.rotationYXZ(
-                            (float) Math.PI - (float) Math.toRadians(this.properties().rotation.get() + this.properties().rotationOffset),
-                            (float) Math.PI + (float) Math.toRadians(this.properties().slant.get()),
-                            (float) Math.PI);
+                if (properties.hideText.get()) {
+                    state.nameTag = null;
+                    state.nameTagAttachment = null;
+                }
+
+                if (properties.overrideRotations.get()) {
+                    if (state instanceof LivingEntityRenderState livingEntityRenderState) {
+                        livingEntityRenderState.bodyRot = (properties.entityRotation.get() + 180);
+                        livingEntityRenderState.xRot = properties.pitch.get();
+                        livingEntityRenderState.yRot = properties.yaw.get();
+                    }
+                }
+
+                // todo: de-dupe
+                if (state instanceof AvatarRenderState avatarRenderState) {
+                    avatarRenderState.capeFlap = 0;
+                    avatarRenderState.capeLean = 0;
+                    avatarRenderState.capeLean2 = 0;
+
+                    if (properties.useSteveSkin.get()) {
+                        avatarRenderState.skin = DefaultPlayerSkin.getDefaultSkin();
+                    }
+                    if (properties.forceSmallArms.get()) {
+                        avatarRenderState.skin = avatarRenderState.skin.with(PlayerSkin.Patch.create(
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.of(PlayerModelType.SLIM))
+                        );
+                    }
+                }
+
+                if (state instanceof ArmedEntityRenderState armedEntityRenderState) {
+                    if (properties.hideHeldItems.get()) {
+                        armedEntityRenderState.leftHandItemStack = ItemStack.EMPTY;
+                        armedEntityRenderState.rightHandItemStack = ItemStack.EMPTY;
+                        armedEntityRenderState.leftHandItemState.clear();
+                        armedEntityRenderState.rightHandItemState.clear();
+                        armedEntityRenderState.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+                        armedEntityRenderState.rightArmPose = HumanoidModel.ArmPose.EMPTY;
+                    } else if (properties.hideEnchantments.get()) {
+                        for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.leftHandItemState).isometric$getLayers()) {
+                            layer.setFoilType(ItemStackRenderState.FoilType.NONE);
+                        }
+                        for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.rightHandItemState).isometric$getLayers()) {
+                            layer.setFoilType(ItemStackRenderState.FoilType.NONE);
+                        }
+                    }
+                }
+
+                if (state instanceof HumanoidRenderState humanoidRenderState) {
+                    if (properties.hideArmor.get()) {
+                        humanoidRenderState.headItem.clear();
+                        humanoidRenderState.wornHeadType = null;
+                        humanoidRenderState.headEquipment = ItemStack.EMPTY;
+                        humanoidRenderState.chestEquipment = ItemStack.EMPTY;
+                        humanoidRenderState.legsEquipment = ItemStack.EMPTY;
+                        humanoidRenderState.feetEquipment = ItemStack.EMPTY;
+                    } else if (properties.hideEnchantments.get()) {
+                        humanoidRenderState.headEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                        humanoidRenderState.chestEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                        humanoidRenderState.legsEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                        humanoidRenderState.feetEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                    }
+                }
+
+                if (properties.invisible.get()) {
+                    state.isInvisible = true;
+                    if (state instanceof LivingEntityRenderState livingEntityRenderState) {
+                        livingEntityRenderState.isInvisibleToPlayer = true;
+                    }
                 }
 
                 // +0.01 fixes z-fighting
-                entityDispatcher.submit(state, newState, entityPos.x, entityPos.y + 0.01, entityPos.z, standardStack, nodeStorage);
+                entityDispatcher.submit(state, cameraRenderState, entityPos.x, entityPos.y + 0.01, entityPos.z, standardStack, nodeStorage);
             });
         }
         super.drawSubmittedRenderFeatures();
@@ -212,10 +289,24 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
 
         public final Property<Boolean> hideEntities = Property.of(false);
         public final Property<Boolean> freezeEntities = Property.of(false);
+        public final Property<Boolean> hideText = Property.of(false);
         public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
 
         public final IntProperty alternativeRotation = IntProperty.of(0, 0, 360).withRollover();
         public final IntProperty alternativeSlant = IntProperty.of(90, -90, 90);
+
+        public final Property<Boolean> overrideRotations = Property.of(false);
+        public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
+        public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
+        public final IntProperty entityRotation = IntProperty.of(0, -90, 90).withRollover();
+
+        public final Property<Boolean> useSteveSkin = Property.of(false);
+        public final Property<Boolean> hideHeldItems = Property.of(false);
+        public final Property<Boolean> hideArmor = Property.of(false);
+        public final Property<Boolean> hideEnchantments = Property.of(false);
+        public final Property<Boolean> invisible = Property.of(false); // idk what this is for but its a requested option
+        public final Property<Boolean> forceSmallArms = Property.of(false);
+
 
         @Override
         public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
@@ -276,8 +367,9 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                     .margins(Insets.top(5)));
 
             WorldMesh mesh = ((AreaRenderable) renderable).mesh;
-            IsometricUI.sectionHeader(container, "mesh_controls", true);
-
+            container.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
+                    .horizontalSizing(Sizing.fixed(80))
+                    .margins(Insets.top(5)));
             IsometricUI.dynamicLabel(container, () -> {
                 MutableComponent meshStatusText = Translate.gui("mesh_status");
                 if (!mesh.state().isBuildStage) {
@@ -295,16 +387,27 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 return meshStatusText;
             });
 
+            IsometricUI.sectionHeader(container, "mesh_entity_overrides", true);
+
             IsometricUI.booleanControl(container, this.hideEntities, "hide_entities");
             // todo: probably not needed since emitVerticies checks for hidden entities
             this.hideEntities.listen((booleanProperty, hidden) -> mesh.setHideEntities(hidden));
 
             IsometricUI.booleanControl(container, this.freezeEntities, "freeze_entities");
             this.freezeEntities.listen((booleanProperty, frozen) -> mesh.setFreezeEntities(frozen));
+            IsometricUI.booleanControl(container, this.hideText, "hide_text");
 
-            container.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
-                    .horizontalSizing(Sizing.fixed(80))
-                    .margins(Insets.top(5)));
+            IsometricUI.booleanControl(container, this.overrideRotations, "mesh_entity_data.override_rotations");
+            IsometricUI.intControl(container, yaw, "entity_data.yaw", 15);
+            IsometricUI.intControl(container, pitch, "entity_data.pitch", 5);
+            IsometricUI.intControl(container, entityRotation, "entity_data.rotation", 5);
+            IsometricUI.booleanControl(container, useSteveSkin, "entity_data.steve");
+            IsometricUI.booleanControl(container, forceSmallArms, "entity_data.small_arms");
+            IsometricUI.booleanControl(container, hideHeldItems, "entity_data.hide_held_items");
+            IsometricUI.booleanControl(container, hideArmor, "entity_data.hide_armor");
+            IsometricUI.booleanControl(container, hideEnchantments, "entity_data.hide_enchantments");
+            IsometricUI.booleanControl(container, invisible, "entity_data.invisible");
+
         }
 
         @Override

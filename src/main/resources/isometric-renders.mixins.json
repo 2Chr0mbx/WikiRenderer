@@ -14,6 +14,7 @@
     "DefaultPlayerSkinMixin",
     "GuiRendererMixin",
     "LevelRendererMixin",
+    "LightTextureMixin",
     "LivingEntityRendererMixin",
     "MinecraftMixin",
     "MixinChunkSectionLayer",
@@ -28,6 +29,7 @@
     "access.GameRendererAccessor",
     "access.ItemStackRenderStateAccessor",
     "access.LevelRendererAccessor",
+    "access.LightTextureAccessor",
     "access.NativeImageInvoker",
     "access.ParticleEngineAccessor",
     "access.WorldCoordinatesAccessor"

@@ -112,7 +112,7 @@ public class IsometricRenders implements ClientModInitializer {
 		renderableDrawProjectionBuffer = matrixStore.getBuffer(projectionMatrix);
 		RenderSystem.setProjectionMatrix(renderableDrawProjectionBuffer, ProjectionType.ORTHOGRAPHIC);
 		inRenderableDraw = true;
-	}
+    }
 
 	public static void endRenderableDraw() {
 		RenderSystem.setProjectionMatrix(prevProjectionMatrix, prevProjectionType);
@@ -121,7 +121,7 @@ public class IsometricRenders implements ClientModInitializer {
 		renderableDrawProjectionMatrix = null;
 		renderableDrawProjectionBuffer = null;
 		inRenderableDraw = false;
-	}
+    }
 
     public static void beginRenderableTick() {
         inRenderableTick = true;

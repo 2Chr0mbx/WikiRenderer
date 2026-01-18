@@ -27,7 +27,7 @@
   "gui.isometric-renders.rotation": "Rotation",
   "gui.isometric-renders.slant": "Slant",
   "gui.isometric-renders.light_angle": "Light Angle",
-  "gui.isometric-renders.rotation_speed": "Rotation Speed",
+  "gui.isometric-renders.rotation_speed": "Rotation Degrees Per Second",
   "gui.isometric-renders.dimetric": "Dimetric",
   "gui.isometric-renders.isometric": "Isometric",
   "gui.isometric-renders.cycle_rotation": "Cycle Rotation 90°",
@@ -71,9 +71,12 @@
   "gui.isometric-renders.presets": "Presets",
   "gui.isometric-renders.lighting_profile": "Lighting Profile",
 
+  "gui.isometric-renders.mesh_entity_overrides": "Mesh Entity Overrides",
+  "gui.isometric-renders.mesh_entity_data.override_rotations": "Override Rotations",
   "gui.isometric-renders.entity_data": "Entity Data",
   "gui.isometric-renders.entity_data.yaw": "Yaw",
   "gui.isometric-renders.entity_data.pitch": "Pitch",
+  "gui.isometric-renders.entity_data.rotation": "Rotation",
   "gui.isometric-renders.entity_data.steve": "Steve Skin",
   "gui.isometric-renders.entity_data.small_arms": "Small Arms",
   "gui.isometric-renders.entity_data.hide_held_items": "Hide Held Items",
@@ -95,7 +98,6 @@
   "gui.isometric-renders.memory_warning4": "are not recommended if you want",
   "gui.isometric-renders.memory_warning5": "your computer to survive",
 
-  "gui.isometric-renders.mesh_controls": "Mesh Controls",
   "gui.isometric-renders.mesh_status": "Status: ",
   "gui.isometric-renders.mesh_building": "Building - %d%%",
   "gui.isometric-renders.mesh_rebuilding": "Rebuilding - %d%%",
@@ -103,6 +105,7 @@
   "gui.isometric-renders.mesh_ready": "Ready",
   "gui.isometric-renders.freeze_entities": "Freeze Entities",
   "gui.isometric-renders.hide_entities": "Hide Entities",
+  "gui.isometric-renders.hide_text": "Hide Text",
   "gui.isometric-renders.rebuild_mesh": "Rebuild Mesh",
   "gui.isometric-renders.reset_offset_and_scale": "Resets Offset & Scale",
 

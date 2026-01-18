@@ -1,6 +1,7 @@
 package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.IsometricRenders;
+import com.glisco.isometricrenders.mixin.access.LightTextureAccessor;
 import com.glisco.isometricrenders.util.FramebufferUtils;
 import com.glisco.isometricrenders.util.ImageCropper;
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -10,6 +11,7 @@ import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.pipeline.TextureTarget;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -65,6 +67,10 @@ public class RenderableDispatcher {
         IsometricRenders.endRenderableDraw();
         modelViewStack.popMatrix();
         renderable.cleanUp();
+
+        LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
+        ((LightTextureAccessor) lightTexture).isometric$setUpdateLightTexture(true);
+        lightTexture.updateLightTexture(1.0F);
     }
 
     /**
