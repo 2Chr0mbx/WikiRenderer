@@ -23,10 +23,10 @@ import java.nio.ByteBuffer;
 
 public abstract class DefaultRenderable<P extends DefaultPropertyBundle> implements Renderable<P> {
 
-    private static final int LIGHTING_UBO_SIZE = new Std140SizeCalculator().putVec3().putVec3().get();
+    protected static final int LIGHTING_UBO_SIZE = new Std140SizeCalculator().putVec3().putVec3().get();
     public static final Frustum ALWAYS_TRUE_PARTICLE_FRUSTUM = new Frustum(new Matrix4f(), new Matrix4f());
 
-    private GpuBuffer lightingBuffer;
+    protected GpuBuffer lightingBuffer;
 
     @Override
     public void setupLighting(Matrix4f modelViewMatrix) {
@@ -122,6 +122,6 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     }
 
     protected Vector4f getLightDirection() {
-        return new Vector4f(this.properties().lightAngle.get() / 90f, .35f, 1, 0);
+        return new Vector4f(this.properties().lightAngle.get() / 90f, 0.35f, 1, 0);
     }
 }

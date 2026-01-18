@@ -67,11 +67,12 @@ public class FFmpegDispatcher {
                 "-i", "seq_%d.png"
         }));
 
+        // todo make crop optional
         if (format == Format.GIF) {
             args.add("-filter_complex");
             args.add("[0:v]" + cropFilter + ",split[v1][v2];" +
                      "[v1]palettegen=reserve_transparent=1:stats_mode=full[p];" +
-                     "[v2][p]paletteuse=alpha_threshold=128:dither=bayer:bayer_scale=5");
+                     "[v2][p]paletteuse=alpha_threshold=255:dither=bayer:bayer_scale=5");
         } else {
             // standard cropping for other formats
             args.add("-vf");

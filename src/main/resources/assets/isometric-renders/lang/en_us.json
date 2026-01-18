@@ -35,6 +35,8 @@
   "gui.isometric-renders.reset_rotation_and_slant": "North & Above",
   "gui.isometric-renders.per_pixel_90_degree_rendering": "Toggle Pixel-Precision Face Rendering",
 
+  "gui.isometric-renders.item_scale_warning_1": "Note: It's recommended to",
+  "gui.isometric-renders.item_scale_warning_2": "keep scale at 100% for items!",
 
   "gui.isometric-renders.atlas_options": "Atlas Options",
   "gui.isometric-renders.columns": "Columns",
@@ -73,6 +75,7 @@
 
   "gui.isometric-renders.mesh_entity_overrides": "Mesh Entity Overrides",
   "gui.isometric-renders.mesh_entity_data.override_rotations": "Override Rotations",
+  "gui.isometric-renders.sprite_rendering": "Sprite Rendering",
   "gui.isometric-renders.entity_data": "Entity Data",
   "gui.isometric-renders.entity_data.yaw": "Yaw",
   "gui.isometric-renders.entity_data.pitch": "Pitch",
