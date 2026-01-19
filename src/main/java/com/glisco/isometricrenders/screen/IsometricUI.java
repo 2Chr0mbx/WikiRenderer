@@ -1,12 +1,10 @@
 package com.glisco.isometricrenders.screen;
 
+import com.glisco.isometricrenders.property.DoubleProperty;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
 import com.glisco.isometricrenders.util.Translate;
-import com.glisco.isometricrenders.widget.DynamicLabelComponent;
-import com.glisco.isometricrenders.widget.PropertyCheckboxComponent;
-import com.glisco.isometricrenders.widget.PropertySliderComponent;
-import com.glisco.isometricrenders.widget.PropertyTextFieldComponent;
+import com.glisco.isometricrenders.widget.*;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.TextBoxComponent;
@@ -57,7 +55,14 @@ public class IsometricUI {
 
     public static void intControl(FlowLayout container, IntProperty property, String name, int step) {
         try (RowBuilder builder = row(container)) {
-            builder.row.child(new PropertyTextFieldComponent(Sizing.fill(15), property));
+            builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(15), property));
+            builder.row.child(new PropertySliderComponent(Sizing.fill(80), Translate.gui(name), step, property).margins(Insets.left(5)));
+        }
+    }
+
+    public static void doubleControl(FlowLayout container, DoubleProperty property, String name, int step) {
+        try (RowBuilder builder = row(container)) {
+            builder.row.child(new DoublePropertyTextFieldComponent(Sizing.fill(15), property));
             builder.row.child(new PropertySliderComponent(Sizing.fill(80), Translate.gui(name), step, property).margins(Insets.left(5)));
         }
     }

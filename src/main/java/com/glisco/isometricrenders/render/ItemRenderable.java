@@ -34,7 +34,7 @@ public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
     private static final ItemRenderablePropertyBundle PROPERTIES = new ItemRenderablePropertyBundle();
 
     static {
-        PROPERTIES.slant.setDefaultValue(0).setToDefault();
+        PROPERTIES.slant.setDefaultValue(0D).setToDefault();
         PROPERTIES.rotation.setDefaultValue(0).setToDefault();
     }
 

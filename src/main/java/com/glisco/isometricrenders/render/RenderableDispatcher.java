@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.LightTextureAccessor;
+import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.util.FramebufferUtils;
 import com.glisco.isometricrenders.util.ImageCropper;
 import com.mojang.blaze3d.buffers.GpuBuffer;

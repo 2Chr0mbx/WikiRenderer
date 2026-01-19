@@ -102,7 +102,7 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
         public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
             super.applyToViewMatrix(renderable, modelViewStack);
             modelViewStack.rotate(Axis.YP.rotationDegrees(-this.rotation.get()));
-            modelViewStack.rotate(Axis.XP.rotationDegrees(-this.slant.get()));
+            modelViewStack.rotate(Axis.XP.rotationDegrees(-this.slant.get().floatValue()));
         }
 
     }

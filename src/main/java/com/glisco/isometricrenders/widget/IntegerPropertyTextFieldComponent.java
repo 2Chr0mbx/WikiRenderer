@@ -1,6 +1,7 @@
 package com.glisco.isometricrenders.widget;
 
 import com.glisco.isometricrenders.property.IntProperty;
+import com.glisco.isometricrenders.property.NumberProperty;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
@@ -9,12 +10,12 @@ import net.minecraft.network.chat.Component;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class PropertyTextFieldComponent extends EditBox {
+public class IntegerPropertyTextFieldComponent extends EditBox {
 
     private final IntProperty setting;
     private String content = "";
 
-    public PropertyTextFieldComponent(Sizing horizontalSizing, IntProperty setting) {
+    public IntegerPropertyTextFieldComponent(Sizing horizontalSizing, IntProperty setting) {
         super(Minecraft.getInstance().font, 0, 0, 35, 20, Component.empty());
         this.setting = setting;
 

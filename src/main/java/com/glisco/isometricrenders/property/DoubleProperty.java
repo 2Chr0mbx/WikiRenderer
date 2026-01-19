@@ -2,34 +2,28 @@ package com.glisco.isometricrenders.property;
 
 import net.minecraft.util.Mth;
 
-public class IntProperty extends NumberProperty<Integer> {
+public class DoubleProperty extends NumberProperty<Double> {
 
-    private IntProperty(int defaultValue, int min, int max) {
+    private DoubleProperty(double defaultValue, double min, double max) {
         super(defaultValue, min, max);
     }
 
-    @Override
-    protected Integer getSpan(Integer min, Integer max) {
-        return max - min;
-    }
-
-    public static IntProperty of(int defaultValue, int min, int max) {
+    public static DoubleProperty of(double defaultValue, double min, double max) {
         if (min >= max) {
             throw new IllegalArgumentException("'min' must be less than 'max'");
         }
 
-        return new IntProperty(defaultValue, min, max);
-    }
-
-    public IntProperty withRollover() {
-        this.allowRollover = true;
-        return this;
+        return new DoubleProperty(defaultValue, min, max);
     }
 
     @Override
-    public void modify(double byDouble) {
-        int by = (int) Math.round(byDouble);
-        if (this.allowRollover) {
+    protected Double getSpan(Double min, Double max) {
+        return max - min;
+    }
+
+    @Override
+    public void modify(double by) {
+        if (allowRollover) {
             this.value += by;
             if (this.value > this.max) this.value -= this.span;
             if (this.value < this.min) this.value += this.span;
@@ -42,12 +36,12 @@ public class IntProperty extends NumberProperty<Integer> {
 
     @Override
     public double progress() {
-        return (this.value - this.min) / (double) this.span;
+        return (this.value - this.min) / this.span;
     }
 
     @Override
     public void setFromProgress(double progress) {
-        this.value = (int) Math.round(this.min + progress * this.span);
+        this.value = this.min + progress * this.span;
         this.invokeListeners();
     }
 }

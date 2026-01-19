@@ -20,7 +20,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
 
     public final IntProperty scale = IntProperty.of(100, 0, 1000);
     public final IntProperty rotation = IntProperty.of(135, 0, 360).withRollover();
-    public final IntProperty slant = IntProperty.of(30, -90, 90);
+    public final DoubleProperty slant = DoubleProperty.of(30, -90, 90);
     public final IntProperty lightAngle = IntProperty.of(-45, -45, 45);
 
     public final IntProperty xOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
@@ -41,7 +41,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
         IsometricUI.sectionHeader(container, "transform_options", false);
         IsometricUI.intControl(container, scale, "scale", 10);
         IsometricUI.intControl(container, rotation, "rotation", 45);
-        IsometricUI.intControl(container, slant, "slant", 30);
+        IsometricUI.doubleControl(container, slant, "slant", 30);
         IsometricUI.intControl(container, lightAngle, "light_angle", 15);
         IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
 
@@ -49,12 +49,12 @@ public class DefaultPropertyBundle implements PropertyBundle {
         try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
             builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
-                this.slant.set(30);
+                this.slant.set(30D);
             }).horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
 
             builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
-                this.slant.set(36);
+                this.slant.set(35.264);
             }).horizontalSizing(Sizing.fixed(60)));
         }
     }
@@ -66,7 +66,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
 
         modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
 
-        modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get()));
+        modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
         modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
 
         this.updateAndApplyRotationOffset(modelViewStack);

@@ -65,8 +65,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_D, properties -> properties.xOffset.modify(1000));
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_A, properties -> properties.xOffset.modify(-1000));
 
-        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_UP, properties -> properties.slant.modify(-5));
-        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_DOWN, properties -> properties.slant.modify(5));
+        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_UP, properties -> properties.slant.modify(-5D));
+        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_DOWN, properties -> properties.slant.modify(5D));
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_LEFT, properties -> properties.rotation.modify(-10));
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_RIGHT, properties -> properties.rotation.modify(10));
 
@@ -252,7 +252,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 if (s.isBlank()) return;
                 int resolution = Integer.parseInt(s);
 
-                if ((resolution < 4 || resolution > 64) && !unsafe.get()) {
+                if ((resolution < 4 || resolution > 256) && !unsafe.get()) {
                     exportButton.active = false;
                 } else {
                     sideViewPixelsPerBlockResolution = resolution;
@@ -504,7 +504,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 properties.rotation.modify((int) (offsetX * 2));
                 return true;
             } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                properties.slant.modify((int) (offsetY * 2));
+                properties.slant.modify(offsetY * 2);
                 return true;
             }
         }

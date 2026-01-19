@@ -47,6 +47,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -247,8 +248,16 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                     }
                 }
 
-                // +0.01 fixes z-fighting
-                entityDispatcher.submit(state, cameraRenderState, entityPos.x, entityPos.y + 0.01, entityPos.z, standardStack, nodeStorage);
+                if (!state.shadowPieces.isEmpty()) {
+                    // increase shadow height by a tiny amount to fix z-fighting, +0.001 is enouth
+                    List<EntityRenderState.ShadowPiece> newPieces = state.shadowPieces
+                            .stream()
+                            .map(piece -> new EntityRenderState.ShadowPiece(piece.relativeX(), piece.relativeY() + 0.001f, piece.relativeZ(), piece.shapeBelow(), piece.alpha()))
+                            .toList();
+                    state.shadowPieces.clear();
+                    state.shadowPieces.addAll(newPieces);
+                }
+                entityDispatcher.submit(state, cameraRenderState, entityPos.x, entityPos.y, entityPos.z, standardStack, nodeStorage);
             });
         }
         super.drawSubmittedRenderFeatures();
@@ -326,17 +335,17 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
                     builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                         this.rotation.setToDefault();
-                        this.slant.set(30);
+                        this.slant.set(30D);
                     }).horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
 
                     builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                         this.rotation.setToDefault();
-                        this.slant.set(36);
+                        this.slant.set(35.264);
                     }).horizontalSizing(Sizing.fixed(60)));
                 }
                 IsometricUI.intControl(container, scale, "scale", 10);
                 IsometricUI.intControl(container, rotation, "rotation", 45);
-                IsometricUI.intControl(container, slant, "slant", 30);
+                IsometricUI.doubleControl(container, slant, "slant", 30);
                 IsometricUI.intControl(container, lightAngle, "light_angle", 15);
                 IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
             } else {
@@ -430,7 +439,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 double pixelsPerBlock = GlobalProperties.sideViewPixelsPerBlockResolution;
                 double bufferSize = highest * pixelsPerBlock;
                 GlobalProperties.exportResolution = (int) bufferSize;
-                double orthoWidth = 2.0; // Because your ortho is -1 to 1
+                double orthoWidth = 2.0; // bcause ortho is -1 to 1
 
                 float pixelPerfectScale = (float) (pixelsPerBlock / (bufferSize / orthoWidth));
 
@@ -444,7 +453,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 // offsets arent needed for side rendering because they're already perfectly aligned
                 modelViewStack.translate(this.xOffset.get() / 2600f, this.yOffset.get() / -2600f, 0);
 
-                modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get()));
+                modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
                 modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
             }
 

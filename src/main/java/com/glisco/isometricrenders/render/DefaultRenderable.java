@@ -90,7 +90,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         float previousYaw = camera.yRot();
         float previousPitch = camera.xRot();
 
-        ((CameraInvoker) camera).isometric$setRotation(this.properties().rotation.get() + 180 + this.properties().rotationOffset(), this.properties().slant.get());
+        ((CameraInvoker) camera).isometric$setRotation(this.properties().rotation.get() + 180 + this.properties().rotationOffset(), this.properties().slant.get().floatValue());
         ParticlesRenderState particleBatch = new ParticlesRenderState();
 
         client.particleEngine.extract(

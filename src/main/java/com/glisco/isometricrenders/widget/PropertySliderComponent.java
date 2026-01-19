@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.widget;
 
 import com.glisco.isometricrenders.mixin.AbstractSliderButtonInvoker;
 import com.glisco.isometricrenders.property.IntProperty;
+import com.glisco.isometricrenders.property.NumberProperty;
 import io.wispforest.owo.ui.component.SliderComponent;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -10,10 +11,10 @@ import org.lwjgl.glfw.GLFW;
 
 public class PropertySliderComponent extends SliderComponent {
 
-    private final IntProperty setting;
+    private final NumberProperty<? extends Number> setting;
     private final int scrollIncrement;
 
-    public PropertySliderComponent(Sizing horizontalSizing, Component text, int scrollIncrement, IntProperty setting) {
+    public PropertySliderComponent(Sizing horizontalSizing, Component text, int scrollIncrement, NumberProperty<? extends Number> setting) {
         super(horizontalSizing);
         this.setting = setting;
         this.scrollIncrement = scrollIncrement;

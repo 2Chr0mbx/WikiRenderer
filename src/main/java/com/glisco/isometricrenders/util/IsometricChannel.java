@@ -44,7 +44,7 @@ public class IsometricChannel extends ExoCommandChannel {
     }
 
     private static void setupItem(ItemRenderable renderable, boolean depth) {
-        renderable.properties().slant.set(depth ? 30 : 0);
+        renderable.properties().slant.set(depth ? 30D : 0D);
         renderable.properties().rotation.set(depth ? 225 : 0);
 
         renderable.properties().scale.set(depth ? 310 : 235);

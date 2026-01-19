@@ -325,7 +325,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             IsometricUI.intControl(container, scale, "scale", 10);
             if (!spriteRendering.get()) {
                 IsometricUI.intControl(container, rotation, "rotation", 45);
-                IsometricUI.intControl(container, slant, "slant", 30);
+                IsometricUI.doubleControl(container, slant, "slant", 30);
                 IsometricUI.intControl(container, lightAngle, "light_angle", 15);
                 IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
             }
@@ -334,12 +334,12 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
                 builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
-                    this.slant.set(30);
+                    this.slant.set(30D);
                 }).horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
 
                 builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
-                    this.slant.set(36);
+                    this.slant.set(35.264);
                 }).horizontalSizing(Sizing.fixed(60)));
             }
 
@@ -378,7 +378,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
             modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
 
             if (!this.spriteRendering.get()) {
-                modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get()));
+                modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
                 modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
             } else {
                 modelViewStack.rotate(Axis.YP.rotationDegrees(180));
