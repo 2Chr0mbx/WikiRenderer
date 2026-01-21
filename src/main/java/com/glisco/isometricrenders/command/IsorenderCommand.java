@@ -5,8 +5,10 @@ import com.glisco.isometricrenders.mixin.access.BlockInputAccessor;
 import com.glisco.isometricrenders.mixin.access.WorldCoordinatesAccessor;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.render.*;
+import com.glisco.isometricrenders.render.area.AreaRenderable;
+import com.glisco.isometricrenders.render.area.WorldMesh;
 import com.glisco.isometricrenders.screen.RenderScreen;
-import com.glisco.isometricrenders.screen.ScreenScheduler;
+import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
 import com.glisco.isometricrenders.util.Translate;
 import com.mojang.authlib.GameProfile;
@@ -42,12 +44,15 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.AttackRange;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -71,6 +76,13 @@ public class IsorenderCommand {
     public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext access) {
         dispatcher.register(literal("isorender")
                 .executes(IsorenderCommand::showRootNodeHelp)
+                .then(literal("refresh_gpu")
+                        .executes(c -> {
+                            WorldMesh.terrainSampler = null;
+                            return 0;
+                        }))
+                .then(literal("reopen")
+                        .executes(IsorenderCommand::reopenSavedMenu))
                 .then(literal("area")
                         .then(literal("island")
                                 .then(argument("chunk_size", IntegerArgumentType.integer(4, 64))
@@ -124,6 +136,15 @@ public class IsorenderCommand {
                                 .executes(IsorenderCommand::disableUnsafe))));
     }
 
+    private static int reopenSavedMenu(CommandContext<FabricClientCommandSource> context) {
+        if (ScreenSchedulerAndSaver.getSavedScreen() == null) {
+            Translate.commandFeedback(context, "no_saved_menu");
+            return 0;
+        }
+        ScreenSchedulerAndSaver.schedule(ScreenSchedulerAndSaver.getSavedScreen());
+        return 0;
+    }
+
     private static int showRootNodeHelp(CommandContext<FabricClientCommandSource> context) {
         FabricClientCommandSource source = context.getSource();
 
@@ -168,7 +189,7 @@ public class IsorenderCommand {
             player.load(TagValueInput.create(logging, server.registryAccess(), playerNbt));
         }
 
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 new EntityRenderable(player)
         ));
 
@@ -188,7 +209,7 @@ public class IsorenderCommand {
             return 0;
         }
 
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 new EntityRenderable(EntityComponent.createRenderablePlayer(gameProfile.get()))
         ));
 
@@ -197,20 +218,9 @@ public class IsorenderCommand {
 
     private static int renderSelf(CommandContext<FabricClientCommandSource> context) {
         LocalPlayer clientPlayer = Minecraft.getInstance().player;
-        EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(clientPlayer.getGameProfile());
 
-        ProblemReporter.ScopedCollector loggingWrite = new ProblemReporter.ScopedCollector(clientPlayer.problemPath(), IsometricRenders.LOGGER);
-        TagValueOutput view = TagValueOutput.createWithContext(loggingWrite, clientPlayer.registryAccess());
-        clientPlayer.saveWithoutId(view);
-        CompoundTag nbt = view.buildResult();
-        loggingWrite.close();
-
-        try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
-            player.load(TagValueInput.create(loggingRead, player.registryAccess(), nbt));
-        }
-
-        ScreenScheduler.schedule(new RenderScreen(
-                new EntityRenderable(player)
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
+                EntityRenderable.copyAsRenderable(clientPlayer)
         ));
         return 0;
     }
@@ -242,28 +252,28 @@ public class IsorenderCommand {
     }
 
     private static int renderItemWithArgument(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 new ItemRenderable(ItemArgument.getItem(context, "item").createItemStack(1, false))
         ));
         return 0;
     }
 
     private static int renderHeldItem(CommandContext<FabricClientCommandSource> context) {
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 new ItemRenderable(Minecraft.getInstance().player.getMainHandItem())
         ));
         return 0;
     }
 
     private static int renderItemTooltipWithArgument(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 new TooltipRenderable(ItemArgument.getItem(context, "item").createItemStack(1, false))
         ));
         return 0;
     }
 
     private static int renderHeldItemTooltip(CommandContext<FabricClientCommandSource> context) {
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 new TooltipRenderable(Minecraft.getInstance().player.getMainHandItem())
         ));
         return 0;
@@ -273,9 +283,7 @@ public class IsorenderCommand {
         CompoundTag entityNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
         Holder.Reference<EntityType<?>> entityReference = context.getArgument("entity", Holder.Reference.class);
 
-        ScreenScheduler.schedule(new RenderScreen(
-                EntityRenderable.of(entityReference.value(), entityNbt)
-        ));
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(EntityRenderable.of(entityReference.value(), entityNbt)));
 
         return 0;
     }
@@ -283,23 +291,43 @@ public class IsorenderCommand {
     private static int renderEntityWithoutNbt(CommandContext<FabricClientCommandSource> context) {
         Holder.Reference<EntityType<?>> entityReference = context.getArgument("entity", Holder.Reference.class);
 
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 EntityRenderable.of(entityReference.value(), null)
         ));
 
         return 0;
     }
 
-    private static int renderTargetedEntity(CommandContext<FabricClientCommandSource> context) {
-        Minecraft client = Minecraft.getInstance();
+    public static int renderTargetedEntity(CommandContext<FabricClientCommandSource> context) {
+        AttackRange attackRange = new AttackRange(0, 10, 0, 10, 0.3f, 10);
+        HitResult closesetHit = attackRange.getClosesetHit(Minecraft.getInstance().player, 1.0f, e -> {
+            System.out.println("a");
 
-        if (client.hitResult.getType() != HitResult.Type.ENTITY) {
+            if (e instanceof LivingEntity livingEntity) {
+                if (livingEntity.isInvisible() || (livingEntity instanceof ArmorStand armorStand && armorStand.isMarker())) {
+                    for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
+                        if (!livingEntity.getItemBySlot(equipmentSlot).isEmpty()) {
+                            System.out.println("not empty (" + livingEntity.getItemBySlot(equipmentSlot) + ")");
+                            return true;
+                        }
+                    }
+                    System.out.println("b");
+                    return false;
+                }
+            }
+
+            boolean pickable = e.isPickable();
+            System.out.println(pickable + " " + e.getType().toShortString());
+            return pickable;
+        });
+
+        if (!(closesetHit instanceof EntityHitResult entityHitResult)) {
             Translate.commandError(context, "no_entity");
             return 0;
         }
 
-        Entity targetEntity = ((EntityHitResult) client.hitResult).getEntity();
-        ScreenScheduler.schedule(new RenderScreen(
+        Entity targetEntity = entityHitResult.getEntity();
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 EntityRenderable.copyAsRenderable(targetEntity)
         ));
 
@@ -311,7 +339,7 @@ public class IsorenderCommand {
         BlockState state = stateArg.getState();
         CompoundTag data = ((BlockInputAccessor) stateArg).isometric$getTag();
 
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 BlockStateRenderable.of(state, data)
         ));
         return 0;
@@ -326,7 +354,7 @@ public class IsorenderCommand {
         }
 
         BlockPos hitPos = ((BlockHitResult) client.hitResult).getBlockPos();
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 BlockStateRenderable.copyOf(client.level, hitPos)
         ));
 
@@ -340,7 +368,7 @@ public class IsorenderCommand {
         BlockPos pos1 = getPosFromArgument(startArg, context.getSource());
         BlockPos pos2 = getPosFromArgument(endArg, context.getSource());
 
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 AreaRenderable.of(pos1, pos2)
         ));
 
@@ -361,7 +389,7 @@ public class IsorenderCommand {
             return 0;
         }
 
-        ScreenScheduler.schedule(new RenderScreen(area));
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(area));
         return 0;
     }
 

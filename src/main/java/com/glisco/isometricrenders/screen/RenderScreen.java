@@ -7,6 +7,9 @@ import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.property.Property;
 import com.glisco.isometricrenders.render.*;
+import com.glisco.isometricrenders.render.area.AreaRenderable;
+import com.glisco.isometricrenders.render.area.MinimapCalibratorData;
+import com.glisco.isometricrenders.render.area.WorldMesh;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.glisco.isometricrenders.widget.NotificationComponent;
@@ -30,13 +33,10 @@ import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
-import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
@@ -99,8 +99,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private final FlowLayout leftAnchor = Containers.verticalFlow(Sizing.content(), Sizing.content());
     private final FlowLayout rightAnchor = Containers.verticalFlow(Sizing.content(), Sizing.content());
 
-    private final FlowLayout leftColumn = Containers.verticalFlow(Sizing.fill(100), Sizing.content());
-    private final FlowLayout rightColumn = Containers.verticalFlow(Sizing.fill(100), Sizing.content());
+    private final FlowLayout leftColumn = Containers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
+    private final FlowLayout rightColumn = Containers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
 
     private final List<GpuTexture> renderedFrames = new ArrayList<>();
     private int remainingAnimationFrames;
@@ -157,6 +157,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Override
     protected void build(FlowLayout rootComponent) {
         this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
+        boolean notFaceFrameAreaRendering = !(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.properties().perPixel90DegreeRendering.get();
 
         ((ParticleEngineAccessor) Minecraft.getInstance().particleEngine).isometric$getParticles().clear();
         IsometricRenders.particleRestriction = this.renderable.particleRestriction();
@@ -193,7 +194,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
 
         IsometricUI.sectionHeader(rightColumn, "export_options", true);
-        IsometricUI.booleanControl(rightColumn, crop, "crop");
+        IsometricUI.booleanControl(rightColumn, crop, notFaceFrameAreaRendering ? "crop_and_resize" : "crop");
         IsometricUI.booleanControl(rightColumn, saveIntoRoot, "dump_into_root");
         IsometricUI.booleanControl(rightColumn, overwriteLatest, "overwrite_latest");
 
@@ -230,7 +231,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }).horizontalSizing(Sizing.fixed(75)));
         }
 
-        if (!(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.properties().perPixel90DegreeRendering.get()) {
+        if (notFaceFrameAreaRendering) {
             String key = crop.get() ? "renderer_resolution_crop" : "renderer_resolution";
             EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), key, Sizing.fixed(50));
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
@@ -246,19 +247,41 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 }
             });
         } else {
-            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(sideViewPixelsPerBlockResolution), "per_pixel_resolution", Sizing.fixed(50));
+            WorldMesh mesh = ((AreaRenderable) renderable).mesh;
+            BlockPos cornerOne = mesh.startPos();
+            BlockPos cornerTwo = mesh.endPos();
+
+            int totalBlocksX = cornerTwo.getX() - cornerOne.getX() + 1;
+            int totalBlocksY = cornerTwo.getY() - cornerOne.getY() + 1;
+            int totalBlocksZ = cornerTwo.getZ() - cornerOne.getZ() + 1;
+            int highest = Math.max(totalBlocksY, Math.max(totalBlocksX, totalBlocksZ));
+
+            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(sideViewPixelsPerBlockResolution), "block_resolution", Sizing.fixed(50));
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
-                int resolution = Integer.parseInt(s);
+                int pixelsPerBlock = Integer.parseInt(s);
 
-                if ((resolution < 4 || resolution > 256) && !unsafe.get()) {
+                double bufferSize = highest * pixelsPerBlock;
+
+                if ((pixelsPerBlock < 4 || pixelsPerBlock > 128 || bufferSize > 16384) && !unsafe.get()) {
                     exportButton.active = false;
                 } else {
-                    sideViewPixelsPerBlockResolution = resolution;
+                    if ((sideViewPixelsPerBlockResolution != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && sideViewPixelsPerBlockResolution == 4)) {
+                        guiRebuildScheduled = true;
+                    }
+                    sideViewPixelsPerBlockResolution = pixelsPerBlock;
                     exportButton.active = true;
                 }
             });
+
+            IsometricUI.booleanControl(rightColumn, sideViewExportMinimapData, "export_minimap_data");
+            if (sideViewPixelsPerBlockResolution == 4) {
+                IsometricUI.booleanControl(rightColumn, halfPixelOffsetFor4x4, "half_pixel_offset_for_4x4");
+                IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_1", true);
+                IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_2", false);
+                IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_3", false);
+            }
         }
 
         IsometricUI.sectionHeader(rightColumn, "animation_options", true);
@@ -339,7 +362,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.drawOnlyBackground) {
-            context.fill(0, 0, this.width, this.height, GlobalProperties.backgroundColor | 255 << 24);
+            context.fill(0, 0, this.width, this.height, backgroundColor | 255 << 24);
         } else {
             this.renderTransparentBackground(context);
         }
@@ -582,9 +605,15 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public void removed() {
-        this.renderable.dispose();
         IsometricRenders.particleRestriction = ParticleRestriction.always();
         this.minecraft.getFramerateLimitTracker().setFramerateLimit(this.minecraft.options.framerateLimit().get());
+
+        if (ScreenSchedulerAndSaver.getScheduledScreen() == null) {
+            ScreenSchedulerAndSaver.setSavedScreen(this);
+        } else {
+            // discrd is called for any saved screens in schedule, but ignore that if this is the saved screen and is being reopened
+            this.renderable.dispose();
+        }
     }
 
     private void drawFramingHint(GuiGraphics context) {

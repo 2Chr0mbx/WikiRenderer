@@ -1,14 +1,12 @@
-package com.glisco.isometricrenders.render;
+package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
-import com.glisco.isometricrenders.render.area.DynamicRenderInfo;
-import com.glisco.isometricrenders.render.area.MiniChunk;
-import com.glisco.isometricrenders.render.area.MiniChunkScanner;
-import com.glisco.isometricrenders.render.area.WorldMesh;
+import com.glisco.isometricrenders.render.DefaultRenderable;
+import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
@@ -47,18 +45,16 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropertyBundle> {
 
     private final Minecraft client = Minecraft.getInstance();
 
-    private final WorldMesh mesh;
-    private final int ySize;
-    private final int xSize;
-    private final int zSize;
+    public final WorldMesh mesh;
+    protected final int ySize;
+    protected final int xSize;
+    protected final int zSize;
 
     public AreaRenderable(WorldMesh mesh) {
         this.mesh = mesh;
@@ -135,8 +131,8 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         CameraRenderState cameraRenderState = new CameraRenderState();
         // this makes certain things face the camera, like text, fishing bobbers, etc, see what uses the orientation field
         cameraRenderState.orientation.rotationYXZ(
-                (float) Math.PI - (float) Math.toRadians(properties.rotation.get() + properties.rotationOffset),
-                (float) Math.PI + (float) Math.toRadians(properties.slant.get()),
+                (float) Math.PI - (float) Math.toRadians(this.properties().getUsedRotation()),
+                (float) Math.PI + (float) Math.toRadians(this.properties().getUsedSlant()),
                 (float) Math.PI);
 
         BlockEntityRenderDispatcher blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
@@ -166,6 +162,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 EntityRenderState state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
                 state.lightCoords = entry.light();
                 state.outlineColor = 0; // remove glow
+
 
                 if (mesh.entitiesFrozen() && (state instanceof AvatarRenderState avatarRenderState)) {
                     // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
@@ -302,9 +299,10 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         public final Property<Boolean> hideText = Property.of(false);
 
         public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
-        public final IntProperty alternativeRotation = IntProperty.of(0, 0, 360).withRollover();
-        public final IntProperty alternativeSlant = IntProperty.of(90, -90, 90);
+        public MeshSideRotation sideViewRotation = MeshSideRotation.NORTH;
+        public MeshSideSlant sideViewSlant = MeshSideSlant.ABOVE;
 
+        public final Property<Boolean> hideMesh = Property.of(false);
         public final Property<Boolean> overrideRotations = Property.of(false);
         public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
         public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
@@ -317,7 +315,6 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         public final Property<Boolean> invisible = Property.of(false); // idk what this is for but its a requested option
         public final Property<Boolean> forceSmallArms = Property.of(false);
 
-
         @Override
         public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
             IsometricUI.sectionHeader(container, "transform_options", false);
@@ -325,8 +322,8 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
             IsometricUI.booleanControl(container, this.perPixel90DegreeRendering, "per_pixel_90_degree_rendering");
             this.perPixel90DegreeRendering.listen((booleanProperty, value) -> {
                 if (value) {
-                    this.alternativeRotation.set(0);
-                    this.alternativeSlant.set(90);
+                    this.sideViewRotation = MeshSideRotation.NORTH;
+                    this.sideViewSlant = MeshSideSlant.ABOVE;
                 }
                 screen.guiRebuildScheduled = true;
             }, false);
@@ -348,33 +345,29 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 IsometricUI.doubleControl(container, slant, "slant", 30);
                 IsometricUI.intControl(container, lightAngle, "light_angle", 15);
                 IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+
+                container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
+                            this.xOffset.setToDefault();
+                            this.yOffset.setToDefault();
+                            this.scale.setToDefault();
+                        })
+                        .horizontalSizing(Sizing.fixed(120))
+                        .margins(Insets.top(5)));
             } else {
                 try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
                     builder.row.child(Components.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
-                        this.alternativeRotation.set((this.alternativeRotation.get() + 90) % 360);
+                        this.sideViewRotation = this.sideViewRotation.nextRotation();
                     }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
 
                     builder.row.child(Components.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
-                        switch (this.alternativeSlant.get()) {
-                            case -90 -> this.alternativeSlant.set(0);
-                            case 0 -> this.alternativeSlant.set(90);
-                            case 90 -> this.alternativeSlant.set(-90);
-                        }
+                        this.sideViewSlant = this.sideViewSlant.nextSlant();
                     }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
                 }
                 container.child(Components.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
-                    this.alternativeRotation.set(0);
-                    this.alternativeSlant.set(90);
-                }).horizontalSizing(Sizing.fixed(130)).margins(Insets.right(5)));
+                    this.sideViewRotation = MeshSideRotation.NORTH;
+                    this.sideViewSlant = MeshSideSlant.ABOVE;
+                }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
             }
-
-            container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
-                        this.xOffset.setToDefault();
-                        this.yOffset.setToDefault();
-                        this.scale.setToDefault();
-                    })
-                    .horizontalSizing(Sizing.fixed(140))
-                    .margins(Insets.top(5)));
 
             WorldMesh mesh = ((AreaRenderable) renderable).mesh;
             container.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
@@ -444,8 +437,13 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                 float pixelPerfectScale = (float) (pixelsPerBlock / (bufferSize / orthoWidth));
 
                 modelViewStack.scale(pixelPerfectScale, pixelPerfectScale, pixelPerfectScale);
-                modelViewStack.rotate(Axis.XP.rotationDegrees(this.alternativeSlant.get()));
-                modelViewStack.rotate(Axis.YP.rotationDegrees(this.alternativeRotation.get()));
+                modelViewStack.rotate(Axis.XP.rotationDegrees(this.sideViewSlant.getRotationDegrees()));
+                modelViewStack.rotate(Axis.YP.rotationDegrees(this.sideViewRotation.getRotationDegrees()));
+
+                if (pixelsPerBlock == 4 && GlobalProperties.halfPixelOffsetFor4x4.get()) {
+                    float halfPixelWorld = 0.5f / (float)pixelsPerBlock;
+                    modelViewStack.translate(halfPixelWorld, 0, halfPixelWorld);
+                }
             } else {
                 final float scale = this.scale.get() / 1000f;
                 modelViewStack.scale(scale, scale, scale);
@@ -458,6 +456,24 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
             }
 
             this.updateAndApplyRotationOffset(modelViewStack);
+        }
+
+        @Override
+        public float getUsedRotation() {
+            if (this.perPixel90DegreeRendering.get()) {
+                return this.sideViewRotation.getRotationDegrees();
+            } else {
+                return super.getUsedRotation();
+            }
+        }
+
+        @Override
+        public double getUsedSlant() {
+            if (this.perPixel90DegreeRendering.get()) {
+                return this.sideViewSlant.getRotationDegrees();
+            } else {
+                return super.getUsedSlant();
+            }
         }
     }
 

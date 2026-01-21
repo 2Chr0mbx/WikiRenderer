@@ -53,13 +53,10 @@ public class IsometricRenders implements ClientModInitializer {
 	public static Matrix4f renderableDrawProjectionMatrix = null;
 	public static GpuBufferSlice renderableDrawProjectionBuffer = null;
 
-    public static final KeyMapping SELECT = new KeyMapping("key.isometric-renders.area_select", GLFW.GLFW_KEY_C, KeyMapping.Category.MISC);
-
     @Override
     public void onInitializeClient() {
         ClientCommandRegistrationCallback.EVENT.register(IsorenderCommand::register);
-
-        KeyBindingHelper.registerKeyBinding(SELECT);
+        IsometricKeybinds.registerKeyBinds();
 
         String ioStateId = "io-state";
         String areaSelectionHintId = "area-selection-hint";
@@ -86,16 +83,6 @@ public class IsometricRenders implements ClientModInitializer {
                     isometricHud.child(new AreaSelectionComponent().id(areaSelectionHintId));
                 } else {
                     isometricHud.removeChild(selectionHint);
-                }
-            }
-        });
-
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (SELECT.consumeClick()) {
-                if (client.player.isShiftKeyDown()) {
-                    AreaSelectionHelper.clear();
-                } else {
-                    AreaSelectionHelper.select();
                 }
             }
         });

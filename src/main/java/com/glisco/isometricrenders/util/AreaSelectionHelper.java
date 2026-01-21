@@ -1,8 +1,8 @@
 package com.glisco.isometricrenders.util;
 
-import com.glisco.isometricrenders.render.AreaRenderable;
+import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.screen.RenderScreen;
-import com.glisco.isometricrenders.screen.ScreenScheduler;
+import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -71,7 +71,7 @@ public class AreaSelectionHelper {
     public static boolean tryOpenScreen() {
         if (pos1 == null || pos2 == null) return false;
 
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 AreaRenderable.of(pos1, pos2)
         ));
         return true;

@@ -1,7 +1,7 @@
 package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.screen.RenderScreen;
-import com.glisco.isometricrenders.screen.ScreenScheduler;
+import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 
@@ -11,12 +11,12 @@ import java.util.function.BiConsumer;
 
 public enum RenderTask {
     ATLAS((source, renderables) -> {
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 new ItemAtlasRenderable(source, new ArrayList<>(renderables))
         ));
     }),
     BATCH_ITEM((source, renderables) -> {
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 BatchRenderable.of(
                         source + "/items",
                         renderables.stream()
@@ -26,7 +26,7 @@ public enum RenderTask {
         ));
     }),
     BATCH_TOOLTIP((source, renderables) -> {
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 BatchRenderable.of(
                         source + "/tooltips",
                         renderables.stream()
@@ -36,7 +36,7 @@ public enum RenderTask {
         ));
     }),
     BATCH_BLOCK((source, renderables) -> {
-        ScreenScheduler.schedule(new RenderScreen(
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
                 BatchRenderable.of(
                         source + "/blocks",
                         renderables.stream()

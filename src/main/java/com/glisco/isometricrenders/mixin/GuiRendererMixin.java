@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(GuiRenderer.class)
 public class GuiRendererMixin {
+	/*
 	@WrapOperation(method = "draw", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getMainRenderTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))
 	private RenderTarget overrideRenderFramebuffer(Minecraft instance, Operation<RenderTarget> original) {
 		if (IsometricRenders.mainTargetOverride != null) return IsometricRenders.mainTargetOverride;
@@ -41,4 +42,6 @@ public class GuiRendererMixin {
 			original.call(IsometricRenders.renderableDrawProjectionBuffer, ProjectionType.ORTHOGRAPHIC);
 		else original.call(projectionMatrixBuffer, projectionType);
 	}
+
+	 */
 }

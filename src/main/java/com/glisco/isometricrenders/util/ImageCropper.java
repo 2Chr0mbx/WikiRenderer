@@ -8,10 +8,13 @@ import java.util.List;
 
 public class ImageCropper {
     public static NativeImage cropTransparent(NativeImage source) {
-
         CropData cropData = getCropData(source);
         if (cropData == null) return source;
 
+        return cropTransparent(source, cropData);
+    }
+
+    public static NativeImage cropTransparent(NativeImage source, CropData cropData) {
         int croppedWidth = cropData.maxX - cropData.minX + 1;
         int croppedHeight = cropData.maxY - cropData.minY + 1;
         NativeImage cropped = new NativeImage(source.format(), croppedWidth, croppedHeight, false);
@@ -42,6 +45,8 @@ public class ImageCropper {
                 }
             }
         }
+
+        System.out.println("minX = " + minX + ", maxX = " + maxX + ", minY = " + minY + ", maxY = " + maxY);
 
         if (maxX == -1) return null;
         return new CropData(minX, maxX, minY, maxY);

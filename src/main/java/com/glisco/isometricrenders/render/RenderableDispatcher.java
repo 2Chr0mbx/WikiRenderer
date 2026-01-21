@@ -3,9 +3,12 @@ package com.glisco.isometricrenders.render;
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.LightTextureAccessor;
 import com.glisco.isometricrenders.property.GlobalProperties;
-import com.glisco.isometricrenders.util.FramebufferUtils;
+import com.glisco.isometricrenders.render.area.AreaRenderable;
+import com.glisco.isometricrenders.render.area.MinimapCalibratorData;
+import com.glisco.isometricrenders.util.RenderTargetUtils;
 import com.glisco.isometricrenders.util.ImageCropper;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.opengl.GlDebug;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -20,6 +23,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
+import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.system.MemoryUtil;
 
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +43,6 @@ public class RenderableDispatcher {
      * @param tickDelta   The tick delta to use
      */
     public static void drawIntoActiveFramebuffer(Renderable<?> renderable, float aspectRatio, float tickDelta, Consumer<Matrix4fStack> transformer) {
-
         renderable.prepare();
 
         // view matrix = position/rotation/scale of camera
@@ -47,6 +50,7 @@ public class RenderableDispatcher {
 
         // Prepare model view matrix
         Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+
         modelViewStack.pushMatrix();
         modelViewStack.identity();
         transformer.accept(modelViewStack);
@@ -55,6 +59,7 @@ public class RenderableDispatcher {
 
         Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -1000, 3000);
         IsometricRenders.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
+
 
         renderable.setupLighting(modelViewStack);
         renderable.emitVerticesThenDraw(
@@ -86,9 +91,21 @@ public class RenderableDispatcher {
         GpuTexture texture = drawIntoTexture(renderable, tickDelta, size);
         CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).whenComplete((i, t) -> texture.close());
 
+        boolean sideRendering = renderable instanceof AreaRenderable areaRenderable && areaRenderable.properties().perPixel90DegreeRendering.get();
+        boolean exportMinimapData = sideRendering && GlobalProperties.sideViewExportMinimapData.get();
+
         if (crop) {
             // resize image to target height by regenerating it with an increased size
-            image = image.thenApply(ImageCropper::cropTransparent).thenCompose(i -> {
+            image = image.thenApply(i -> {
+                ImageCropper.CropData cropData = ImageCropper.getCropData(i);
+                NativeImage nativeImage = ImageCropper.cropTransparent(i, cropData);
+
+                if (exportMinimapData) {
+                    MinimapCalibratorData calibrationData = MinimapCalibratorData.getCalibrationData((AreaRenderable) renderable, cropData, nativeImage);
+                }
+
+                return nativeImage;
+            }).thenCompose(i -> {
                 int height = i.getHeight();
                 if (height >= size || (renderable instanceof AreaRenderable areaRenderable && areaRenderable.properties().perPixel90DegreeRendering.get())) {
                     // resizing would be pointless with this size, or if per pixel rendering is on dont do it
@@ -115,23 +132,23 @@ public class RenderableDispatcher {
     @SuppressWarnings("ConstantConditions")
     public static GpuTexture drawIntoTexture(Renderable<?> renderable, float tickDelta, int size) {
         Minecraft.getInstance().player.displayClientMessage(Component.literal("size="+size), false);
-        TextureTarget framebuffer = new TextureTarget("Isometric Renders RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
-        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(framebuffer.getColorTexture(), 0, framebuffer.getDepthTexture(), 1.0);
+        TextureTarget target = new TextureTarget("Isometric Renders RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
+        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(target.getColorTexture(), 0, target.getDepthTexture(), 1.0);
 
-        IsometricRenders.mainTargetOverride = framebuffer;
-        RenderSystem.outputColorTextureOverride = framebuffer.getColorTextureView();
-        RenderSystem.outputDepthTextureOverride = framebuffer.getDepthTextureView();
+        IsometricRenders.mainTargetOverride = target;
+        RenderSystem.outputColorTextureOverride = target.getColorTextureView();
+        RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
 
         drawIntoActiveFramebuffer(renderable, 1, tickDelta, matrixStack -> {});
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
         IsometricRenders.mainTargetOverride = null;
-        GpuTexture texture = FramebufferUtils.cloneColorAttachment(framebuffer);
+        GpuTexture texture = RenderTargetUtils.cloneColorAttachment(target);
 
         // Release depth attachment and FBO to save on VRAM - we only need
         // the color attachment texture to later turn into an image
-        framebuffer.destroyBuffers();
+        target.destroyBuffers();
 
         return texture;
     }

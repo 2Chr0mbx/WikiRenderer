@@ -1,18 +1,13 @@
 {
-  "key.isometric-renders.area_select": [
-    "",
-    {"text": "[", "color": "dark_gray"},
-    {"text": "I", "color": "#00c9f1"},
-    {"text": "S", "color": "#00f1c7"},
-    {"text": "O", "color": "#00f195"},
-    {"text": "]", "color": "dark_gray"},
-    " Select Area"
-  ],
+  "key.category.isometric-renders.keybinds": "Isometric Renders",
+  "key.isometric-renders.area_select": "Select Area",
+  "key.isometric-renders.render_hovered_item_or_viewed_entity": "Render Hovered Item / Viewed Entity",
 
   "gui.isometric-renders.animations": "Run Animations (Tick)",
   "gui.isometric-renders.particles": "Show Particles (requires ticking)",
   "gui.isometric-renders.use_external_renderer": "Use External Renderer",
-  "gui.isometric-renders.crop": "Crop and Resize",
+  "gui.isometric-renders.crop": "Crop",
+  "gui.isometric-renders.crop_and_resize": "Crop and Resize",
   "gui.isometric-renders.dump_into_root": "Dump into root",
   "gui.isometric-renders.overwrite_latest": "Overwrite latest file",
   "gui.isometric-renders.export": "Export",
@@ -32,8 +27,13 @@
   "gui.isometric-renders.isometric": "Isometric",
   "gui.isometric-renders.cycle_rotation": "Cycle Rotation 90°",
   "gui.isometric-renders.cycle_slant": "Cycle Slant 90°",
+  "gui.isometric-renders.half_pixel_offset_for_4x4": "Half Pixel Sampling Offset",
+  "gui.isometric-renders.half_pixel_offset_for_4x4_note_1": "This option helps fix things",
+  "gui.isometric-renders.half_pixel_offset_for_4x4_note_2": "like fence lines not rendering,",
+  "gui.isometric-renders.half_pixel_offset_for_4x4_note_3": "but may impact sharpness.",
   "gui.isometric-renders.reset_rotation_and_slant": "North & Above",
   "gui.isometric-renders.per_pixel_90_degree_rendering": "Toggle Pixel-Precision Face Rendering",
+  "gui.isometric-renders.export_minimap_data": "Export Minimap Data",
 
   "gui.isometric-renders.item_scale_warning_1": "Note: It's recommended to",
   "gui.isometric-renders.item_scale_warning_2": "keep scale at 100% for items!",
@@ -92,7 +92,7 @@
   "gui.isometric-renders.export_options": "Export Options",
   "gui.isometric-renders.renderer_resolution": "Resolution",
   "gui.isometric-renders.renderer_resolution_crop": "Resolution (Target Height)",
-  "gui.isometric-renders.per_pixel_resolution": "Block Resolution",
+  "gui.isometric-renders.block_resolution": "Block Resolution",
   "gui.isometric-renders.hotkeys": "F10: Toggle UI  F12: Export",
 
   "gui.isometric-renders.memory_warning1": "Warning: Unless you have at least 6GB ",
@@ -110,7 +110,7 @@
   "gui.isometric-renders.hide_entities": "Hide Entities",
   "gui.isometric-renders.hide_text": "Hide Text",
   "gui.isometric-renders.rebuild_mesh": "Rebuild Mesh",
-  "gui.isometric-renders.reset_offset_and_scale": "Resets Offset & Scale",
+  "gui.isometric-renders.reset_offset_and_scale": "Reset Offset & Scale",
 
   "gui.isometric-renders.exporter.idle": "Exporter Idle",
   "gui.isometric-renders.exporter.jobs": "Export Jobs: %s",
@@ -154,6 +154,7 @@
   "message.isometric-renders.lighting_profile_updated": "§aLighting profile updated",
   "message.isometric-renders.unsafe_enabled": "Unsafe mode §cenabled§7. Tread lightly",
   "message.isometric-renders.unsafe_disabled": "Unsafe mode §adisabled§7",
+  "message.isometric-renders.no_saved_menu": "No saved render found",
 
   "message.isometric-renders.version": "Running Isometric Renders v%s",
   "message.isometric-renders.command_hint": "Hint: Check the wiki to see the subcommands and what they do",

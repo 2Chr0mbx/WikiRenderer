@@ -38,9 +38,11 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.HangingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -56,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.stream.StreamSupport;
 
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldMesh {
@@ -73,7 +76,7 @@ public class WorldMesh {
             .build();
 
     public static boolean overrideCutoutRenderPipeline = false;
-    private static GpuSampler terrainSampler = null;
+    public static GpuSampler terrainSampler = null;
 
     // Render setup data
     private final BlockAndTintGetter world;
@@ -83,7 +86,6 @@ public class WorldMesh {
     private final Set<MiniChunk> chunksToGrabBlocksFrom;
 
     private final AABB dimensions;
-
     private final boolean cull;
 
     private final TriFunction<Player, BlockPos, BlockPos, List<Entity>> entitySupplier;
@@ -121,7 +123,7 @@ public class WorldMesh {
 
         this.world = useGlobalNeighbors
                 ? world
-                : new MeshRenderView(world, from, to);
+                : new MeshWorldOverrides(world, from, to);
 
         this.cull = cull;
         this.freezeEntities = freezeEntities;

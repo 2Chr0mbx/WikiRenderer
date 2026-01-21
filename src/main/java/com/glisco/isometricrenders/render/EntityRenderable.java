@@ -13,6 +13,8 @@ import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.util.Translate;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.EntityComponent;
@@ -22,9 +24,7 @@ import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -34,26 +34,19 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityProcessor;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
-import net.minecraft.util.ProblemReporter;
-import com.mojang.math.Axis;
 import net.minecraft.world.phys.Vec3;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
@@ -61,7 +54,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> implements TickingRenderable<DefaultPropertyBundle> {
@@ -89,15 +81,13 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
     }
 
     public static EntityRenderable copyAsRenderable(Entity source) {
-        return new EntityRenderable(copy(source));
+        return new EntityRenderable(copyEntityAndPassengers(source));
     }
 
     public static Entity copy(Entity source) {
-        if (source instanceof AbstractClientPlayer player) {
+       if (source instanceof Player player) {
             return copyPlayer(player);
         }
-
-        Minecraft client = Minecraft.getInstance();
 
         ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(source.problemPath(), IsometricRenders.LOGGER);
         TagValueOutput view = TagValueOutput.createWithContext(logging, source.registryAccess());
@@ -107,29 +97,65 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         logging.close();
         nbt.putString("id", EntityType.getKey(source.getType()).toString());
 
-        Entity entity = EntityType.loadEntityRecursive(nbt, client.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
-        applyToEntityAndPassengers(entity, Entity::tick);
+        Entity entity = EntityType.loadEntityRecursive(nbt, Minecraft.getInstance().level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
+        entity.setPose(source.getPose());
+        entity.getEntityData().assignValues(source.getEntityData().getNonDefaultValues());
+        if (entity instanceof LivingEntity living) {
+            living.hurtTime = 0;
+            living.deathTime = 0;
+        }
 
         return entity;
     }
 
-    public static EntityComponent.RenderablePlayerEntity copyPlayer(AbstractClientPlayer originalPlayer) {
+    public static Entity copyEntityAndPassengers(Entity source) {
+        source = source.getRootVehicle();
+
+        List<Entity> entityStack = new ArrayList<>();
+        applyToEntityAndPassengers(source, entity -> {
+            Entity clonedEntity = copy(entity);
+            if (clonedEntity.getVehicle() != null) {
+                clonedEntity.getVehicle().remove(Entity.RemovalReason.DISCARDED);
+            }
+            clonedEntity.getPassengers().forEach(passenger -> {
+                passenger.remove(Entity.RemovalReason.DISCARDED);
+            });
+
+            entityStack.add(clonedEntity);
+        });
+
+        Entity bottomEntity = entityStack.getFirst();
+
+        Entity recentTopEntity = bottomEntity;
+        for (int i = 1, entityStackSize = entityStack.size(); i < entityStackSize; i++) {
+            Entity passenger = entityStack.get(i);
+            passenger.startRiding(recentTopEntity);
+            recentTopEntity = passenger;
+        }
+
+        applyToEntityAndPassengers(bottomEntity, Entity::tick);
+        return bottomEntity;
+    }
+
+    public static EntityComponent.RenderablePlayerEntity copyPlayer(Player originalPlayer) {
         GameProfile originalProfile = originalPlayer.getGameProfile();
         GameProfile fakeProfile = new GameProfile(originalProfile.id(), originalProfile.name(), new PropertyMap(originalProfile.properties()));
 
         EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(fakeProfile);
 
         ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(originalPlayer.problemPath(), IsometricRenders.LOGGER);
-
         TagValueOutput view = TagValueOutput.createWithContext(problemReporter, originalPlayer.registryAccess());
         originalPlayer.saveWithoutId(view);
+
         CompoundTag nbt = view.buildResult();
-
         problemReporter.close();
-
         try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(player.problemPath(), IsometricRenders.LOGGER)) {
             player.load(TagValueInput.create(loggingRead, player.registryAccess(), nbt));
         }
+
+        player.hurtTime = 0;
+        player.deathTime = 0;
+        player.getEntityData().assignValues(player.getEntityData().getNonDefaultValues());
 
         return player;
     }
@@ -154,18 +180,17 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         this.entity.setXRot(properties.pitch.get());
         this.entity.xRotO = properties.pitch.get();
 
-        final MutableObject<Vec3> offset = new MutableObject<>(Vec3.ZERO);
-
         EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
         SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
+        applyToEntityAndPassengers(this.entity, Entity::rideTick);
+
         applyToEntityAndPassengers(this.entity, entity -> {
-            entity.setPosRaw(client.player.getX(), client.player.getY(), client.player.getZ());
+            Vec3 offset = Vec3.ZERO;
             if (entity.isPassenger()) {
-                offset.setValue(offset.getValue().add(entity.getVehicle().getPassengerRidingPosition(entity).subtract(entity.trackingPosition())));
+                offset = entity.position().subtract(this.entity.position());
             }
 
-            Vec3 offsetPos = offset.getValue();
             EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
 
             state.outlineColor = 0; // remove glow
@@ -241,15 +266,15 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
                 if (state instanceof AvatarRenderState avatarRenderState) {
                     avatarRenderState.isSpectator = true;
                 }
-                EntityRenderer<?,?> renderer = renderDispatcher.getRenderer(entity);
-                if (renderer instanceof LivingEntityRenderer<?,?,?> livingEntityRenderer) {
+                EntityRenderer<?, ?> renderer = renderDispatcher.getRenderer(entity);
+                if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
                     EntityModel<?> model = livingEntityRenderer.getModel();
                     ModelPart root = model.root();
                     this.hideNonHeadParts(toggleCallbacks, root);
                 }
             }
 
-            renderDispatcher.submit(state, new CameraRenderState(), offsetPos.x(), offsetPos.y(), offsetPos.z(), matrices, nodeStorage);
+            renderDispatcher.submit(state, new CameraRenderState(), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
 
             matrices.popPose();
@@ -316,6 +341,7 @@ public class EntityRenderable extends DefaultRenderable<DefaultPropertyBundle> i
         public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
             IsometricUI.sectionHeader(container, "transform_options", false);
             IsometricUI.booleanControl(container, spriteRendering, "sprite_rendering");
+
             this.spriteRendering.listen(((booleanProperty, value) -> {
                 screen.guiRebuildScheduled = true;
                 this.yaw.set(0);

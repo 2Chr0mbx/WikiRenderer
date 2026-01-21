@@ -90,7 +90,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         float previousYaw = camera.yRot();
         float previousPitch = camera.xRot();
 
-        ((CameraInvoker) camera).isometric$setRotation(this.properties().rotation.get() + 180 + this.properties().rotationOffset(), this.properties().slant.get().floatValue());
+        ((CameraInvoker) camera).isometric$setRotation(this.properties().getUsedRotation() + 180, (float) this.properties().getUsedSlant());
         ParticlesRenderState particleBatch = new ParticlesRenderState();
 
         client.particleEngine.extract(
@@ -106,9 +106,11 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         cameraRenderState.pos = camera.position();
         cameraRenderState.blockPos = camera.blockPosition();
         cameraRenderState.entityPos = camera.entity().getPosition(tickDelta);
+
+        // todo: make this respect alternative rotations, such as in side down views
         cameraRenderState.orientation.rotationYXZ(
-                (float) Math.PI - (float) Math.toRadians(this.properties().rotation.get() + this.properties().rotationOffset),
-                (float) Math.PI + (float) Math.toRadians(this.properties().slant.get()),
+                (float) Math.PI - (float) Math.toRadians(this.properties().getUsedRotation()),
+                (float) Math.PI + (float) Math.toRadians(this.properties().getUsedSlant()),
                 (float) Math.PI);
 
         /* submit and render to vertexconsumers */

@@ -1,5 +1,6 @@
 package com.glisco.isometricrenders.widget;
 
+import com.glisco.isometricrenders.IsometricKeybinds;
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.util.Translate;
 import io.wispforest.owo.ui.component.Components;
@@ -37,7 +38,7 @@ public class AreaSelectionComponent extends FlowLayout {
                 .shadow(false).margins(Insets.bottom(10))
         );
 
-        this.child(Components.label(Translate.gui("hud.area_selection.clear_hint", KeyBindingHelper.getBoundKeyOf(IsometricRenders.SELECT).getDisplayName())));
+        this.child(Components.label(Translate.gui("hud.area_selection.clear_hint", KeyBindingHelper.getBoundKeyOf(IsometricKeybinds.KEYBIND_SELECT).getDisplayName())));
     }
 
     private static Supplier<Component> positionText(Supplier<BlockPos> pos, String name) {
