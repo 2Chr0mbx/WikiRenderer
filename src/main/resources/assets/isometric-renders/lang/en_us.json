@@ -25,6 +25,11 @@
   "gui.isometric-renders.rotation_speed": "Rotation Degrees Per Second",
   "gui.isometric-renders.dimetric": "Dimetric",
   "gui.isometric-renders.isometric": "Isometric",
+
+  "gui.isometric-renders.hide_blocks": "Hide Blocks",
+  "gui.isometric-renders.walkability_filter": "Walkability Filter / \"Cave Mode\"",
+  "gui.isometric-renders.walkable_blocks_threshold": "Walkable Blocks Threshold",
+  "gui.isometric-renders.require_ceiling": "Require Ceilings for Walkable Areas",
   "gui.isometric-renders.cycle_rotation": "Cycle Rotation 90°",
   "gui.isometric-renders.cycle_slant": "Cycle Slant 90°",
   "gui.isometric-renders.half_pixel_offset_for_4x4": "Half Pixel Sampling Offset",
@@ -73,7 +78,6 @@
   "gui.isometric-renders.presets": "Presets",
   "gui.isometric-renders.lighting_profile": "Lighting Profile",
 
-  "gui.isometric-renders.hide_blocks": "Hide Blocks",
   "gui.isometric-renders.mesh_entity_overrides": "Mesh Entity Overrides",
   "gui.isometric-renders.mesh_entity_data.override_rotations": "Override Rotations",
   "gui.isometric-renders.sprite_rendering": "Sprite Rendering",

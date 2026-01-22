@@ -2,8 +2,7 @@ package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.render.EntityRenderable;
-import com.glisco.isometricrenders.render.area.side_view.topdown_filters.CaveModeFilter;
-import com.glisco.isometricrenders.render.area.side_view.topdown_filters.TopdownRenderingModeFilter;
+import com.glisco.isometricrenders.render.area.side_view.WalkabilityFilter;
 import com.google.common.collect.HashMultimap;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -84,7 +83,7 @@ public class WorldMesh {
     @Nullable
     private final Set<MiniChunk> chunksToGrabBlocksFrom;
 
-    private final Set<TopdownRenderingModeFilter> blockFilters = new HashSet<>();
+    private final Set<WalkabilityFilter> blockFilters = new HashSet<>();
     private final AABB dimensions;
     private final boolean cull;
 
@@ -436,15 +435,12 @@ public class WorldMesh {
                             * (this.to.getY() - this.from.getY() + 1)
                             * (this.to.getZ() - this.from.getZ() + 1);
 
-        List<TopdownRenderingModeFilter> topdownFilters = new ArrayList<>();
+        WalkabilityFilter walkabilityFilter = null;
         AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
         if (properties.perPixel90DegreeRendering.get()) {
-            if (properties.useCaveModeFilter.get()) {
-                topdownFilters.add(new CaveModeFilter(this, properties.requireCeilingForCaveMode.get()));
-            }
-
-            for (TopdownRenderingModeFilter topdownFilter : topdownFilters) {
-                topdownFilter.cacheData();
+            if (properties.useWalkabilityFilter.get()) {
+                walkabilityFilter = new WalkabilityFilter(this, properties.walkableBlocksThreshold.get(), properties.requireCeilingForCaveMode.get());
+                walkabilityFilter.cacheData();
             }
         }
 
@@ -460,17 +456,15 @@ public class WorldMesh {
                     : null;
 
             for (Iterable<BlockPos> positions : data.positions) {
-                blockLoop: for (BlockPos pos : positions) {
+                for (BlockPos pos : positions) {
                     currentBlockIndex++;
                     this.buildProgress = currentBlockIndex / (float) blocksToBuild;
 
                     BlockState state = world.getBlockState(pos);
                     if (state.isAir()) continue;
 
-                    for (TopdownRenderingModeFilter topdownFilter : topdownFilters) {
-                        if (!topdownFilter.shouldRenderBlock(pos)) {
-                            continue blockLoop;
-                        }
+                    if (walkabilityFilter != null && !walkabilityFilter.shouldRenderBlock(pos)) {
+                        continue;
                     }
 
                     BlockPos renderPos = pos.subtract(from);

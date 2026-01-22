@@ -33,7 +33,8 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
     public MeshSideRotation sideViewRotation = MeshSideRotation.NORTH;
     public MeshSideSlant sideViewSlant = MeshSideSlant.ABOVE;
 
-    public final Property<Boolean> useCaveModeFilter = Property.of(false);
+    public final Property<Boolean> useWalkabilityFilter = Property.of(false);
+    public final IntProperty walkableBlocksThreshold = IntProperty.of(2, 1, 20);
     public final Property<Boolean> requireCeilingForCaveMode = Property.of(false);
 
     public final Property<Boolean> hideMesh = Property.of(false);
@@ -103,14 +104,12 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
                 this.sideViewSlant = MeshSideSlant.ABOVE;
             }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
 
-            IsometricUI.booleanControl(container, this.useCaveModeFilter, "cave_mode");
-            this.useCaveModeFilter.listen((booleanProperty, value) -> renderable.mesh.scheduleRebuild(), false);
-            IsometricUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling_cave_mode");
-            this.requireCeilingForCaveMode.listen((booleanProperty, value) -> {
-                if (this.useCaveModeFilter.get()) {
-                    renderable.mesh.scheduleRebuild();
-                }
-            }, false);
+            IsometricUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");
+            this.useWalkabilityFilter.listen((booleanProperty, value) -> screen.guiRebuildScheduled = true, false);
+            if (this.useWalkabilityFilter.get()) {
+                IsometricUI.intControl(container, walkableBlocksThreshold, "walkable_blocks_threshold", 1);
+                IsometricUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");
+            }
         }
 
         WorldMesh mesh = renderable.mesh;
