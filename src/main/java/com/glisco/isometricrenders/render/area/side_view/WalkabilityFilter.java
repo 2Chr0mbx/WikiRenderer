@@ -1,6 +1,6 @@
 package com.glisco.isometricrenders.render.area.side_view;
 
-import com.glisco.isometricrenders.render.area.WorldMesh;
+import com.glisco.isometricrenders.render.area.WorldBlockMesh;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,13 +14,13 @@ import java.util.OptionalInt;
  * A block render filter that only renders areas you can walk in, so basically a cave mode
  */
 public class WalkabilityFilter {
-    protected final WorldMesh mesh;
+    protected final WorldBlockMesh mesh;
 
     private final Map<Long, Integer> maxYLevelRenderMap = new HashMap<>();
     private final int walkableHeightRequirement;
     private final boolean requireCeilingToShow;
 
-    public WalkabilityFilter(WorldMesh mesh, int walkableHeightRequirement, boolean requireCeilingToShow) {
+    public WalkabilityFilter(WorldBlockMesh mesh, int walkableHeightRequirement, boolean requireCeilingToShow) {
         this.mesh = mesh;
         this.walkableHeightRequirement = walkableHeightRequirement;
         this.requireCeilingToShow = requireCeilingToShow;

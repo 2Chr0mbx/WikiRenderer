@@ -2,9 +2,9 @@ package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
+import com.glisco.isometricrenders.render.EntityRenderable;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
-import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
@@ -29,18 +30,27 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
 
     private final Minecraft client = Minecraft.getInstance();
 
-    public final WorldMesh mesh;
+    public final WorldBlockMesh mesh;
     public final int ySize;
     public final int xSize;
     public final int zSize;
 
-    public AreaRenderable(WorldMesh mesh) {
+    protected List<Entity> entities = new ArrayList<>();
+    private boolean entitiesFrozen;
+    protected boolean freezeEntities;
+    protected boolean hideEntities;
+
+    public AreaRenderable(WorldBlockMesh mesh) {
         this.mesh = mesh;
 
         AABB dimensions = mesh.dimensions();
@@ -50,7 +60,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
     }
 
     public static AreaRenderable of(BlockPos origin, BlockPos end) {
-        final WorldMesh.Builder builder = new WorldMesh.Builder(Minecraft.getInstance().level, origin, end);
+        final WorldBlockMesh.Builder builder = new WorldBlockMesh.Builder(Minecraft.getInstance().level, origin, end);
         if (AreaPropertyBundle.INSTANCE.freezeEntities.get()) {
             builder.freezeEntities();
         }
@@ -74,7 +84,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         BlockPos firstPos = new BlockPos(minX, 0, minZ);
         BlockPos secondPos = new BlockPos(maxX, level.getMaxY(), maxZ);
 
-        final WorldMesh.Builder builder = new WorldMesh.Builder(level, chunks, firstPos, secondPos);
+        final WorldBlockMesh.Builder builder = new WorldBlockMesh.Builder(level, chunks, firstPos, secondPos);
         if (AreaPropertyBundle.INSTANCE.freezeEntities.get()) {
             builder.freezeEntities();
         }
@@ -85,7 +95,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
     @Override
     public void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack standardStack, MultiBufferSource vertexConsumers, float tickDelta) {
         if (!mesh.canRender()) {
-            if (mesh.state() == WorldMesh.MeshState.CORRUPT) return;
+            if (mesh.state() == WorldBlockMesh.MeshState.CORRUPT) return;
 
             mesh.scheduleRebuild();
             return;
@@ -105,14 +115,13 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
             PoseStack meshStack = new PoseStack();
             meshStack.mulPose(modelViewStack);
             meshStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
-            this.mesh.draw(meshStack);
+            this.mesh.drawBlocks(meshStack);
         }
 
         standardStack.setIdentity();
         standardStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
         SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
-
 
         CameraRenderState cameraRenderState = new CameraRenderState();
         // this makes certain things face the camera, like text, fishing bobbers, etc, see what uses the orientation field
@@ -121,8 +130,19 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
                 (float) Math.PI + (float) Math.toRadians(this.properties().getUsedSlant()),
                 (float) Math.PI);
 
+        this.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
+        this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
+
+        Vec3 diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
+        standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
+        this.drawParticles(standardStack.last().pose(), tickDelta);
+
+        super.drawSubmittedRenderFeatures();
+    }
+
+    private void drawBlockEntities(PoseStack standardStack, SubmitNodeStorage nodeStorage, CameraRenderState cameraRenderState, float tickDelta) {
         BlockEntityRenderDispatcher blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
-        mesh.renderInfo().blockEntities().forEach((blockPos, entity) -> {
+        mesh.getBlockEntities().forEach((blockPos, entity) -> {
             standardStack.pushPose();
             standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
@@ -134,28 +154,57 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
             standardStack.popPose();
         });
         super.drawSubmittedRenderFeatures();
+    }
 
+    private void refreshEntities() {
+        if (this.freezeEntities) {
+            if (!this.entitiesFrozen) {
+                this.entitiesFrozen = true;
+
+                this.entities = this.entities
+                        .stream()
+                        .map(originalEntity -> {
+                            Entity clonedEntity = EntityRenderable.copy(originalEntity);
+                            clonedEntity.restoreFrom(originalEntity);
+                            clonedEntity.copyPosition(originalEntity);
+                            clonedEntity.tick();
+                            return clonedEntity;
+                        })
+                        .collect(Collectors.toList());
+            }
+            return;
+        }
+
+        // not frozen selected by here
+        if (properties().autoRefreshVisibleEntities.get() || this.entitiesFrozen) {
+            ClientLevel level = Minecraft.getInstance().level;
+            assert level != null;
+            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(mesh.startPos(), mesh.endPos()), obj -> true);
+        }
+
+        this.entities.removeIf(Entity::isRemoved);
+        this.entitiesFrozen = false;
+    }
+
+    private void drawEntities(CameraRenderState cameraRenderState, float tickDelta, PoseStack standardStack, SubmitNodeStorage nodeStorage) {
+        AreaPropertyBundle properties = this.properties();
+        EntityRenderDispatcher entityDispatcher = client.getEntityRenderDispatcher();
         float effectiveDelta = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
 
-        Multimap<Vec3, DynamicRenderInfo.EntityEntry> entities = mesh.renderInfo().entities();
-        EntityRenderDispatcher entityDispatcher = client.getEntityRenderDispatcher();
-
+        this.refreshEntities();
         if (!properties.hideEntities.get()) {
-            entities.forEach((entityPos, entry) -> {
-                if (!mesh.entitiesFrozen()) {
-                    entityPos = entry.entity().getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
-                }
-                EntityRenderState state = entityDispatcher.extractEntity(entry.entity(), tickDelta);
-                state.lightCoords = entry.light();
+            this.entities.forEach(entity -> {
+                Vec3 offsetFromMesh = entity.getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
+
+                EntityRenderState state = entityDispatcher.extractEntity(entity, tickDelta);
+                state.lightCoords = client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0); // entry.light();
                 state.outlineColor = 0; // remove glow
 
-
-                if (mesh.entitiesFrozen() && (state instanceof AvatarRenderState avatarRenderState)) {
+                if (this.entitiesFrozen && (state instanceof AvatarRenderState avatarRenderState)) {
                     // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
                     avatarRenderState.capeFlap = 0;
                     avatarRenderState.capeLean = 0;
                     avatarRenderState.capeLean2 = 0;
-                    // todo remove this?
                 }
 
                 if (properties.hideText.get()) {
@@ -240,18 +289,11 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
                     state.shadowPieces.clear();
                     state.shadowPieces.addAll(newPieces);
                 }
-                entityDispatcher.submit(state, cameraRenderState, entityPos.x, entityPos.y, entityPos.z, standardStack, nodeStorage);
+                entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
             });
         }
         super.drawSubmittedRenderFeatures();
-
-        Vec3 diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
-        standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
-        this.drawParticles(standardStack.last().pose(), tickDelta);
-
-        super.drawSubmittedRenderFeatures();
     }
-
 
     @Override
     public AreaPropertyBundle properties() {

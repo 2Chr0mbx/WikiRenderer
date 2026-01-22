@@ -16,11 +16,9 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.phys.Vec2;
 import org.joml.Matrix4fStack;
 
 public class AreaPropertyBundle extends DefaultPropertyBundle {
@@ -29,6 +27,7 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
 
     public final Property<Boolean> hideEntities = Property.of(false);
     public final Property<Boolean> freezeEntities = Property.of(false);
+    public final Property<Boolean> autoRefreshVisibleEntities = Property.of(true);
     public final Property<Boolean> hideText = Property.of(false);
 
     public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
@@ -114,7 +113,7 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
             }
         }
 
-        WorldMesh mesh = renderable.mesh;
+        WorldBlockMesh mesh = renderable.mesh;
         container.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
                 .horizontalSizing(Sizing.fixed(80))
                 .margins(Insets.top(5)));
@@ -141,11 +140,11 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
         IsometricUI.sectionHeader(container, "mesh_entity_overrides", true);
 
         IsometricUI.booleanControl(container, this.hideEntities, "hide_entities");
-        // todo: probably not needed since emitVerticies checks for hidden entities
-        this.hideEntities.listen((booleanProperty, hidden) -> mesh.setHideEntities(hidden));
-
+        this.hideEntities.listen((booleanProperty, hidden) -> renderable.hideEntities = hidden);
         IsometricUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-        this.freezeEntities.listen((booleanProperty, frozen) -> mesh.setFreezeEntities(frozen));
+        this.freezeEntities.listen((booleanProperty, frozen) -> renderable.freezeEntities = frozen);
+        IsometricUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
+
         IsometricUI.booleanControl(container, this.hideText, "hide_text");
 
         IsometricUI.booleanControl(container, this.overrideRotations, "mesh_entity_data.override_rotations");
@@ -167,7 +166,7 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
         AreaPropertyBundle properties = renderable.properties();
 
         if (properties.perPixel90DegreeRendering.get()) {
-            WorldMesh mesh = renderable.mesh;
+            WorldBlockMesh mesh = renderable.mesh;
             BlockPos cornerOne = mesh.startPos();
             BlockPos cornerTwo = mesh.endPos();
 

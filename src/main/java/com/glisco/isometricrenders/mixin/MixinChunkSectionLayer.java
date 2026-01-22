@@ -1,6 +1,6 @@
 package com.glisco.isometricrenders.mixin;
 
-import com.glisco.isometricrenders.render.area.WorldMesh;
+import com.glisco.isometricrenders.render.area.WorldBlockMesh;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,8 +17,8 @@ public class MixinChunkSectionLayer {
         // 'this' refers to the ChunkSectionLayer enum instance
         ChunkSectionLayer layer = (ChunkSectionLayer) (Object) this;
 
-        if (layer == ChunkSectionLayer.CUTOUT && WorldMesh.overrideCutoutRenderPipeline) {
-            cir.setReturnValue(WorldMesh.CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING);
+        if (layer == ChunkSectionLayer.CUTOUT && WorldBlockMesh.overrideCutoutRenderPipeline) {
+            cir.setReturnValue(WorldBlockMesh.CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING);
         }
     }
 

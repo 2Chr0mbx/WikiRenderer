@@ -7,7 +7,7 @@ import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.Property;
 import com.glisco.isometricrenders.render.*;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
-import com.glisco.isometricrenders.render.area.WorldMesh;
+import com.glisco.isometricrenders.render.area.WorldBlockMesh;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.glisco.isometricrenders.widget.NotificationComponent;
@@ -245,7 +245,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 }
             });
         } else {
-            WorldMesh mesh = ((AreaRenderable) renderable).mesh;
+            WorldBlockMesh mesh = ((AreaRenderable) renderable).mesh;
             BlockPos cornerOne = mesh.startPos();
             BlockPos cornerTwo = mesh.endPos();
 

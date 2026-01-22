@@ -6,7 +6,7 @@ import com.glisco.isometricrenders.mixin.access.WorldCoordinatesAccessor;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.render.*;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
-import com.glisco.isometricrenders.render.area.WorldMesh;
+import com.glisco.isometricrenders.render.area.WorldBlockMesh;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
@@ -78,7 +78,7 @@ public class IsorenderCommand {
                 .executes(IsorenderCommand::showRootNodeHelp)
                 .then(literal("refresh_gpu")
                         .executes(c -> {
-                            WorldMesh.terrainSampler = null;
+                            WorldBlockMesh.terrainSampler = null;
                             return 0;
                         }))
                 .then(literal("reopen")

@@ -1,9 +1,7 @@
 package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.IsometricRenders;
-import com.glisco.isometricrenders.render.EntityRenderable;
 import com.glisco.isometricrenders.render.area.side_view.WalkabilityFilter;
-import com.google.common.collect.HashMultimap;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.BlendFunction;
@@ -46,7 +44,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -59,9 +56,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
-public class WorldMesh {
+public class WorldBlockMesh {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WorldMesh.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WorldBlockMesh.class);
 
     public static final RenderPipeline CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
             .withLocation("pipeline/iso_cutout_terrain")
@@ -83,38 +80,27 @@ public class WorldMesh {
     @Nullable
     private final Set<MiniChunk> chunksToGrabBlocksFrom;
 
-    private final Set<WalkabilityFilter> blockFilters = new HashSet<>();
     private final AABB dimensions;
     private final boolean cull;
 
-    private final TriFunction<Player, BlockPos, BlockPos, List<Entity>> entitySupplier;
-    private DynamicRenderInfo renderInfo = DynamicRenderInfo.EMPTY;
-    private boolean entitiesFrozen;
-    private boolean freezeEntities;
-    private boolean entitiesHidden;
-    private boolean hideEntities;
 
     // Build process data
-    private WorldMesh.MeshState state = WorldMesh.MeshState.NEW;
+    private WorldBlockMesh.MeshState state = WorldBlockMesh.MeshState.NEW;
 
     private float buildProgress = 0;
     private @Nullable CompletableFuture<Void> buildFuture = null;
 
     // Vertex storage
     public final List<Map<ChunkSectionLayer, SectionBuffers>> subMeshes = new ArrayList<>();
+    private final HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
 
-    private WorldMesh(
+    private WorldBlockMesh(
             BlockAndTintGetter world,
             BlockPos from,
             BlockPos to,
             @Nullable Set<MiniChunk> chunks,
             boolean cull,
-            boolean useGlobalNeighbors,
-            boolean freezeEntities,
-            TriFunction<Player,
-                    BlockPos,
-                    BlockPos,
-                    List<Entity>> entitySupplier
+            boolean useGlobalNeighbors
     ) {
         this.from = from;
         this.to = to;
@@ -125,9 +111,7 @@ public class WorldMesh {
                 : new MeshWorldOverrides(world, from, to);
 
         this.cull = cull;
-        this.freezeEntities = freezeEntities;
         this.dimensions = AABB.encapsulatingFullBlocks(this.from, this.to);
-        this.entitySupplier = entitySupplier;
 
         this.scheduleRebuild();
     }
@@ -137,7 +121,7 @@ public class WorldMesh {
      *
      * @param matrices The translation matrices. This is applied to the entire mesh
      */
-    public void draw(PoseStack matrices) {
+    public void drawBlocks(PoseStack matrices) {
         if (!this.canRender()) {
             throw new IllegalStateException("World mesh not prepared!");
         }
@@ -223,7 +207,7 @@ public class WorldMesh {
      *
      * @return The current {@code MeshState} constant
      */
-    public WorldMesh.MeshState state() {
+    public WorldBlockMesh.MeshState state() {
         return this.state;
     }
 
@@ -231,7 +215,7 @@ public class WorldMesh {
      * Renamed to {@link #state()}
      */
     @Deprecated(forRemoval = true)
-    public WorldMesh.MeshState getState() {
+    public WorldBlockMesh.MeshState getState() {
         return this.state();
     }
 
@@ -244,22 +228,29 @@ public class WorldMesh {
         return this.buildProgress;
     }
 
+    public HashMap<BlockPos, BlockEntity> getBlockEntities() {
+        return blockEntities;
+    }
+
+    /*
     /**
      * @return An object describing the entities and block
      * entities in the area this mesh is covering, with positions
      * relative to the mesh
-     */
+
     public DynamicRenderInfo renderInfo() {
         return this.renderInfo;
     }
-
+    */
+    /*
     /**
      * Renamed to {@link #renderInfo()}
-     */
+
     @Deprecated(forRemoval = true)
     public DynamicRenderInfo getRenderInfo() {
         return this.renderInfo();
     }
+    */
 
     /**
      * @return The origin position of this mesh's area
@@ -275,6 +266,7 @@ public class WorldMesh {
         return this.to;
     }
 
+    /*
     public boolean entitiesFrozen() {
         return this.entitiesFrozen;
     }
@@ -290,6 +282,7 @@ public class WorldMesh {
     public void setHideEntities(boolean hideEntities) {
         this.hideEntities = hideEntities;
     }
+     */
 
     /**
      * @return The dimensions of this mesh's entire area
@@ -299,14 +292,14 @@ public class WorldMesh {
     }
 
     /**
-     * Reset this mesh to {@link WorldMesh.MeshState#NEW}, releasing
+     * Reset this mesh to {@link WorldBlockMesh.MeshState#NEW}, releasing
      * all vertex buffers in the process
      */
     public void reset() {
         this.subMeshes.forEach(map -> map.values().forEach(SectionBuffers::close));
         this.subMeshes.clear();
 
-        this.state = WorldMesh.MeshState.NEW;
+        this.state = WorldBlockMesh.MeshState.NEW;
     }
 
     /**
@@ -333,18 +326,18 @@ public class WorldMesh {
         if (this.buildFuture != null) return this.buildFuture;
 
         this.buildProgress = 0;
-        this.state = this.state != WorldMesh.MeshState.NEW
-                ? WorldMesh.MeshState.REBUILDING
-                : WorldMesh.MeshState.BUILDING;
+        this.state = this.state != WorldBlockMesh.MeshState.NEW
+                ? WorldBlockMesh.MeshState.REBUILDING
+                : WorldBlockMesh.MeshState.BUILDING;
 
         this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync).whenComplete((unused, throwable) -> {
             this.buildFuture = null;
 
             if (throwable == null) {
-                state = WorldMesh.MeshState.READY;
+                state = WorldBlockMesh.MeshState.READY;
             } else {
                 LOGGER.warn("World mesh building failed", throwable);
-                state = WorldMesh.MeshState.CORRUPT;
+                state = WorldBlockMesh.MeshState.CORRUPT;
             }
         });
 
@@ -352,9 +345,10 @@ public class WorldMesh {
     }
 
     private void buildMeshAsync() {
-        this.entitiesFrozen = this.freezeEntities;
-        this.entitiesHidden = this.hideEntities;
+        //this.entitiesFrozen = this.freezeEntities;
+        //this.entitiesHidden = this.hideEntities;
         Minecraft.getInstance().executeBlocking((() -> {
+            this.blockEntities.clear();
             this.subMeshes.forEach(map -> {
                 map.forEach((layer, buffers) -> buffers.close());
                 map.clear();
@@ -365,6 +359,7 @@ public class WorldMesh {
         Minecraft client = Minecraft.getInstance();
 
         HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
+        /*
         List<DynamicRenderInfo.EntityEntry> entitiesList = this.entitySupplier.apply(client.player, this.from, this.to)
                 .stream()
                 .map(entity -> {
@@ -386,7 +381,7 @@ public class WorldMesh {
                     );
                 })
                 .toList();
-
+         */
 
         // large islands like the crimson isle hit a verticies limit, therefore we split into smaller (but still fairly large) meshes
         record SubMesh(List<Iterable<BlockPos>> positions) { }
@@ -515,6 +510,9 @@ public class WorldMesh {
 
         }
 
+        this.blockEntities.putAll(blockEntities);
+
+        /*
         HashMultimap<Vec3, DynamicRenderInfo.EntityEntry> entities = HashMultimap.create();
         for (DynamicRenderInfo.EntityEntry entityEntry : entitiesList) {
             entities.put(
@@ -524,6 +522,7 @@ public class WorldMesh {
         }
 
         this.renderInfo = new DynamicRenderInfo(blockEntities, entities);
+         */
     }
 
     private VertexConsumer getOrCreateBuilder(SectionBufferBuilderPack allocatorStorage, Map<ChunkSectionLayer, BufferBuilder> builderStorage, ChunkSectionLayer layer) {
@@ -560,26 +559,26 @@ public class WorldMesh {
             this.chunks = chunks;
         }
 
-        public WorldMesh.Builder disableCulling() {
+        public WorldBlockMesh.Builder disableCulling() {
             this.cull = false;
             return this;
         }
 
-        public WorldMesh.Builder useGlobalNeighbors() {
+        public WorldBlockMesh.Builder useGlobalNeighbors() {
             this.useGlobalNeighbors = true;
             return this;
         }
 
-        public WorldMesh.Builder freezeEntities() {
+        public WorldBlockMesh.Builder freezeEntities() {
             this.freezeEntities = true;
             return this;
         }
 
-        public WorldMesh build() {
+        public WorldBlockMesh build() {
             BlockPos start = new BlockPos(Math.min(origin.getX(), end.getX()), Math.min(origin.getY(), end.getY()), Math.min(origin.getZ(), end.getZ()));
             BlockPos target = new BlockPos(Math.max(origin.getX(), end.getX()), Math.max(origin.getY(), end.getY()), Math.max(origin.getZ(), end.getZ()));
 
-            return new WorldMesh(world, start, target, chunks, cull, useGlobalNeighbors, freezeEntities, entitySupplier);
+            return new WorldBlockMesh(world, start, target, chunks, cull, useGlobalNeighbors);
         }
     }
 
