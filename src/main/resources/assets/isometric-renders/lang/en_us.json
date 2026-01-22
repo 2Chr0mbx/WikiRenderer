@@ -73,6 +73,7 @@
   "gui.isometric-renders.presets": "Presets",
   "gui.isometric-renders.lighting_profile": "Lighting Profile",
 
+  "gui.isometric-renders.hide_blocks": "Hide Blocks",
   "gui.isometric-renders.mesh_entity_overrides": "Mesh Entity Overrides",
   "gui.isometric-renders.mesh_entity_data.override_rotations": "Override Rotations",
   "gui.isometric-renders.sprite_rendering": "Sprite Rendering",

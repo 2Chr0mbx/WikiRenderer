@@ -1,6 +1,8 @@
-package com.glisco.isometricrenders.render.area;
+package com.glisco.isometricrenders.render.area.side_view;
 
 import com.glisco.isometricrenders.property.GlobalProperties;
+import com.glisco.isometricrenders.render.area.AreaPropertyBundle;
+import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.util.ImageCropper;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.world.phys.Vec2;
@@ -82,7 +84,7 @@ public record MinimapCalibratorData(
     }
 
     private static Vec2 projectToMapPlane(AreaRenderable renderable, Vec3 worldPosition) {
-        AreaRenderable.AreaPropertyBundle props = renderable.properties();
+        AreaPropertyBundle props = renderable.properties();
 
         return switch (props.sideViewSlant) {
             case BELOW, ABOVE -> new Vec2((float) worldPosition.x, (float) worldPosition.z);

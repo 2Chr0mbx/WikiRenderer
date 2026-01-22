@@ -2,6 +2,8 @@ package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.render.EntityRenderable;
+import com.glisco.isometricrenders.render.area.side_view.topdown_filters.CaveModeFilter;
+import com.glisco.isometricrenders.render.area.side_view.topdown_filters.TopdownRenderingModeFilter;
 import com.google.common.collect.HashMultimap;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -38,11 +40,9 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.decoration.HangingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -58,7 +58,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.stream.StreamSupport;
 
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldMesh {
@@ -79,12 +78,13 @@ public class WorldMesh {
     public static GpuSampler terrainSampler = null;
 
     // Render setup data
-    private final BlockAndTintGetter world;
-    private final BlockPos from;
+    public final BlockAndTintGetter world;
+    public final BlockPos from;
     private final BlockPos to;
     @Nullable
     private final Set<MiniChunk> chunksToGrabBlocksFrom;
 
+    private final Set<TopdownRenderingModeFilter> blockFilters = new HashSet<>();
     private final AABB dimensions;
     private final boolean cull;
 
@@ -436,6 +436,18 @@ public class WorldMesh {
                             * (this.to.getY() - this.from.getY() + 1)
                             * (this.to.getZ() - this.from.getZ() + 1);
 
+        List<TopdownRenderingModeFilter> topdownFilters = new ArrayList<>();
+        AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
+        if (properties.perPixel90DegreeRendering.get()) {
+            if (properties.useCaveModeFilter.get()) {
+                topdownFilters.add(new CaveModeFilter(this, properties.requireCeilingForCaveMode.get()));
+            }
+
+            for (TopdownRenderingModeFilter topdownFilter : topdownFilters) {
+                topdownFilter.cacheData();
+            }
+        }
+
         for (SubMesh data : subMeshes) {
 
             SectionBufferBuilderPack bufferBuilderPack = new SectionBufferBuilderPack();
@@ -448,12 +460,18 @@ public class WorldMesh {
                     : null;
 
             for (Iterable<BlockPos> positions : data.positions) {
-                for (BlockPos pos : positions) {
+                blockLoop: for (BlockPos pos : positions) {
                     currentBlockIndex++;
                     this.buildProgress = currentBlockIndex / (float) blocksToBuild;
 
                     BlockState state = world.getBlockState(pos);
                     if (state.isAir()) continue;
+
+                    for (TopdownRenderingModeFilter topdownFilter : topdownFilters) {
+                        if (!topdownFilter.shouldRenderBlock(pos)) {
+                            continue blockLoop;
+                        }
+                    }
 
                     BlockPos renderPos = pos.subtract(from);
                     if (world.getBlockEntity(pos) != null) {

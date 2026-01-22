@@ -1,4 +1,4 @@
-package com.glisco.isometricrenders.render.area;
+package com.glisco.isometricrenders.render.area.side_view;
 
 public enum MeshSideSlant {
     BELOW(-90),
