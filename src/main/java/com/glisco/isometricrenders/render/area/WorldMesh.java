@@ -328,9 +328,6 @@ public class WorldMesh {
     /**
      * Schedule a rebuild of this mesh,
      * on the supplied executor
-     *
-     * @return A future completing when the build process is finished,
-     * or {@code null} if this mesh is already building
      */
     public synchronized CompletableFuture<Void> scheduleRebuild(Executor executor) {
         if (this.buildFuture != null) return this.buildFuture;
@@ -340,7 +337,7 @@ public class WorldMesh {
                 ? WorldMesh.MeshState.REBUILDING
                 : WorldMesh.MeshState.BUILDING;
 
-        this.buildFuture = CompletableFuture.runAsync(this::build, executor).whenComplete((unused, throwable) -> {
+        this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync).whenComplete((unused, throwable) -> {
             this.buildFuture = null;
 
             if (throwable == null) {
@@ -354,16 +351,16 @@ public class WorldMesh {
         return this.buildFuture;
     }
 
-    private void build() {
-        RenderSystem.assertOnRenderThread(); // Everything in here must be run in the render thread, so enforce that.
-
+    private void buildMeshAsync() {
         this.entitiesFrozen = this.freezeEntities;
         this.entitiesHidden = this.hideEntities;
-        this.subMeshes.forEach(map -> {
-            map.forEach((layer, buffers) -> buffers.close());
-            map.clear();
-        });
-        this.subMeshes.clear();
+        Minecraft.getInstance().executeBlocking((() -> {
+            this.subMeshes.forEach(map -> {
+                map.forEach((layer, buffers) -> buffers.close());
+                map.clear();
+            });
+            this.subMeshes.clear();
+        }));
 
         Minecraft client = Minecraft.getInstance();
 
@@ -372,6 +369,7 @@ public class WorldMesh {
                 .stream()
                 .map(entity -> {
                     if (this.freezeEntities) {
+                        // this also breaks passengers
                         Entity originalEntity = entity;
                         if (entity instanceof Player) {
                             entity = EntityRenderable.copy(originalEntity);
@@ -499,19 +497,22 @@ public class WorldMesh {
                 }
             }
 
-            Map<ChunkSectionLayer, SectionBuffers> regionBuffers = new HashMap<>();
-            builderStorage.forEach((layer, bufferBuilder) -> {
-                MeshData builtData = bufferBuilder.build();
-                if (builtData == null) return;
+            Minecraft.getInstance().executeBlocking((() -> {
+                Map<ChunkSectionLayer, SectionBuffers> regionBuffers = new HashMap<>();
+                builderStorage.forEach((layer, bufferBuilder) -> {
+                    MeshData builtData = bufferBuilder.build();
+                    if (builtData == null) return;
 
-                GpuBuffer vBuf = RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-VBuf", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, builtData.vertexBuffer());
-                GpuBuffer iBuf = builtData.indexBuffer() != null ? RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-IBuf", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST, builtData.indexBuffer()) : null;
+                    GpuBuffer vBuf = RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-VBuf", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, builtData.vertexBuffer());
+                    GpuBuffer iBuf = builtData.indexBuffer() != null ? RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-IBuf", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST, builtData.indexBuffer()) : null;
 
-                regionBuffers.put(layer, new SectionBuffers(vBuf, iBuf, builtData.drawState().indexCount(), builtData.drawState().indexType()));
-            });
-            this.subMeshes.add(regionBuffers);
+                    regionBuffers.put(layer, new SectionBuffers(vBuf, iBuf, builtData.drawState().indexCount(), builtData.drawState().indexType()));
+                });
+                this.subMeshes.add(regionBuffers);
 
-            bufferBuilderPack.close();
+                bufferBuilderPack.close();
+            }));
+
         }
 
         HashMultimap<Vec3, DynamicRenderInfo.EntityEntry> entities = HashMultimap.create();
@@ -583,8 +584,8 @@ public class WorldMesh {
     }
 
     public enum MeshState {
-        NEW(false, false),
-        BUILDING(true, false),
+        NEW(false, true),
+        BUILDING(true, true),
         REBUILDING(true, true),
         READY(false, true),
         CORRUPT(false, false);

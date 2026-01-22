@@ -18,7 +18,9 @@ import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.phys.Vec2;
 import org.joml.Matrix4fStack;
 
 public class AreaPropertyBundle extends DefaultPropertyBundle {
@@ -119,7 +121,7 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
         IsometricUI.dynamicLabel(container, () -> {
             MutableComponent meshStatusText = Translate.gui("mesh_status");
             if (!mesh.state().isBuildStage) {
-                meshStatusText.append(Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN));
+                meshStatusText.append(Translate.gui("mesh_ready"));
             } else {
                 meshStatusText.append(Translate.gui(
                         switch (mesh.state()) {
@@ -128,8 +130,9 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
                             default -> "mesh_rebuilding";
                         },
                         (int) (mesh.buildProgress() * 100)
-                ).withStyle(ChatFormatting.RED));
+                ));
             }
+
             return meshStatusText;
         });
 
@@ -161,17 +164,25 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
     @Override
     public void applyToViewMatrix(Renderable<?> r, Matrix4fStack modelViewStack) {
         AreaRenderable renderable = (AreaRenderable) r;
+        AreaPropertyBundle properties = renderable.properties();
 
-        if (renderable.properties().perPixel90DegreeRendering.get()) {
+        if (properties.perPixel90DegreeRendering.get()) {
             WorldMesh mesh = renderable.mesh;
             BlockPos cornerOne = mesh.startPos();
             BlockPos cornerTwo = mesh.endPos();
 
-            int totalBlocksX = cornerTwo.getX() - cornerOne.getX() + 1;
-            int totalBlocksY = cornerTwo.getY() - cornerOne.getY() + 1;
-            int totalBlocksZ = cornerTwo.getZ() - cornerOne.getZ() + 1;
+            Direction.Axis[] visibleAxes = switch (properties.sideViewSlant) {
+                case BELOW, ABOVE -> new Direction.Axis[]{Direction.Axis.X, Direction.Axis.Z};
+                case SIDE -> switch (properties.sideViewRotation) {
+                    case NORTH, SOUTH -> new Direction.Axis[]{Direction.Axis.X, Direction.Axis.Y};
+                    case EAST, WEST -> new Direction.Axis[]{Direction.Axis.Z, Direction.Axis.Y};
+                };
+            };
 
-            int highest = Math.max(totalBlocksY, Math.max(totalBlocksX, totalBlocksZ));
+            int totalBlocksA = cornerTwo.get(visibleAxes[0]) - cornerOne.get(visibleAxes[0]) + 1;
+            int totalBlocksB = cornerTwo.get(visibleAxes[1]) - cornerOne.get(visibleAxes[1]) + 1;
+
+            int highest = Math.max(totalBlocksA, totalBlocksB);
 
             // force pixel count per blocks without blurriness
             double pixelsPerBlock = GlobalProperties.sideViewPixelsPerBlockResolution;
