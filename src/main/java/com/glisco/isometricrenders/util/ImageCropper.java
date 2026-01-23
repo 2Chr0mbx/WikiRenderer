@@ -9,12 +9,14 @@ import java.util.List;
 public class ImageCropper {
     public static NativeImage cropTransparent(NativeImage source) {
         CropData cropData = getCropData(source);
-        if (cropData == null) return source;
-
         return cropTransparent(source, cropData);
     }
 
-    public static NativeImage cropTransparent(NativeImage source, CropData cropData) {
+    public static NativeImage cropTransparent(NativeImage source, @Nullable CropData cropData) {
+        if (cropData == null) {
+            return source;
+        }
+
         int croppedWidth = cropData.maxX - cropData.minX + 1;
         int croppedHeight = cropData.maxY - cropData.minY + 1;
         NativeImage cropped = new NativeImage(source.format(), croppedWidth, croppedHeight, false);

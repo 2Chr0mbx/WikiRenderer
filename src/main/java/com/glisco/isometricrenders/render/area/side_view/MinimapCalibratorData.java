@@ -12,7 +12,9 @@ import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector4f;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -106,5 +108,24 @@ public record MinimapCalibratorData(
         }
 
         return new Vec3(pos.x - halfPixelWorldOffset, pos.y, pos.z - halfPixelWorldOffset).add(renderable.mesh.startPos().getX(), renderable.mesh.startPos().getY(), renderable.mesh.startPos().getZ());
+    }
+
+    public String toFileText(String imageFileName) {
+        List<String> lines = new ArrayList<>();
+        lines.add("Use this data on https://hypixel-skyblock.fandom.com/wiki/Module:Minimap/Datasheet in the following order:");
+        lines.add("");
+        lines.add("Corresponding minimap file name: " + imageFileName);
+        lines.add("");
+        lines.add("Top-left Image Pixel X: " + this.topLeftImagePixelX);
+        lines.add("Top-left Image Pixel Y: " + this.topLeftImagePixelY);
+        lines.add("Top-left Map Coordinate X: " + this.topLeftMapCoordX);
+        lines.add("Top-left Map Coordinate Y: " + this.topLeftMapCoordY);
+        lines.add("Bottom-right Image Pixel X: " + this.bottomRightImagePixelX);
+        lines.add("Bottom-right Image Pixel Y: " + this.bottomRightImagePixelY);
+        lines.add("Bottom-right Map Coordinate X: " + this.bottomRightMapCoordX);
+        lines.add("Bottom-right Map Coordinate Y: " + this.bottomRightMapCoordY);
+        lines.add("Image Width: " + this.imageWidth);
+        lines.add("Image Height: " + this.imageHeight);
+        return String.join("\n", lines);
     }
 }

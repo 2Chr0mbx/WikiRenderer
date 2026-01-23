@@ -1,16 +1,21 @@
 package com.glisco.isometricrenders.render.area;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public class FluidVertexConsumer implements VertexConsumer {
 
     private final VertexConsumer delegate;
     private final Matrix4f transform;
+    private final Matrix3f normalTransform;
 
-    public FluidVertexConsumer(VertexConsumer delegate, Matrix4f transform) {
+    public FluidVertexConsumer(VertexConsumer delegate, Matrix4f transform, Matrix3f normalTransform) {
         this.delegate = delegate;
         this.transform = transform;
+        this.normalTransform = normalTransform;
     }
 
     @Override
@@ -51,7 +56,8 @@ public class FluidVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer setNormal(float x, float y, float z) {
-        this.delegate.setNormal(x, y, z);
+        Vector3f transformed = new Vector3f(x, y, z).mul(this.normalTransform);
+        this.delegate.setNormal(transformed.x(), transformed.y(), transformed.z());
         return this;
     }
 

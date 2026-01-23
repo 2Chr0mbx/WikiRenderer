@@ -75,6 +75,7 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
                 builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
+
                 }).horizontalSizing(Sizing.fixed(60)));
             }
             IsometricUI.intControl(container, scale, "scale", 10);
@@ -94,15 +95,18 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
             try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
                 builder.row.child(Components.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
                     this.sideViewRotation = this.sideViewRotation.nextRotation();
+                    screen.guiRebuildScheduled = true;
                 }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
 
                 builder.row.child(Components.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
                     this.sideViewSlant = this.sideViewSlant.nextSlant();
+                    screen.guiRebuildScheduled = true;
                 }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
             }
             container.child(Components.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
                 this.sideViewRotation = MeshSideRotation.NORTH;
                 this.sideViewSlant = MeshSideSlant.ABOVE;
+                screen.guiRebuildScheduled = true;
             }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
 
             IsometricUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");

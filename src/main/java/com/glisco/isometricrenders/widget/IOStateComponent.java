@@ -1,13 +1,12 @@
 package com.glisco.isometricrenders.widget;
 
 import com.glisco.isometricrenders.screen.IsometricUI;
-import com.glisco.isometricrenders.util.ImageIO;
+import com.glisco.isometricrenders.util.FileIO;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.OwoUIDrawContext;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.Surface;
-import com.mojang.blaze3d.vertex.PoseStack;
 
 public class IOStateComponent extends FlowLayout {
 
@@ -17,7 +16,7 @@ public class IOStateComponent extends FlowLayout {
         this.padding(Insets.of(10));
         this.surface(Surface.flat(0x77000000).and(Surface.outline(0x77000000)));
 
-        this.child(new DynamicLabelComponent(ImageIO::progressText).margins(Insets.bottom(10)));
+        this.child(new DynamicLabelComponent(FileIO::progressText).margins(Insets.bottom(10)));
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.glisco.isometricrenders.property.PropertyBundle;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ExportPathSpec;
-import com.glisco.isometricrenders.util.ImageIO;
+import com.glisco.isometricrenders.util.FileIO;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -39,7 +39,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         this.reset();
 
         this.contentType = ExportPathSpec.exportRoot().resolve("batches/")
-                .relativize(ImageIO.next(ExportPathSpec.exportRoot().resolve("batches/" + source + "/"))).toString();
+                .relativize(FileIO.next(ExportPathSpec.exportRoot().resolve("batches/" + source + "/"))).toString();
         this.renderDelay = Math.max((int) Math.pow(GlobalProperties.exportResolution / 1024f, 2) * 100L, 75);
     }
 
@@ -65,10 +65,10 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
         this.currentDelegate.emitVerticesThenDraw(matrix4fStack, matrices, vertexConsumers, tickDelta);
 
-    if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && ImageIO.taskCount() <= 5) {
-        final ExportPathSpec exportPath = this.exportPath();
-        RenderableDispatcher.drawIntoImage(this.currentDelegate, 0, GlobalProperties.exportResolution, GlobalProperties.crop.get())
-            .thenCompose(image -> ImageIO.save(image, exportPath).whenComplete((f, _t) -> image.close()));
+        if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && FileIO.taskCount() <= 5) {
+            final ExportPathSpec exportPath = this.exportPath();
+            RenderableDispatcher.drawIntoImage(this.currentDelegate, 0, GlobalProperties.exportResolution, GlobalProperties.crop.get(), null)
+                    .thenCompose(image -> FileIO.saveImage(image, exportPath).whenComplete((f, _t) -> image.close()));
 
             this.currentIndex++;
             this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;

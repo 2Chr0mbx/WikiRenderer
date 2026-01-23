@@ -15,6 +15,7 @@
   "gui.isometric-renders.open_folder": "Open Folder",
   "gui.isometric-renders.copied_to_clipboard": "Exported to Clipboard",
   "gui.isometric-renders.exported_as": "Exported as: ",
+  "gui.isometric-renders.exported_minimap_data_as": "Exported minimap data as: ",
   "gui.isometric-renders.animation_saved": "Animation saved to: ",
   "gui.isometric-renders.converting_image_sequence": "Converting image sequence to target format",
 
@@ -32,6 +33,8 @@
   "gui.isometric-renders.require_ceiling": "Require Ceilings for Walkable Areas",
   "gui.isometric-renders.cycle_rotation": "Cycle Rotation 90°",
   "gui.isometric-renders.cycle_slant": "Cycle Slant 90°",
+  "gui.isometric-renders.minimap_disabled_notice_1": "Minimap Exporting requires",
+  "gui.isometric-renders.minimap_disabled_notice_2": "North & Above rotation settings.",
   "gui.isometric-renders.half_pixel_offset_for_4x4": "Half Pixel Sampling Offset",
   "gui.isometric-renders.half_pixel_offset_for_4x4_note_1": "This option helps fix things",
   "gui.isometric-renders.half_pixel_offset_for_4x4_note_2": "like fence lines not rendering,",

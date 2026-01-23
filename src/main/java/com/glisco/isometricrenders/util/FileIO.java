@@ -7,36 +7,67 @@ import net.minecraft.network.chat.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ImageIO {
+public class FileIO {
 
     private static final AtomicInteger TASK_COUNT = new AtomicInteger(0);
 
-    public static CompletableFuture<File> save(NativeImage image, ExportPathSpec path) {
+    public static CompletableFuture<File> saveImage(NativeImage image, ExportPathSpec path) {
         CompletableFuture<File> future = new CompletableFuture<>();
 
         TASK_COUNT.incrementAndGet();
-        ForkJoinPool.commonPool().submit(() -> {
-            File imageFile = path.resolveFile("png");
+        try (ForkJoinPool pool = ForkJoinPool.commonPool()) {
+            pool.submit(() -> {
+                File imageFile = path.resolveFile("png");
+                imageFile.getParentFile().mkdirs();
 
-            imageFile.getParentFile().mkdirs();
+                try {
+                    image.writeToFile(imageFile);
+                    IsometricRenders.LOGGER.info("Image {} saved", imageFile.getAbsolutePath());
+                    future.complete(imageFile);
+                } catch (IOException e) {
+                    IsometricRenders.LOGGER.warn("Could not save image {}", imageFile.getAbsolutePath(), e);
+                    future.completeExceptionally(e);
+                } finally {
+                    TASK_COUNT.decrementAndGet();
+                }
+            });
+        }
 
-            try {
-                image.writeToFile(imageFile);
-                IsometricRenders.LOGGER.info("Image " + imageFile.getAbsolutePath() + " saved");
-                future.complete(imageFile);
-            } catch (IOException e) {
-                IsometricRenders.LOGGER.warn("Could not save image " + imageFile.getAbsolutePath(), e);
-                future.completeExceptionally(e);
-            } finally {
-                TASK_COUNT.decrementAndGet();
-            }
-        });
+        return future;
+    }
+
+    public static CompletableFuture<File> saveText(String text, ExportPathSpec path) {
+        CompletableFuture<File> future = new CompletableFuture<>();
+
+        TASK_COUNT.incrementAndGet();
+        try (ForkJoinPool pool = ForkJoinPool.commonPool()) {
+            pool.submit(() -> {
+                File textFile = path.resolveFile("txt");
+                textFile.getParentFile().mkdirs();
+
+                try {
+                    Files.writeString(
+                            textFile.toPath(),
+                            text,
+                            StandardCharsets.UTF_8
+                    );
+                    future.complete(textFile);
+                } catch (IOException e) {
+                    IsometricRenders.LOGGER.warn("Could not save text {}", textFile.getAbsolutePath(), e);
+                    future.completeExceptionally(e);
+                } finally {
+                    TASK_COUNT.decrementAndGet();
+                }
+            });
+        }
+
 
         return future;
     }

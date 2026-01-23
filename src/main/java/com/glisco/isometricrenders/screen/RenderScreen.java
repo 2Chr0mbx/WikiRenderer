@@ -5,9 +5,15 @@ import com.glisco.isometricrenders.mixin.access.NativeImageInvoker;
 import com.glisco.isometricrenders.mixin.access.ParticleEngineAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.Property;
-import com.glisco.isometricrenders.render.*;
+import com.glisco.isometricrenders.render.DefaultRenderable;
+import com.glisco.isometricrenders.render.Renderable;
+import com.glisco.isometricrenders.render.RenderableDispatcher;
+import com.glisco.isometricrenders.render.TickingRenderable;
+import com.glisco.isometricrenders.render.area.AreaPropertyBundle;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
-import com.glisco.isometricrenders.render.area.WorldBlockMesh;
+import com.glisco.isometricrenders.render.area.side_view.MeshSideRotation;
+import com.glisco.isometricrenders.render.area.side_view.MeshSideSlant;
+import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.glisco.isometricrenders.widget.NotificationComponent;
@@ -49,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.glisco.isometricrenders.property.GlobalProperties.*;
@@ -211,7 +218,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 this.notify(Translate.gui("copied_to_clipboard"));
 
-                RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get())
+                RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get(), null)
                         .whenComplete((image, t) -> {
                             try (image) {
                                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -245,9 +252,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 }
             });
         } else {
-            WorldBlockMesh mesh = ((AreaRenderable) renderable).mesh;
-            BlockPos cornerOne = mesh.startPos();
-            BlockPos cornerTwo = mesh.endPos();
+            AreaRenderable areaRenderable = (AreaRenderable) renderable;
+            AreaPropertyBundle properties = areaRenderable.properties();
+
+            BlockPos cornerOne = areaRenderable.mesh.startPos();
+            BlockPos cornerTwo = areaRenderable.mesh.endPos();
 
             int totalBlocksX = cornerTwo.getX() - cornerOne.getX() + 1;
             int totalBlocksY = cornerTwo.getY() - cornerOne.getY() + 1;
@@ -262,7 +271,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 double bufferSize = highest * pixelsPerBlock;
 
-                if ((pixelsPerBlock < 4 || pixelsPerBlock > 128 || bufferSize > 16384) && !unsafe.get()) {
+                if ((pixelsPerBlock < 4 || pixelsPerBlock > 256 || bufferSize > 16384) && !unsafe.get()) {
                     exportButton.active = false;
                 } else {
                     if ((sideViewPixelsPerBlockResolution != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && sideViewPixelsPerBlockResolution == 4)) {
@@ -273,7 +282,18 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 }
             });
 
-            IsometricUI.booleanControl(rightColumn, sideViewExportMinimapData, "export_minimap_data");
+            boolean allowMinimapExporting = properties.sideViewRotation == MeshSideRotation.NORTH && properties.sideViewSlant == MeshSideSlant.ABOVE;
+            if (!allowMinimapExporting) {
+                sideViewExportMinimapData.set(false);
+            }
+
+            if (allowMinimapExporting) {
+                IsometricUI.booleanControl(rightColumn, sideViewExportMinimapData, "export_minimap_data");
+            } else {
+                IsometricUI.sectionHeader(rightColumn, "minimap_disabled_notice_1", false);
+                IsometricUI.sectionHeader(rightColumn, "minimap_disabled_notice_2", false);
+            }
+
             if (sideViewPixelsPerBlockResolution == 4) {
                 IsometricUI.booleanControl(rightColumn, halfPixelOffsetFor4x4, "half_pixel_offset_for_4x4");
                 IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_1", true);
@@ -397,7 +417,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 //            client.textRenderer.draw(matrices, Translate.gui("memory_warning4"), 10, height - 30, 0xAAAAAA);
 //            client.textRenderer.draw(matrices, Translate.gui("memory_warning5"), 10, height - 20, 0xAAAAAA);
 
-            if (ImageIO.taskCount() > 0) {
+            if (FileIO.taskCount() > 0) {
                 if (!this.ioStateComponent.hasParent()) {
                     this.notificationArea.child(this.ioStateComponent);
                 }
@@ -408,15 +428,33 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         if (this.captureScheduled) {
             final ExportPathSpec exportPath = this.renderable.exportPath();
-            RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get())
-                    .thenCompose(img -> ImageIO.save(img, exportPath).whenComplete((f, t) -> img.close()))
-                    .whenComplete((file, throwable) -> {
-                        exportCallback.accept(file);
+
+            AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
+            Consumer<MinimapCalibratorData> dataConsumer = null;
+            if (renderable instanceof AreaRenderable areaRenderable && areaRenderable.properties().perPixel90DegreeRendering.get()) {
+                dataConsumer = data::set;
+            }
+
+            RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get(), dataConsumer)
+                    .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((f, t) -> img.close()))
+                    .whenComplete((imageFile, throwable) -> {
+                        exportCallback.accept(imageFile);
                         this.minecraft.execute(() -> this.notify(
-                                () -> Util.getPlatform().openFile(file),
+                                () -> Util.getPlatform().openFile(imageFile),
                                 Translate.gui("exported_as"),
-                                Component.literal(ExportPathSpec.exportRoot().relativize(file.toPath()).toString())
+                                Component.literal(ExportPathSpec.exportRoot().relativize(imageFile.toPath()).toString())
                         ));
+
+                        if (data.get() != null) {
+                            String fileText = data.get().toFileText(imageFile.getName());
+                            FileIO.saveText(fileText, exportPath.differentFileName("area_render_minimap_data")).whenComplete((textFile, textThrowable) -> {
+                                this.minecraft.execute(() -> this.notify(
+                                        () -> Util.getPlatform().openFile(textFile),
+                                        Translate.gui("exported_minimap_data_as"),
+                                        Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
+                                ));
+                            });
+                        }
                     });
 
             this.captureScheduled = false;
@@ -444,7 +482,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                                 collectedCropData.add(ImageCropper.getCropData(image));
                                 return image;
                             })
-                            .thenCompose(img -> ImageIO.save(img, ExportPathSpec.forced("sequence", "seq_" + sequenceIndex))
+                            .thenCompose(img -> FileIO.saveImage(img, ExportPathSpec.forced("sequence", "seq_" + sequenceIndex))
                                     .whenComplete((f, t) -> img.close()));
 
                     exportFutures.add(future);

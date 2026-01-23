@@ -28,10 +28,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
-import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
-import net.minecraft.client.renderer.chunk.SectionBuffers;
+import net.minecraft.client.renderer.chunk.*;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
@@ -48,9 +45,11 @@ import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.geom.Area;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -69,7 +68,6 @@ public class WorldBlockMesh {
             ))
             .withShaderDefine("ALPHA_CUTOUT", 0.5f)
             .build();
-
     public static boolean overrideCutoutRenderPipeline = false;
     public static GpuSampler terrainSampler = null;
 
@@ -83,35 +81,35 @@ public class WorldBlockMesh {
     private final AABB dimensions;
     private final boolean cull;
 
-
-    // Build process data
-    private WorldBlockMesh.MeshState state = WorldBlockMesh.MeshState.NEW;
-
+    private MeshState state = MeshState.NEW;
     private float buildProgress = 0;
     private @Nullable CompletableFuture<Void> buildFuture = null;
+    protected boolean viewingAngleChanged = false;
 
     // Vertex storage
-    public final List<Map<ChunkSectionLayer, SectionBuffers>> subMeshes = new ArrayList<>();
+    public final List<MeshSection> subMeshes = new ArrayList<>();
     private final HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
+
+    private float lastUsedRotation;
+    private double lastUsedSlant;
 
     private WorldBlockMesh(
             BlockAndTintGetter world,
             BlockPos from,
             BlockPos to,
-            @Nullable Set<MiniChunk> chunks,
-            boolean cull,
-            boolean useGlobalNeighbors
+            @Nullable Set<MiniChunk> chunks
     ) {
         this.from = from;
         this.to = to;
         this.chunksToGrabBlocksFrom = chunks;
 
-        this.world = useGlobalNeighbors
-                ? world
-                : new MeshWorldOverrides(world, from, to);
+        this.world = new MeshWorldOverrides(world, from, to);
 
-        this.cull = cull;
+        this.cull = false;
         this.dimensions = AABB.encapsulatingFullBlocks(this.from, this.to);
+
+        this.lastUsedRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
+        this.lastUsedSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();
 
         this.scheduleRebuild();
     }
@@ -134,9 +132,21 @@ public class WorldBlockMesh {
 
         Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
 
+        float currentRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
+        double currentSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();
+        if (this.lastUsedRotation != currentRotation || this.lastUsedSlant != currentSlant) {
+            this.lastUsedRotation = currentRotation;
+            this.lastUsedSlant = currentSlant;
+
+            VertexSorting sortingMethod = this.getIsometricSortingMethod();
+            for (MeshSection meshSection : subMeshes) {
+                meshSection.reSortTransparencyData(sortingMethod);
+            }
+        }
+
         List<ChunkSectionsToRender> preparedSections = new ArrayList<>();
-        for (Map<ChunkSectionLayer, SectionBuffers> storage : subMeshes) {
-            preparedSections.add(renderBlockLayers(storage, matrices.last().pose()));
+        for (MeshSection meshSection : subMeshes) {
+            preparedSections.add(renderBlockLayers(meshSection.getBuffers(), matrices.last().pose()));
         }
 
         // opaque runs first
@@ -207,7 +217,7 @@ public class WorldBlockMesh {
      *
      * @return The current {@code MeshState} constant
      */
-    public WorldBlockMesh.MeshState state() {
+    public MeshState state() {
         return this.state;
     }
 
@@ -215,7 +225,7 @@ public class WorldBlockMesh {
      * Renamed to {@link #state()}
      */
     @Deprecated(forRemoval = true)
-    public WorldBlockMesh.MeshState getState() {
+    public MeshState getState() {
         return this.state();
     }
 
@@ -292,14 +302,14 @@ public class WorldBlockMesh {
     }
 
     /**
-     * Reset this mesh to {@link WorldBlockMesh.MeshState#NEW}, releasing
+     * Reset this mesh to {@link MeshState#NEW}, releasing
      * all vertex buffers in the process
      */
     public void reset() {
-        this.subMeshes.forEach(map -> map.values().forEach(SectionBuffers::close));
+        this.subMeshes.forEach(MeshSection::close);
         this.subMeshes.clear();
 
-        this.state = WorldBlockMesh.MeshState.NEW;
+        this.state = MeshState.NEW;
     }
 
     /**
@@ -326,18 +336,18 @@ public class WorldBlockMesh {
         if (this.buildFuture != null) return this.buildFuture;
 
         this.buildProgress = 0;
-        this.state = this.state != WorldBlockMesh.MeshState.NEW
-                ? WorldBlockMesh.MeshState.REBUILDING
-                : WorldBlockMesh.MeshState.BUILDING;
+        this.state = this.state != MeshState.NEW
+                ? MeshState.REBUILDING
+                : MeshState.BUILDING;
 
         this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync).whenComplete((unused, throwable) -> {
             this.buildFuture = null;
 
             if (throwable == null) {
-                state = WorldBlockMesh.MeshState.READY;
+                state = MeshState.READY;
             } else {
                 LOGGER.warn("World mesh building failed", throwable);
-                state = WorldBlockMesh.MeshState.CORRUPT;
+                state = MeshState.CORRUPT;
             }
         });
 
@@ -349,39 +359,13 @@ public class WorldBlockMesh {
         //this.entitiesHidden = this.hideEntities;
         Minecraft.getInstance().executeBlocking((() -> {
             this.blockEntities.clear();
-            this.subMeshes.forEach(map -> {
-                map.forEach((layer, buffers) -> buffers.close());
-                map.clear();
-            });
+            this.subMeshes.forEach(MeshSection::close);
             this.subMeshes.clear();
         }));
 
         Minecraft client = Minecraft.getInstance();
 
         HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
-        /*
-        List<DynamicRenderInfo.EntityEntry> entitiesList = this.entitySupplier.apply(client.player, this.from, this.to)
-                .stream()
-                .map(entity -> {
-                    if (this.freezeEntities) {
-                        // this also breaks passengers
-                        Entity originalEntity = entity;
-                        if (entity instanceof Player) {
-                            entity = EntityRenderable.copy(originalEntity);
-                        }
-
-                        entity.restoreFrom(originalEntity);
-                        entity.copyPosition(originalEntity);
-                        entity.tick();
-                    }
-
-                    return new DynamicRenderInfo.EntityEntry(
-                            entity,
-                            client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0)
-                    );
-                })
-                .toList();
-         */
 
         // large islands like the crimson isle hit a verticies limit, therefore we split into smaller (but still fairly large) meshes
         record SubMesh(List<Iterable<BlockPos>> positions) { }
@@ -437,6 +421,8 @@ public class WorldBlockMesh {
             }
         }
 
+        VertexSorting isometricSortingMethod = getIsometricSortingMethod();
+
         for (SubMesh data : subMeshes) {
 
             SectionBufferBuilderPack bufferBuilderPack = new SectionBufferBuilderPack();
@@ -473,7 +459,7 @@ public class WorldBlockMesh {
                         poseStack.translate(-(pos.getX() & 15), -(pos.getY() & 15), -(pos.getZ() & 15));
                         poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
 
-                        blockRenderDispatcher.renderLiquid(pos, world, new FluidVertexConsumer(this.getOrCreateBuilder(bufferBuilderPack, builderStorage, fluidLayer), poseStack.last().pose()), state, fluidState);
+                        blockRenderDispatcher.renderLiquid(pos, world, new FluidVertexConsumer(this.getOrCreateBuilder(bufferBuilderPack, builderStorage, fluidLayer), poseStack.last().pose(), poseStack.last().normal()), state, fluidState);
 
                         poseStack.popPose();
                     }
@@ -493,61 +479,61 @@ public class WorldBlockMesh {
             }
 
             Minecraft.getInstance().executeBlocking((() -> {
-                Map<ChunkSectionLayer, SectionBuffers> regionBuffers = new HashMap<>();
+                Map<ChunkSectionLayer, MeshData> builtMeshes = new HashMap<>();
+
                 builderStorage.forEach((layer, bufferBuilder) -> {
                     MeshData builtData = bufferBuilder.build();
-                    if (builtData == null) return;
-
-                    GpuBuffer vBuf = RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-VBuf", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, builtData.vertexBuffer());
-                    GpuBuffer iBuf = builtData.indexBuffer() != null ? RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-IBuf", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST, builtData.indexBuffer()) : null;
-
-                    regionBuffers.put(layer, new SectionBuffers(vBuf, iBuf, builtData.drawState().indexCount(), builtData.drawState().indexType()));
+                    if (builtData != null) {
+                        builtMeshes.put(layer, builtData);
+                    }
                 });
-                this.subMeshes.add(regionBuffers);
 
-                bufferBuilderPack.close();
+                MeshSection meshSection = new MeshSection(bufferBuilderPack, builtMeshes, isometricSortingMethod);
+                meshSection.upload();
+                this.subMeshes.add(meshSection);
+
+                // bufferBuilderPack.close();
             }));
 
         }
 
         this.blockEntities.putAll(blockEntities);
-
-        /*
-        HashMultimap<Vec3, DynamicRenderInfo.EntityEntry> entities = HashMultimap.create();
-        for (DynamicRenderInfo.EntityEntry entityEntry : entitiesList) {
-            entities.put(
-                    entityEntry.entity().trackingPosition().subtract(this.from.getX(), this.from.getY(), this.from.getZ()),
-                    entityEntry
-            );
-        }
-
-        this.renderInfo = new DynamicRenderInfo(blockEntities, entities);
-         */
     }
 
-    private VertexConsumer getOrCreateBuilder(SectionBufferBuilderPack allocatorStorage, Map<ChunkSectionLayer, BufferBuilder> builderStorage, ChunkSectionLayer layer) {
+    private VertexConsumer getOrCreateBuilder(SectionBufferBuilderPack bufferBuilderPack, Map<ChunkSectionLayer, BufferBuilder> builderStorage, ChunkSectionLayer layer) {
         return builderStorage.computeIfAbsent(layer, renderLayer ->
-                new BufferBuilder(allocatorStorage.buffer(layer), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK));
+                new BufferBuilder(bufferBuilderPack.buffer(layer), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK));
     }
 
+    public VertexSorting getIsometricSortingMethod() {
+        Vector3f virtualCamera = new Vector3f(0, 0, 1000);
+        virtualCamera.rotateX((float) Math.toRadians(-AreaPropertyBundle.INSTANCE.getUsedSlant()));
+        virtualCamera.rotateY((float) Math.toRadians(-AreaPropertyBundle.INSTANCE.getUsedRotation()));
+        return VertexSorting.byDistance(virtualCamera.x(), virtualCamera.y(), virtualCamera.z());
+    }
+
+    /*
+    private VertexSorting createVertexSorting(SectionPos sectionPos) {
+        Camera camera = new Camera();
+        ((CameraInvoker) camera).isometric$setRotation(AreaPropertyBundle.INSTANCE.getUsedRotation() + 180f, (float) AreaPropertyBundle.INSTANCE.getUsedSlant());
+
+        Vec3 cameraPos = SectionRenderDispatcher.this.cameraPosition;
+        return VertexSorting.byDistance((float)(cameraPos.x - sectionPos.minBlockX()), (float)(cameraPos.y - sectionPos.minBlockY()), (float)(cameraPos.z - sectionPos.minBlockZ()));
+    }
+     */
 
     public static class Builder {
 
         private final BlockAndTintGetter world;
-        private final TriFunction<Player, BlockPos, BlockPos, List<Entity>> entitySupplier;
 
         private final BlockPos origin;
         private final BlockPos end;
-        private boolean cull = false;
-        private boolean useGlobalNeighbors = false;
-        private boolean freezeEntities = false;
         private Set<MiniChunk> chunks = null;
 
         public Builder(BlockAndTintGetter world, BlockPos origin, BlockPos end, TriFunction<Player, BlockPos, BlockPos, List<Entity>> entitySupplier) {
             this.world = world;
             this.origin = origin;
             this.end = end;
-            this.entitySupplier = entitySupplier;
         }
 
         public Builder(Level world, BlockPos origin, BlockPos end) {
@@ -559,26 +545,11 @@ public class WorldBlockMesh {
             this.chunks = chunks;
         }
 
-        public WorldBlockMesh.Builder disableCulling() {
-            this.cull = false;
-            return this;
-        }
-
-        public WorldBlockMesh.Builder useGlobalNeighbors() {
-            this.useGlobalNeighbors = true;
-            return this;
-        }
-
-        public WorldBlockMesh.Builder freezeEntities() {
-            this.freezeEntities = true;
-            return this;
-        }
-
         public WorldBlockMesh build() {
             BlockPos start = new BlockPos(Math.min(origin.getX(), end.getX()), Math.min(origin.getY(), end.getY()), Math.min(origin.getZ(), end.getZ()));
             BlockPos target = new BlockPos(Math.max(origin.getX(), end.getX()), Math.max(origin.getY(), end.getY()), Math.max(origin.getZ(), end.getZ()));
 
-            return new WorldBlockMesh(world, start, target, chunks, cull, useGlobalNeighbors);
+            return new WorldBlockMesh(world, start, target, chunks);
         }
     }
 

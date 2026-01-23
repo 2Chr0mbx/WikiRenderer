@@ -2,12 +2,13 @@ package com.glisco.isometricrenders;
 
 import com.glisco.isometricrenders.command.IsorenderCommand;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
-import com.glisco.isometricrenders.util.ImageIO;
+import com.glisco.isometricrenders.util.FileIO;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.widget.AreaSelectionComponent;
 import com.glisco.isometricrenders.widget.IOStateComponent;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -18,17 +19,12 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
-import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,8 +65,8 @@ public class IsometricRenders implements ClientModInitializer {
             FlowLayout isometricHud = (FlowLayout) Hud.getComponent(hudId);
 
             IOStateComponent ioState = isometricHud.childById(IOStateComponent.class, ioStateId);
-            if ((ioState == null) == (ImageIO.taskCount() > 0 && client.screen == null)) {
-                if (ImageIO.taskCount() > 0 && client.screen == null) {
+            if ((ioState == null) == (FileIO.taskCount() > 0 && client.screen == null)) {
+                if (FileIO.taskCount() > 0 && client.screen == null) {
                     isometricHud.child(new IOStateComponent().positioning(Positioning.absolute(20, 20)).id(ioStateId));
                 } else {
                     isometricHud.removeChild(ioState);

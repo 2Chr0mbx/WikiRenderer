@@ -48,16 +48,16 @@ public class NotificationComponent extends FlowLayout {
         super.parentUpdate(delta, mouseX, mouseY);
         this.age += delta * 50;
 
-        if (this.age > 5000 && this.horizontalSizing.get().method == Sizing.Method.CONTENT) {
+        if (this.age > 8000 && this.horizontalSizing.get().method == Sizing.Method.CONTENT) {
             this.verticalSizing(Sizing.fixed(this.height));
             this.horizontalSizing(Sizing.fixed(this.width));
 
-            this.margins.animate(1500, Easing.CUBIC, Insets.none()).forwards();
-            this.verticalSizing.animate(1500, Easing.CUBIC, Sizing.fixed(0)).forwards();
-            this.horizontalSizing.animate(1500, Easing.CUBIC, Sizing.fixed(0)).forwards();
+            this.margins.animate(2000, Easing.CUBIC, Insets.none()).forwards();
+            this.verticalSizing.animate(2000, Easing.CUBIC, Sizing.fixed(0)).forwards();
+            this.horizontalSizing.animate(2000, Easing.CUBIC, Sizing.fixed(0)).forwards();
         }
 
-        if (this.age > 6500) {
+        if (this.age > 10000) {
             this.queue(() -> this.parent.removeChild(this));
         }
     }

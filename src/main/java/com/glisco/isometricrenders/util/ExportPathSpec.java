@@ -28,11 +28,15 @@ public record ExportPathSpec(String rootOffset, String filename, boolean ignoreS
     }
 
     public File resolveFile(String extension) {
-        return ImageIO.next(exportRoot().resolve(this.effectiveOffset()).resolve(this.filename + "." + extension)).toFile();
+        return FileIO.next(exportRoot().resolve(this.effectiveOffset()).resolve(this.filename + "." + extension)).toFile();
     }
 
     public ExportPathSpec relocate(String newOffset) {
         return new ExportPathSpec(newOffset, this.filename, this.ignoreSaveIntoRoot);
+    }
+
+    public ExportPathSpec differentFileName(String newFileName) {
+        return new ExportPathSpec(this.rootOffset, newFileName, this.ignoreSaveIntoRoot);
     }
 
     private String effectiveOffset() {

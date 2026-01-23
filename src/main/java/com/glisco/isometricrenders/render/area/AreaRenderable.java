@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.PlayerModelType;
@@ -60,11 +61,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
     }
 
     public static AreaRenderable of(BlockPos origin, BlockPos end) {
-        final WorldBlockMesh.Builder builder = new WorldBlockMesh.Builder(Minecraft.getInstance().level, origin, end);
-        if (AreaPropertyBundle.INSTANCE.freezeEntities.get()) {
-            builder.freezeEntities();
-        }
-        return new AreaRenderable(builder.build());
+        return new AreaRenderable(new WorldBlockMesh.Builder(Minecraft.getInstance().level, origin, end).build());
     }
 
     @Nullable
@@ -84,12 +81,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         BlockPos firstPos = new BlockPos(minX, 0, minZ);
         BlockPos secondPos = new BlockPos(maxX, level.getMaxY(), maxZ);
 
-        final WorldBlockMesh.Builder builder = new WorldBlockMesh.Builder(level, chunks, firstPos, secondPos);
-        if (AreaPropertyBundle.INSTANCE.freezeEntities.get()) {
-            builder.freezeEntities();
-        }
-
-        return new AreaRenderable(builder.build());
+        return new AreaRenderable(new WorldBlockMesh.Builder(level, chunks, firstPos, secondPos).build());
     }
 
     @Override
@@ -179,7 +171,12 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         if (properties().autoRefreshVisibleEntities.get() || this.entitiesFrozen) {
             ClientLevel level = Minecraft.getInstance().level;
             assert level != null;
-            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(mesh.startPos(), mesh.endPos()), obj -> true);
+            BlockPos start = mesh.startPos().subtract(new Vec3i(5, 5, 5));
+            BlockPos end = mesh.endPos().offset(5, 5, 5);
+            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start, end), e -> {
+                AABB boundingBox = e.getBoundingBox();
+                return boundingBox.intersects(new Vec3(start), new Vec3(end));
+            });
         }
 
         this.entities.removeIf(Entity::isRemoved);
@@ -281,7 +278,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
                 }
 
                 if (!state.shadowPieces.isEmpty()) {
-                    // increase shadow height by a tiny amount to fix z-fighting, +0.001 is enouth
+                    // increase shadow height by a tiny amount to fix z-fighting, +0.001 is enough
                     List<EntityRenderState.ShadowPiece> newPieces = state.shadowPieces
                             .stream()
                             .map(piece -> new EntityRenderState.ShadowPiece(piece.relativeX(), piece.relativeY() + 0.001f, piece.relativeZ(), piece.shapeBelow(), piece.alpha()))
@@ -321,10 +318,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
     @Override
     public void dispose() {
         super.dispose();
-        mesh.subMeshes.forEach(map -> {
-            map.forEach((layer, buffers) -> buffers.close());
-            map.clear();
-        });
+        mesh.subMeshes.forEach(MeshSection::close);
         mesh.subMeshes.clear();
     }
 }

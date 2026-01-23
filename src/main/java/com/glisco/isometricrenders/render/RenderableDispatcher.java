@@ -5,19 +5,19 @@ import com.glisco.isometricrenders.mixin.access.LightTextureAccessor;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
-import com.glisco.isometricrenders.util.RenderTargetUtils;
 import com.glisco.isometricrenders.util.ImageCropper;
+import com.glisco.isometricrenders.util.RenderTargetUtils;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import com.mojang.blaze3d.pipeline.TextureTarget;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
@@ -85,12 +85,12 @@ public class RenderableDispatcher {
      * @param size       The resolution to render at
      * @return The created image
      */
-    public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, boolean crop) {
+    public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
         GpuTexture texture = drawIntoTexture(renderable, tickDelta, size);
         CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).whenComplete((i, t) -> texture.close());
 
         boolean sideRendering = renderable instanceof AreaRenderable areaRenderable && areaRenderable.properties().perPixel90DegreeRendering.get();
-        boolean exportMinimapData = sideRendering && GlobalProperties.sideViewExportMinimapData.get();
+        boolean exportMinimapData = calibrationDataCallback != null && sideRendering && GlobalProperties.sideViewExportMinimapData.get();
 
         if (crop) {
             // resize image to target height by regenerating it with an increased size
@@ -100,6 +100,7 @@ public class RenderableDispatcher {
 
                 if (exportMinimapData) {
                     MinimapCalibratorData calibrationData = MinimapCalibratorData.getCalibrationData((AreaRenderable) renderable, cropData, nativeImage);
+                    calibrationDataCallback.accept(calibrationData);
                 }
 
                 return nativeImage;
@@ -111,7 +112,7 @@ public class RenderableDispatcher {
                 } else {
                     double multiplier = (double) size / (double) height;
                     int newSize = (int) Math.round(size * multiplier);
-                    return drawIntoImage(renderable, tickDelta, newSize, false).thenApply(ImageCropper::cropTransparent);
+                    return drawIntoImage(renderable, tickDelta, newSize, false, null).thenApply(ImageCropper::cropTransparent);
                 }
             });
         }
