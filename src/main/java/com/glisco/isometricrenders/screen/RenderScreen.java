@@ -3,6 +3,7 @@ package com.glisco.isometricrenders.screen;
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.NativeImageInvoker;
 import com.glisco.isometricrenders.mixin.access.ParticleEngineAccessor;
+import com.glisco.isometricrenders.property.CroppablePropertyBundle;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.Property;
 import com.glisco.isometricrenders.render.DefaultRenderable;
@@ -11,8 +12,6 @@ import com.glisco.isometricrenders.render.RenderableDispatcher;
 import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.render.area.AreaPropertyBundle;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
-import com.glisco.isometricrenders.render.area.side_view.MeshSideRotation;
-import com.glisco.isometricrenders.render.area.side_view.MeshSideSlant;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
@@ -162,10 +161,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Override
     protected void build(FlowLayout rootComponent) {
         this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
-        boolean notFaceFrameAreaRendering = !(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.properties().perPixel90DegreeRendering.get();
+        boolean notFaceFrameAreaRendering = !(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.getProperties().perPixel90DegreeRendering.get();
 
         ((ParticleEngineAccessor) Minecraft.getInstance().particleEngine).isometric$getParticles().clear();
-        IsometricRenders.particleRestriction = this.renderable.particleRestriction();
+        IsometricRenders.particleRestriction = this.renderable.getParticleRestriction();
 
         this.leftColumn.margins(Insets.top(20));
         this.rightColumn.margins(Insets.top(20));
@@ -180,7 +179,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         .padding(Insets.of(5))
         );
 
-        this.renderable.properties().buildGuiControls(this.renderable, this, this.leftColumn);
+        this.renderable.getProperties().buildGuiControls(this.renderable, this, this.leftColumn);
 
         // ---
 
@@ -199,7 +198,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
 
         IsometricUI.sectionHeader(rightColumn, "export_options", true);
-        IsometricUI.booleanControl(rightColumn, crop, notFaceFrameAreaRendering ? "crop_and_resize" : "crop");
+        if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
+            IsometricUI.booleanControl(rightColumn, croppablePropertyBundle.getCropProperty(), notFaceFrameAreaRendering ? "crop_and_resize" : "crop");
+        }
         IsometricUI.booleanControl(rightColumn, saveIntoRoot, "dump_into_root");
         IsometricUI.booleanControl(rightColumn, overwriteLatest, "overwrite_latest");
 
@@ -209,7 +210,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             builder.row.child(exportButton.horizontalSizing(Sizing.fixed(75)));
 
             builder.row.child(Components.button(Translate.gui("open_folder"), button -> {
-                Util.getPlatform().openFile(this.renderable.exportPath().resolveOffset().toFile());
+                Util.getPlatform().openFile(this.renderable.getExportPath().resolveOffset().toFile());
             }).horizontalSizing(Sizing.fixed(75)).margins(Insets.left(5)));
         }
 
@@ -218,7 +219,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 this.notify(Translate.gui("copied_to_clipboard"));
 
-                RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get(), null)
+                RenderableDispatcher.drawIntoImage(this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
                         .whenComplete((image, t) -> {
                             try (image) {
                                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -237,8 +238,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (notFaceFrameAreaRendering) {
-            String key = crop.get() ? "renderer_resolution_crop" : "renderer_resolution";
-            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportResolution), key, Sizing.fixed(50));
+            String key = renderable.shouldCrop() ? "renderer_resolution_crop" : "renderer_resolution";
+            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(renderable.getExportResolution()), key, Sizing.fixed(50));
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
@@ -247,13 +248,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 if ((resolution < 16 || resolution > 16384) && !unsafe.get()) {
                     exportButton.active = false;
                 } else {
-                    exportResolution = resolution;
+                    renderable.getProperties().setExportResolution(resolution);
                     exportButton.active = true;
                 }
             });
         } else {
             AreaRenderable areaRenderable = (AreaRenderable) renderable;
-            AreaPropertyBundle properties = areaRenderable.properties();
+            AreaPropertyBundle properties = areaRenderable.getProperties();
 
             BlockPos cornerOne = areaRenderable.mesh.startPos();
             BlockPos cornerTwo = areaRenderable.mesh.endPos();
@@ -263,7 +264,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             int totalBlocksZ = cornerTwo.getZ() - cornerOne.getZ() + 1;
             int highest = Math.max(totalBlocksY, Math.max(totalBlocksX, totalBlocksZ));
 
-            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(sideViewPixelsPerBlockResolution), "block_resolution", Sizing.fixed(50));
+            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(properties.getPixelsPerBlockResolution()), "block_resolution", Sizing.fixed(50));
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
@@ -274,28 +275,24 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 if ((pixelsPerBlock < 4 || pixelsPerBlock > 256 || bufferSize > 16384) && !unsafe.get()) {
                     exportButton.active = false;
                 } else {
-                    if ((sideViewPixelsPerBlockResolution != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && sideViewPixelsPerBlockResolution == 4)) {
+                    if ((properties.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && properties.getPixelsPerBlockResolution() == 4)) {
                         guiRebuildScheduled = true;
                     }
-                    sideViewPixelsPerBlockResolution = pixelsPerBlock;
+                    properties.setPixelsPerBlockResolution(pixelsPerBlock);
                     exportButton.active = true;
                 }
             });
 
-            boolean allowMinimapExporting = properties.sideViewRotation == MeshSideRotation.NORTH && properties.sideViewSlant == MeshSideSlant.ABOVE;
-            if (!allowMinimapExporting) {
-                sideViewExportMinimapData.set(false);
-            }
-
+            boolean allowMinimapExporting = properties.areMinimapSettingsExportable();
             if (allowMinimapExporting) {
-                IsometricUI.booleanControl(rightColumn, sideViewExportMinimapData, "export_minimap_data");
+                IsometricUI.booleanControl(rightColumn, properties.exportSideViewMinimapData, "export_minimap_data");
             } else {
                 IsometricUI.sectionHeader(rightColumn, "minimap_disabled_notice_1", false);
                 IsometricUI.sectionHeader(rightColumn, "minimap_disabled_notice_2", false);
             }
 
-            if (sideViewPixelsPerBlockResolution == 4) {
-                IsometricUI.booleanControl(rightColumn, halfPixelOffsetFor4x4, "half_pixel_offset_for_4x4");
+            if (properties.getPixelsPerBlockResolution() == 4) {
+                IsometricUI.booleanControl(rightColumn, properties.halfPixelOffsetFor4x4, "half_pixel_offset_for_4x4");
                 IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_1", true);
                 IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_2", false);
                 IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_3", false);
@@ -427,15 +424,18 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.captureScheduled) {
-            final ExportPathSpec exportPath = this.renderable.exportPath();
+            final ExportPathSpec exportPath = this.renderable.getExportPath();
 
             AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
             Consumer<MinimapCalibratorData> dataConsumer = null;
-            if (renderable instanceof AreaRenderable areaRenderable && areaRenderable.properties().perPixel90DegreeRendering.get()) {
+            if (renderable instanceof AreaRenderable areaRenderable
+                && areaRenderable.getProperties().perPixel90DegreeRendering.get()
+                && areaRenderable.getProperties().exportSideViewMinimapData.get()
+                && areaRenderable.getProperties().areMinimapSettingsExportable()) {
                 dataConsumer = data::set;
             }
 
-            RenderableDispatcher.drawIntoImage(this.renderable, 0, exportResolution, crop.get(), dataConsumer)
+            RenderableDispatcher.drawIntoImage(this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
                     .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((f, t) -> img.close()))
                     .whenComplete((imageFile, throwable) -> {
                         exportCallback.accept(imageFile);
@@ -461,7 +461,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.remainingAnimationFrames > 0) {
-            this.renderedFrames.add(RenderableDispatcher.drawIntoTexture(this.renderable, effectiveTickDelta, exportResolution));
+            this.renderedFrames.add(RenderableDispatcher.drawIntoTexture(this.renderable, effectiveTickDelta, renderable.getExportResolution()));
 
             IsometricRenders.skipNextWorldRender();
 
@@ -491,7 +491,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 this.renderedFrames.clear();
 
-                final ExportPathSpec animationTarget = this.renderable.exportPath();
+                final ExportPathSpec animationTarget = this.renderable.getExportPath();
                 CompletableFuture.allOf(exportFutures.toArray(CompletableFuture[]::new))
                         .whenComplete((file, throwable) -> {
                             overwriteLatest.set(overwriteValue);
@@ -504,7 +504,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                                     animationTarget,
                                     ExportPathSpec.exportRoot().resolve("sequence/"),
                                     animationFormat,
-                                    ImageCropper.getFfmpegCropSize(collectedCropData)
+                                    ImageCropper.getFfmpegCropSize(renderable, collectedCropData)
                             ).whenComplete((animationFile, animationThrowable) -> {
                                 this.exportAnimationButton.active = true;
                                 this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
@@ -547,7 +547,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
-        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties))
+        if (!(this.renderable.getProperties() instanceof DefaultPropertyBundle properties))
             return super.mouseDragged(click, offsetX, offsetY);
 
         if (this.isInViewport(click.x())) {
@@ -573,7 +573,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties))
+        if (!(this.renderable.getProperties() instanceof DefaultPropertyBundle properties))
             return super.mouseClicked(click, doubled);
 
         if (this.isInViewport(click.x()) && click.hasControlDown()) {
@@ -594,7 +594,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) {
+        if (!(this.renderable.getProperties() instanceof DefaultPropertyBundle properties)) {
             return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
         }
 
@@ -617,13 +617,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         } else if (keyCode == GLFW.GLFW_KEY_F10) {
             this.drawOnlyBackground = !this.drawOnlyBackground;
         } else if (KEYBOARD_CONTROLS.containsKey(keyCode) && this.renderable instanceof DefaultRenderable) {
-            KEYBOARD_CONTROLS.get(keyCode).accept((DefaultPropertyBundle) this.renderable.properties());
+            KEYBOARD_CONTROLS.get(keyCode).accept((DefaultPropertyBundle) this.renderable.getProperties());
         }
         return true;
     }
 
     private int estimateMemoryUsage(int frames) {
-        return (int) ((exportResolution * exportResolution * 4L * frames) / 1024L / 1024L);
+        return (int) ((renderable.getExportResolution() * renderable.getExportResolution() * 4L * frames) / 1024L / 1024L);
     }
 
     public void scheduleCapture() {

@@ -4,9 +4,13 @@ import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.BlockInputAccessor;
 import com.glisco.isometricrenders.mixin.access.WorldCoordinatesAccessor;
 import com.glisco.isometricrenders.property.GlobalProperties;
-import com.glisco.isometricrenders.render.*;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.WorldBlockMesh;
+import com.glisco.isometricrenders.render.entity.EntityRenderable;
+import com.glisco.isometricrenders.render.item.BlockStateRenderable;
+import com.glisco.isometricrenders.render.item.ItemRenderable;
+import com.glisco.isometricrenders.render.batch.BatchRenderTask;
+import com.glisco.isometricrenders.render.item.TooltipRenderable;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
@@ -238,7 +242,7 @@ public class IsorenderCommand {
     }
 
     private static int renderCreativeTab(CommandContext<FabricClientCommandSource> context) {
-        RenderTask task = RenderTaskArgumentType.getTask("task", context);
+        BatchRenderTask task = RenderTaskArgumentType.getTask("task", context);
         withItemGroupFromContext(context, (itemStacks, name) -> {
             task.action.accept(name, itemStacks);
         });

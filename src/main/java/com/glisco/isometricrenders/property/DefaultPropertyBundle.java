@@ -30,10 +30,26 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public float rotationOffset = 0;
     protected boolean rotationOffsetUpdated = false;
 
+    private int exportResolution = this.getDefaultExportResolution();
+
     public DefaultPropertyBundle() {
         ClientRenderCallback.EVENT.register(client -> {
             this.rotationOffsetUpdated = false;
         });
+    }
+
+    protected int getDefaultExportResolution() {
+        return 1000;
+    }
+
+    @Override
+    public int getExportResolution(Renderable<?> renderable) {
+        return exportResolution;
+    }
+
+    @Override
+    public void setExportResolution(int exportResolution) {
+        this.exportResolution = exportResolution;
     }
 
     @Override

@@ -13,8 +13,6 @@ public class MiniChunkScanner {
         Set<MiniChunk> scannedChunks = new HashSet<>();
         Set<MiniChunk> validChunks = new HashSet<>();
 
-        Minecraft.getInstance().player.displayClientMessage(Component.literal("origin = " + origin.getX() + "/" + origin.getY() + "/" + origin.getZ()), false);
-
         MiniChunk startingChunk = new MiniChunk(origin.getX(), origin.getZ(), chunkSize);
         scanChunkAndAdjacentChunks(level, scannedChunks, validChunks, startingChunk);
         return validChunks;

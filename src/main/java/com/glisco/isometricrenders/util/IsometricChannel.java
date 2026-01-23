@@ -1,6 +1,6 @@
 package com.glisco.isometricrenders.util;
 
-import com.glisco.isometricrenders.render.ItemRenderable;
+import com.glisco.isometricrenders.render.item.ItemRenderable;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import io.wispforest.exo.api.Exo;
@@ -44,10 +44,10 @@ public class IsometricChannel extends ExoCommandChannel {
     }
 
     private static void setupItem(ItemRenderable renderable, boolean depth) {
-        renderable.properties().slant.set(depth ? 30D : 0D);
-        renderable.properties().rotation.set(depth ? 225 : 0);
+        renderable.getProperties().slant.set(depth ? 30D : 0D);
+        renderable.getProperties().rotation.set(depth ? 225 : 0);
 
-        renderable.properties().scale.set(depth ? 310 : 235);
+        renderable.getProperties().scale.set(depth ? 310 : 235);
 //        renderable.properties().exportResolution = 32;
 //        renderable.properties().dumpIntoRoot.set(true);
     }

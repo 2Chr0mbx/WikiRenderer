@@ -4,6 +4,7 @@ import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import io.wispforest.owo.ui.container.FlowLayout;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.joml.Matrix4fStack;
 
 public interface PropertyBundle {
@@ -11,4 +12,8 @@ public interface PropertyBundle {
     void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container);
 
     void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack);
+
+    int getExportResolution(Renderable<?> renderable);
+
+    void setExportResolution(int resolution);
 }

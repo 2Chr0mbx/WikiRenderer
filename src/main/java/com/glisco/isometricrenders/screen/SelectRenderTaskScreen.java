@@ -1,6 +1,6 @@
 package com.glisco.isometricrenders.screen;
 
-import com.glisco.isometricrenders.render.RenderTask;
+import com.glisco.isometricrenders.render.batch.BatchRenderTask;
 import com.glisco.isometricrenders.util.Translate;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -45,19 +45,19 @@ public class SelectRenderTaskScreen extends BaseOwoScreen<FlowLayout> {
 
         contentPanel.child(Containers.verticalFlow(Sizing.content(), Sizing.content())
                 .child(Components.button(Translate.gui("select_item_batch"), (ButtonComponent button) -> {
-                    RenderTask.BATCH_ITEM.action.accept("inventory", this.items);
+                    BatchRenderTask.BATCH_ITEM.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
                 .child(Components.button(Translate.gui("select_block_batch"), (ButtonComponent button) -> {
-                    RenderTask.BATCH_BLOCK.action.accept("inventory", this.items);
+                    BatchRenderTask.BATCH_BLOCK.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
                 .child(Components.button(Translate.gui("select_tooltip_batch"), (ButtonComponent button) -> {
-                    RenderTask.BATCH_TOOLTIP.action.accept("inventory", this.items);
+                    BatchRenderTask.BATCH_TOOLTIP.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
                 .child(Components.button(Translate.gui("select_atlas"), (ButtonComponent button) -> {
-                    RenderTask.ATLAS.action.accept("inventory", this.items);
+                    BatchRenderTask.ATLAS.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)))
                 .padding(Insets.of(5))

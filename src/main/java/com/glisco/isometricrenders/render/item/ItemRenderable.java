@@ -1,15 +1,13 @@
-package com.glisco.isometricrenders.render;
+package com.glisco.isometricrenders.render.item;
 
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
-import com.glisco.isometricrenders.screen.IsometricUI;
-import com.glisco.isometricrenders.screen.RenderScreen;
+import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
-import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -19,16 +17,14 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
-import com.mojang.math.Axis;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 
-public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
+public class ItemRenderable extends DefaultRenderable<ItemRenderablePropertyBundle> {
 
     private static final ItemStackRenderState RENDER_STATE = new ItemStackRenderState();
     private static final ItemRenderablePropertyBundle PROPERTIES = new ItemRenderablePropertyBundle();
@@ -99,31 +95,16 @@ public class ItemRenderable extends DefaultRenderable<DefaultPropertyBundle> {
     }
 
     @Override
-    public DefaultPropertyBundle properties() {
+    public ItemRenderablePropertyBundle getProperties() {
         return PROPERTIES;
     }
 
     @Override
-    public ExportPathSpec exportPath() {
+    public ExportPathSpec getExportPath() {
         return ExportPathSpec.ofIdentified(
             BuiltInRegistries.ITEM.getKey(this.stack.getItem()),
             "item"
         );
     }
 
-    private static class ItemRenderablePropertyBundle extends DefaultPropertyBundle {
-        @Override
-        public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
-            float scale = (this.scale.get() / 100f) * 2f;
-            modelViewStack.scale(scale, scale, scale);
-        }
-
-        @Override
-        public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-            IsometricUI.sectionHeader(container, "transform_options", false);
-            IsometricUI.intControl(container, scale, "scale", 10);
-            IsometricUI.sectionHeader(container, "item_scale_warning_1", false);
-            IsometricUI.sectionHeader(container, "item_scale_warning_2", false);
-        }
-    }
 }

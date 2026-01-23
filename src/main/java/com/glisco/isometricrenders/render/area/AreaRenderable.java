@@ -2,7 +2,7 @@ package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
-import com.glisco.isometricrenders.render.EntityRenderable;
+import com.glisco.isometricrenders.render.entity.EntityRenderable;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -102,7 +102,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
                 false
         );
 
-        AreaPropertyBundle properties = properties();
+        AreaPropertyBundle properties = getProperties();
         if (!properties.hideMesh.get()) {
             PoseStack meshStack = new PoseStack();
             meshStack.mulPose(modelViewStack);
@@ -118,8 +118,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         CameraRenderState cameraRenderState = new CameraRenderState();
         // this makes certain things face the camera, like text, fishing bobbers, etc, see what uses the orientation field
         cameraRenderState.orientation.rotationYXZ(
-                (float) Math.PI - (float) Math.toRadians(this.properties().getUsedRotation()),
-                (float) Math.PI + (float) Math.toRadians(this.properties().getUsedSlant()),
+                (float) Math.PI - (float) Math.toRadians(this.getProperties().getUsedRotation()),
+                (float) Math.PI + (float) Math.toRadians(this.getProperties().getUsedSlant()),
                 (float) Math.PI);
 
         this.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
@@ -168,7 +168,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         }
 
         // not frozen selected by here
-        if (properties().autoRefreshVisibleEntities.get() || this.entitiesFrozen) {
+        if (getProperties().autoRefreshVisibleEntities.get() || this.entitiesFrozen) {
             ClientLevel level = Minecraft.getInstance().level;
             assert level != null;
             BlockPos start = mesh.startPos().subtract(new Vec3i(5, 5, 5));
@@ -184,7 +184,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
     }
 
     private void drawEntities(CameraRenderState cameraRenderState, float tickDelta, PoseStack standardStack, SubmitNodeStorage nodeStorage) {
-        AreaPropertyBundle properties = this.properties();
+        AreaPropertyBundle properties = this.getProperties();
         EntityRenderDispatcher entityDispatcher = client.getEntityRenderDispatcher();
         float effectiveDelta = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
 
@@ -293,12 +293,12 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
     }
 
     @Override
-    public AreaPropertyBundle properties() {
+    public AreaPropertyBundle getProperties() {
         return AreaPropertyBundle.INSTANCE;
     }
 
     @Override
-    public ParticleRestriction<?> particleRestriction() {
+    public ParticleRestriction<?> getParticleRestriction() {
         AABB dimensions = this.mesh.dimensions();
         return ParticleRestriction.inArea(new AABB(
                 dimensions.minX,
@@ -311,7 +311,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
     }
 
     @Override
-    public ExportPathSpec exportPath() {
+    public ExportPathSpec getExportPath() {
         return ExportPathSpec.of("area_renders", "area_render");
     }
 

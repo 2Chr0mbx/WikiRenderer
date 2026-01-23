@@ -1,6 +1,6 @@
 package com.glisco.isometricrenders.command;
 
-import com.glisco.isometricrenders.render.RenderTask;
+import com.glisco.isometricrenders.render.batch.BatchRenderTask;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -13,26 +13,26 @@ import net.minecraft.network.chat.Component;
 
 import java.util.concurrent.CompletableFuture;
 
-public class RenderTaskArgumentType implements ArgumentType<RenderTask> {
+public class RenderTaskArgumentType implements ArgumentType<BatchRenderTask> {
 
     private static final SimpleCommandExceptionType EXCEPTION = new SimpleCommandExceptionType(Component.nullToEmpty("mald about it, see if anybody notices"));
 
-    public static <S> RenderTask getTask(String name, CommandContext<S> context) {
-        return context.getArgument(name, RenderTask.class);
+    public static <S> BatchRenderTask getTask(String name, CommandContext<S> context) {
+        return context.getArgument(name, BatchRenderTask.class);
     }
 
     @Override
-    public RenderTask parse(StringReader reader) throws CommandSyntaxException {
+    public BatchRenderTask parse(StringReader reader) throws CommandSyntaxException {
         String first = reader.readString();
-        if (first.equals("atlas")) return RenderTask.ATLAS;
+        if (first.equals("atlas")) return BatchRenderTask.ATLAS;
 
         if (first.equals("batch")) {
             reader.expect(' ');
             String second = reader.readString();
 
-            if (second.equals("items")) return RenderTask.BATCH_ITEM;
-            if (second.equals("blocks")) return RenderTask.BATCH_BLOCK;
-            if (second.equals("tooltips")) return RenderTask.BATCH_TOOLTIP;
+            if (second.equals("items")) return BatchRenderTask.BATCH_ITEM;
+            if (second.equals("blocks")) return BatchRenderTask.BATCH_BLOCK;
+            if (second.equals("tooltips")) return BatchRenderTask.BATCH_TOOLTIP;
         }
 
         throw EXCEPTION.create();

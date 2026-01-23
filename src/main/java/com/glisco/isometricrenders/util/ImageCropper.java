@@ -1,6 +1,6 @@
 package com.glisco.isometricrenders.util;
 
-import com.glisco.isometricrenders.property.GlobalProperties;
+import com.glisco.isometricrenders.render.Renderable;
 import com.mojang.blaze3d.platform.NativeImage;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,15 +54,17 @@ public class ImageCropper {
         return new CropData(minX, maxX, minY, maxY);
     }
 
-    public static String getFfmpegCropSize(List<CropData> dataList) {
+    public static String getFfmpegCropSize(Renderable<?> renderable, List<CropData> dataList) {
+        int exportResolution = renderable.getProperties().getExportResolution(renderable);
+
         int offsetFromLeft = dataList.stream().mapToInt(CropData::minX).min().orElseThrow();
-        int offsetFromRight = GlobalProperties.exportResolution - dataList.stream().mapToInt(CropData::maxX).max().orElseThrow();
+        int offsetFromRight = exportResolution - dataList.stream().mapToInt(CropData::maxX).max().orElseThrow();
         // min y is a little confusing since to my brain it implies from the bottom, but its from the top instead
         int offsetFromTop = dataList.stream().mapToInt(CropData::minY).min().orElseThrow();
-        int offsetFromBottom = GlobalProperties.exportResolution - dataList.stream().mapToInt(CropData::maxY).max().orElseThrow();
+        int offsetFromBottom = exportResolution - dataList.stream().mapToInt(CropData::maxY).max().orElseThrow();
 
-        int width = GlobalProperties.exportResolution - offsetFromRight - offsetFromLeft;
-        int height = GlobalProperties.exportResolution - offsetFromBottom - offsetFromTop;
+        int width = exportResolution - offsetFromRight - offsetFromLeft;
+        int height = exportResolution - offsetFromBottom - offsetFromTop;
 
         if (width % 2 != 0) width++;
         if (height % 2 != 0) height++;

@@ -16,6 +16,14 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
 
         @Override
         public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {}
+
+        @Override
+        public int getExportResolution(Renderable<?> renderable) {
+            return 1000;
+        }
+
+        @Override
+        public void setExportResolution(int resolution) {}
     };
 
     @Override
@@ -25,12 +33,12 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
     public void drawSubmittedRenderFeatures() {}
 
     @Override
-    public PropertyBundle properties() {
+    public PropertyBundle getProperties() {
         return EMPTY_BUNDLE;
     }
 
     @Override
-    public ExportPathSpec exportPath() {
+    public ExportPathSpec getExportPath() {
         return ExportPathSpec.of("", "empty");
     }
 }

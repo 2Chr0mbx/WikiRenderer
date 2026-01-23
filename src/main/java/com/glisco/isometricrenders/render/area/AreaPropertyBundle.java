@@ -1,9 +1,6 @@
 package com.glisco.isometricrenders.render.area;
 
-import com.glisco.isometricrenders.property.DefaultPropertyBundle;
-import com.glisco.isometricrenders.property.GlobalProperties;
-import com.glisco.isometricrenders.property.IntProperty;
-import com.glisco.isometricrenders.property.Property;
+import com.glisco.isometricrenders.property.*;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.render.area.side_view.MeshSideRotation;
 import com.glisco.isometricrenders.render.area.side_view.MeshSideSlant;
@@ -21,7 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
 import org.joml.Matrix4fStack;
 
-public class AreaPropertyBundle extends DefaultPropertyBundle {
+public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public static final AreaPropertyBundle INSTANCE = new AreaPropertyBundle();
 
@@ -33,6 +30,10 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
     public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
     public MeshSideRotation sideViewRotation = MeshSideRotation.NORTH;
     public MeshSideSlant sideViewSlant = MeshSideSlant.ABOVE;
+
+    public final Property<Boolean> exportSideViewMinimapData = Property.of(true);
+    public final Property<Boolean> halfPixelOffsetFor4x4 = Property.of(true); // helps fix certain things like fence lines not rendering
+    private int pixelsPerBlockResolution = 16;
 
     public final Property<Boolean> useWalkabilityFilter = Property.of(false);
     public final IntProperty walkableBlocksThreshold = IntProperty.of(2, 1, 20);
@@ -50,6 +51,10 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
     public final Property<Boolean> hideEnchantments = Property.of(false);
     public final Property<Boolean> invisible = Property.of(false); // idk what this is for but its a requested option
     public final Property<Boolean> forceSmallArms = Property.of(false);
+
+    public boolean areMinimapSettingsExportable() {
+        return sideViewRotation == MeshSideRotation.NORTH && sideViewSlant == MeshSideSlant.ABOVE;
+    }
 
     @Override
     public void buildGuiControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
@@ -161,13 +166,29 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
         IsometricUI.booleanControl(container, hideArmor, "entity_data.hide_armor");
         IsometricUI.booleanControl(container, hideEnchantments, "entity_data.hide_enchantments");
         IsometricUI.booleanControl(container, invisible, "entity_data.invisible");
+    }
 
+    @Override
+    public void setExportResolution(int exportResolution) {
+        if (perPixel90DegreeRendering.get()) {
+            this.pixelsPerBlockResolution = exportResolution;
+        } else {
+            super.setExportResolution(exportResolution);
+        }
+    }
+
+    public int getPixelsPerBlockResolution() {
+        return pixelsPerBlockResolution;
+    }
+
+    public void setPixelsPerBlockResolution(int pixelsPerBlockResolution) {
+        this.pixelsPerBlockResolution = pixelsPerBlockResolution;
     }
 
     @Override
     public void applyToViewMatrix(Renderable<?> r, Matrix4fStack modelViewStack) {
         AreaRenderable renderable = (AreaRenderable) r;
-        AreaPropertyBundle properties = renderable.properties();
+        AreaPropertyBundle properties = renderable.getProperties();
 
         if (properties.perPixel90DegreeRendering.get()) {
             WorldBlockMesh mesh = renderable.mesh;
@@ -188,9 +209,9 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
             int highest = Math.max(totalBlocksA, totalBlocksB);
 
             // force pixel count per blocks without blurriness
-            double pixelsPerBlock = GlobalProperties.sideViewPixelsPerBlockResolution;
+            double pixelsPerBlock = this.getPixelsPerBlockResolution();
             double bufferSize = highest * pixelsPerBlock;
-            GlobalProperties.exportResolution = (int) bufferSize;
+            this.setExportResolution((int) bufferSize);
             double orthoWidth = 2.0; // bcause ortho is -1 to 1
 
             float pixelPerfectScale = (float) (pixelsPerBlock / (bufferSize / orthoWidth));
@@ -199,7 +220,7 @@ public class AreaPropertyBundle extends DefaultPropertyBundle {
             modelViewStack.rotate(Axis.XP.rotationDegrees(this.sideViewSlant.getRotationDegrees()));
             modelViewStack.rotate(Axis.YP.rotationDegrees(this.sideViewRotation.getRotationDegrees()));
 
-            if (pixelsPerBlock == 4 && GlobalProperties.halfPixelOffsetFor4x4.get()) {
+            if (pixelsPerBlock == 4 && this.halfPixelOffsetFor4x4.get()) {
                 float halfPixelWorld = 0.5f / (float) pixelsPerBlock;
                 modelViewStack.translate(halfPixelWorld, 0, halfPixelWorld);
             }

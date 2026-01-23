@@ -1,5 +1,6 @@
 package com.glisco.isometricrenders.render;
 
+import com.glisco.isometricrenders.property.CroppablePropertyBundle;
 import com.glisco.isometricrenders.property.PropertyBundle;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
@@ -24,11 +25,23 @@ public interface Renderable<P extends PropertyBundle> {
 
     default void dispose() {}
 
-    default ParticleRestriction<?> particleRestriction() {
+    default ParticleRestriction<?> getParticleRestriction() {
         return ParticleRestriction.never();
     }
 
-    P properties();
+    P getProperties();
 
-    ExportPathSpec exportPath();
+    ExportPathSpec getExportPath();
+
+    default int getExportResolution() {
+        return getProperties().getExportResolution(this);
+    }
+
+    default boolean shouldCrop() {
+        if (getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
+            return croppablePropertyBundle.getCropProperty().get();
+        } else {
+            return false;
+        }
+    }
 }

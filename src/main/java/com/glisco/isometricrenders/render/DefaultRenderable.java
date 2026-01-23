@@ -90,7 +90,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         float previousYaw = camera.yRot();
         float previousPitch = camera.xRot();
 
-        ((CameraInvoker) camera).isometric$setRotation(this.properties().getUsedRotation() + 180, (float) this.properties().getUsedSlant());
+        ((CameraInvoker) camera).isometric$setRotation(this.getProperties().getUsedRotation() + 180, (float) this.getProperties().getUsedSlant());
         ParticlesRenderState particleBatch = new ParticlesRenderState();
 
         client.particleEngine.extract(
@@ -109,8 +109,8 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 
         // todo: make this respect alternative rotations, such as in side down views
         cameraRenderState.orientation.rotationYXZ(
-                (float) Math.PI - (float) Math.toRadians(this.properties().getUsedRotation()),
-                (float) Math.PI + (float) Math.toRadians(this.properties().getUsedSlant()),
+                (float) Math.PI - (float) Math.toRadians(this.getProperties().getUsedRotation()),
+                (float) Math.PI + (float) Math.toRadians(this.getProperties().getUsedSlant()),
                 (float) Math.PI);
 
         /* submit and render to vertexconsumers */
@@ -124,6 +124,6 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     }
 
     protected Vector4f getLightDirection() {
-        return new Vector4f(this.properties().lightAngle.get() / 90f, 0.35f, 1, 0);
+        return new Vector4f(this.getProperties().lightAngle.get() / 90f, 0.35f, 1, 0);
     }
 }

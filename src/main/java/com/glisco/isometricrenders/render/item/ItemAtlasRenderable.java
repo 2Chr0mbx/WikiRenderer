@@ -1,11 +1,7 @@
-package com.glisco.isometricrenders.render;
+package com.glisco.isometricrenders.render.item;
 
-import com.glisco.isometricrenders.property.DefaultPropertyBundle;
-import com.glisco.isometricrenders.property.IntProperty;
-import com.glisco.isometricrenders.screen.IsometricUI;
-import com.glisco.isometricrenders.screen.RenderScreen;
+import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.util.ExportPathSpec;
-import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -17,12 +13,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.util.Mth;
-import com.mojang.math.Axis;
 import org.joml.Matrix4fStack;
 
 import java.util.List;
 
-public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.ItemAtlasPropertyBundle> {
+public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasPropertyBundle> {
 
 	private static final ItemStackRenderState RENDER_STATE = new ItemStackRenderState();
     private final Minecraft client = Minecraft.getInstance();
@@ -36,7 +31,7 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
 
     @Override
     public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
-        final int columns = this.properties().columns.get();
+        final int columns = this.getProperties().columns.get();
         final int rows = Mth.positiveCeilDiv(this.items.size(), columns);
 
         final float spacing = 1.25f;
@@ -75,35 +70,13 @@ public class ItemAtlasRenderable extends DefaultRenderable<ItemAtlasRenderable.I
     }
 
     @Override
-    public ItemAtlasPropertyBundle properties() {
+    public ItemAtlasPropertyBundle getProperties() {
         return ItemAtlasPropertyBundle.INSTANCE;
     }
 
     @Override
-    public ExportPathSpec exportPath() {
+    public ExportPathSpec getExportPath() {
         return ExportPathSpec.of("atlases", this.atlasSource);
     }
 
-    public static class ItemAtlasPropertyBundle extends DefaultPropertyBundle {
-
-        private static final ItemAtlasPropertyBundle INSTANCE = new ItemAtlasPropertyBundle();
-
-        private final IntProperty columns = IntProperty.of(20, 1, 500);
-
-        @Override
-        public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-            IsometricUI.sectionHeader(container, "transform_options", false);
-
-            IsometricUI.intControl(container, this.scale, "scale", 10);
-            IsometricUI.intControl(container, this.columns, "columns", 1);
-        }
-
-        @Override
-        public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
-            super.applyToViewMatrix(renderable, modelViewStack);
-            modelViewStack.rotate(Axis.YP.rotationDegrees(-this.rotation.get()));
-            modelViewStack.rotate(Axis.XP.rotationDegrees(-this.slant.get().floatValue()));
-        }
-
-    }
 }

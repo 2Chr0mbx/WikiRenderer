@@ -38,7 +38,7 @@ public record MinimapCalibratorData(
         Map<ViewportCorner, Vec3> corners = MinimapCalibratorData.getViewportCorners(renderable);
         Vec3 originTopLeft = corners.get(ViewportCorner.TOP_LEFT);
 
-        double resolution = GlobalProperties.exportResolution;
+        double resolution = renderable.getExportResolution();
         Vec3 right = corners.get(ViewportCorner.TOP_RIGHT).subtract(originTopLeft).scale(1.0 / resolution);
         Vec3 down = corners.get(ViewportCorner.BOTTOM_LEFT).subtract(originTopLeft).scale(1.0 / resolution);
 
@@ -69,7 +69,7 @@ public record MinimapCalibratorData(
         Matrix4f projection = new Matrix4f().setOrtho(-1, 1, -1, 1, -1000, 3000);
 
         Matrix4fStack modelView = new Matrix4fStack(2);
-        renderable.properties().applyToViewMatrix(renderable, modelView);
+        renderable.getProperties().applyToViewMatrix(renderable, modelView);
         modelView.translate(-renderable.xSize / 2f, -renderable.ySize / 2f, -renderable.zSize / 2f);
 
         Matrix4f combined = new Matrix4f(projection).mul(modelView);
@@ -86,7 +86,7 @@ public record MinimapCalibratorData(
     }
 
     private static Vec2 projectToMapPlane(AreaRenderable renderable, Vec3 worldPosition) {
-        AreaPropertyBundle props = renderable.properties();
+        AreaPropertyBundle props = renderable.getProperties();
 
         return switch (props.sideViewSlant) {
             case BELOW, ABOVE -> new Vec2((float) worldPosition.x, (float) worldPosition.z);
@@ -101,9 +101,10 @@ public record MinimapCalibratorData(
         Vector4f pos = new Vector4f(ndcX, ndcY, 0, 1);
         pos.mul(invMatrix);
 
-        double pixelsPerBlock = GlobalProperties.sideViewPixelsPerBlockResolution;
+        AreaPropertyBundle properties = renderable.getProperties();
+        double pixelsPerBlock = properties.getPixelsPerBlockResolution();
         float halfPixelWorldOffset = 0;
-        if (pixelsPerBlock == 4 && GlobalProperties.halfPixelOffsetFor4x4.get()) {
+        if (pixelsPerBlock == 4 && properties.halfPixelOffsetFor4x4.get()) {
             halfPixelWorldOffset = 0.5f / (float) pixelsPerBlock;
         }
 

@@ -12,11 +12,6 @@ public class GlobalProperties {
     public static Property<Boolean> saveIntoRoot = Property.of(true);
     public static Property<Boolean> overwriteLatest = Property.of(false);
 
-    public static int exportResolution = 1000;
-    public static int sideViewPixelsPerBlockResolution = 16;
-    public static Property<Boolean> sideViewExportMinimapData = Property.of(true);
-    public static Property<Boolean> halfPixelOffsetFor4x4 = Property.of(true); // helps fix certain things like fence lines not rendering
-    public static Property<Boolean> crop = Property.of(true);
 
     // Animation Options
     public static int exportFramerate = 30;

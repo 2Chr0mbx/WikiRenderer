@@ -2,7 +2,6 @@ package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.LightTextureAccessor;
-import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
 import com.glisco.isometricrenders.util.ImageCropper;
@@ -53,7 +52,7 @@ public class RenderableDispatcher {
         modelViewStack.identity();
         transformer.accept(modelViewStack);
 
-        renderable.properties().applyToViewMatrix(renderable, modelViewStack);
+        renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
         Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -1000, 3000);
         IsometricRenders.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
@@ -89,8 +88,8 @@ public class RenderableDispatcher {
         GpuTexture texture = drawIntoTexture(renderable, tickDelta, size);
         CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).whenComplete((i, t) -> texture.close());
 
-        boolean sideRendering = renderable instanceof AreaRenderable areaRenderable && areaRenderable.properties().perPixel90DegreeRendering.get();
-        boolean exportMinimapData = calibrationDataCallback != null && sideRendering && GlobalProperties.sideViewExportMinimapData.get();
+        boolean sideRendering = renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get();
+        boolean exportMinimapData = calibrationDataCallback != null && sideRendering;
 
         if (crop) {
             // resize image to target height by regenerating it with an increased size
@@ -106,7 +105,7 @@ public class RenderableDispatcher {
                 return nativeImage;
             }).thenCompose(i -> {
                 int height = i.getHeight();
-                if (height >= size || (renderable instanceof AreaRenderable areaRenderable && areaRenderable.properties().perPixel90DegreeRendering.get())) {
+                if (height >= size || (renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get())) {
                     // resizing would be pointless with this size, or if per pixel rendering is on dont do it
                     return CompletableFuture.completedFuture(i);
                 } else {
@@ -130,7 +129,6 @@ public class RenderableDispatcher {
      */
     @SuppressWarnings("ConstantConditions")
     public static GpuTexture drawIntoTexture(Renderable<?> renderable, float tickDelta, int size) {
-        Minecraft.getInstance().player.displayClientMessage(Component.literal("size="+size), false);
         TextureTarget target = new TextureTarget("Isometric Renders RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(target.getColorTexture(), 0, target.getDepthTexture(), 1.0);
 

@@ -2,7 +2,7 @@ package com.glisco.isometricrenders;
 
 import com.glisco.isometricrenders.command.IsorenderCommand;
 import com.glisco.isometricrenders.mixin.access.AbstractContainerScreenAccessor;
-import com.glisco.isometricrenders.render.ItemRenderable;
+import com.glisco.isometricrenders.render.item.ItemRenderable;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;

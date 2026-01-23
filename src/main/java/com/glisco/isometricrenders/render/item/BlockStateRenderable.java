@@ -1,8 +1,11 @@
-package com.glisco.isometricrenders.render;
+package com.glisco.isometricrenders.render.item;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.BlockEntityAccessor;
+import com.glisco.isometricrenders.property.DefaultCroppablePropertyBundle;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
+import com.glisco.isometricrenders.render.DefaultRenderable;
+import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -28,7 +31,9 @@ import net.minecraft.world.level.storage.TagValueInput;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
-public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundle> implements TickingRenderable<DefaultPropertyBundle> {
+public class BlockStateRenderable extends DefaultRenderable<DefaultCroppablePropertyBundle> implements TickingRenderable<DefaultCroppablePropertyBundle> {
+
+    public static final DefaultCroppablePropertyBundle PROPERTIES = new DefaultCroppablePropertyBundle();
 
     private final Minecraft client = Minecraft.getInstance();
 
@@ -109,17 +114,17 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
     }
 
     @Override
-    public DefaultPropertyBundle properties() {
-        return DefaultPropertyBundle.get();
+    public DefaultCroppablePropertyBundle getProperties() {
+        return PROPERTIES;
     }
 
     @Override
-    public ParticleRestriction<?> particleRestriction() {
+    public ParticleRestriction<?> getParticleRestriction() {
         return ParticleRestriction.duringTick();
     }
 
     @Override
-    public ExportPathSpec exportPath() {
+    public ExportPathSpec getExportPath() {
         return ExportPathSpec.ofIdentified(
                 BuiltInRegistries.BLOCK.getKey(this.state.getBlock()),
                 "block"
