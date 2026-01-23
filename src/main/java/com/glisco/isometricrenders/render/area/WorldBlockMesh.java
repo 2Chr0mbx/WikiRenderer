@@ -84,7 +84,6 @@ public class WorldBlockMesh {
     private MeshState state = MeshState.NEW;
     private float buildProgress = 0;
     private @Nullable CompletableFuture<Void> buildFuture = null;
-    protected boolean viewingAngleChanged = false;
 
     // Vertex storage
     public final List<MeshSection> subMeshes = new ArrayList<>();
@@ -369,6 +368,7 @@ public class WorldBlockMesh {
 
         // large islands like the crimson isle hit a verticies limit, therefore we split into smaller (but still fairly large) meshes
         record SubMesh(List<Iterable<BlockPos>> positions) { }
+
         List<SubMesh> subMeshes = new ArrayList<>();
         int regionSize = 64;
         if (this.chunksToGrabBlocksFrom != null) {
@@ -380,6 +380,8 @@ public class WorldBlockMesh {
             }
             regionSize = chunkSize;
         }
+
+        int scanningAreas = 0;
 
         for (int x = from.getX(); x <= to.getX(); x += regionSize) {
             for (int z = from.getZ(); z <= to.getZ(); z += regionSize) {
@@ -393,12 +395,14 @@ public class WorldBlockMesh {
 
                 if (this.chunksToGrabBlocksFrom == null) {
                     subMeshes.add(new SubMesh(List.of(BlockPos.betweenClosed(subFrom, subTo))));
+                    scanningAreas++;
                 } else {
                     // combine the mini chunks (between 4x4-16x16, based on the user command input) into one bigger 64x64 section
                     List<Iterable<BlockPos>> miniChunkBlocksForThisMesh = new ArrayList<>();
                     for (MiniChunk chunk : this.chunksToGrabBlocksFrom) {
                         if (chunk.isWithin(subFrom.getX(), subFrom.getZ(), subTo.getX(), subTo.getZ())) {
                             miniChunkBlocksForThisMesh.add(BlockPos.betweenClosed(chunk.startX, from.getY(), chunk.startZ, chunk.endX, to.getY(), chunk.endZ));
+                            scanningAreas++;
                         }
                     }
 
@@ -407,10 +411,7 @@ public class WorldBlockMesh {
             }
         }
 
-        int currentBlockIndex = 0;
-        int blocksToBuild = (this.to.getX() - this.from.getX() + 1)
-                            * (this.to.getY() - this.from.getY() + 1)
-                            * (this.to.getZ() - this.from.getZ() + 1);
+        int currentScanIndex = 0;
 
         WalkabilityFilter walkabilityFilter = null;
         AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
@@ -435,9 +436,9 @@ public class WorldBlockMesh {
                     : null;
 
             for (Iterable<BlockPos> positions : data.positions) {
+                currentScanIndex++;
+                this.buildProgress = (float) currentScanIndex / (float) scanningAreas;
                 for (BlockPos pos : positions) {
-                    currentBlockIndex++;
-                    this.buildProgress = currentBlockIndex / (float) blocksToBuild;
 
                     BlockState state = world.getBlockState(pos);
                     if (state.isAir()) continue;

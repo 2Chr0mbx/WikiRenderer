@@ -94,6 +94,6 @@ void main() {
     }
 #endif
 
-    color.a = 1.0;
+    color.a = 1.0; // this line fixes transparency issues
     fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);
 }

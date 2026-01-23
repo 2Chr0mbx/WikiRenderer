@@ -13,6 +13,7 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
@@ -123,26 +124,30 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
         }
 
         WorldBlockMesh mesh = renderable.mesh;
-        container.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
-                .horizontalSizing(Sizing.fixed(80))
-                .margins(Insets.top(5)));
-        IsometricUI.dynamicLabel(container, () -> {
-            MutableComponent meshStatusText = Translate.gui("mesh_status");
-            if (!mesh.state().isBuildStage) {
-                meshStatusText.append(Translate.gui("mesh_ready"));
-            } else {
-                meshStatusText.append(Translate.gui(
-                        switch (mesh.state()) {
-                            case BUILDING -> "mesh_building";
-                            case CORRUPT -> "mesh_corrupt";
-                            default -> "mesh_rebuilding";
-                        },
-                        (int) (mesh.buildProgress() * 100)
-                ));
-            }
 
-            return meshStatusText;
-        });
+        try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
+            builder.row.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
+                    .horizontalSizing(Sizing.fixed(80))
+                    .margins(Insets.top(5)));
+            IsometricUI.dynamicLabel(builder.row, () -> {
+                MutableComponent meshStatusText = Translate.gui("mesh_status");
+                if (!mesh.state().isBuildStage) {
+                    meshStatusText.append(Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN));
+                } else {
+                    meshStatusText.append(Translate.gui(
+                            switch (mesh.state()) {
+                                case BUILDING -> "mesh_building";
+                                case CORRUPT -> "mesh_corrupt";
+                                default -> "mesh_rebuilding";
+                            },
+                            (int) (mesh.buildProgress() * 100)
+                    ).withStyle(ChatFormatting.RED));
+                }
+
+                return meshStatusText;
+            }).margins(Insets.of(7, 0, 10, 0));
+        }
+
 
         IsometricUI.booleanControl(container, this.hideMesh, "hide_blocks");
 
@@ -211,7 +216,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             // force pixel count per blocks without blurriness
             double pixelsPerBlock = this.getPixelsPerBlockResolution();
             double bufferSize = highest * pixelsPerBlock;
-            this.setExportResolution((int) bufferSize);
+            super.setExportResolution((int) bufferSize);
             double orthoWidth = 2.0; // bcause ortho is -1 to 1
 
             float pixelPerfectScale = (float) (pixelsPerBlock / (bufferSize / orthoWidth));

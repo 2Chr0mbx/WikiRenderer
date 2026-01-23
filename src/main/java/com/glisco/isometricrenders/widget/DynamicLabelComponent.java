@@ -1,6 +1,8 @@
 package com.glisco.isometricrenders.widget;
 
 import io.wispforest.owo.ui.base.BaseComponent;
+import io.wispforest.owo.ui.component.LabelComponent;
+import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.OwoUIDrawContext;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
@@ -9,25 +11,21 @@ import net.minecraft.network.chat.Component;
 
 import java.util.function.Supplier;
 
-public class DynamicLabelComponent extends BaseComponent {
+public class DynamicLabelComponent extends LabelComponent {
 
     private final Font textRenderer = Minecraft.getInstance().font;
 
     private final Supplier<Component> content;
-    private int color = 0xFFFFFF;
-    private boolean shadow = true;
 
     public DynamicLabelComponent(Supplier<Component> content) {
+        super(content.get());
+        super.color(Color.ofArgb(0xFFFFFF));
+        super.shadow(true);
         this.content = content;
     }
 
-    public DynamicLabelComponent color(int color) {
-        this.color = color;
-        return this;
-    }
-
     public DynamicLabelComponent shadow(boolean shadow) {
-        this.shadow = shadow;
+        super.shadow(shadow);
         return this;
     }
 
@@ -43,6 +41,7 @@ public class DynamicLabelComponent extends BaseComponent {
 
     @Override
     public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
-        context.drawString(this.textRenderer, this.content.get(), this.x, this.y, this.color, this.shadow);
+        this.text(this.content.get());
+        super.draw(context, mouseX, mouseY, partialTicks, delta);
     }
 }
