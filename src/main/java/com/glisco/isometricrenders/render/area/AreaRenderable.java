@@ -171,11 +171,18 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         if (getProperties().autoRefreshVisibleEntities.get() || this.entitiesFrozen) {
             ClientLevel level = Minecraft.getInstance().level;
             assert level != null;
-            BlockPos start = mesh.startPos().subtract(new Vec3i(5, 5, 5));
-            BlockPos end = mesh.endPos().offset(5, 5, 5);
-            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start, end), e -> {
-                AABB boundingBox = e.getBoundingBox();
-                return boundingBox.intersects(new Vec3(start), new Vec3(end));
+            BlockPos start = mesh.startPos();
+            BlockPos end = mesh.endPos();
+            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), e -> {
+                AABB entityBoundingBox = e.getBoundingBox();
+
+                // kinda jank, might redo this
+                double halfX = entityBoundingBox.getXsize() / 2D;
+                double halfY = entityBoundingBox.getYsize() / 2D;
+                double halfZ = entityBoundingBox.getZsize() / 2D;
+                AABB expandedBlockBoundingBox = new AABB(start.getX() - halfX, start.getY() - halfY, start.getZ() - halfZ, end.getX() + halfX, end.getY() + halfY, end.getZ() + halfZ);
+
+                return entityBoundingBox.intersects(expandedBlockBoundingBox);
             });
         }
 
