@@ -324,26 +324,33 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         if (FFmpegDispatcher.wasFFmpegDetected()) {
             if (FFmpegDispatcher.ffmpegAvailable()) {
-                EditBox framesField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportFrames), "animation_frames", Sizing.fixed(30));
-                framesField.setFilter(s -> s.matches("\\d*"));
-                framesField.setResponder(s -> {
-                    if (s.isBlank()) return;
-                    exportFrames = Integer.parseInt(s);
-                });
 
-                EditBox framerateField = IsometricUI.labelledTextField(rightColumn, String.valueOf(exportFramerate), "animation_framerate", Sizing.fixed(30));
-                framerateField.setFilter(s -> s.matches("\\d*"));
-                framerateField.setResponder(s -> {
-                    if (s.isBlank()) return;
-                    exportFramerate = Integer.parseInt(s);
-                });
+                if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
+                    Property<Boolean> animatedCropProperty = croppablePropertyBundle.getFfmpegCropProperty();
+                    IsometricUI.booleanControl(rightColumn, animatedCropProperty, "crop");
+                }
+
+                IsometricUI.booleanControl(rightColumn, speedUpEnchantmentGlints, "speed_up_enchantment_glints");
+                speedUpEnchantmentGlints.listen((p, v) -> guiRebuildScheduled = true, false);
+
+                if (speedUpEnchantmentGlints.get()) {
+                    rightColumn.child(Components.button(Translate.gui("enchantment_glint_preset"), button -> {
+                        int seconds = 120000 / 8000;
+                        int framerate = 25;
+                        exportFramerate.set(framerate);
+                        exportFrames.set(seconds * framerate);
+                    }).margins(Insets.vertical(5)));
+                }
+
+                IsometricUI.labelledTextField(rightColumn, exportFrames, "animation_frames", Sizing.fixed(30));
+                IsometricUI.labelledTextField(rightColumn, exportFramerate, "animation_framerate", Sizing.fixed(30));
 
                 try (IsometricUI.RowBuilder builder = IsometricUI.row(rightColumn)) {
                     this.exportAnimationButton = Components.button(Translate.gui("export_animation"), button -> {
-                        if (this.memoryGuard.canFit(this.estimateMemoryUsage(exportFrames)) || this.minecraft.hasControlDown()) {
-                            this.remainingAnimationFrames = exportFrames;
+                        if (this.memoryGuard.canFit(this.estimateMemoryUsage(exportFrames.get())) || this.minecraft.hasControlDown()) {
+                            this.remainingAnimationFrames = exportFrames.get();
 
-                            this.minecraft.getFramerateLimitTracker().setFramerateLimit(Integer.parseInt(framerateField.getValue()));
+                            this.minecraft.getFramerateLimitTracker().setFramerateLimit(exportFramerate.get());
                             IsometricRenders.skipNextWorldRender();
 
                             button.active = false;
@@ -458,7 +465,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             super.render(context, mouseX, mouseY, delta);
 
             if (this.exportAnimationButton != null) {
-                this.exportAnimationButton.tooltip(this.memoryGuard.getStatusTooltip(this.estimateMemoryUsage(exportFrames)).stream().map(text -> ClientTooltipComponent.create(text.getVisualOrderText())).toList());
+                this.exportAnimationButton.tooltip(this.memoryGuard.getStatusTooltip(this.estimateMemoryUsage(exportFrames.get())).stream().map(text -> ClientTooltipComponent.create(text.getVisualOrderText())).toList());
             }
 
 //            fill(matrices, viewportEndX + 160, 45, viewportEndX + 168, 53, GlobalProperties.backgroundColor | 255 << 24);
@@ -561,7 +568,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                                     animationTarget,
                                     ExportPathSpec.exportRoot().resolve("sequence/"),
                                     animationFormat,
-                                    ImageCropper.getFfmpegCropSize(renderable, collectedCropData)
+                                    renderable.shouldCropForFfmpeg() ? ImageCropper.getFfmpegCropSize(renderable, collectedCropData) : ""
                             ).whenComplete((animationFile, animationThrowable) -> {
                                 this.exportAnimationButton.active = true;
                                 this.exportAnimationButton.setMessage(Translate.gui("export_animation"));

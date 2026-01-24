@@ -1,7 +1,6 @@
 package com.glisco.isometricrenders.widget;
 
-import com.glisco.isometricrenders.mixin.AbstractSliderButtonInvoker;
-import com.glisco.isometricrenders.property.IntProperty;
+import com.glisco.isometricrenders.mixin.access.AbstractSliderButtonInvoker;
 import com.glisco.isometricrenders.property.NumberProperty;
 import io.wispforest.owo.ui.component.SliderComponent;
 import io.wispforest.owo.ui.core.Sizing;

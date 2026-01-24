@@ -3,6 +3,7 @@ package com.glisco.isometricrenders.util;
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import net.minecraft.util.Util;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,24 +57,23 @@ public class FFmpegDispatcher {
     }
 
     @SuppressWarnings("resource")
-    public static CompletableFuture<File> assemble(ExportPathSpec target, Path sourcePath, Format format, String cropFilter) {
+    public static CompletableFuture<File> assemble(ExportPathSpec target, Path sourcePath, Format format, @Nullable String cropFilter) {
         target.resolveOffset().toFile().mkdirs();
 
         List<String> args = new ArrayList<>(List.of(new String[]{
                 "ffmpeg",
                 "-y",
                 "-f", "image2",
-                "-framerate", String.valueOf(GlobalProperties.exportFramerate),
+                "-framerate", String.valueOf(GlobalProperties.exportFramerate.get()),
                 "-i", "seq_%d.png"
         }));
 
-        // todo make crop optional
+        boolean hasCrop = cropFilter != null && !cropFilter.isBlank();
         if (format == Format.GIF) {
             args.add("-filter_complex");
-            args.add("[0:v]" + cropFilter + ",split[v1][v2];" +
-                     "[v1]palettegen=reserve_transparent=1:stats_mode=full[p];" +
-                     "[v2][p]paletteuse=alpha_threshold=255:dither=bayer:bayer_scale=5");
-        } else {
+            String filterChain = hasCrop ? "[0:v]" + cropFilter + ",split[v1][v2];" : "[0:v]split[v1][v2];";
+            args.add(filterChain + "[v1]palettegen=reserve_transparent=1:stats_mode=full[p];" + "[v2][p]paletteuse=alpha_threshold=255:dither=bayer:bayer_scale=5");
+        } else if (hasCrop) {
             // standard cropping for other formats
             args.add("-vf");
             args.add(cropFilter);

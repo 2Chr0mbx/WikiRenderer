@@ -32,14 +32,18 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
 
             this.content = s;
 
-            this.ignoringChange = true;
-            this.setting.set(Integer.parseInt(s));
-            this.ignoringChange = false;
+            if (!this.ignoringChange) {
+                this.ignoringChange = true;
+                this.setting.set(Integer.parseInt(s));
+                this.ignoringChange = false;
+            }
         });
 
         this.setting.listen((integerSetting, integer) -> {
             if (!this.ignoringChange) {
+                this.ignoringChange = true;
                 this.text(String.valueOf(integer));
+                this.ignoringChange = false;
             }
         }, false);
     }

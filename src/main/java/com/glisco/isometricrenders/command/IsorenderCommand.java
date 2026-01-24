@@ -10,6 +10,7 @@ import com.glisco.isometricrenders.render.entity.EntityRenderable;
 import com.glisco.isometricrenders.render.item.BlockStateRenderable;
 import com.glisco.isometricrenders.render.item.ItemRenderable;
 import com.glisco.isometricrenders.render.item.TooltipRenderable;
+import com.glisco.isometricrenders.render.skyblock.SkyBlockItemsBatchRender;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
@@ -119,6 +120,11 @@ public class IsorenderCommand {
                         .then(argument("namespace", NamespaceArgumentType.namespace())
                                 .then(argument("task", new RenderTaskArgumentType())
                                         .executes(IsorenderCommand::renderNamespace))))
+                .then(literal("sb")
+                        .executes(source -> {
+                            SkyBlockItemsBatchRender.renderSBItems();
+                            return 0;
+                        }))
                 .then(literal("creative_tab")
                         .then(argument("itemgroup", ItemGroupArgumentType.itemGroup())
                                 .then(argument("task", new RenderTaskArgumentType())

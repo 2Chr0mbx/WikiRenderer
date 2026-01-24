@@ -9,7 +9,7 @@
   "plugin": "com.glisco.isometricrenders.mixin.IsometricMixinPlugin",
   "client": [
     "AbstractContainerScreenMixin",
-    "AbstractSliderButtonInvoker",
+    "access.AbstractSliderButtonInvoker",
     "BeaconRendererMixin",
     "ChunkSectionsToRenderMixin",
     "DefaultPlayerSkinMixin",
@@ -27,6 +27,7 @@
     "ReloadableTextureMixin",
     "RenderPipelinesMixin",
     "TextureManagerMixin",
+    "TextureTransformMixin",
     "access.AbstractContainerScreenAccessor",
     "access.BlockEntityAccessor",
     "access.BlockInputAccessor",

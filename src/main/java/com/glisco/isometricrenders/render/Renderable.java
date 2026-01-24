@@ -44,4 +44,12 @@ public interface Renderable<P extends PropertyBundle> {
             return false;
         }
     }
+
+    default boolean shouldCropForFfmpeg() {
+        if (getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
+            return croppablePropertyBundle.getFfmpegCropProperty().get();
+        } else {
+            return false;
+        }
+    }
 }

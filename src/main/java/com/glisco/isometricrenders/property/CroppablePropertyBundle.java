@@ -6,6 +6,8 @@ public interface CroppablePropertyBundle extends PropertyBundle {
 
     Property<Boolean> getCropProperty();
 
+    Property<Boolean> getFfmpegCropProperty();
+
     Property<ImageRescaleMode> getRescaleMode();
 
 }

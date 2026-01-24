@@ -12,10 +12,10 @@ public class GlobalProperties {
     public static Property<Boolean> saveIntoRoot = Property.of(true);
     public static Property<Boolean> overwriteLatest = Property.of(false);
 
-
     // Animation Options
-    public static int exportFramerate = 30;
-    public static int exportFrames = 60;
+    public static Property<Boolean> speedUpEnchantmentGlints = Property.of(false);
+    public static IntProperty exportFramerate = IntProperty.of(30, 1, 300);
+    public static IntProperty exportFrames = IntProperty.of(60, 1, 5000);
 
     public static FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
 }

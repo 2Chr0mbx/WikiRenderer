@@ -65,6 +65,8 @@
   "gui.isometric-renders.render_task_size": "Items to renders: %s",
 
   "gui.isometric-renders.animation_options": "Animation Options",
+  "gui.isometric-renders.speed_up_enchantment_glints": "Speed up Enchant Glints (15s loop)",
+  "gui.isometric-renders.enchantment_glint_preset": "Use Enchanted Items Timings",
   "gui.isometric-renders.animation_frames": "Animation Frames",
   "gui.isometric-renders.animation_framerate": "Animation Framerate",
   "gui.isometric-renders.export_animation": "Export Animation",
