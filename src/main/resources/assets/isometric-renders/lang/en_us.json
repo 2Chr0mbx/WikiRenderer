@@ -26,6 +26,8 @@
   "gui.isometric-renders.rotation_speed": "Rotation Degrees Per Second",
   "gui.isometric-renders.dimetric": "Dimetric",
   "gui.isometric-renders.isometric": "Isometric",
+  "gui.isometric-renders.dimetric_recommended": "Dimetric (Recommended)",
+  "gui.isometric-renders.isometric_recommended": "Isometric (Recommended)",
 
   "gui.isometric-renders.hide_blocks": "Hide Blocks",
   "gui.isometric-renders.walkability_filter": "Walkability Filter / \"Cave Mode\"",
@@ -114,7 +116,7 @@
   "gui.isometric-renders.entity_data.invisible": "Invisible",
 
   "gui.isometric-renders.render_options": "Render Options",
-  "gui.isometric-renders.background_color": "Background Color",
+  "gui.isometric-renders.background_color": "Background Color (F10)",
   "gui.isometric-renders.export_options": "Export Options",
   "gui.isometric-renders.renderer_resolution": "Resolution",
   "gui.isometric-renders.renderer_resolution_crop": "Resolution (Target Height)",

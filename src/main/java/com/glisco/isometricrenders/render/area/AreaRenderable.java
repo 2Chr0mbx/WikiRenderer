@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
+import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.render.entity.EntityRenderable;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
@@ -40,7 +41,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
+public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implements TickingRenderable<AreaPropertyBundle> {
 
     private final Minecraft client = Minecraft.getInstance();
 
@@ -334,5 +335,10 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         super.dispose();
         mesh.subMeshes.forEach(MeshSection::close);
         mesh.subMeshes.clear();
+    }
+
+    @Override
+    public void tick(boolean tick) {
+        // nothing here needed, but implementing this means the option is available, and that controls a mixin
     }
 }

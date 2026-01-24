@@ -100,17 +100,20 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultCroppableProp
     }
 
     @Override
-    public void tick() {
-        if (this.entity != null && this.state.getTicker(client.level, this.entity.getType()) != null) {
-            BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.entity.getType());
-            if (ticker == null) return;
+    public void tick(boolean tick) {
+        if (tick) {
+            if (this.entity != null && this.state.getTicker(client.level, this.entity.getType()) != null) {
+                BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.entity.getType());
+                if (ticker == null) return;
 
-            ticker.tick(client.level, client.player.blockPosition(), this.state, this.entity);
+                ticker.tick(client.level, client.player.blockPosition(), this.state, this.entity);
+            }
+
+            if (client.level.random.nextDouble() < 0.150) {
+                this.state.getBlock().animateTick(this.state, client.level, client.player.blockPosition(), client.level.random);
+            }
         }
 
-        if (client.level.random.nextDouble() < 0.150) {
-            this.state.getBlock().animateTick(this.state, client.level, client.player.blockPosition(), client.level.random);
-        }
     }
 
     @Override

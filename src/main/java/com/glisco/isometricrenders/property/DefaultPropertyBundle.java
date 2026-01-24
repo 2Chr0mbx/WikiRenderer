@@ -12,6 +12,7 @@ import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
 import com.mojang.math.Axis;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
 public class DefaultPropertyBundle implements PropertyBundle {

@@ -193,8 +193,12 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             IsometricUI.booleanControl(rightColumn, areaRenderable.getProperties().useNightVision, "night_vision");
         }
 
-        IsometricUI.booleanControl(rightColumn, this.playAnimations, "animations");
-        IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
+        if (this.renderable instanceof TickingRenderable<?>) {
+            IsometricUI.booleanControl(rightColumn, this.playAnimations, "animations");
+        }
+        if (this.renderable instanceof AreaRenderable) {
+            IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
+        }
 
         IsometricUI.sectionHeader(rightColumn, "export_options", true);
         if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
@@ -540,10 +544,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.memoryGuard.update();
         }
 
-        if (playAnimations.get() && this.renderable instanceof TickingRenderable<?> tickable) {
-            IsometricRenders.beginRenderableTick();
-            tickable.tick();
-            IsometricRenders.endRenderableTick();
+        if (this.renderable instanceof TickingRenderable<?> tickable) {
+            boolean tick = playAnimations.get();
+            if (tick) IsometricRenders.beginRenderableTick();
+            tickable.tick(tick);
+            if (tick) IsometricRenders.endRenderableTick();
         }
     }
 

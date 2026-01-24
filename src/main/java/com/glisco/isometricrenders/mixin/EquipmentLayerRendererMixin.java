@@ -31,7 +31,7 @@ public class EquipmentLayerRendererMixin {
     private void isometric$nudgeEachLayer(CallbackInfo ci, @Local(argsOnly = true) PoseStack poseStack) {
         if (IsometricRenders.inRenderableDraw) {
             poseStack.translate(0.0F, 0.75F, 0.0F);
-            poseStack.scale(1.001F, 1.001F, 1.001F);
+            poseStack.scale(1.0015F, 1.0015F, 1.0015F);
             poseStack.translate(0.0F, -0.75F, 0.0F);
         }
     }

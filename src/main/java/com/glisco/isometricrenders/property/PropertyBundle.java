@@ -3,8 +3,6 @@ package com.glisco.isometricrenders.property;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import io.wispforest.owo.ui.container.FlowLayout;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.joml.Matrix4fStack;
 
 public interface PropertyBundle {

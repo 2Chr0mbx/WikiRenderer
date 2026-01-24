@@ -479,7 +479,7 @@ public class WorldBlockMesh {
                 }
             }
 
-            Minecraft.getInstance().executeBlocking((() -> {
+            Minecraft.getInstance().execute((() -> {
                 Map<ChunkSectionLayer, MeshData> builtMeshes = new HashMap<>();
 
                 builderStorage.forEach((layer, bufferBuilder) -> {

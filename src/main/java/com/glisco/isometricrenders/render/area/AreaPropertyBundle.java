@@ -1,6 +1,8 @@
 package com.glisco.isometricrenders.render.area;
 
-import com.glisco.isometricrenders.property.*;
+import com.glisco.isometricrenders.property.DefaultCroppablePropertyBundle;
+import com.glisco.isometricrenders.property.IntProperty;
+import com.glisco.isometricrenders.property.Property;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.render.area.side_view.MeshSideRotation;
 import com.glisco.isometricrenders.render.area.side_view.MeshSideSlant;
@@ -90,7 +92,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
                     this.slant.set(30D);
                 }).margins(Insets.right(5)));
 
-                builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+                builder.row.child(Components.button(Translate.gui("isometric_recommended"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
 

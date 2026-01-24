@@ -80,11 +80,6 @@ public class IsorenderCommand {
     public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext access) {
         dispatcher.register(literal("isorender")
                 .executes(IsorenderCommand::showRootNodeHelp)
-                .then(literal("refresh_gpu")
-                        .executes(c -> {
-                            WorldBlockMesh.terrainSampler = null;
-                            return 0;
-                        }))
                 .then(literal("reopen")
                         .executes(IsorenderCommand::reopenSavedMenu))
                 .then(literal("area")

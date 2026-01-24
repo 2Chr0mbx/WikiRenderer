@@ -1,7 +1,6 @@
 package com.glisco.isometricrenders.render.entity;
 
 import com.glisco.isometricrenders.property.DefaultCroppablePropertyBundle;
-import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
 import com.glisco.isometricrenders.render.Renderable;
@@ -24,7 +23,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public final Property<Boolean> spriteRendering = Property.of(false);
     private final Property<Boolean> spriteCropping = Property.of(true);
-    private int spriteExportResolution = 300;
+    private int spriteExportResolution = 64;
 
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
     public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
@@ -83,7 +82,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
         IsometricUI.sectionHeader(container, "presets", true);
         try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
-            builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
+            builder.row.child(Components.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(30D);
             }).horizontalSizing(Sizing.content(5)).margins(Insets.right(5)));
