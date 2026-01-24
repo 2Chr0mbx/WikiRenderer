@@ -25,9 +25,8 @@ public class ItemAtlasPropertyBundle extends DefaultPropertyBundle {
 
     @Override
     public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
-        super.applyToViewMatrix(renderable, modelViewStack);
-        modelViewStack.rotate(Axis.YP.rotationDegrees(-this.rotation.get()));
-        modelViewStack.rotate(Axis.XP.rotationDegrees(-this.slant.get().floatValue()));
+        final float scale = this.scale.get() / 100f;
+        modelViewStack.scale(scale, scale, scale);
+        modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
     }
-
 }
