@@ -1,5 +1,6 @@
 package com.glisco.isometricrenders.mixin;
 
+import com.glisco.isometricrenders.property.TickingPropertyBundle;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -14,8 +15,13 @@ public class TextureManagerMixin {
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     public void stopTick(CallbackInfo ci) {
         Minecraft client = Minecraft.getInstance();
-        if (client.screen instanceof RenderScreen screen && !screen.playAnimations.get()) {
-            ci.cancel();
+        if (client.screen instanceof RenderScreen screen) {
+            // there needs to be a cleaner way to do this
+            if (screen.renderable.getProperties() instanceof TickingPropertyBundle ticking) {
+                if (ticking.getTickProperty().get()) {
+                    ci.cancel();
+                }
+            }
         }
     }
 

@@ -3,6 +3,7 @@ package com.glisco.isometricrenders.render.area;
 import com.glisco.isometricrenders.property.DefaultCroppablePropertyBundle;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
+import com.glisco.isometricrenders.property.TickingPropertyBundle;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.render.area.side_view.MeshSideRotation;
 import com.glisco.isometricrenders.render.area.side_view.MeshSideSlant;
@@ -20,10 +21,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
 import org.joml.Matrix4fStack;
 
-public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
+public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
 
     public static final AreaPropertyBundle INSTANCE = new AreaPropertyBundle();
 
+    private final Property<Boolean> tick = Property.of(true);
     public final Property<Boolean> emulateDaylight = Property.of(true);
     public final Property<Boolean> useFullBrightGamma = Property.of(false);
     public final Property<Boolean> useNightVision = Property.of(false);
@@ -64,6 +66,12 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public boolean areMinimapSettingsExportable() {
         return sideViewRotation == MeshSideRotation.NORTH && sideViewSlant == MeshSideSlant.ABOVE;
+    }
+
+
+    @Override
+    public Property<Boolean> getTickProperty() {
+        return this.tick;
     }
 
     @Override

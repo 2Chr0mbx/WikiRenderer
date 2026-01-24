@@ -5,6 +5,7 @@ import com.glisco.isometricrenders.mixin.access.ParticleEngineAccessor;
 import com.glisco.isometricrenders.property.CroppablePropertyBundle;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.property.Property;
+import com.glisco.isometricrenders.property.TickingPropertyBundle;
 import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.render.RenderableDispatcher;
@@ -72,11 +73,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private final MemoryGuard memoryGuard = new MemoryGuard(0.75f);
 
-    private final Renderable<?> renderable;
+    public final Renderable<?> renderable;
     private Consumer<File> exportCallback = (file) -> {
     };
 
-    public final Property<Boolean> playAnimations = Property.of(true);
     public final Property<Boolean> tickParticles = Property.of(true);
 
     private Button exportAnimationButton;
@@ -193,8 +193,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             IsometricUI.booleanControl(rightColumn, areaRenderable.getProperties().useNightVision, "night_vision");
         }
 
-        if (this.renderable instanceof TickingRenderable<?>) {
-            IsometricUI.booleanControl(rightColumn, this.playAnimations, "animations");
+        if (this.renderable.getProperties() instanceof TickingPropertyBundle ticking) {
+            IsometricUI.booleanControl(rightColumn, ticking.getTickProperty(), "animations");
         }
         if (this.renderable instanceof AreaRenderable) {
             IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
@@ -401,7 +401,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         Window window = minecraft.getWindow();
-        float effectiveTickDelta = playAnimations.get() ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
+        boolean tick = renderable.getProperties() instanceof TickingPropertyBundle ticking && ticking.getTickProperty().get();
+        float effectiveTickDelta = tick ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
         RenderableDispatcher.drawIntoActiveFramebuffer(
                 this.renderable,
                 window.getWidth() / (float) window.getHeight(),
@@ -544,10 +545,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.memoryGuard.update();
         }
 
-        if (this.renderable instanceof TickingRenderable<?> tickable) {
-            boolean tick = playAnimations.get();
+        if (this.renderable instanceof TickingRenderable<?> ticking) {
+            boolean tick = ticking.getProperties().getTickProperty().get();
             if (tick) IsometricRenders.beginRenderableTick();
-            tickable.tick(tick);
+            ticking.tick(tick);
             if (tick) IsometricRenders.endRenderableTick();
         }
     }

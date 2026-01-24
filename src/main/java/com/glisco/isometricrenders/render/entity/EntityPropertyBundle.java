@@ -3,6 +3,7 @@ package com.glisco.isometricrenders.render.entity;
 import com.glisco.isometricrenders.property.DefaultCroppablePropertyBundle;
 import com.glisco.isometricrenders.property.IntProperty;
 import com.glisco.isometricrenders.property.Property;
+import com.glisco.isometricrenders.property.TickingPropertyBundle;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.screen.RenderScreen;
@@ -17,13 +18,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.joml.Matrix4fStack;
 
-public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
+public class EntityPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
 
     public static final EntityPropertyBundle INSTANCE = new EntityPropertyBundle();
 
     public final Property<Boolean> spriteRendering = Property.of(false);
     private final Property<Boolean> spriteCropping = Property.of(true);
     private int spriteExportResolution = 64;
+
+    private final Property<Boolean> tick = Property.of(false);
 
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
     public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
@@ -138,5 +141,10 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
         if (!this.spriteRendering.get()) {
             super.updateAndApplyRotationOffset(modelViewStack);
         }
+    }
+
+    @Override
+    public Property<Boolean> getTickProperty() {
+        return this.tick;
     }
 }

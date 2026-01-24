@@ -2,8 +2,6 @@ package com.glisco.isometricrenders.render.item;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.BlockEntityAccessor;
-import com.glisco.isometricrenders.property.DefaultCroppablePropertyBundle;
-import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.util.ExportPathSpec;
@@ -31,9 +29,9 @@ import net.minecraft.world.level.storage.TagValueInput;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
-public class BlockStateRenderable extends DefaultRenderable<DefaultCroppablePropertyBundle> implements TickingRenderable<DefaultCroppablePropertyBundle> {
+public class BlockStateRenderable extends DefaultRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle> {
 
-    public static final DefaultCroppablePropertyBundle PROPERTIES = new DefaultCroppablePropertyBundle();
+    public static final BlockStatePropertyBundle PROPERTIES = new BlockStatePropertyBundle();
 
     private final Minecraft client = Minecraft.getInstance();
 
@@ -117,7 +115,7 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultCroppableProp
     }
 
     @Override
-    public DefaultCroppablePropertyBundle getProperties() {
+    public BlockStatePropertyBundle getProperties() {
         return PROPERTIES;
     }
 
