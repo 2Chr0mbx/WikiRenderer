@@ -336,7 +336,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 if (speedUpEnchantmentGlints.get()) {
                     rightColumn.child(Components.button(Translate.gui("enchantment_glint_preset"), button -> {
                         int seconds = 120000 / 8000;
-                        int framerate = 25;
+                        int framerate = 20;
                         exportFramerate.set(framerate);
                         exportFrames.set(seconds * framerate);
                     }).margins(Insets.vertical(5)));

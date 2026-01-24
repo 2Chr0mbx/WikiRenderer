@@ -9,7 +9,7 @@ public class GlobalProperties {
 
     //Export Options
     public static Property<Boolean> unsafe = Property.of(false);
-    public static Property<Boolean> saveIntoRoot = Property.of(true);
+    public static Property<Boolean> saveIntoRoot = Property.of(false);
     public static Property<Boolean> overwriteLatest = Property.of(false);
 
     // Animation Options
