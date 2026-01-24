@@ -41,6 +41,9 @@ public class DynamicLabelComponent extends LabelComponent {
 
     @Override
     public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
+        if (this.content.get().getString().isEmpty()) {
+            return;
+        }
         this.text(this.content.get());
         super.draw(context, mouseX, mouseY, partialTicks, delta);
     }

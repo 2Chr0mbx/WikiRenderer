@@ -21,7 +21,9 @@ public class IOStateComponent extends FlowLayout {
 
     @Override
     public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
-        super.draw(context, mouseX, mouseY, partialTicks, delta);
-        IsometricUI.drawExportProgressBar(context, this.x + 10, this.y + 25, 100, 50, 10);
+        if (FileIO.taskCount() > 0) {
+            super.draw(context, mouseX, mouseY, partialTicks, delta);
+            IsometricUI.drawExportProgressBar(context, this.x + 10, this.y + 25, 100, 50, 10);
+        }
     }
 }

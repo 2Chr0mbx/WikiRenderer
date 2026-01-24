@@ -124,7 +124,9 @@
   "gui.isometric-renders.background_color": "Background Color (F10)",
   "gui.isometric-renders.export_options": "Export Options",
   "gui.isometric-renders.renderer_resolution": "Resolution",
-  "gui.isometric-renders.renderer_resolution_crop": "Resolution (Target Height)",
+  "gui.isometric-renders.renderer_resolution_rescale_vertical": "Resolution (Target Height)",
+  "gui.isometric-renders.renderer_resolution_rescale_horizontal": "Resolution (Target Width)",
+  "gui.isometric-renders.renderer_resolution_rescale_disabled": "Resolution",
   "gui.isometric-renders.block_resolution": "Block Resolution",
   "gui.isometric-renders.hotkeys": "F10: Toggle UI  F12: Export",
 
