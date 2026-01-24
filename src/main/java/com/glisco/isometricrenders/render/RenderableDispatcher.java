@@ -7,7 +7,6 @@ import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
 import com.glisco.isometricrenders.util.ImageCropper;
 import com.glisco.isometricrenders.util.RenderTargetUtils;
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -18,7 +17,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -55,7 +53,7 @@ public class RenderableDispatcher {
 
         renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
-        Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
+        Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -1000, 1000);
         IsometricRenders.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
 
 

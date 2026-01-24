@@ -32,6 +32,13 @@ public class IsometricUI {
         }
     }
 
+    public static void intControl(FlowLayout container, IntProperty property, String name, int step) {
+        try (RowBuilder builder = row(container)) {
+            builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(15), property));
+            builder.row.child(new PropertySliderComponent(Sizing.fill(80), Translate.gui(name), step, property).margins(Insets.left(5)));
+        }
+    }
+
     public static LabelComponent sectionHeader(FlowLayout container, String key, boolean separate) {
         LabelComponent label = Components.label(Translate.gui(key)).shadow(true);
         if (separate) label.margins(Insets.top(20));
@@ -51,13 +58,6 @@ public class IsometricUI {
 
     public static void booleanControl(FlowLayout container, Property<Boolean> property, String key) {
         container.child(new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5)));
-    }
-
-    public static void intControl(FlowLayout container, IntProperty property, String name, int step) {
-        try (RowBuilder builder = row(container)) {
-            builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(15), property));
-            builder.row.child(new PropertySliderComponent(Sizing.fill(80), Translate.gui(name), step, property).margins(Insets.left(5)));
-        }
     }
 
     public static void doubleControl(FlowLayout container, DoubleProperty property, String name, int step) {
@@ -80,7 +80,7 @@ public class IsometricUI {
 
     public static RowBuilder row(FlowLayout container) {
         FlowLayout layout = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
-        layout.margins(Insets.of(5, 0, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
+        layout.margins(Insets.of(5, 5, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
         return new RowBuilder(layout, container);
     }
 

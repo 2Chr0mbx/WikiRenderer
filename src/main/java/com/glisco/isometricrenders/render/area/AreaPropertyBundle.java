@@ -41,6 +41,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     public final Property<Boolean> exportSideViewMinimapData = Property.of(true);
     public final Property<Boolean> halfPixelOffsetFor4x4 = Property.of(true); // helps fix certain things like fence lines not rendering
     private int pixelsPerBlockResolution = 16;
+    private int faceRenderingActualResolution = this.getDefaultExportResolution();
 
     public final Property<Boolean> useWalkabilityFilter = Property.of(false);
     public final IntProperty walkableBlocksThreshold = IntProperty.of(2, 1, 20);
@@ -133,7 +134,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
         WorldBlockMesh mesh = renderable.mesh;
 
         try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
-            builder.row.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild()).margins(Insets.top(5)));
+            builder.row.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild()).margins(Insets.top(10)));
 
             IsometricUI.dynamicLabel(builder.row, () -> {
                 MutableComponent meshStatusText = Translate.gui("mesh_status");
@@ -187,9 +188,18 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     @Override
     public void setExportResolution(int exportResolution) {
         if (perPixel90DegreeRendering.get()) {
-            this.pixelsPerBlockResolution = exportResolution;
+            this.faceRenderingActualResolution = exportResolution;
         } else {
             super.setExportResolution(exportResolution);
+        }
+    }
+
+    @Override
+    public int getExportResolution(Renderable<?> renderable) {
+        if (this.perPixel90DegreeRendering.get()) {
+            return this.faceRenderingActualResolution;
+        } else {
+            return super.getExportResolution(renderable);
         }
     }
 

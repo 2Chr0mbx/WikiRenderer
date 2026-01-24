@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.widget;
 
 import com.glisco.isometricrenders.property.DoubleProperty;
 import com.glisco.isometricrenders.property.IntProperty;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
@@ -11,34 +12,33 @@ import java.text.NumberFormat;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class DoublePropertyTextFieldComponent extends EditBox {
+public class DoublePropertyTextFieldComponent extends TextBoxComponent {
 
     private final DoubleProperty setting;
     private String content = "";
 
     public DoublePropertyTextFieldComponent(Sizing horizontalSizing, DoubleProperty setting) {
-        super(Minecraft.getInstance().font, 0, 0, 70, 20, Component.empty());
+        super(horizontalSizing);
         this.setting = setting;
 
-        this.horizontalSizing(horizontalSizing);
-
-        this.setValue(String.valueOf(setting.get()));
+        this.text(String.valueOf(setting.get()));
         this.setFilter(makeMatcher());
 
-        this.setting.listen((doubleSetting, value) -> {
-            this.setValue(String.valueOf(value));
-        });
+        this.onChanged().subscribe(s -> {
+            if (s.endsWith(".")) {
+                return;
+            }
 
-        this.setResponder(s -> {
             if (Objects.equals(s, content) || s.isEmpty() || s.equals("-")) {
                 return;
             }
 
             this.content = s;
-            if (s.endsWith(".")) {
-                s = s.substring(0, s.length() - 1);
-            }
             this.setting.set(Double.parseDouble(s));
+        });
+
+        this.setting.listen((doubleSetting, value) -> {
+            this.setValue(String.valueOf(value));
         });
     }
 

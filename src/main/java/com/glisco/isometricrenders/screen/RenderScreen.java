@@ -76,7 +76,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private Consumer<File> exportCallback = (file) -> {
     };
 
-    public final Property<Boolean> playAnimations = Property.of(false);
+    public final Property<Boolean> playAnimations = Property.of(true);
     public final Property<Boolean> tickParticles = Property.of(true);
 
     private Button exportAnimationButton;
@@ -199,6 +199,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         IsometricUI.sectionHeader(rightColumn, "export_options", true);
         if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
             IsometricUI.booleanControl(rightColumn, croppablePropertyBundle.getCropProperty(), notFaceFrameAreaRendering ? "crop_and_resize" : "crop");
+
+
         }
         IsometricUI.booleanControl(rightColumn, saveIntoRoot, "dump_into_root");
         IsometricUI.booleanControl(rightColumn, overwriteLatest, "overwrite_latest");
@@ -216,6 +218,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (notFaceFrameAreaRendering) {
             String key = renderable.shouldCrop() ? "renderer_resolution_crop" : "renderer_resolution";
             EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(renderable.getExportResolution()), key, Sizing.fixed(50));
+            /*
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
@@ -228,6 +231,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     exportButton.active = true;
                 }
             });
+
+             */
         } else {
             AreaRenderable areaRenderable = (AreaRenderable) renderable;
             AreaPropertyBundle properties = areaRenderable.getProperties();

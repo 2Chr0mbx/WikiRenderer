@@ -24,7 +24,7 @@
   "gui.isometric-renders.slant": "Slant",
   "gui.isometric-renders.light_angle": "Light Angle",
   "gui.isometric-renders.rotation_speed": "Rotation Degrees Per Second",
-  "gui.isometric-renders.dimetric": "Dimetric (Recommended)",
+  "gui.isometric-renders.dimetric": "Dimetric",
   "gui.isometric-renders.isometric": "Isometric",
 
   "gui.isometric-renders.hide_blocks": "Hide Blocks",
