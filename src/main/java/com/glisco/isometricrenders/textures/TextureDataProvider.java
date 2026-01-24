@@ -53,30 +53,5 @@ public interface TextureDataProvider {
                 }
             }
         }
-
-        /*
-        layout.child(Components.button(Translate.gui("export_skin_to_clipboard"), button -> {
-            screen.notify(Translate.gui("copied_skin_to_clipboard"));
-
-            NativeImage playerSkinImage = SkinGrabber.getPlayerSkin(player);
-            if (playerSkinImage != null) {
-                try (playerSkinImage) {
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    WritableByteChannel channel = Channels.newChannel(stream);
-
-                    ((NativeImageInvoker) (Object) playerSkinImage).isometric$write(channel);
-
-                    ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
-                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
-                } catch (IOException e) {
-                    IsometricRenders.LOGGER.error("mfw", e);
-                }
-            }
-
-
-        }).horizontalSizing(Sizing.fixed(75)));
-         */
-
-
     }
 }

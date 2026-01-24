@@ -218,7 +218,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (notFaceFrameAreaRendering) {
             String key = renderable.shouldCrop() ? "renderer_resolution_crop" : "renderer_resolution";
             EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(renderable.getExportResolution()), key, Sizing.fixed(50));
-            /*
+
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
             resolutionField.setResponder(s -> {
                 if (s.isBlank()) return;
@@ -231,8 +231,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     exportButton.active = true;
                 }
             });
-
-             */
         } else {
             AreaRenderable areaRenderable = (AreaRenderable) renderable;
             AreaPropertyBundle properties = areaRenderable.getProperties();
