@@ -6,6 +6,7 @@ import com.glisco.isometricrenders.render.entity.EntityRenderable;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -23,6 +24,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
@@ -48,8 +51,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
 
     protected List<Entity> entities = new ArrayList<>();
     private boolean entitiesFrozen;
-    protected boolean freezeEntities;
-    protected boolean hideEntities;
 
     public AreaRenderable(WorldBlockMesh mesh) {
         this.mesh = mesh;
@@ -98,7 +99,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
                 client.getWindow().getGuiScaledWidth(),
                 client.getWindow().getGuiScaledHeight(),
                 1.0, 0, client.getDeltaTracker(), 0,
-                new net.minecraft.client.Camera(), // Passing a new/empty camera sets pos to 0,0,0
+                new Camera(), // Passing a new/empty camera sets pos to 0,0,0
                 false
         );
 
@@ -149,7 +150,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
     }
 
     private void refreshEntities() {
-        if (this.freezeEntities) {
+        if (this.getProperties().freezeEntities.get()) {
             if (!this.entitiesFrozen) {
                 this.entitiesFrozen = true;
 
@@ -198,6 +199,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         this.refreshEntities();
         if (!properties.hideEntities.get()) {
             this.entities.forEach(entity -> {
+                if (entity instanceof Player && properties.hidePlayers.get()) return;
+                if (entity instanceof ArmorStand && properties.hideArmorStands.get()) return;
+
                 Vec3 offsetFromMesh = entity.getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
 
                 EntityRenderState state = entityDispatcher.extractEntity(entity, tickDelta);

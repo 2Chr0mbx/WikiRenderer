@@ -1,7 +1,6 @@
 package com.glisco.isometricrenders.screen;
 
 import com.glisco.isometricrenders.IsometricRenders;
-import com.glisco.isometricrenders.mixin.access.NativeImageInvoker;
 import com.glisco.isometricrenders.mixin.access.ParticleEngineAccessor;
 import com.glisco.isometricrenders.property.CroppablePropertyBundle;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
@@ -13,6 +12,7 @@ import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.render.area.AreaPropertyBundle;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
+import com.glisco.isometricrenders.textures.TextureDataProvider;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
 import com.glisco.isometricrenders.widget.NotificationComponent;
@@ -23,8 +23,6 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
-import io.wispforest.owo.ui.core.Color;
-import io.wispforest.owo.ui.core.Insets;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.CameraType;
@@ -43,13 +41,7 @@ import net.minecraft.world.item.DyeColor;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
-import java.awt.*;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -91,6 +83,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private boolean drawOnlyBackground = false;
     private boolean captureScheduled = false;
+    private boolean skinExportScheduled = false;
     public boolean guiRebuildScheduled = false;
 
     private int viewportBeginX;
@@ -194,6 +187,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             backgroundColor = Integer.parseInt(s.substring(1), 16);
         });
 
+        if (renderable instanceof AreaRenderable areaRenderable) {
+            // put this here since being a render setting makes more sense
+            IsometricUI.booleanControl(rightColumn, areaRenderable.getProperties().emulateDaylight, "render_as_daytime");
+            IsometricUI.booleanControl(rightColumn, areaRenderable.getProperties().useFullBrightGamma, "full_bright");
+            IsometricUI.booleanControl(rightColumn, areaRenderable.getProperties().useNightVision, "night_vision");
+        }
+
         IsometricUI.booleanControl(rightColumn, this.playAnimations, "animations");
         IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
 
@@ -207,13 +207,15 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         final Button exportButton;
         try (IsometricUI.RowBuilder builder = IsometricUI.row(rightColumn)) {
             exportButton = Components.button(Translate.gui("export"), button -> this.captureScheduled = true);
-            builder.row.child(exportButton.horizontalSizing(Sizing.fixed(75)));
+            builder.row.child(exportButton);
 
             builder.row.child(Components.button(Translate.gui("open_folder"), button -> {
                 Util.getPlatform().openFile(this.renderable.getExportPath().resolveOffset().toFile());
-            }).horizontalSizing(Sizing.fixed(75)).margins(Insets.left(5)));
+            }).margins(Insets.left(5)));
         }
 
+
+        /*
         if (!GraphicsEnvironment.isHeadless()) {
             rightColumn.child(Components.button(Translate.gui("export_to_clipboard"), button -> {
 
@@ -236,6 +238,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
             }).horizontalSizing(Sizing.fixed(75)));
         }
+         */
 
         if (notFaceFrameAreaRendering) {
             String key = renderable.shouldCrop() ? "renderer_resolution_crop" : "renderer_resolution";
@@ -329,7 +332,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                             button.setMessage(Translate.gui("exporting"));
                         }
                     });
-                    builder.row.child(this.exportAnimationButton.horizontalSizing(Sizing.fixed(100)).margins(Insets.right(5)));
+                    builder.row.child(this.exportAnimationButton.margins(Insets.right(5)));
 
                     builder.row.child(Components.button(Translate.gui("format." + animationFormat.extension), button -> {
                         animationFormat = animationFormat.next();
@@ -361,7 +364,42 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             IsometricUI.sectionHeader(rightColumn, "detecting_ffmpeg", false);
             FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> this.guiRebuildScheduled = true);
         }
+
+        if (renderable instanceof TextureDataProvider textureProvider) {
+            textureProvider.buildTextureGrabSection(this, rightColumn);
+        }
     }
+
+    /*
+    private void buildTextureGrabSection() {
+        IsometricUI.sectionHeader(rightColumn, "player_skin_grabbing", true);
+
+        if (!GraphicsEnvironment.isHeadless()) {
+            rightColumn.child(Components.button(Translate.gui("export_skin_to_clipboard"), button -> {
+                this.notify(Translate.gui("copied_skin_to_clipboard"));
+
+                NativeImage playerSkinImage = SkinGrabber.getPlayerSkin(player);
+                if (playerSkinImage != null) {
+                    try (playerSkinImage) {
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        WritableByteChannel channel = Channels.newChannel(stream);
+
+                        ((NativeImageInvoker) (Object) playerSkinImage).isometric$write(channel);
+
+                        ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
+                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+                    } catch (IOException e) {
+                        IsometricRenders.LOGGER.error("mfw", e);
+                    }
+                }
+
+
+            }).horizontalSizing(Sizing.fixed(75)));
+        }
+
+        rightColumn.child(Components.button(Translate.gui("export_skin"), button -> skinExportScheduled = true));
+    }
+     */
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
@@ -460,6 +498,26 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.captureScheduled = false;
         }
 
+        /*
+        if (this.skinExportScheduled) {
+            this.skinExportScheduled = false;
+
+            LocalPlayer player = (LocalPlayer) ((EntityRenderable) renderable).entity;
+            final ExportPathSpec exportPath = ExportPathSpec.of("player_skins", player.getStringUUID());
+
+            NativeImage playerSkinImage = SkinGrabber.getPlayerSkin(player);
+            FileIO.saveImage(playerSkinImage, exportPath).whenComplete((imageFile, throwable) -> {
+                exportCallback.accept(imageFile);
+                this.minecraft.execute(() -> this.notify(
+                        () -> Util.getPlatform().openFile(imageFile),
+                        Translate.gui("exported_as"),
+                        Component.literal(ExportPathSpec.exportRoot().relativize(imageFile.toPath()).toString())
+                ));
+            });
+        }
+
+         */
+
         if (this.remainingAnimationFrames > 0) {
             this.renderedFrames.add(RenderableDispatcher.drawIntoTexture(this.renderable, effectiveTickDelta, renderable.getExportResolution()));
 
@@ -537,7 +595,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.notificationArea.child(0, new NotificationComponent(onClick, messages));
     }
 
-    private void notify(Component... messages) {
+    public void notify(Component... messages) {
         this.notificationArea.child(0, new NotificationComponent(null, messages));
     }
 

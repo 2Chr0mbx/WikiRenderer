@@ -80,7 +80,7 @@ public class IsometricUI {
 
     public static RowBuilder row(FlowLayout container) {
         FlowLayout layout = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
-        layout.margins(Insets.vertical(5)).verticalAlignment(VerticalAlignment.CENTER);
+        layout.margins(Insets.of(5, 0, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
         return new RowBuilder(layout, container);
     }
 

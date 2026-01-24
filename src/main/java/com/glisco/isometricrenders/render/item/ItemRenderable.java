@@ -1,12 +1,15 @@
 package com.glisco.isometricrenders.render.item;
 
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
-import com.glisco.isometricrenders.property.DefaultPropertyBundle;
 import com.glisco.isometricrenders.render.DefaultRenderable;
+import com.glisco.isometricrenders.textures.SkinGrabber;
+import com.glisco.isometricrenders.textures.TextureDataProvider;
 import com.glisco.isometricrenders.util.ExportPathSpec;
+import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -17,14 +20,16 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
+import java.util.*;
 
-public class ItemRenderable extends DefaultRenderable<ItemRenderablePropertyBundle> {
+public class ItemRenderable extends DefaultRenderable<ItemRenderablePropertyBundle> implements TextureDataProvider {
 
     private static final ItemStackRenderState RENDER_STATE = new ItemStackRenderState();
     private static final ItemRenderablePropertyBundle PROPERTIES = new ItemRenderablePropertyBundle();
@@ -32,6 +37,12 @@ public class ItemRenderable extends DefaultRenderable<ItemRenderablePropertyBund
     static {
         PROPERTIES.slant.setDefaultValue(0D).setToDefault();
         PROPERTIES.rotation.setDefaultValue(0).setToDefault();
+    }
+
+    private final ItemStack stack;
+
+    public ItemRenderable(ItemStack stack) {
+        this.stack = stack;
     }
 
     @Override
@@ -63,12 +74,6 @@ public class ItemRenderable extends DefaultRenderable<ItemRenderablePropertyBund
         } else {
             Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_FLAT);
         }
-    }
-
-    private final ItemStack stack;
-
-    public ItemRenderable(ItemStack stack) {
-        this.stack = stack;
     }
 
     @Override
@@ -107,4 +112,9 @@ public class ItemRenderable extends DefaultRenderable<ItemRenderablePropertyBund
         );
     }
 
+    @Override
+    public @NotNull Map<String, MinecraftTexturesPayload> getTextureData() {
+        MinecraftTexturesPayload playerSkin = SkinGrabber.getPlayerHeadTextureData(this.stack);
+        return playerSkin == null ? new HashMap<>() : Map.of("item", playerSkin);
+    }
 }

@@ -5,10 +5,17 @@ import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.mixin.access.ModelPartAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.TickingRenderable;
+import com.glisco.isometricrenders.textures.SkinGrabber;
+import com.glisco.isometricrenders.textures.TextureDataProvider;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.EntityComponent;
@@ -16,6 +23,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -38,19 +46,21 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
+import org.joml.Vector3f;
+import org.lwjgl.system.MemoryStack;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.function.Consumer;
 
-public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TickingRenderable<EntityPropertyBundle> {
+public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TickingRenderable<EntityPropertyBundle>, TextureDataProvider {
 
     private final Minecraft client = Minecraft.getInstance();
-    protected final Entity entity;
+    public final Entity entity;
 
     public EntityRenderable(Entity entity) {
         this.entity = entity;
@@ -322,5 +332,59 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 hideNonHeadParts(toggleCallbacks, modelPart);
             }
         });
+    }
+
+    @Override
+    public void setupLighting(Matrix4f modelViewMatrix) {
+        if (true) {
+            super.setupLighting(modelViewMatrix);
+            return;
+        }
+        // pulled from Lighting's first setup for ITEMS_3D, but with the scaling value of y changed from -1.0f to 1.0f
+        // ngl i have absolutely no idea why this works, but it does - it might have something to do with their atlas sheets having an inverted Y value, idk, probably does
+        // (for that, see CachedOrthoProjectionMatrixBuffer and how when it's created in GuiRendered, flip y is true)
+        // also i changed the numbers here to use Math.toRadians() rather than harder to process numbers
+        Matrix4f matrix4f2 = new Matrix4f()
+                .scaling(1.0F, 1.0F, 1.0F) // IMPORTANT: the y is changed from -1.0 to 1.08
+                .rotateYXZ((float) Math.toRadians(62), (float) Math.toRadians(185.5), 0.0F)
+                .rotateYXZ((float) Math.toRadians(-22.5), (float) (Math.toRadians(135)), 0.0F);
+
+        if (this.lightingBuffer == null)
+            this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders DefaultRenderable Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
+
+        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+            ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, LIGHTING_UBO_SIZE)
+                    .putVec3(matrix4f2.transformDirection(new Vector3f(0.2F, 1.0F, -0.7F).normalize(), new Vector3f()))
+                    .putVec3(matrix4f2.transformDirection(new Vector3f(-0.2F, 1.0F, 0.7F).normalize(), new Vector3f()))
+                    .get();
+
+            RenderSystem.getDevice().createCommandEncoder().writeToBuffer(this.lightingBuffer.slice(), byteBuffer);
+        }
+
+        RenderSystem.setShaderLights(this.lightingBuffer.slice());
+    }
+
+    @Override
+    public @NotNull Map<String, MinecraftTexturesPayload> getTextureData() {
+        Map<String, MinecraftTexturesPayload> textureData = new LinkedHashMap<>();
+
+        if (this.entity instanceof Player player) {
+            MinecraftTexturesPayload playerTexture = SkinGrabber.getGameProfileTextureData(player.getGameProfile());
+            if (playerTexture != null) {
+                textureData.put("player", playerTexture);
+            }
+        }
+
+        if (this.entity instanceof LivingEntity livingEntity) {
+            for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
+                ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
+                MinecraftTexturesPayload itemTextureData = SkinGrabber.getPlayerHeadTextureData(item);
+                if (itemTextureData != null) {
+                    textureData.put(equipmentSlot.getName(), itemTextureData);
+                }
+            }
+        }
+
+        return textureData;
     }
 }

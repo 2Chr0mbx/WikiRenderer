@@ -305,23 +305,19 @@ public class IsorenderCommand {
     public static int renderTargetedEntity(CommandContext<FabricClientCommandSource> context) {
         AttackRange attackRange = new AttackRange(0, 10, 0, 10, 0.3f, 10);
         HitResult closesetHit = attackRange.getClosesetHit(Minecraft.getInstance().player, 1.0f, e -> {
-            System.out.println("a");
 
             if (e instanceof LivingEntity livingEntity) {
                 if (livingEntity.isInvisible() || (livingEntity instanceof ArmorStand armorStand && armorStand.isMarker())) {
                     for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
                         if (!livingEntity.getItemBySlot(equipmentSlot).isEmpty()) {
-                            System.out.println("not empty (" + livingEntity.getItemBySlot(equipmentSlot) + ")");
                             return true;
                         }
                     }
-                    System.out.println("b");
                     return false;
                 }
             }
 
             boolean pickable = e.isPickable();
-            System.out.println(pickable + " " + e.getType().toShortString());
             return pickable;
         });
 

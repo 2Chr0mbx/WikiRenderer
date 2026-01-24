@@ -84,12 +84,12 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(30D);
-            }).horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
+            }).horizontalSizing(Sizing.content(5)).margins(Insets.right(5)));
 
             builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(35.264);
-            }).horizontalSizing(Sizing.fixed(60)));
+            }));
         }
 
         container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
@@ -97,7 +97,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
                     this.yOffset.setToDefault();
                     this.scale.setToDefault();
                 })
-                .horizontalSizing(Sizing.fixed(140))
+                .horizontalSizing(Sizing.content(5))
                 .margins(Insets.top(5)));
 
         IsometricUI.sectionHeader(container, "entity_data", true);

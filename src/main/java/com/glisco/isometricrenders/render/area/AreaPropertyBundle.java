@@ -23,7 +23,13 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public static final AreaPropertyBundle INSTANCE = new AreaPropertyBundle();
 
+    public final Property<Boolean> emulateDaylight = Property.of(true);
+    public final Property<Boolean> useFullBrightGamma = Property.of(false);
+    public final Property<Boolean> useNightVision = Property.of(false);
+
     public final Property<Boolean> hideEntities = Property.of(false);
+    public final Property<Boolean> hidePlayers = Property.of(false);
+    public final Property<Boolean> hideArmorStands = Property.of(false);
     public final Property<Boolean> freezeEntities = Property.of(false);
     public final Property<Boolean> autoRefreshVisibleEntities = Property.of(true);
     public final Property<Boolean> hideText = Property.of(false);
@@ -76,13 +82,13 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
                 builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(30D);
-                }).horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
+                }).margins(Insets.right(5)));
 
                 builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
 
-                }).horizontalSizing(Sizing.fixed(60)));
+                }));
             }
             IsometricUI.intControl(container, scale, "scale", 10);
             IsometricUI.intControl(container, rotation, "rotation", 45);
@@ -95,28 +101,29 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
                         this.yOffset.setToDefault();
                         this.scale.setToDefault();
                     })
-                    .horizontalSizing(Sizing.fixed(120))
                     .margins(Insets.top(5)));
         } else {
             try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
                 builder.row.child(Components.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
                     this.sideViewRotation = this.sideViewRotation.nextRotation();
                     screen.guiRebuildScheduled = true;
-                }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
+                }).margins(Insets.right(5)));
 
                 builder.row.child(Components.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
                     this.sideViewSlant = this.sideViewSlant.nextSlant();
                     screen.guiRebuildScheduled = true;
-                }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
+                }).margins(Insets.right(5)));
             }
             container.child(Components.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
                 this.sideViewRotation = MeshSideRotation.NORTH;
                 this.sideViewSlant = MeshSideSlant.ABOVE;
                 screen.guiRebuildScheduled = true;
-            }).horizontalSizing(Sizing.fixed(110)).margins(Insets.right(5)));
+            }).margins(Insets.right(5)));
 
             IsometricUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");
-            this.useWalkabilityFilter.listen((booleanProperty, value) -> screen.guiRebuildScheduled = true, false);
+            this.useWalkabilityFilter.listen((booleanProperty, value) -> {
+                screen.guiRebuildScheduled = true;
+            }, false);
             if (this.useWalkabilityFilter.get()) {
                 IsometricUI.intControl(container, walkableBlocksThreshold, "walkable_blocks_threshold", 1);
                 IsometricUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");
@@ -126,9 +133,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
         WorldBlockMesh mesh = renderable.mesh;
 
         try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
-            builder.row.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild())
-                    .horizontalSizing(Sizing.fixed(80))
-                    .margins(Insets.top(5)));
+            builder.row.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild()).margins(Insets.top(5)));
+
             IsometricUI.dynamicLabel(builder.row, () -> {
                 MutableComponent meshStatusText = Translate.gui("mesh_status");
                 if (!mesh.state().isBuildStage) {
@@ -151,12 +157,17 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
         IsometricUI.booleanControl(container, this.hideMesh, "hide_blocks");
 
-        IsometricUI.sectionHeader(container, "mesh_entity_overrides", true);
+        IsometricUI.sectionHeader(container, "area_overrides", true);
 
         IsometricUI.booleanControl(container, this.hideEntities, "hide_entities");
-        this.hideEntities.listen((booleanProperty, hidden) -> renderable.hideEntities = hidden);
+        this.hideEntities.listen((booleanProperty, hidden) -> {
+            screen.guiRebuildScheduled = true;
+        }, false);
+        if (!this.hideEntities.get()) {
+            IsometricUI.booleanControl(container, this.hidePlayers, "hide_players");
+            IsometricUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
+        }
         IsometricUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-        this.freezeEntities.listen((booleanProperty, frozen) -> renderable.freezeEntities = frozen);
         IsometricUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
 
         IsometricUI.booleanControl(container, this.hideText, "hide_text");

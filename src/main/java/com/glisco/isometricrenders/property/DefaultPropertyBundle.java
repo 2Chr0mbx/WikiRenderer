@@ -66,12 +66,12 @@ public class DefaultPropertyBundle implements PropertyBundle {
             builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(30D);
-            }).horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
+            }).margins(Insets.right(5)));
 
             builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(35.264);
-            }).horizontalSizing(Sizing.fixed(60)));
+            }));
         }
     }
 

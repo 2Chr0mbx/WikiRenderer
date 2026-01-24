@@ -48,8 +48,6 @@ public class ImageCropper {
             }
         }
 
-        System.out.println("minX = " + minX + ", maxX = " + maxX + ", minY = " + minY + ", maxY = " + maxY);
-
         if (maxX == -1) return null;
         return new CropData(minX, maxX, minY, maxY);
     }

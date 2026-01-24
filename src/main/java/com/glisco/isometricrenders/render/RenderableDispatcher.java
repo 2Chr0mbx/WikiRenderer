@@ -7,6 +7,7 @@ import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
 import com.glisco.isometricrenders.util.ImageCropper;
 import com.glisco.isometricrenders.util.RenderTargetUtils;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -54,7 +55,7 @@ public class RenderableDispatcher {
 
         renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
-        Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -1000, 3000);
+        Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
         IsometricRenders.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
 
 
@@ -110,7 +111,7 @@ public class RenderableDispatcher {
                     return CompletableFuture.completedFuture(i);
                 } else {
                     double multiplier = (double) size / (double) height;
-                    int newSize = (int) Math.round(size * multiplier);
+                    int newSize = (int) Math.ceil(size * multiplier);
                     return drawIntoImage(renderable, tickDelta, newSize, false, null).thenApply(ImageCropper::cropTransparent);
                 }
             });

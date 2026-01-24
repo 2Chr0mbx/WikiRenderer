@@ -61,7 +61,6 @@ public record MinimapCalibratorData(
                 image.getWidth() - 1, image.getHeight() - 1, mapBottomRight.x, mapBottomRight.y,
                 image.getWidth(), image.getHeight()
         );
-        System.out.println("data = " + minimapCalibratorData);
         return minimapCalibratorData;
     }
 
