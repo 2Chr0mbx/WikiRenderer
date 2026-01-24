@@ -202,10 +202,42 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         IsometricUI.sectionHeader(rightColumn, "export_options", true);
         if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
-            IsometricUI.booleanControl(rightColumn, croppablePropertyBundle.getCropProperty(), notFaceFrameAreaRendering ? "crop_and_resize" : "crop");
+            Property<Boolean> cropProperty = croppablePropertyBundle.getCropProperty();
+            Property<ImageRescaleMode> resizeModeProperty = croppablePropertyBundle.getRescaleMode();
 
+            IsometricUI.booleanControl(rightColumn, cropProperty, notFaceFrameAreaRendering ? "crop_and_rescale_" + resizeModeProperty.get().name().toLowerCase() : "crop");
+            cropProperty.listen((p, b) -> this.guiRebuildScheduled = true, false);
 
+            if (cropProperty.get() && notFaceFrameAreaRendering) {
+
+                rightColumn.child(Components.dropdown(Sizing.content())
+                        .button(Translate.gui("rescale_vertically"), b -> {
+                            resizeModeProperty.set(ImageRescaleMode.VERTICAL);
+                            this.guiRebuildScheduled = true;
+                        })
+                        .button(Translate.gui("rescale_horizontally"), b -> {
+                            resizeModeProperty.set(ImageRescaleMode.HORIZONTAL);
+                            this.guiRebuildScheduled = true;
+                        })
+                        .button(Translate.gui("dont_rescale"), b -> {
+                            resizeModeProperty.set(ImageRescaleMode.DISABLED);
+                            this.guiRebuildScheduled = true;
+                        })
+                        .closeWhenNotHovered(false)
+                        .padding(Insets.of(5))
+                        .surface(Surface.blur(10, 50))
+                );
+
+                /*
+                try (IsometricUI.RowBuilder builder = IsometricUI.row(rightColumn)) {
+                    builder.row.child(new EnumCheckboxComponent<>(Translate.gui("rescale_vertically"), resizeModeProperty, ImageResizeMode.VERTICAL, ImageResizeMode.DISABLED));
+                    builder.row.child(new EnumCheckboxComponent<>(Translate.gui("rescale_horizontally"), resizeModeProperty, ImageResizeMode.HORIZONTAL, ImageResizeMode.DISABLED));
+                }
+                rightColumn.child(new EnumCheckboxComponent<>(Translate.gui("dont_rescale"), resizeModeProperty, ImageResizeMode.DISABLED, ImageResizeMode.DISABLED));
+                 */
+            }
         }
+
         IsometricUI.booleanControl(rightColumn, saveIntoRoot, "dump_into_root");
         IsometricUI.booleanControl(rightColumn, overwriteLatest, "overwrite_latest");
 

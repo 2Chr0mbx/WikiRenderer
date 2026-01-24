@@ -31,6 +31,7 @@
     "access.BlockEntityAccessor",
     "access.BlockInputAccessor",
     "access.CameraInvoker",
+    "access.CheckBoxAccessor",
     "access.GameRendererAccessor",
     "access.ItemStackRenderStateAccessor",
     "access.LevelRendererAccessor",

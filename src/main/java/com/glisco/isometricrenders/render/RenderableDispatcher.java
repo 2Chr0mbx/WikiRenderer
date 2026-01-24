@@ -2,9 +2,11 @@ package com.glisco.isometricrenders.render;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.LightTextureAccessor;
+import com.glisco.isometricrenders.property.CroppablePropertyBundle;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
 import com.glisco.isometricrenders.util.ImageCropper;
+import com.glisco.isometricrenders.util.ImageRescaleMode;
 import com.glisco.isometricrenders.util.RenderTargetUtils;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.TextureTarget;
@@ -103,13 +105,25 @@ public class RenderableDispatcher {
 
                 return nativeImage;
             }).thenCompose(i -> {
-                int height = i.getHeight();
-                if (height >= size || (renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get())) {
-                    // resizing would be pointless with this size, or if per pixel rendering is on dont do it
+                ImageRescaleMode rescaleMode = ((CroppablePropertyBundle) renderable.getProperties()).getRescaleMode().get();
+                int axisSize = switch (rescaleMode) {
+                    case VERTICAL -> i.getHeight();
+                    case HORIZONTAL -> i.getWidth();
+                    case DISABLED -> 0;
+                };
+
+                if (rescaleMode == ImageRescaleMode.DISABLED
+                    || axisSize >= size
+                    || (renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get())) {
                     return CompletableFuture.completedFuture(i);
                 } else {
-                    double multiplier = (double) size / (double) height;
+                    double multiplier = (double) size / (double) axisSize;
                     int newSize = (int) Math.ceil(size * multiplier);
+
+                    int maxTextureSize = RenderSystem.getDevice().getMaxTextureSize();
+                    if (newSize > maxTextureSize) {
+                        newSize = maxTextureSize;
+                    }
                     return drawIntoImage(renderable, tickDelta, newSize, false, null).thenApply(ImageCropper::cropTransparent);
                 }
             });
@@ -135,7 +149,8 @@ public class RenderableDispatcher {
         RenderSystem.outputColorTextureOverride = target.getColorTextureView();
         RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
 
-        drawIntoActiveFramebuffer(renderable, 1, tickDelta, matrixStack -> {});
+        drawIntoActiveFramebuffer(renderable, 1, tickDelta, matrixStack -> {
+        });
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;

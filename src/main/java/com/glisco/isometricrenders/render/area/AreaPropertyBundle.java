@@ -137,9 +137,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             }).margins(Insets.right(5)));
 
             IsometricUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");
-            this.useWalkabilityFilter.listen((booleanProperty, value) -> {
-                screen.guiRebuildScheduled = true;
-            }, false);
+            this.useWalkabilityFilter.listen((booleanProperty, value) -> screen.guiRebuildScheduled = true, false);
             if (this.useWalkabilityFilter.get()) {
                 IsometricUI.intControl(container, walkableBlocksThreshold, "walkable_blocks_threshold", 1);
                 IsometricUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");

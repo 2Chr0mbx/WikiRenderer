@@ -5,14 +5,12 @@ import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ClientRenderCallback;
 import com.glisco.isometricrenders.util.Translate;
+import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
-import com.mojang.math.Axis;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
 public class DefaultPropertyBundle implements PropertyBundle {
@@ -34,9 +32,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     private int exportResolution = this.getDefaultExportResolution();
 
     public DefaultPropertyBundle() {
-        ClientRenderCallback.EVENT.register(client -> {
-            this.rotationOffsetUpdated = false;
-        });
+        ClientRenderCallback.EVENT.register(client -> this.rotationOffsetUpdated = false);
     }
 
     protected double getDefaultSlant() {

@@ -5,11 +5,10 @@ import com.glisco.isometricrenders.mixin.access.BlockInputAccessor;
 import com.glisco.isometricrenders.mixin.access.WorldCoordinatesAccessor;
 import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
-import com.glisco.isometricrenders.render.area.WorldBlockMesh;
+import com.glisco.isometricrenders.render.batch.BatchRenderTask;
 import com.glisco.isometricrenders.render.entity.EntityRenderable;
 import com.glisco.isometricrenders.render.item.BlockStateRenderable;
 import com.glisco.isometricrenders.render.item.ItemRenderable;
-import com.glisco.isometricrenders.render.batch.BatchRenderTask;
 import com.glisco.isometricrenders.render.item.TooltipRenderable;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
@@ -138,9 +137,9 @@ public class IsorenderCommand {
     private static int reopenSavedMenu(CommandContext<FabricClientCommandSource> context) {
         if (ScreenSchedulerAndSaver.getSavedScreen() == null) {
             Translate.commandFeedback(context, "no_saved_menu");
-            return 0;
+        } else {
+            ScreenSchedulerAndSaver.schedule(ScreenSchedulerAndSaver.getSavedScreen());
         }
-        ScreenSchedulerAndSaver.schedule(ScreenSchedulerAndSaver.getSavedScreen());
         return 0;
     }
 
