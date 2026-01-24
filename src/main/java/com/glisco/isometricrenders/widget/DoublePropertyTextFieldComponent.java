@@ -16,6 +16,7 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
 
     private final DoubleProperty setting;
     private String content = "";
+    private boolean ignoringChange = false;
 
     public DoublePropertyTextFieldComponent(Sizing horizontalSizing, DoubleProperty setting) {
         super(horizontalSizing);
@@ -34,11 +35,16 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
             }
 
             this.content = s;
+            this.ignoringChange = true;
             this.setting.set(Double.parseDouble(s));
+            this.ignoringChange = false;
+            this.text(s);
         });
 
         this.setting.listen((doubleSetting, value) -> {
-            this.setValue(String.valueOf(value));
+            if (!this.ignoringChange) {
+                this.text(String.valueOf(value));
+            }
         });
     }
 

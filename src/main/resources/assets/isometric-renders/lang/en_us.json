@@ -135,6 +135,7 @@
   "gui.isometric-renders.full_bright": "Full Bright",
   "gui.isometric-renders.render_as_daytime": "Daytime Sky Lighting",
   "gui.isometric-renders.night_vision": "Night Vision",
+  "gui.isometric-renders.hide_beacon_beams": "Hide Beacon Beams",
   "gui.isometric-renders.hide_entities": "Hide All Entities",
   "gui.isometric-renders.hide_players": "Hide Players",
   "gui.isometric-renders.hide_armor_stands": "Hide Armor Stands",

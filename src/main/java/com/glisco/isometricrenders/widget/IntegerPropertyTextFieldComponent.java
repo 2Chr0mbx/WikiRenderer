@@ -15,6 +15,7 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
 
     private final IntProperty setting;
     private String content = "";
+    private boolean ignoringChange = false;
 
     public IntegerPropertyTextFieldComponent(Sizing horizontalSizing, IntProperty setting) {
         super(horizontalSizing);
@@ -30,11 +31,16 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
             }
 
             this.content = s;
+
+            this.ignoringChange = true;
             this.setting.set(Integer.parseInt(s));
+            this.ignoringChange = false;
         });
 
         this.setting.listen((integerSetting, integer) -> {
-            this.setValue(String.valueOf(integer));
+            if (!this.ignoringChange) {
+                this.text(String.valueOf(integer));
+            }
         }, false);
     }
 

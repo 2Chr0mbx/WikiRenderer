@@ -1,6 +1,7 @@
 package com.glisco.isometricrenders.mixin;
 
 import com.glisco.isometricrenders.IsometricRenders;
+import com.glisco.isometricrenders.render.area.WorldBlockMesh;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -34,5 +35,13 @@ public class LevelRendererMixin {
     @Inject(method = "method_62214", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderBlockOutline(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/LevelRenderState;)V"))
     public void drawAreaSelection(GpuBufferSlice gpuBufferSlice, LevelRenderState worldRenderState, ProfilerFiller profiler, Matrix4f matrix4f, ResourceHandle<RenderTarget> handle, ResourceHandle<RenderTarget> handle2, boolean bl, ResourceHandle<RenderTarget> handle3, ResourceHandle<RenderTarget> handle4, CallbackInfo ci) {
         AreaSelectionHelper.renderSelectionBox();
+    }
+
+    @Inject(method = "resetSampler", at = @At(value = "HEAD"))
+    public void resetTerrainSampler(CallbackInfo ci) {
+        if (WorldBlockMesh.terrainSampler != null) {
+            WorldBlockMesh.terrainSampler.close();
+            WorldBlockMesh.terrainSampler = null;
+        }
     }
 }

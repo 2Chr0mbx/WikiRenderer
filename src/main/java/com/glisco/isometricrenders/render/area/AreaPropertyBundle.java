@@ -12,7 +12,6 @@ import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,6 +25,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     public final Property<Boolean> emulateDaylight = Property.of(true);
     public final Property<Boolean> useFullBrightGamma = Property.of(false);
     public final Property<Boolean> useNightVision = Property.of(false);
+    public final Property<Boolean> hideBeaconBeams = Property.of(false);
 
     public final Property<Boolean> hideEntities = Property.of(false);
     public final Property<Boolean> hidePlayers = Property.of(false);
@@ -62,6 +62,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public boolean areMinimapSettingsExportable() {
         return sideViewRotation == MeshSideRotation.NORTH && sideViewSlant == MeshSideSlant.ABOVE;
+    }
+
+    @Override
+    protected double getDefaultSlant() {
+        return 35.264;
     }
 
     @Override
@@ -152,13 +157,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
                 }
 
                 return meshStatusText;
-            }).margins(Insets.of(7, 0, 10, 0));
+            }).margins(Insets.of(10, 0, 10, 0));
         }
 
-
-        IsometricUI.booleanControl(container, this.hideMesh, "hide_blocks");
-
         IsometricUI.sectionHeader(container, "area_overrides", true);
+        IsometricUI.booleanControl(container, this.hideMesh, "hide_blocks");
 
         IsometricUI.booleanControl(container, this.hideEntities, "hide_entities");
         this.hideEntities.listen((booleanProperty, hidden) -> {
@@ -172,6 +175,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
         IsometricUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
 
         IsometricUI.booleanControl(container, this.hideText, "hide_text");
+        IsometricUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
         IsometricUI.booleanControl(container, this.overrideRotations, "mesh_entity_data.override_rotations");
         IsometricUI.intControl(container, yaw, "entity_data.yaw", 15);

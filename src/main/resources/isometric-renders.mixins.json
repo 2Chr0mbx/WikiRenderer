@@ -10,8 +10,10 @@
   "client": [
     "AbstractContainerScreenMixin",
     "AbstractSliderButtonInvoker",
+    "BeaconRendererMixin",
     "ChunkSectionsToRenderMixin",
     "DefaultPlayerSkinMixin",
+    "EquipmentLayerRendererMixin",
     "GLDebugMixin",
     "GuiRendererMixin",
     "LevelRendererMixin",

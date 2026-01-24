@@ -53,7 +53,7 @@ public class RenderableDispatcher {
 
         renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
-        Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -1000, 1000);
+        Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
         IsometricRenders.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
 
 

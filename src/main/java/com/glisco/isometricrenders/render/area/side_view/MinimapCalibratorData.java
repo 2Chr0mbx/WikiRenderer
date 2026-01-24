@@ -65,7 +65,7 @@ public record MinimapCalibratorData(
     }
 
     private static Map<ViewportCorner, Vec3> getViewportCorners(AreaRenderable renderable) {
-        Matrix4f projection = new Matrix4f().setOrtho(-1, 1, -1, 1, -1000, 3000);
+        Matrix4f projection = new Matrix4f().setOrtho(-1, 1, -1, 1, -100, 100);
 
         Matrix4fStack modelView = new Matrix4fStack(2);
         renderable.getProperties().applyToViewMatrix(renderable, modelView);
