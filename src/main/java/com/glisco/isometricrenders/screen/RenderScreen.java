@@ -83,7 +83,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private boolean drawOnlyBackground = false;
     private boolean captureScheduled = false;
-    private boolean skinExportScheduled = false;
     public boolean guiRebuildScheduled = false;
 
     private int viewportBeginX;
@@ -213,32 +212,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 Util.getPlatform().openFile(this.renderable.getExportPath().resolveOffset().toFile());
             }).margins(Insets.left(5)));
         }
-
-
-        /*
-        if (!GraphicsEnvironment.isHeadless()) {
-            rightColumn.child(Components.button(Translate.gui("export_to_clipboard"), button -> {
-
-                this.notify(Translate.gui("copied_to_clipboard"));
-
-                RenderableDispatcher.drawIntoImage(this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
-                        .whenComplete((image, t) -> {
-                            try (image) {
-                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                WritableByteChannel channel = Channels.newChannel(stream);
-
-                                ((NativeImageInvoker) (Object) image).isometric$write(channel);
-
-                                ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
-                                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
-                            } catch (IOException e) {
-                                IsometricRenders.LOGGER.error("mfw", e);
-                            }
-                        });
-
-            }).horizontalSizing(Sizing.fixed(75)));
-        }
-         */
 
         if (notFaceFrameAreaRendering) {
             String key = renderable.shouldCrop() ? "renderer_resolution_crop" : "renderer_resolution";
@@ -497,26 +470,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
             this.captureScheduled = false;
         }
-
-        /*
-        if (this.skinExportScheduled) {
-            this.skinExportScheduled = false;
-
-            LocalPlayer player = (LocalPlayer) ((EntityRenderable) renderable).entity;
-            final ExportPathSpec exportPath = ExportPathSpec.of("player_skins", player.getStringUUID());
-
-            NativeImage playerSkinImage = SkinGrabber.getPlayerSkin(player);
-            FileIO.saveImage(playerSkinImage, exportPath).whenComplete((imageFile, throwable) -> {
-                exportCallback.accept(imageFile);
-                this.minecraft.execute(() -> this.notify(
-                        () -> Util.getPlatform().openFile(imageFile),
-                        Translate.gui("exported_as"),
-                        Component.literal(ExportPathSpec.exportRoot().relativize(imageFile.toPath()).toString())
-                ));
-            });
-        }
-
-         */
 
         if (this.remainingAnimationFrames > 0) {
             this.renderedFrames.add(RenderableDispatcher.drawIntoTexture(this.renderable, effectiveTickDelta, renderable.getExportResolution()));

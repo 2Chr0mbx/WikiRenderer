@@ -21,7 +21,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public final IntProperty scale = IntProperty.of(100, 0, 1000);
     public final IntProperty rotation = IntProperty.of(135, 0, 360).withRollover();
     public final DoubleProperty slant = DoubleProperty.of(30, -90, 90);
-    public final IntProperty lightAngle = IntProperty.of(-45, -45, 45);
+    public final IntProperty lightAngle = IntProperty.of(-45, -45, -45);
 
     public final IntProperty xOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
     public final IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);

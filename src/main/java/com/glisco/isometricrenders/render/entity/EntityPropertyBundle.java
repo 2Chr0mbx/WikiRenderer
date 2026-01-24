@@ -69,11 +69,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             screen.guiRebuildScheduled = true;
             this.yaw.set(0);
             this.pitch.set(0);
+            this.rotation.set(180);
+            this.slant.set(0D);
         }), false);
 
         IsometricUI.intControl(container, scale, "scale", 10);
+        IsometricUI.intControl(container, rotation, "rotation", 45);
         if (!spriteRendering.get()) {
-            IsometricUI.intControl(container, rotation, "rotation", 45);
             IsometricUI.doubleControl(container, slant, "slant", 30);
             IsometricUI.intControl(container, lightAngle, "light_angle", 15);
             IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
@@ -126,12 +128,8 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
         modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
 
-        if (!this.spriteRendering.get()) {
-            modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
-            modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
-        } else {
-            modelViewStack.rotate(Axis.YP.rotationDegrees(180));
-        }
+        modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
+        modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
 
         this.updateAndApplyRotationOffset(modelViewStack);
     }

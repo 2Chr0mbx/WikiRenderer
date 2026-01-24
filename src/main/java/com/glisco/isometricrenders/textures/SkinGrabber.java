@@ -5,13 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
-import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.util.UUIDTypeAdapter;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
 import org.jetbrains.annotations.Nullable;
@@ -51,19 +46,4 @@ public class SkinGrabber {
 
         return GSON.fromJson(decodedSkin, MinecraftTexturesPayload.class);
     }
-
-    public static NativeImage getPlayerSkin(LocalPlayer player) {
-        Identifier bodyTexturePath = player.getSkin().body().texturePath();
-
-        DynamicTexture dynamic = (DynamicTexture) Minecraft.getInstance().getTextureManager().getTexture(bodyTexturePath);
-        NativeImage pixels = dynamic.getPixels();
-        if (pixels != null) {
-            NativeImage newPixels = new NativeImage(64, 64, true);
-            newPixels.copyFrom(pixels);
-            return newPixels;
-        }
-
-        return null;
-    }
-
 }
