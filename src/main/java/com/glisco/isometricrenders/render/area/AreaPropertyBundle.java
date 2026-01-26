@@ -248,7 +248,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             // force pixel count per blocks without blurriness
             double pixelsPerBlock = this.getPixelsPerBlockResolution();
             double bufferSize = highest * pixelsPerBlock;
-            super.setExportResolution(renderable, (int) bufferSize);
+            this.setExportResolution(renderable, (int) bufferSize);
             double orthoWidth = 2.0; // bcause ortho is -1 to 1
 
             float pixelPerfectScale = (float) (pixelsPerBlock / (bufferSize / orthoWidth));
