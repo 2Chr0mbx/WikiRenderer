@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.render.entity;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
+import com.glisco.isometricrenders.mixin.access.MannequinAccessor;
 import com.glisco.isometricrenders.mixin.access.ModelPartAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.TickingRenderable;
@@ -17,11 +18,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.EntityComponent;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -34,10 +37,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.decoration.Mannequin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.Vec3;
@@ -46,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TickingRenderable<EntityPropertyBundle>, TextureDataProvider {
@@ -359,6 +365,13 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         if (usedEntity instanceof Player player) {
             MinecraftTexturesPayload playerTexture = SkinGrabber.getGameProfileTextureData(player.getGameProfile());
+            if (playerTexture != null) {
+                textureData.put("player", playerTexture);
+            }
+        } else if (usedEntity instanceof Mannequin mannequin) {
+            ResolvableProfile profile = ((MannequinAccessor) mannequin).isometric$getProfile();
+            PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
+            MinecraftTexturesPayload playerTexture = SkinGrabber.getGameProfileTextureData(renderInfo.gameProfile());
             if (playerTexture != null) {
                 textureData.put("player", playerTexture);
             }
