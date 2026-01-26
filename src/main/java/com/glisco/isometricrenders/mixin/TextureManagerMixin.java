@@ -18,7 +18,7 @@ public class TextureManagerMixin {
         if (client.screen instanceof RenderScreen screen) {
             // there needs to be a cleaner way to do this
             if (screen.renderable.getProperties() instanceof TickingPropertyBundle ticking) {
-                if (ticking.getTickProperty().get()) {
+                if (!ticking.getTickProperty().get()) {
                     ci.cancel();
                 }
             }
