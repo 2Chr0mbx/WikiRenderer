@@ -222,7 +222,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                     );
                 }
 
-                avatarRenderState.ageInTicks = 1; // 1 allows for an armor offset to fix z-fighting
+                if (!properties.getTickProperty().get()) {
+                    avatarRenderState.ageInTicks = 1; // 1 allows for an armor offset to fix z-fighting
+                }
             }
 
             if (state instanceof ArmedEntityRenderState armedEntityRenderState) {
