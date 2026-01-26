@@ -2,18 +2,15 @@ package com.glisco.isometricrenders.render.item;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.BlockEntityAccessor;
-import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.util.CameraOrientationUtil;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
-import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,7 +26,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
 public class BlockStateRenderable extends ItemBasedRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle> {
@@ -39,11 +35,11 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     private final Minecraft client = Minecraft.getInstance();
 
     private final BlockState state;
-    private final @Nullable BlockEntity entity;
+    private final @Nullable BlockEntity blockEntity;
 
-    public BlockStateRenderable(BlockState state, @Nullable BlockEntity entity) {
+    public BlockStateRenderable(BlockState state, @Nullable BlockEntity blockEntity) {
         this.state = state;
-        this.entity = entity;
+        this.blockEntity = blockEntity;
     }
 
     public static BlockStateRenderable of(Block block) {
@@ -78,7 +74,7 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
         matrices.translate(-0.5, -0.5, -0.5);
 
         // renders the extra stuff, like the book on the enchantment table, middle bell within the bell block, etc
-		BlockEntityRenderState renderState = this.entity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(entity, tickDelta, null);
+		BlockEntityRenderState renderState = this.blockEntity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, null);
 		if (renderState != null) {
 			renderState.lightCoords = LightTexture.FULL_BRIGHT;
 			this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), CameraOrientationUtil.createRenderState(this));
@@ -106,11 +102,11 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     @Override
     public void tick(boolean tick) {
         if (tick) {
-            if (this.entity != null && this.state.getTicker(client.level, this.entity.getType()) != null) {
-                BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.entity.getType());
+            if (this.blockEntity != null && this.state.getTicker(client.level, this.blockEntity.getType()) != null) {
+                BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.blockEntity.getType());
                 if (ticker == null) return;
 
-                ticker.tick(client.level, client.player.blockPosition(), this.state, this.entity);
+                ticker.tick(client.level, client.player.blockPosition(), this.state, this.blockEntity);
             }
 
             if (client.level.random.nextDouble() < 0.150) {

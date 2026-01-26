@@ -203,7 +203,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.renderable.getProperties() instanceof TickingPropertyBundle ticking) {
-            IsometricUI.booleanControl(rightColumn, ticking.getTickProperty(), "animations");
+            IsometricUI.booleanControl(rightColumn, ticking.getTickProperty(), ticking.getOptionTranslationKey());
         }
         if (this.renderable instanceof AreaRenderable) {
             IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");

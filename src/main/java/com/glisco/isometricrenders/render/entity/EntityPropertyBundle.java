@@ -19,7 +19,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.joml.Matrix4fStack;
 
-public class EntityPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
+public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public static final EntityPropertyBundle INSTANCE = new EntityPropertyBundle();
 
@@ -28,7 +28,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     private int spriteExportResolution = 64;
 
     public final Property<Boolean> useLiveEntity = Property.of(false);
-    private final Property<Boolean> tick = Property.of(false);
+    public final Property<Boolean> freezePlayerArms = Property.of(true);
 
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
     public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
@@ -108,6 +108,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         IsometricUI.sectionHeader(container, "entity_data", true);
 
         IsometricUI.booleanControl(container, useLiveEntity, "entity_data.use_live_entity");
+        this.useLiveEntity.listen(((booleanProperty, value) -> screen.guiRebuildScheduled = true), false);
+
+        if (useLiveEntity.get()) {
+            IsometricUI.booleanControl(container, freezePlayerArms, "entity_data.freeze_player_arms");
+        }
 
         IsometricUI.intControl(container, yaw, "entity_data.yaw", 15);
         IsometricUI.intControl(container, pitch, "entity_data.pitch", 5);
@@ -145,10 +150,5 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         if (!this.spriteRendering.get()) {
             super.updateAndApplyRotationOffset(modelViewStack);
         }
-    }
-
-    @Override
-    public Property<Boolean> getTickProperty() {
-        return this.tick;
     }
 }

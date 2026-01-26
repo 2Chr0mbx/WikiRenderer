@@ -4,4 +4,6 @@ public interface TickingPropertyBundle extends PropertyBundle {
 
     Property<Boolean> getTickProperty();
 
+    String getOptionTranslationKey();
+
 }

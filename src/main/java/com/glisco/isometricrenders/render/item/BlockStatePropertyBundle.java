@@ -14,6 +14,11 @@ public class BlockStatePropertyBundle extends DefaultCroppablePropertyBundle imp
     }
 
     @Override
+    public String getOptionTranslationKey() {
+        return "animated_blocks";
+    }
+
+    @Override
     protected int getDefaultScale() {
         return 125; // what the mc wiki uses it seems, and what helps to match block states with regular item (block) renders
     }

@@ -35,6 +35,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final Property<Boolean> hidePlayers = Property.of(false);
     public final Property<Boolean> hideArmorStands = Property.of(false);
     public final Property<Boolean> freezeEntities = Property.of(false);
+    public final Property<Boolean> freezePlayerArms = Property.of(false);
     public final Property<Boolean> autoRefreshVisibleEntities = Property.of(true);
     public final Property<Boolean> hideText = Property.of(false);
 
@@ -179,6 +180,13 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             IsometricUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
         }
         IsometricUI.booleanControl(container, this.freezeEntities, "freeze_entities");
+        this.freezeEntities.listen((booleanProperty, hidden) -> {
+            screen.guiRebuildScheduled = true;
+        }, false);
+        if (!this.freezeEntities.get()) {
+            IsometricUI.booleanControl(container, this.freezePlayerArms, "freeze_player_arms");
+        }
+
         IsometricUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
 
         IsometricUI.booleanControl(container, this.hideText, "hide_text");
@@ -291,5 +299,10 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         } else {
             return super.getUsedSlant();
         }
+    }
+
+    @Override
+    public String getOptionTranslationKey() {
+        return "block_animations";
     }
 }

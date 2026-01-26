@@ -54,7 +54,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TickingRenderable<EntityPropertyBundle>, TextureDataProvider {
+public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider {
 
     private final Minecraft client = Minecraft.getInstance();
     private final Entity liveNonTickableEntity;
@@ -228,7 +228,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                     );
                 }
 
-                if (!properties.getTickProperty().get()) {
+                if (properties.freezePlayerArms.get() || !isUsingLiveEntity()) {
                     avatarRenderState.ageInTicks = 1; // 1 allows for an armor offset to fix z-fighting
                 }
             }
@@ -322,21 +322,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 BuiltInRegistries.ENTITY_TYPE.getKey(this.getUsedEntity().getType()),
                 "entity"
         );
-    }
-
-    @Override
-    public void tick(boolean tick) {
-        if (isUsingLiveEntity()) {
-            return;
-        }
-
-        applyToEntityAndPassengers(this.getUsedEntity(), entity -> {
-            if (!tick) {
-                entity.tickCount = 0;
-                return;
-            }
-            client.level.tickNonPassenger(entity);
-        });
     }
 
     private static void applyToEntityAndPassengers(Entity entity, Consumer<Entity> action) {

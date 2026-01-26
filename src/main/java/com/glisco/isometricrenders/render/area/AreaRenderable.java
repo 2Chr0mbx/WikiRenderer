@@ -25,6 +25,7 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
@@ -123,8 +124,11 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             this.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
         }
 
+        this.refreshEntities();
+
         if (!properties.hideEntities.get()) {
-            this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
+            // if frozen dont use a tick delta, since that
+            this.drawEntities(cameraRenderState, this.entitiesFrozen ? tickDelta : tickDelta, standardStack, nodeStorage);
         }
 
         Vec3 diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
@@ -160,8 +164,14 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                         .map(originalEntity -> {
                             Entity clonedEntity = EntityRenderable.copy(originalEntity);
                             clonedEntity.restoreFrom(originalEntity);
-                            clonedEntity.copyPosition(originalEntity);
-                            clonedEntity.tick();
+                            if (originalEntity instanceof LivingEntity livingOriginal && clonedEntity instanceof LivingEntity livingClone) {
+                                livingClone.yHeadRot = livingOriginal.yHeadRot;
+                                livingClone.yHeadRotO = livingOriginal.yHeadRotO;
+                                livingClone.yBodyRot = livingOriginal.yBodyRot;
+                                livingClone.yBodyRotO = livingOriginal.yBodyRotO;
+                                // this doesn't copy for some reason
+                            }
+                            clonedEntity.baseTick();
                             return clonedEntity;
                         })
                         .collect(Collectors.toList());
@@ -185,115 +195,121 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     private void drawEntities(CameraRenderState cameraRenderState, float tickDelta, PoseStack standardStack, SubmitNodeStorage nodeStorage) {
         AreaPropertyBundle properties = this.getProperties();
         EntityRenderDispatcher entityDispatcher = client.getEntityRenderDispatcher();
-        float effectiveDelta = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
 
         this.refreshEntities();
         this.entities.forEach(entity -> {
             if (entity instanceof Player && properties.hidePlayers.get()) return;
             if (entity instanceof ArmorStand && properties.hideArmorStands.get()) return;
 
-            Vec3 offsetFromMesh = entity.getPosition(effectiveDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
+            Vec3 offsetFromMesh = entity.getPosition(tickDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
 
             EntityRenderState state = entityDispatcher.extractEntity(entity, tickDelta);
-            state.lightCoords = client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0); // entry.light();
-            state.outlineColor = 0; // remove glow
+            this.updateEntityState(entity, state);
 
-            if (this.entitiesFrozen && (state instanceof AvatarRenderState avatarRenderState)) {
-                // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
-                avatarRenderState.capeFlap = 0;
-                avatarRenderState.capeLean = 0;
-                avatarRenderState.capeLean2 = 0;
-            }
-
-            if (properties.hideText.get()) {
-                state.nameTag = null;
-                state.nameTagAttachment = null;
-            }
-
-            if (properties.overrideRotations.get()) {
-                if (state instanceof LivingEntityRenderState livingEntityRenderState) {
-                    livingEntityRenderState.bodyRot = (properties.entityRotation.get() + 180); // 180 makes it face the camera by default in the isometric preset (i think)
-                    livingEntityRenderState.xRot = properties.pitch.get();
-                    livingEntityRenderState.yRot = properties.yaw.get();
-                }
-            }
-
-            // todo: de-dupe
-            if (state instanceof AvatarRenderState avatarRenderState) {
-                avatarRenderState.capeFlap = 0;
-                avatarRenderState.capeLean = 0;
-                avatarRenderState.capeLean2 = 0;
-
-                if (properties.useSteveSkin.get()) {
-                    avatarRenderState.skin = DefaultPlayerSkin.getDefaultSkin();
-                }
-                if (properties.forceSmallArms.get()) {
-                    avatarRenderState.skin = avatarRenderState.skin.with(PlayerSkin.Patch.create(
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.of(PlayerModelType.SLIM))
-                    );
-                }
-            }
-
-            if (state instanceof ArmedEntityRenderState armedEntityRenderState) {
-                if (properties.hideHeldItems.get()) {
-                    armedEntityRenderState.leftHandItemStack = ItemStack.EMPTY;
-                    armedEntityRenderState.rightHandItemStack = ItemStack.EMPTY;
-                    armedEntityRenderState.leftHandItemState.clear();
-                    armedEntityRenderState.rightHandItemState.clear();
-                    armedEntityRenderState.leftArmPose = HumanoidModel.ArmPose.EMPTY;
-                    armedEntityRenderState.rightArmPose = HumanoidModel.ArmPose.EMPTY;
-                } else if (properties.hideEnchantments.get()) {
-                    for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.leftHandItemState).isometric$getLayers()) {
-                        layer.setFoilType(ItemStackRenderState.FoilType.NONE);
-                    }
-                    for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.rightHandItemState).isometric$getLayers()) {
-                        layer.setFoilType(ItemStackRenderState.FoilType.NONE);
-                    }
-                }
-            }
-
-            if (state instanceof HumanoidRenderState humanoidRenderState) {
-                if (properties.hideArmor.get()) {
-                    humanoidRenderState.headItem.clear();
-                    humanoidRenderState.wornHeadType = null;
-                    humanoidRenderState.headEquipment = ItemStack.EMPTY;
-                    humanoidRenderState.chestEquipment = ItemStack.EMPTY;
-                    humanoidRenderState.legsEquipment = ItemStack.EMPTY;
-                    humanoidRenderState.feetEquipment = ItemStack.EMPTY;
-                } else if (properties.hideEnchantments.get()) {
-                    humanoidRenderState.headEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-                    humanoidRenderState.chestEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-                    humanoidRenderState.legsEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-                    humanoidRenderState.feetEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-                }
-            }
-
-            if (properties.invisible.get()) {
-                state.isInvisible = true;
-                if (state instanceof LivingEntityRenderState livingEntityRenderState) {
-                    livingEntityRenderState.isInvisibleToPlayer = true;
-                }
-            }
-
-            if (!state.shadowPieces.isEmpty()) {
-                if (properties.hideMesh.get()) {
-                    state.shadowPieces.clear();
-                } else {
-                    // increase shadow height by a tiny amount to fix z-fighting, +0.001 is enough
-                    List<EntityRenderState.ShadowPiece> newPieces = state.shadowPieces
-                            .stream()
-                            .map(piece -> new EntityRenderState.ShadowPiece(piece.relativeX(), piece.relativeY() + 0.001f, piece.relativeZ(), piece.shapeBelow(), piece.alpha()))
-                            .toList();
-                    state.shadowPieces.clear();
-                    state.shadowPieces.addAll(newPieces);
-                }
-            }
             entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
         });
         super.drawSubmittedRenderFeatures();
+    }
+
+    private void updateEntityState(Entity entity, EntityRenderState state) {
+        AreaPropertyBundle properties = this.getProperties();
+        state.lightCoords = client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0); // entry.light();
+        state.outlineColor = 0; // remove glow
+
+        if (this.entitiesFrozen && (state instanceof AvatarRenderState avatarRenderState)) {
+            // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
+            avatarRenderState.capeFlap = 0;
+            avatarRenderState.capeLean = 0;
+            avatarRenderState.capeLean2 = 0;
+            avatarRenderState.ageInTicks = 1; // 1 allows for an armor offset to fix z-fighting
+        }
+
+        if (properties.hideText.get()) {
+            state.nameTag = null;
+            state.nameTagAttachment = null;
+        }
+
+        if (properties.overrideRotations.get()) {
+            if (state instanceof LivingEntityRenderState livingEntityRenderState) {
+                livingEntityRenderState.bodyRot = (properties.entityRotation.get() + 180); // 180 makes it face the camera by default in the isometric preset (i think)
+                livingEntityRenderState.xRot = properties.pitch.get();
+                livingEntityRenderState.yRot = properties.yaw.get();
+            }
+        }
+
+        // todo: de-dupe
+        if (state instanceof AvatarRenderState avatarRenderState) {
+            if (properties.useSteveSkin.get()) {
+                avatarRenderState.skin = DefaultPlayerSkin.getDefaultSkin();
+            }
+            if (properties.forceSmallArms.get()) {
+                avatarRenderState.skin = avatarRenderState.skin.with(PlayerSkin.Patch.create(
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(PlayerModelType.SLIM))
+                );
+            }
+
+            if (properties.freezePlayerArms.get()) {
+                avatarRenderState.ageInTicks = 1; // 1 allows for an armor offset to fix z-fighting
+            }
+        }
+
+        if (state instanceof ArmedEntityRenderState armedEntityRenderState) {
+            if (properties.hideHeldItems.get()) {
+                armedEntityRenderState.leftHandItemStack = ItemStack.EMPTY;
+                armedEntityRenderState.rightHandItemStack = ItemStack.EMPTY;
+                armedEntityRenderState.leftHandItemState.clear();
+                armedEntityRenderState.rightHandItemState.clear();
+                armedEntityRenderState.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+                armedEntityRenderState.rightArmPose = HumanoidModel.ArmPose.EMPTY;
+            } else if (properties.hideEnchantments.get()) {
+                for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.leftHandItemState).isometric$getLayers()) {
+                    layer.setFoilType(ItemStackRenderState.FoilType.NONE);
+                }
+                for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.rightHandItemState).isometric$getLayers()) {
+                    layer.setFoilType(ItemStackRenderState.FoilType.NONE);
+                }
+            }
+        }
+
+        if (state instanceof HumanoidRenderState humanoidRenderState) {
+            if (properties.hideArmor.get()) {
+                humanoidRenderState.headItem.clear();
+                humanoidRenderState.wornHeadType = null;
+                humanoidRenderState.headEquipment = ItemStack.EMPTY;
+                humanoidRenderState.chestEquipment = ItemStack.EMPTY;
+                humanoidRenderState.legsEquipment = ItemStack.EMPTY;
+                humanoidRenderState.feetEquipment = ItemStack.EMPTY;
+            } else if (properties.hideEnchantments.get()) {
+                humanoidRenderState.headEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                humanoidRenderState.chestEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                humanoidRenderState.legsEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                humanoidRenderState.feetEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+            }
+        }
+
+        if (properties.invisible.get()) {
+            state.isInvisible = true;
+            if (state instanceof LivingEntityRenderState livingEntityRenderState) {
+                livingEntityRenderState.isInvisibleToPlayer = true;
+            }
+        }
+
+        if (!state.shadowPieces.isEmpty()) {
+            if (properties.hideMesh.get()) {
+                state.shadowPieces.clear();
+            } else {
+                // increase shadow height by a tiny amount to fix z-fighting, +0.001 is enough
+                List<EntityRenderState.ShadowPiece> newPieces = state.shadowPieces
+                        .stream()
+                        .map(piece -> new EntityRenderState.ShadowPiece(piece.relativeX(), piece.relativeY() + 0.001f, piece.relativeZ(), piece.shapeBelow(), piece.alpha()))
+                        .toList();
+                state.shadowPieces.clear();
+                state.shadowPieces.addAll(newPieces);
+            }
+        }
     }
 
     @Override
