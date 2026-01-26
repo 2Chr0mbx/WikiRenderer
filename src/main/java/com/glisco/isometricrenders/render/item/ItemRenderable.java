@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -80,10 +81,18 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
 
     @Override
     public ExportPathSpec getExportPath() {
-        return ExportPathSpec.ofIdentified(
-            BuiltInRegistries.ITEM.getKey(this.stack.getItem()),
-            "item"
+        ExportPathSpec path = ExportPathSpec.ofIdentified(
+                BuiltInRegistries.ITEM.getKey(this.stack.getItem()),
+                "item"
         );
+
+        Component customName = stack.getCustomName();
+        if (customName != null) {
+            path = path.differentFileName(customName.getString());
+        }
+
+        return path;
+
     }
 
     @Override

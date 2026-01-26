@@ -120,11 +120,6 @@ public class IsorenderCommand {
                         .then(argument("namespace", NamespaceArgumentType.namespace())
                                 .then(argument("task", new RenderTaskArgumentType())
                                         .executes(IsorenderCommand::renderNamespace))))
-                .then(literal("sb")
-                        .executes(source -> {
-                            SkyBlockItemsBatchRender.renderSBItems();
-                            return 0;
-                        }))
                 .then(literal("creative_tab")
                         .then(argument("itemgroup", ItemGroupArgumentType.itemGroup())
                                 .then(argument("task", new RenderTaskArgumentType())

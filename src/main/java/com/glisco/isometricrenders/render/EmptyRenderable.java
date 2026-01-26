@@ -18,7 +18,7 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
         public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {}
 
         @Override
-        public int getExportResolution(Renderable<?> renderable) {
+        public int getExportResolution() {
             return 1000;
         }
 

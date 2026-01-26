@@ -23,19 +23,29 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
         // A bit ugly, but we copy all property values from the delegate and hook
         // the delegate onto our properties - this makes sure we don't always reset
         // the properties and that the mouse and keyboard controls actually affect the delegate
-        if (this.delegate instanceof DefaultPropertyBundle defaultPropertyBundle) {
-            this.scale.copyFrom(defaultPropertyBundle.scale);
-            this.rotation.copyFrom(defaultPropertyBundle.rotation);
-            this.slant.copyFrom(defaultPropertyBundle.slant);
-            this.xOffset.copyFrom(defaultPropertyBundle.xOffset);
-            this.yOffset.copyFrom(defaultPropertyBundle.yOffset);
+        if (this.delegate instanceof DefaultPropertyBundle clonedFrom) {
+            this.scale.copyFrom(clonedFrom.scale);
+            this.rotation.copyFrom(clonedFrom.rotation);
+            this.slant.copyFrom(clonedFrom.slant);
+            this.xOffset.copyFrom(clonedFrom.xOffset);
+            this.yOffset.copyFrom(clonedFrom.yOffset);
 
-            this.scale.listen(defaultPropertyBundle.scale);
-            this.rotation.listen(defaultPropertyBundle.rotation);
-            this.slant.listen(defaultPropertyBundle.slant);
-            this.xOffset.listen(defaultPropertyBundle.xOffset);
-            this.yOffset.listen(defaultPropertyBundle.yOffset);
+            this.scale.listen(clonedFrom.scale);
+            this.rotation.listen(clonedFrom.rotation);
+            this.slant.listen(clonedFrom.slant);
+            this.xOffset.listen(clonedFrom.xOffset);
+            this.yOffset.listen(clonedFrom.yOffset);
         }
+    }
+
+    @Override
+    public int getExportResolution() {
+        return this.delegate.getExportResolution();
+    }
+
+    @Override
+    public void setExportResolution(int exportResolution) {
+        this.delegate.setExportResolution(exportResolution);
     }
 
     @Override
