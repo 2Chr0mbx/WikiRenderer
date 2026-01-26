@@ -17,7 +17,11 @@ import java.nio.ByteBuffer;
 public abstract class ItemBasedRenderable<T extends DefaultPropertyBundle> extends DefaultRenderable<T> {
 
     protected void setupLighting(ItemStackRenderState itemRenderState) {
-        if (itemRenderState.usesBlockLight()) {
+        setupLighting(itemRenderState.usesBlockLight());
+    }
+
+    protected void setupLighting(boolean usesBlockLight) {
+        if (usesBlockLight) {
 
             // pulled from Lighting's first setup for ITEMS_3D, but with the scaling value of y changed from -1.0f to 1.0f
             // ngl i have absolutely no idea why this works, but it does - it might have something to do with their atlas sheets having an inverted Y value, idk, probably does
@@ -28,8 +32,9 @@ public abstract class ItemBasedRenderable<T extends DefaultPropertyBundle> exten
                     .rotateYXZ((float) Math.toRadians(62), (float) Math.toRadians(185.5), 0.0F)
                     .rotateYXZ((float) Math.toRadians(-22.5), (float) (Math.toRadians(135)), 0.0F);
 
-            if (this.lightingBuffer == null)
+            if (this.lightingBuffer == null) {
                 this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders DefaultRenderable Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
+            }
 
             try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                 ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, LIGHTING_UBO_SIZE)

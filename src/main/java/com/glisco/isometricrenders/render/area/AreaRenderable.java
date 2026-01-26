@@ -4,6 +4,7 @@ import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.render.entity.EntityRenderable;
+import com.glisco.isometricrenders.util.CameraOrientationUtil;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -116,12 +117,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
-        CameraRenderState cameraRenderState = new CameraRenderState();
-        // this makes certain things face the camera, like text, fishing bobbers, etc, see what uses the orientation field
-        cameraRenderState.orientation.rotationYXZ(
-                (float) Math.PI - (float) Math.toRadians(this.getProperties().getUsedRotation()),
-                (float) Math.PI + (float) Math.toRadians(this.getProperties().getUsedSlant()),
-                (float) Math.PI);
+        CameraRenderState cameraRenderState = CameraOrientationUtil.createRenderState(this);
 
         if (!properties.hideMesh.get()) {
             this.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
@@ -179,17 +175,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             assert level != null;
             BlockPos start = mesh.startPos();
             BlockPos end = mesh.endPos();
-            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), e -> {
-                AABB entityBoundingBox = e.getBoundingBox();
-
-                // kinda jank, might redo this
-                double halfX = entityBoundingBox.getXsize() / 2D;
-                double halfY = entityBoundingBox.getYsize() / 2D;
-                double halfZ = entityBoundingBox.getZsize() / 2D;
-                AABB expandedBlockBoundingBox = new AABB(start.getX() - halfX, start.getY() - halfY, start.getZ() - halfZ, end.getX() + halfX, end.getY() + halfY, end.getZ() + halfZ);
-
-                return entityBoundingBox.intersects(expandedBlockBoundingBox);
-            });
+            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-1, -1, -1), end.offset(1, 1, 1)), e -> true);
         }
 
         this.entities.removeIf(Entity::isRemoved);
@@ -293,13 +279,17 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             }
 
             if (!state.shadowPieces.isEmpty()) {
-                // increase shadow height by a tiny amount to fix z-fighting, +0.001 is enough
-                List<EntityRenderState.ShadowPiece> newPieces = state.shadowPieces
-                        .stream()
-                        .map(piece -> new EntityRenderState.ShadowPiece(piece.relativeX(), piece.relativeY() + 0.001f, piece.relativeZ(), piece.shapeBelow(), piece.alpha()))
-                        .toList();
-                state.shadowPieces.clear();
-                state.shadowPieces.addAll(newPieces);
+                if (properties.hideMesh.get()) {
+                    state.shadowPieces.clear();
+                } else {
+                    // increase shadow height by a tiny amount to fix z-fighting, +0.001 is enough
+                    List<EntityRenderState.ShadowPiece> newPieces = state.shadowPieces
+                            .stream()
+                            .map(piece -> new EntityRenderState.ShadowPiece(piece.relativeX(), piece.relativeY() + 0.001f, piece.relativeZ(), piece.shapeBelow(), piece.alpha()))
+                            .toList();
+                    state.shadowPieces.clear();
+                    state.shadowPieces.addAll(newPieces);
+                }
             }
             entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
         });

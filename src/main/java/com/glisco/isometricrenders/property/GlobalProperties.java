@@ -14,8 +14,8 @@ public class GlobalProperties {
 
     // Animation Options
     public static Property<Boolean> speedUpEnchantmentGlints = Property.of(false);
-    public static IntProperty exportFramerate = IntProperty.of(30, 1, 300);
-    public static IntProperty exportFrames = IntProperty.of(60, 1, 5000);
+    public static IntProperty exportFramerate = IntProperty.of(25, 1, 300);
+    public static IntProperty exportFrames = IntProperty.of(50, 1, 5000);
 
     public static FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
 }

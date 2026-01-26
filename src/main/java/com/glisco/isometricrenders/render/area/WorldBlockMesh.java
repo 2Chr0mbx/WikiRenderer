@@ -131,7 +131,7 @@ public class WorldBlockMesh {
             terrainSampler = RenderSystem.getDevice().createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST, maxAnisotropy, OptionalDouble.empty());
         }
 
-        Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
+        //Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
 
         float currentRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
         double currentSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();
@@ -341,6 +341,8 @@ public class WorldBlockMesh {
                 ? MeshState.REBUILDING
                 : MeshState.BUILDING;
 
+        // todo: if i get around to properly adding iris shaders support, make sure mesh building isn't async when a shaderpack is active (and then look into shadow rendering)
+
         this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync).whenComplete((unused, throwable) -> {
             this.buildFuture = null;
 
@@ -369,7 +371,8 @@ public class WorldBlockMesh {
         HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
 
         // large islands like the crimson isle hit a verticies limit, therefore we split into smaller (but still fairly large) meshes
-        record SubMesh(List<Iterable<BlockPos>> positions) { }
+        record SubMesh(List<Iterable<BlockPos>> positions) {
+        }
 
         List<SubMesh> subMeshes = new ArrayList<>();
         int regionSize = 64;

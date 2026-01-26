@@ -4,8 +4,10 @@ import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.mixin.access.BlockEntityAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.TickingRenderable;
+import com.glisco.isometricrenders.util.CameraOrientationUtil;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
+import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -27,9 +29,10 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
-public class BlockStateRenderable extends DefaultRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle> {
+public class BlockStateRenderable extends ItemBasedRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle> {
 
     public static final BlockStatePropertyBundle PROPERTIES = new BlockStatePropertyBundle();
 
@@ -74,13 +77,16 @@ public class BlockStateRenderable extends DefaultRenderable<BlockStatePropertyBu
         matrices.pushPose();
         matrices.translate(-0.5, -0.5, -0.5);
 
+        // renders the extra stuff, like the book on the enchantment table, middle bell within the bell block, etc
 		BlockEntityRenderState renderState = this.entity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(entity, tickDelta, null);
-
 		if (renderState != null) {
 			renderState.lightCoords = LightTexture.FULL_BRIGHT;
-			this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), new CameraRenderState());
-        } else if (this.state.getRenderShape() != RenderShape.INVISIBLE) {
-	        this.client.getBlockRenderer().renderSingleBlock(this.state, matrices, vertexConsumers, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+			this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), CameraOrientationUtil.createRenderState(this));
+        }
+
+        // renders the main stuff
+        if (this.state.getRenderShape() != RenderShape.INVISIBLE) {
+            this.client.getBlockRenderer().renderSingleBlock(this.state, matrices, vertexConsumers, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
         }
 
 		super.drawSubmittedRenderFeatures();

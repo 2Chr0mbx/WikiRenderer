@@ -3,6 +3,7 @@ package com.glisco.isometricrenders.render;
 import com.glisco.isometricrenders.mixin.access.CameraInvoker;
 import com.glisco.isometricrenders.mixin.access.LightTextureAccessor;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
+import com.glisco.isometricrenders.util.CameraOrientationUtil;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
@@ -30,29 +31,32 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 
     @Override
     public void setupLighting(Matrix4f modelViewMatrix) {
-        // Apply inverse transform to lighting to keep it consistent
-        Vector4f lightDirection = getLightDirection();
-        Matrix4f lightTransform = new Matrix4f(modelViewMatrix);
-        lightTransform.invert();
-        lightDirection.mul(lightTransform);
-        lightDirection.normalize(); // this line fixes inconsistent lighting with scale
+        float rotation = (float) Math.toRadians(getProperties().getUsedRotation());
 
-        Vector3f transformedLightDirection = new Vector3f(lightDirection.x, lightDirection.y, lightDirection.z);
+        // you might be wondering: what are these numbers from? how did I get them
+        // well, I wanted to make it so entity renders would have 100% brightness on the top, 80% on the left side, and 60% brightness on the right side, regardless of
+        // whichever isometric rotation you're at (45, 135, 225, 315) - to get those, I created a separate program to scan every combination of lighing positions to see which granted
+        // those rotation numbers at each of the aforementioned rotations, and these were the closest numbers
+        // so yes, they're basically magic numbers, but at least they get the job done, and entities now look like how they do on the minecraft wiki (which I think uses blockbench for renders)
+        // yay!! (i think?)
 
-        // Lazily create the lighting UBO buffer when it's actually needed.
-        if (this.lightingBuffer == null)
-            this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders DefaultRenderable Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
+        // is this the best way to do this? definitely not, but the previous version of this method didn't lead to the best results so i suppose this'll do
+        Vector3f light0 = new Vector3f(-0.2f, 0.8f, -0.2f).rotateY((float) (Math.PI - rotation)).normalize();
+        Vector3f light1 = new Vector3f(0.5f, 0.75f, -0.45f).rotateY((float) (Math.PI - rotation)).normalize();
 
-        try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-            ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, LIGHTING_UBO_SIZE)
-                    .putVec3(transformedLightDirection)
-                    .putVec3(transformedLightDirection)
-                    .get();
-
-            RenderSystem.getDevice().createCommandEncoder().writeToBuffer(this.lightingBuffer.slice(), byteBuffer);
+        if (this.lightingBuffer == null) {
+            this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
         }
 
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            ByteBuffer buf = Std140Builder.onStack(stack, LIGHTING_UBO_SIZE)
+                    .putVec3(light0)
+                    .putVec3(light1)
+                    .get();
+            RenderSystem.getDevice().createCommandEncoder().writeToBuffer(this.lightingBuffer.slice(), buf);
+        }
         RenderSystem.setShaderLights(this.lightingBuffer.slice());
+
 
         LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
         ((LightTextureAccessor) lightTexture).isometric$setUpdateLightTexture(true);
@@ -101,17 +105,11 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         );
 
         /* create render state from camera object; (mostly) mirrors GameRenderer.updateCameraState */
-        CameraRenderState cameraRenderState = new CameraRenderState();
+        CameraRenderState cameraRenderState = CameraOrientationUtil.createRenderState(this);
         cameraRenderState.initialized = true;
         cameraRenderState.pos = camera.position();
         cameraRenderState.blockPos = camera.blockPosition();
         cameraRenderState.entityPos = camera.entity().getPosition(tickDelta);
-
-        // todo: make this respect alternative rotations, such as in side down views
-        cameraRenderState.orientation.rotationYXZ(
-                (float) Math.PI - (float) Math.toRadians(this.getProperties().getUsedRotation()),
-                (float) Math.PI + (float) Math.toRadians(this.getProperties().getUsedSlant()),
-                (float) Math.PI);
 
         /* submit and render to vertexconsumers */
         particleBatch.submit(client.gameRenderer.getSubmitNodeStorage(), cameraRenderState);
@@ -121,9 +119,5 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         ((CameraInvoker) camera).isometric$setRotation(previousYaw, previousPitch);
 
         modelView.popMatrix();
-    }
-
-    protected Vector4f getLightDirection() {
-        return new Vector4f(this.getProperties().lightAngle.get() / 90f, 0.35f, 1, 0);
     }
 }

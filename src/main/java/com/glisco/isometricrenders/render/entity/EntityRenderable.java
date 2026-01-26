@@ -7,14 +7,12 @@ import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.textures.SkinGrabber;
 import com.glisco.isometricrenders.textures.TextureDataProvider;
+import com.glisco.isometricrenders.util.CameraOrientationUtil;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.Std140Builder;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.EntityComponent;
@@ -30,7 +28,6 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -46,12 +43,8 @@ import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
-import org.joml.Vector3f;
-import org.lwjgl.system.MemoryStack;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -97,7 +90,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         nbt.putString("id", EntityType.getKey(source.getType()).toString());
 
         Entity entity = EntityType.loadEntityRecursive(nbt, Minecraft.getInstance().level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
-        entity.setPose(source.getPose());
         entity.getEntityData().assignValues(source.getEntityData().getNonDefaultValues());
         if (entity instanceof LivingEntity living) {
             living.hurtTime = 0;
@@ -273,7 +265,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 }
             }
 
-            renderDispatcher.submit(state, new CameraRenderState(), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
+            renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
 
             matrices.popPose();

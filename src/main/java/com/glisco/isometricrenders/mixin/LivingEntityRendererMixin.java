@@ -33,9 +33,9 @@ public class LivingEntityRendererMixin<T extends LivingEntity, S extends LivingE
     private void isometric$applyIncrementalNudge(LivingEntityRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState cameraState, CallbackInfo ci) {
         if (IsometricRenders.inRenderableDraw) {
             float middle = state.boundingBoxHeight / 2f;
-            poseStack.translate(0.0F, middle, 0.0F);
-            poseStack.scale(1.001F, 1.001F, 1.001F);
-            poseStack.translate(0.0F, -middle, 0.0F);
+            //poseStack.translate(0.0F, middle, 0.0F);
+            //poseStack.scale(1.001F, 1.001F, 1.001F);
+            //poseStack.translate(0.0F, -middle, 0.0F);
         }
 
     }

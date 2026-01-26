@@ -1,6 +1,7 @@
 package com.glisco.isometricrenders.screen;
 
 import com.glisco.isometricrenders.IsometricRenders;
+import com.glisco.isometricrenders.mixin.access.NativeImageInvoker;
 import com.glisco.isometricrenders.mixin.access.ParticleEngineAccessor;
 import com.glisco.isometricrenders.property.CroppablePropertyBundle;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
@@ -24,6 +25,8 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
+import io.wispforest.owo.ui.core.Color;
+import io.wispforest.owo.ui.core.Insets;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.CameraType;
@@ -42,7 +45,13 @@ import net.minecraft.world.item.DyeColor;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
+import java.awt.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -249,6 +258,27 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             builder.row.child(Components.button(Translate.gui("open_folder"), button -> {
                 Util.getPlatform().openFile(this.renderable.getExportPath().resolveOffset().toFile());
             }).margins(Insets.left(5)));
+        }
+
+        if (!GraphicsEnvironment.isHeadless()) {
+            rightColumn.child(Components.button(Translate.gui("export_to_clipboard"), button -> {
+                this.notify(Translate.gui("copied_to_clipboard"));
+
+                RenderableDispatcher.drawIntoImage(this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
+                        .whenComplete((image, t) -> {
+                            try (image) {
+                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                WritableByteChannel channel = Channels.newChannel(stream);
+
+                                ((NativeImageInvoker) (Object) image).isometric$write(channel);
+
+                                ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
+                                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+                            } catch (IOException e) {
+                                IsometricRenders.LOGGER.error("mfw", e);
+                            }
+                        });
+            }).horizontalSizing(Sizing.fixed(75)));
         }
 
         if (notFaceFrameAreaRendering) {

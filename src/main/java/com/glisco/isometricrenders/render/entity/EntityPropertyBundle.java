@@ -79,7 +79,6 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         IsometricUI.intControl(container, rotation, "rotation", 45);
         if (!spriteRendering.get()) {
             IsometricUI.doubleControl(container, slant, "slant", 30);
-            IsometricUI.intControl(container, lightAngle, "light_angle", 15);
             IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
         }
 

@@ -12,4 +12,9 @@ public class BlockStatePropertyBundle extends DefaultCroppablePropertyBundle imp
     public Property<Boolean> getTickProperty() {
         return tick;
     }
+
+    @Override
+    protected int getDefaultScale() {
+        return 125; // what the mc wiki uses it seems, and what helps to match block states with regular item (block) renders
+    }
 }

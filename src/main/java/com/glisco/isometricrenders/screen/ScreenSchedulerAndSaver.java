@@ -2,7 +2,6 @@ package com.glisco.isometricrenders.screen;
 
 import net.minecraft.client.Minecraft;
 
-// todo: get better screen saving logic
 public class ScreenSchedulerAndSaver {
 
     private static RenderScreen SCHEDULED_SCREEN = null;

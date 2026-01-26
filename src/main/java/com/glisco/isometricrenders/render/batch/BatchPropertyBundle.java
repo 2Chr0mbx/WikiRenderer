@@ -27,14 +27,12 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
             this.scale.copyFrom(defaultPropertyBundle.scale);
             this.rotation.copyFrom(defaultPropertyBundle.rotation);
             this.slant.copyFrom(defaultPropertyBundle.slant);
-            this.lightAngle.copyFrom(defaultPropertyBundle.lightAngle);
             this.xOffset.copyFrom(defaultPropertyBundle.xOffset);
             this.yOffset.copyFrom(defaultPropertyBundle.yOffset);
 
             this.scale.listen(defaultPropertyBundle.scale);
             this.rotation.listen(defaultPropertyBundle.rotation);
             this.slant.listen(defaultPropertyBundle.slant);
-            this.lightAngle.listen(defaultPropertyBundle.lightAngle);
             this.xOffset.listen(defaultPropertyBundle.xOffset);
             this.yOffset.listen(defaultPropertyBundle.yOffset);
         }

@@ -109,7 +109,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             IsometricUI.intControl(container, scale, "scale", 10);
             IsometricUI.intControl(container, rotation, "rotation", 45);
             IsometricUI.doubleControl(container, slant, "slant", 30);
-            IsometricUI.intControl(container, lightAngle, "light_angle", 15);
             IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
 
             container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {

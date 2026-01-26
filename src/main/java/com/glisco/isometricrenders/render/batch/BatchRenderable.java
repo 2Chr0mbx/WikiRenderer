@@ -10,6 +10,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BatchRenderable<R extends Renderable<?>> implements Renderable<BatchPropertyBundle> {
