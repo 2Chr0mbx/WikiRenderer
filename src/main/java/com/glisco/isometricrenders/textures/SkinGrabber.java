@@ -18,7 +18,7 @@ import java.util.UUID;
 
 public class SkinGrabber {
 
-    private static final Gson GSON = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
+    protected static final Gson GSON = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).setPrettyPrinting().create();
 
     @Nullable
     public static MinecraftTexturesPayload getPlayerHeadTextureData(ItemStack itemStack) {

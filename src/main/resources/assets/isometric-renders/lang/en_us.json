@@ -101,7 +101,9 @@
   "gui.isometric-renders.texture_type.elytra": "Elytra",
   "gui.isometric-renders.open_url": "Open",
   "gui.isometric-renders.copy_texture_id": "Copy ID",
+  "gui.isometric-renders.copy_json": "Copy JSON",
   "gui.isometric-renders.copied_texture_id_to_clipboard": "Copied texture ID to clipboard",
+  "gui.isometric-renders.copied_json_to_clipboard": "Copied profile JSON to clipboard",
 
   "gui.isometric-renders.transform_options": "Transform Options",
   "gui.isometric-renders.presets": "Presets",
