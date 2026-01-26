@@ -40,10 +40,15 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
         PROPERTIES.rotation.setDefaultValue(0).setToDefault();
     }
 
-    private final ItemStack stack;
+    protected final ItemStack stack;
 
     public ItemRenderable(ItemStack stack) {
         this.stack = stack;
+    }
+
+    @Override
+    public int getExportResolution() {
+        return super.getExportResolution();
     }
 
     @Override

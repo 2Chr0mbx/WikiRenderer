@@ -299,7 +299,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 if ((resolution < 16 || resolution > 16384) && !unsafe.get()) {
                     exportButton.active = false;
                 } else {
-                    renderable.getProperties().setExportResolution(resolution);
+                    renderable.getProperties().setExportResolution(renderable, resolution);
                     exportButton.active = true;
                 }
             });

@@ -18,12 +18,12 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
         public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {}
 
         @Override
-        public int getExportResolution() {
+        public int getExportResolution(Renderable<?> renderable) {
             return 1000;
         }
 
         @Override
-        public void setExportResolution(int resolution) {}
+        public void setExportResolution(Renderable<?> renderable, int resolution) {}
     };
 
     @Override

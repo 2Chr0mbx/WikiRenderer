@@ -11,7 +11,7 @@ public interface PropertyBundle {
 
     void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack);
 
-    int getExportResolution();
+    int getExportResolution(Renderable<?> renderable);
 
-    void setExportResolution(int resolution);
+    void setExportResolution(Renderable<?> renderable, int resolution);
 }

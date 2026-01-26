@@ -47,12 +47,12 @@ public class DefaultPropertyBundle implements PropertyBundle {
     }
 
     @Override
-    public int getExportResolution() {
+    public int getExportResolution(Renderable<?> renderable) {
         return exportResolution;
     }
 
     @Override
-    public void setExportResolution(int exportResolution) {
+    public void setExportResolution(Renderable<?> renderable, int exportResolution) {
         this.exportResolution = exportResolution;
     }
 

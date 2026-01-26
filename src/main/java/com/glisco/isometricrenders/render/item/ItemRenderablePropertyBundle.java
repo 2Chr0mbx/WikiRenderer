@@ -5,13 +5,34 @@ import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import io.wispforest.owo.ui.container.FlowLayout;
+import net.minecraft.world.item.Items;
 import org.joml.Matrix4fStack;
 
 public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle {
 
+    protected int playerHeadsExportResolution = 300;
+
     @Override
     protected int getDefaultExportResolution() {
-        return 300;
+        return 160;
+    }
+
+    @Override
+    public void setExportResolution(Renderable<?> renderable, int exportResolution) {
+        if (((ItemRenderable) renderable).stack.is(Items.PLAYER_HEAD)) {
+            playerHeadsExportResolution = exportResolution;
+        } else {
+            super.setExportResolution(renderable, exportResolution);
+        }
+    }
+
+    @Override
+    public int getExportResolution(Renderable<?> renderable) {
+        if (((ItemRenderable) renderable).stack.is(Items.PLAYER_HEAD)) {
+            return playerHeadsExportResolution;
+        } else {
+            return super.getExportResolution(renderable);
+        }
     }
 
     @Override

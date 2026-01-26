@@ -39,13 +39,13 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
     }
 
     @Override
-    public int getExportResolution() {
-        return this.delegate.getExportResolution();
+    public int getExportResolution(Renderable<?> renderable) {
+        return this.delegate.getExportResolution(renderable);
     }
 
     @Override
-    public void setExportResolution(int exportResolution) {
-        this.delegate.setExportResolution(exportResolution);
+    public void setExportResolution(Renderable<?> renderable, int exportResolution) {
+        this.delegate.setExportResolution(renderable, exportResolution);
     }
 
     @Override

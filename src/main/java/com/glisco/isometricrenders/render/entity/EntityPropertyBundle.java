@@ -54,11 +54,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     }
 
     @Override
-    public void setExportResolution(int exportResolution) {
+    public void setExportResolution(Renderable<?> renderable, int exportResolution) {
         if (this.spriteRendering.get()) {
             this.spriteExportResolution = exportResolution;
         } else {
-            super.setExportResolution(exportResolution);
+            super.setExportResolution(renderable, exportResolution);
         }
     }
 
