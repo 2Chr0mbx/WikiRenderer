@@ -137,7 +137,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.rightAnchor.positioning(Positioning.absolute(viewportEndX, 0)).horizontalSizing(Sizing.fixed(this.width - this.viewportEndX)).verticalSizing(Sizing.fixed(this.height));
 
             this.rightAnchor.child(
-                    Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content())
+                    Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10))
                             .child(leftColumn)
                             .child(Components.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
                             .child(rightColumn)
@@ -150,8 +150,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.leftAnchor.horizontalSizing(Sizing.fixed(viewportBeginX)).verticalSizing(Sizing.fixed(this.height));
             this.rightAnchor.positioning(Positioning.absolute(viewportEndX, 0)).horizontalSizing(Sizing.fixed(viewportBeginX)).verticalSizing(Sizing.fixed(this.height));
 
-            this.leftAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), this.leftColumn));
-            this.rightAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), this.rightColumn));
+            this.leftAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.leftColumn)));
+            this.rightAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.rightColumn)));
         }
 
         this.notificationArea.positioning(Positioning.absolute(this.viewportBeginX + 5, 5)).sizing(Sizing.fixed(this.height - 10));
