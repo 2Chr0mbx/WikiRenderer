@@ -50,7 +50,7 @@ public class AreaSelectionHelper {
         pos1 = new BlockPos(minX, minY, minZ);
         pos2 = new BlockPos(maxX + 1, maxY + 1, maxZ + 1);
 
-        Gizmos.cuboid(new AABB(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ()), GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 1)));
+        Gizmos.cuboid(new AABB(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ()), GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 1f), 5), true);
     }
 
     public static void select() {

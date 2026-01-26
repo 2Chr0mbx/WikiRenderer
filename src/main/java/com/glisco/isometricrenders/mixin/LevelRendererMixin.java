@@ -32,7 +32,14 @@ public class LevelRendererMixin {
         ci.cancel();
     }
 
-    @Inject(method = "method_62214", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderBlockOutline(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/LevelRenderState;)V"))
+    @Inject(
+            method = "method_62214",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/OutlineBufferSource;endOutlineBatch()V",
+                    shift = At.Shift.AFTER
+            )
+    )
     public void drawAreaSelection(GpuBufferSlice gpuBufferSlice, LevelRenderState worldRenderState, ProfilerFiller profiler, Matrix4f matrix4f, ResourceHandle<RenderTarget> handle, ResourceHandle<RenderTarget> handle2, boolean bl, ResourceHandle<RenderTarget> handle3, ResourceHandle<RenderTarget> handle4, CallbackInfo ci) {
         AreaSelectionHelper.renderSelectionBox();
     }
