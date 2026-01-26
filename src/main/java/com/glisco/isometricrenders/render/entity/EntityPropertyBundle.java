@@ -14,6 +14,7 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.joml.Matrix4fStack;
@@ -26,6 +27,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     private final Property<Boolean> spriteCropping = Property.of(true);
     private int spriteExportResolution = 64;
 
+    public final Property<Boolean> useLiveEntity = Property.of(false);
     private final Property<Boolean> tick = Property.of(false);
 
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
@@ -105,15 +107,18 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
         IsometricUI.sectionHeader(container, "entity_data", true);
 
+        IsometricUI.booleanControl(container, useLiveEntity, "entity_data.use_live_entity");
+
         IsometricUI.intControl(container, yaw, "entity_data.yaw", 15);
         IsometricUI.intControl(container, pitch, "entity_data.pitch", 5);
         IsometricUI.intControl(container, entityRotation, "entity_data.rotation", 5);
         if (renderable instanceof EntityRenderable entityRenderable) {
-            if (entityRenderable.entity instanceof Player) {
+            Entity usedEntity = entityRenderable.getUsedEntity();
+            if (usedEntity instanceof Player) {
                 IsometricUI.booleanControl(container, useSteveSkin, "entity_data.steve");
                 IsometricUI.booleanControl(container, forceSmallArms, "entity_data.small_arms");
             }
-            if (entityRenderable.entity instanceof LivingEntity) {
+            if (usedEntity instanceof LivingEntity) {
                 IsometricUI.booleanControl(container, hideHeldItems, "entity_data.hide_held_items");
                 IsometricUI.booleanControl(container, hideArmor, "entity_data.hide_armor");
                 IsometricUI.booleanControl(container, hideEnchantments, "entity_data.hide_enchantments");

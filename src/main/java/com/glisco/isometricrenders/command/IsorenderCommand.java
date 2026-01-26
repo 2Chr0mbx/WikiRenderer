@@ -189,7 +189,7 @@ public class IsorenderCommand {
         }
 
         ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new EntityRenderable(player)
+                new EntityRenderable(player, player)
         ));
 
         return 0;
@@ -208,8 +208,9 @@ public class IsorenderCommand {
             return 0;
         }
 
+        EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(gameProfile.get());
         ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new EntityRenderable(EntityComponent.createRenderablePlayer(gameProfile.get()))
+                new EntityRenderable(player, player)
         ));
 
         return 0;

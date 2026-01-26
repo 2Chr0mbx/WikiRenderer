@@ -111,6 +111,7 @@
   "gui.isometric-renders.mesh_entity_data.override_rotations": "Override Rotations",
   "gui.isometric-renders.sprite_rendering": "Sprite Rendering",
   "gui.isometric-renders.entity_data": "Entity Data",
+  "gui.isometric-renders.entity_data.use_live_entity": "Use Live Entity",
   "gui.isometric-renders.entity_data.yaw": "Yaw",
   "gui.isometric-renders.entity_data.pitch": "Pitch",
   "gui.isometric-renders.entity_data.rotation": "Rotation",
