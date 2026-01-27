@@ -57,6 +57,13 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
         builder.append("}");
 
         String regex = builder.toString();
-        return s -> s.matches(regex);
+        return s -> {
+            boolean matches = s.matches(regex);
+            if (matches && !s.isEmpty() && !s.equals("-")) {
+                int number = Integer.parseInt(s);
+                return number >= this.setting.min() && number <= this.setting.max();
+            }
+            return matches;
+        };
     }
 }

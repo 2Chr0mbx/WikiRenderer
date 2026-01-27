@@ -22,7 +22,7 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
         super(horizontalSizing);
         this.setting = setting;
 
-        this.text(String.valueOf(setting.get()));
+        this.text(String.format("%.1f", setting.get()));
         this.setFilter(makeMatcher());
 
         this.onChanged().subscribe(s -> {
@@ -35,15 +35,23 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
             }
 
             this.content = s;
-            this.ignoringChange = true;
-            this.setting.set(Double.parseDouble(s));
-            this.ignoringChange = false;
-            this.text(s);
+            if (!this.ignoringChange) {
+                this.ignoringChange = true;
+                this.setting.set(Double.parseDouble(s));
+                this.ignoringChange = false;
+            }
         });
 
         this.setting.listen((doubleSetting, value) -> {
             if (!this.ignoringChange) {
-                this.text(String.valueOf(value));
+                this.ignoringChange = true;
+                String number = String.format("%.1f", value);
+                if (value.floatValue() == 35.264f) {
+                    number = "35.264"; // jank but whatever
+                }
+
+                this.text(number.endsWith(".0") ? number.substring(0, number.length() - 2) : number);
+                this.ignoringChange = false;
             }
         });
     }
@@ -55,10 +63,18 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
         builder.append("\\d{0,");
         builder.append(String.valueOf(Math.max(Math.abs(this.setting.min()), Math.abs(this.setting.max()))).length());
         builder.append("}");
-        builder.append("\\.?\\d{0,6}"); // up to 6 decimals
+        builder.append("\\.?\\d{0,3}"); // up to 3 decimals
 
         String regex = builder.toString();
-        return s -> s.matches(regex);
+        return s -> {
+            boolean matches = s.matches(regex);
+            if (matches && !s.isEmpty() && !s.endsWith(".") && !s.equals("-")) {
+                double number = Double.parseDouble(s);
+                return number >= this.setting.min() && number <= this.setting.max();
+            }
+
+            return matches;
+        };
     }
 }
 

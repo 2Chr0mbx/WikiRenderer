@@ -708,7 +708,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.minecraft.getFramerateLimitTracker().setFramerateLimit(this.minecraft.options.framerateLimit().get());
 
         if (ScreenSchedulerAndSaver.getScheduledScreen() == null) {
-            Translate.sendMessage("closed");
             ScreenSchedulerAndSaver.setSavedScreen(this);
         } else {
             // discrd is called for any saved screens in schedule, but ignore that if this is the saved screen and is being reopened
