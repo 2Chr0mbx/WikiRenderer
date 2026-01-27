@@ -1,6 +1,7 @@
 package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.IsometricRenders;
+import com.glisco.isometricrenders.render.area.chunk.MiniChunk;
 import com.glisco.isometricrenders.render.area.side_view.WalkabilityFilter;
 import com.glisco.isometricrenders.util.BlockOrthographicSort;
 import com.mojang.blaze3d.buffers.GpuBuffer;

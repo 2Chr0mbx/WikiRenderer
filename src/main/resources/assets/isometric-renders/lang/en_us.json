@@ -196,6 +196,9 @@
   "message.isometric-renders.incomplete_selection": "You do not have a completed area",
   "message.isometric-renders.no_valid_chunks": "Couldn't find any blocks in this chunk or any adjacent chunks. Make sure you're standing on a block!",
   "message.isometric-renders.no_such_namespace": "Unknown namespace",
+  "message.isometric-renders.scanning_chunks": "Scanning outwards for blocks in %sx%s chunks up to %s blocks. Chunks that have no blocks will be skipped.",
+  "message.isometric-renders.chunks_found": "Successfully found %s connected %sx%s chunks within %s blocks.",
+  "message.isometric-renders.closed": "Render menu saved, type /isorender reopen to reopen it.",
 
   "message.isometric-renders.player_rendering_in_multiplayer": "Rendering players by names is only supported in Singleplayer",
 

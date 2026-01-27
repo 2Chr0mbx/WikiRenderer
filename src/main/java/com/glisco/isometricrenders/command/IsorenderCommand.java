@@ -10,7 +10,6 @@ import com.glisco.isometricrenders.render.entity.EntityRenderable;
 import com.glisco.isometricrenders.render.item.BlockStateRenderable;
 import com.glisco.isometricrenders.render.item.ItemRenderable;
 import com.glisco.isometricrenders.render.item.TooltipRenderable;
-import com.glisco.isometricrenders.render.skyblock.SkyBlockItemsBatchRender;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
@@ -84,8 +83,9 @@ public class IsorenderCommand {
                         .executes(IsorenderCommand::reopenSavedMenu))
                 .then(literal("area")
                         .then(literal("island")
-                                .then(argument("chunk_size", IntegerArgumentType.integer(4, 64))
-                                        .executes(IsorenderCommand::renderSurroundingConnectedMiniChunks)))
+                                .then(argument("chunk_cube_size", IntegerArgumentType.integer(4, 64))
+                                        .then(argument("distance_limit", IntegerArgumentType.integer(1, 2000))
+                                                .executes(IsorenderCommand::renderSurroundingConnectedMiniChunks))))
                         .then(literal("pos")
                                 .then(argument("start", BlockPosArgument.blockPos())
                                         .then(argument("end", BlockPosArgument.blockPos())
@@ -372,16 +372,17 @@ public class IsorenderCommand {
     }
 
     private static int renderSurroundingConnectedMiniChunks(CommandContext<FabricClientCommandSource> context) {
-        Integer chunkSize = context.getArgument("chunk_size", Integer.class);
+        Integer chunkSize = context.getArgument("chunk_cube_size", Integer.class);
+        Integer distanceLimit = context.getArgument("distance_limit", Integer.class);
 
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return 0;
         }
 
-        AreaRenderable area = AreaRenderable.of(player.blockPosition(), chunkSize);
+        Translate.commandFeedback(context, "scanning_chunks", Component.literal(String.valueOf(chunkSize)), Component.literal(String.valueOf(chunkSize)), Component.literal(String.valueOf(distanceLimit)));
+        AreaRenderable area = AreaRenderable.of(context, player.blockPosition(), chunkSize, distanceLimit);
         if (area == null) {
-            Translate.commandError(context, "no_valid_chunks");
             return 0;
         }
 

@@ -3,11 +3,17 @@ package com.glisco.isometricrenders.render.area;
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.TickingRenderable;
+import com.glisco.isometricrenders.render.area.chunk.ChunkScanResult;
+import com.glisco.isometricrenders.render.area.chunk.MiniChunk;
+import com.glisco.isometricrenders.render.area.chunk.MiniChunkScanner;
 import com.glisco.isometricrenders.render.entity.EntityRenderable;
 import com.glisco.isometricrenders.util.CameraOrientationUtil;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
+import com.glisco.isometricrenders.util.Translate;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -68,12 +74,19 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     @Nullable
-    public static AreaRenderable of(BlockPos origin, int chunkSize) {
+    public static AreaRenderable of(CommandContext<FabricClientCommandSource> commandContext, BlockPos origin, int chunkSize, int scanLimit) {
         ClientLevel level = Minecraft.getInstance().level;
         assert level != null;
 
-        Set<MiniChunk> chunks = MiniChunkScanner.getConnectedChunks(level, origin, chunkSize);
+        ChunkScanResult scanResult = MiniChunkScanner.getConnectedChunks(level, origin, chunkSize, scanLimit);
+        if (scanResult == null) {
+            Translate.commandError(commandContext, "no_valid_chunks");
+            return null;
+        }
+
+        Set<MiniChunk> chunks = scanResult.chunks();
         if (chunks.isEmpty()) {
+            Translate.commandError(commandContext, "no_valid_chunks");
             return null;
         }
 
@@ -81,8 +94,16 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         int maxX = chunks.stream().mapToInt(c -> c.endX).max().getAsInt();
         int minZ = chunks.stream().mapToInt(c -> c.startZ).min().getAsInt();
         int maxZ = chunks.stream().mapToInt(c -> c.endZ).max().getAsInt();
-        BlockPos firstPos = new BlockPos(minX, 0, minZ);
-        BlockPos secondPos = new BlockPos(maxX, level.getMaxY(), maxZ);
+        BlockPos firstPos = new BlockPos(minX, scanResult.minY(), minZ);
+        BlockPos secondPos = new BlockPos(maxX, scanResult.maxY(), maxZ);
+
+        Translate.commandFeedback(commandContext, "chunks_found",
+                chunks.size(),
+                chunkSize,
+                chunkSize,
+                scanLimit
+        );
+
 
         return new AreaRenderable(new WorldBlockMesh.Builder(level, chunks, firstPos, secondPos).build());
     }

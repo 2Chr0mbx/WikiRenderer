@@ -7,7 +7,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 
 public class Translate {
 
@@ -24,6 +23,7 @@ public class Translate {
     public static MutableComponent msg(String key, Object... args) {
         return prefixed(make(key, args).withStyle(ChatFormatting.GRAY));
     }
+
     public static void commandFeedback(CommandContext<FabricClientCommandSource> context, String key, Object... args) {
         context.getSource().sendFeedback(msg(key, args));
     }
@@ -32,11 +32,11 @@ public class Translate {
         if (context != null) {
             context.getSource().sendError(msg(key, args));
         } else {
-            errorMessage(key, args);
+            sendMessage(key, args);
         }
     }
 
-    public static void errorMessage(String key, Object... args) {
+    public static void sendMessage(String key, Object... args) {
         Component message = msg(key, args);
         Minecraft.getInstance().gui.getChat().addMessage(message);
         Minecraft.getInstance().getNarrator().saySystemChatQueued(message);
