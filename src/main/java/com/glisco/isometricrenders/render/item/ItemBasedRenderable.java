@@ -32,20 +32,10 @@ public abstract class ItemBasedRenderable<T extends DefaultPropertyBundle> exten
                     .rotateYXZ((float) Math.toRadians(62), (float) Math.toRadians(185.5), 0.0F)
                     .rotateYXZ((float) Math.toRadians(-22.5), (float) (Math.toRadians(135)), 0.0F);
 
-            if (this.lightingBuffer == null) {
-                this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders DefaultRenderable Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
-            }
+            Vector3f light0 = matrix4f2.transformDirection(new Vector3f(0.2F, 1.0F, -0.7F).normalize(), new Vector3f());
+            Vector3f light1 = matrix4f2.transformDirection(new Vector3f(-0.2F, 1.0F, 0.7F).normalize(), new Vector3f());
 
-            try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-                ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, LIGHTING_UBO_SIZE)
-                        .putVec3(matrix4f2.transformDirection(new Vector3f(0.2F, 1.0F, -0.7F).normalize(), new Vector3f()))
-                        .putVec3(matrix4f2.transformDirection(new Vector3f(-0.2F, 1.0F, 0.7F).normalize(), new Vector3f()))
-                        .get();
-
-                RenderSystem.getDevice().createCommandEncoder().writeToBuffer(this.lightingBuffer.slice(), byteBuffer);
-            }
-
-            RenderSystem.setShaderLights(this.lightingBuffer.slice());
+            this.setupLighting(light0, light1);
         } else {
             Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_FLAT);
         }

@@ -15,6 +15,7 @@
     "EquipmentLayerRendererMixin",
     "GLDebugMixin",
     "GuiRendererMixin",
+    "HumanoidArmorLayerMixin",
     "LevelRendererMixin",
     "LightTextureMixin",
     "LivingEntityRendererMixin",

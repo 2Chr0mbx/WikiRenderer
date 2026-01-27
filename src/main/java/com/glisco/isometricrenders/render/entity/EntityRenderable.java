@@ -5,7 +5,6 @@ import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
 import com.glisco.isometricrenders.mixin.access.MannequinAccessor;
 import com.glisco.isometricrenders.mixin.access.ModelPartAccessor;
 import com.glisco.isometricrenders.render.DefaultRenderable;
-import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.textures.SkinGrabber;
 import com.glisco.isometricrenders.textures.TextureDataProvider;
 import com.glisco.isometricrenders.util.CameraOrientationUtil;
@@ -18,7 +17,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.EntityComponent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -48,10 +46,11 @@ import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
+import org.joml.Vector3f;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider {
@@ -280,19 +279,19 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             List<Runnable> toggleCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {
-                if (state instanceof AvatarRenderState avatarRenderState) {
-                    avatarRenderState.isSpectator = true;
-                }
                 EntityRenderer<?, ?> renderer = renderDispatcher.getRenderer(entity);
                 if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
                     EntityModel<?> model = livingEntityRenderer.getModel();
                     ModelPart root = model.root();
                     this.hideNonHeadParts(toggleCallbacks, root);
                 }
+
+                IsometricRenders.inSpriteEntityDraw = true;
             }
 
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+            IsometricRenders.inSpriteEntityDraw = false;
 
             matrices.popPose();
             toggleCallbacks.forEach(Runnable::run);
@@ -322,6 +321,19 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 BuiltInRegistries.ENTITY_TYPE.getKey(this.getUsedEntity().getType()),
                 "entity"
         );
+    }
+
+    @Override
+    public void setupLighting(Matrix4f modelViewMatrix) {
+        if (this.getProperties().spriteRendering.get()) {
+            float rotation = (float) Math.toRadians(getProperties().getUsedRotation());
+
+            // forces the face to be bright
+            Vector3f faceLight = new Vector3f(0, 0, -1).rotateY((float) (Math.PI - rotation)).normalize();
+            this.setupLighting(faceLight, faceLight);
+        } else {
+            super.setupLighting(modelViewMatrix);
+        }
     }
 
     private static void applyToEntityAndPassengers(Entity entity, Consumer<Entity> action) {

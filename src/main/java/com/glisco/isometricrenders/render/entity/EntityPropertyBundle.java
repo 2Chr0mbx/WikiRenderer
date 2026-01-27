@@ -1,9 +1,6 @@
 package com.glisco.isometricrenders.render.entity;
 
-import com.glisco.isometricrenders.property.DefaultCroppablePropertyBundle;
-import com.glisco.isometricrenders.property.IntProperty;
-import com.glisco.isometricrenders.property.Property;
-import com.glisco.isometricrenders.property.TickingPropertyBundle;
+import com.glisco.isometricrenders.property.*;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.screen.IsometricUI;
 import com.glisco.isometricrenders.screen.RenderScreen;
@@ -26,6 +23,8 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
     public final Property<Boolean> spriteRendering = Property.of(false);
     private final Property<Boolean> spriteCropping = Property.of(true);
     private int spriteExportResolution = 64;
+    private final IntProperty spriteRotation = IntProperty.of(180, 0, 360).withRollover();
+    private final IntProperty spriteSlant = IntProperty.of(0, -90, 90);
 
     public final Property<Boolean> useLiveEntity = Property.of(false);
     public final Property<Boolean> freezePlayerArms = Property.of(true);
@@ -65,6 +64,16 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
     }
 
     @Override
+    public double getUsedSlant() {
+        return this.spriteRendering.get() ? spriteSlant.get() : super.getUsedSlant();
+    }
+
+    @Override
+    public float getUsedRotation() {
+        return this.spriteRendering.get() ? this.spriteRotation.get() : super.getUsedRotation();
+    }
+
+    @Override
     public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         IsometricUI.sectionHeader(container, "transform_options", false);
         IsometricUI.booleanControl(container, spriteRendering, "sprite_rendering");
@@ -73,28 +82,33 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             screen.guiRebuildScheduled = true;
             this.yaw.set(0);
             this.pitch.set(0);
-            this.rotation.set(180);
-            this.slant.set(0D);
+            this.spriteRotation.set(180);
+            this.spriteSlant.set(0);
         }), false);
 
         IsometricUI.intControl(container, scale, "scale", 10);
-        IsometricUI.intControl(container, rotation, "rotation", 45);
         if (!spriteRendering.get()) {
+            IsometricUI.intControl(container, rotation, "rotation", 45);
             IsometricUI.doubleControl(container, slant, "slant", 30);
             IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+        } else {
+            IsometricUI.intControl(container, spriteRotation, "rotation", 45);
+            IsometricUI.intControl(container, spriteSlant, "slant", 30);
         }
 
         IsometricUI.sectionHeader(container, "presets", true);
-        try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
-            builder.row.child(Components.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
-                this.rotation.setToDefault();
-                this.slant.set(30D);
-            }).horizontalSizing(Sizing.content(5)).margins(Insets.right(5)));
+        if (!spriteRendering.get()) {
+            try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
+                builder.row.child(Components.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
+                    this.rotation.setToDefault();
+                    this.slant.set(30D);
+                }).horizontalSizing(Sizing.content(5)).margins(Insets.right(5)));
 
-            builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
-                this.rotation.setToDefault();
-                this.slant.set(35.264);
-            }));
+                builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+                    this.rotation.setToDefault();
+                    this.slant.set(35.264);
+                }));
+            }
         }
 
         container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
@@ -139,8 +153,14 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
         modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
 
-        modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
-        modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
+        if (this.spriteRendering.get()) {
+            modelViewStack.rotate(Axis.XP.rotationDegrees(this.spriteSlant.get()));
+            modelViewStack.rotate(Axis.YP.rotationDegrees(this.spriteRotation.get()));
+        } else {
+            modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
+            modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
+        }
+
 
         this.updateAndApplyRotationOffset(modelViewStack);
     }

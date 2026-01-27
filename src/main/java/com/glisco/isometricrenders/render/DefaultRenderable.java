@@ -17,7 +17,6 @@ import net.minecraft.client.renderer.state.ParticlesRenderState;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
@@ -44,6 +43,10 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         Vector3f light0 = new Vector3f(-0.2f, 0.8f, -0.2f).rotateY((float) (Math.PI - rotation)).normalize();
         Vector3f light1 = new Vector3f(0.5f, 0.75f, -0.45f).rotateY((float) (Math.PI - rotation)).normalize();
 
+        setupLighting(light0, light1);
+    }
+
+    protected void setupLighting(Vector3f light0, Vector3f light1) {
         if (this.lightingBuffer == null) {
             this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
         }

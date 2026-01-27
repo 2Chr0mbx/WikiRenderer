@@ -1,6 +1,7 @@
 package com.glisco.isometricrenders;
 
 import com.glisco.isometricrenders.command.IsorenderCommand;
+import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
 import com.glisco.isometricrenders.util.BlockOrthographicSort;
 import com.glisco.isometricrenders.util.FileIO;
@@ -40,6 +41,7 @@ public class IsometricRenders implements ClientModInitializer {
 
     public static ParticleRestriction<?> particleRestriction = ParticleRestriction.always();
 
+    public static boolean inSpriteEntityDraw = false;
     public static boolean inRenderableDraw = false;
     public static boolean inRenderableTick = false;
     public static boolean skipWorldRender = false;
