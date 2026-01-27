@@ -51,8 +51,6 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
 
         BlockEntity blockEntity = null;
 
-        System.out.println("nbt = " + nbt);
-        System.out.println("state = " + state.toString());
         if (state.getBlock() instanceof EntityBlock provider) {
             blockEntity = provider.newBlockEntity(client.player.blockPosition(), state);
             prepareBlockEntity(state, blockEntity, nbt);

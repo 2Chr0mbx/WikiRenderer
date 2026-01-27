@@ -31,7 +31,6 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     public void renderInventory(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-        System.out.println("key pressed");
         if (input.key() != GLFW.GLFW_KEY_F12 || !input.hasControlDown()) return;
 
         this.onClose();

@@ -204,7 +204,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             BlockPos start = mesh.startPos();
             BlockPos end = mesh.endPos().offset(1, 1, 1);
             AABB areaBoundingBox = new AABB(start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
-            // without doing an offset below,
 
             this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), e -> {
                 AABB entityBounds = e.getBoundingBox();
@@ -217,8 +216,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 // more accurate check i'd say
                 return  entityBounds.intersects(areaBoundingBox);
             });
-
-            // System.out.println("armor stands found = " + armorStandsFound.get());
         }
 
         this.entities.removeIf(Entity::isRemoved);

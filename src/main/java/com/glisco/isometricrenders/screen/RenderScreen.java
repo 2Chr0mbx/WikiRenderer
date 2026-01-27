@@ -130,8 +130,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.leftAnchor.clearChildren();
         this.rightAnchor.clearChildren();
 
-        System.out.println("Hi");
-
         if (this.viewportBeginX < 200) {
             this.viewportEndX -= this.viewportBeginX;
             this.viewportBeginX = 0;

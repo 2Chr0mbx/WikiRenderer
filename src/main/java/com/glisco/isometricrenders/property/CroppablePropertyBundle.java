@@ -61,7 +61,7 @@ public interface CroppablePropertyBundle extends PropertyBundle {
     @Override
     default void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         String key = "renderer_resolution";
-        if (this.getCropProperty().get()) {
+        if (allowForRescaling() && this.getCropProperty().get()) {
             key = "renderer_resolution_rescale_" + this.getRescaleMode().get().name().toLowerCase();
         }
 

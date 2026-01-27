@@ -72,6 +72,28 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
         return new Vector2i(DefaultTooltipPositioner.INSTANCE.positionTooltip(screenWidth, screenHeight, x, y, width, height)).add(-12 - width / 2, 12 - height / 2);
     }
 
+    public int getTooltipSize() {
+        Minecraft minecraft = Minecraft.getInstance();
+        List<ClientTooltipComponent> list = Screen.getTooltipFromItem(minecraft, this.stack)
+                .stream()
+                .map(Component::getVisualOrderText)
+                .map(ClientTooltipComponent::create)
+                .collect(Util.toMutableList());
+
+        this.stack.getTooltipImage().ifPresent(data -> list.add(list.isEmpty() ? 0 : 1, ClientTooltipComponent.create(data)));
+
+        int width = 0;
+        int height = list.size() == 1 ? -2 : 0;
+
+        for (ClientTooltipComponent component : list) {
+            int componentWidth = component.getWidth(minecraft.font);
+            if (componentWidth > width) width = componentWidth;
+            height += component.getHeight(minecraft.font);
+        }
+
+        return Math.max(width + 8, height + 8);
+    }
+
     @Override
     public TooltipPropertyBundle getProperties() {
         return TooltipPropertyBundle.INSTANCE;
