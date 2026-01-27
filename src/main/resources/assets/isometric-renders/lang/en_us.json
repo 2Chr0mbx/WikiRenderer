@@ -134,6 +134,7 @@
   "gui.isometric-renders.renderer_resolution_rescale_horizontal": "Resolution (Target Width)",
   "gui.isometric-renders.renderer_resolution_rescale_disabled": "Resolution",
   "gui.isometric-renders.block_resolution": "Block Resolution",
+  "gui.isometric-renders.file_name": "File Name",
   "gui.isometric-renders.hotkeys": "F10: Toggle UI  F12: Export",
 
   "gui.isometric-renders.memory_warning1": "Warning: Unless you have at least 6GB ",

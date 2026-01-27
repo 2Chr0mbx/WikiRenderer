@@ -43,6 +43,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.DyeColor;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -87,7 +88,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     };
 
     public final Property<Boolean> tickParticles = Property.of(true);
-    private String customFileName = null;
+    private String customFileName = "";
 
     private Button exportAnimationButton;
 
@@ -110,6 +111,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private final List<GpuTexture> renderedFrames = new ArrayList<>();
     private int remainingAnimationFrames;
+    private EditBox fileNameField = null;
 
     public RenderScreen(Renderable<?> renderable) {
         this.renderable = renderable;
@@ -237,14 +239,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         .padding(Insets.of(5))
                         .surface(Surface.blur(10, 50))
                 );
-
-                /*
-                try (IsometricUI.RowBuilder builder = IsometricUI.row(rightColumn)) {
-                    builder.row.child(new EnumCheckboxComponent<>(Translate.gui("rescale_vertically"), resizeModeProperty, ImageResizeMode.VERTICAL, ImageResizeMode.DISABLED));
-                    builder.row.child(new EnumCheckboxComponent<>(Translate.gui("rescale_horizontally"), resizeModeProperty, ImageResizeMode.HORIZONTAL, ImageResizeMode.DISABLED));
-                }
-                rightColumn.child(new EnumCheckboxComponent<>(Translate.gui("dont_rescale"), resizeModeProperty, ImageResizeMode.DISABLED, ImageResizeMode.DISABLED));
-                 */
             }
         }
 
@@ -351,6 +345,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }
         }
 
+        this.fileNameField = IsometricUI.labelledTextField(rightColumn, this.customFileName, "file_name", Sizing.fixed(120));
+        fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
+        fileNameField.setResponder(s -> this.customFileName = s);
+
         IsometricUI.sectionHeader(rightColumn, "animation_options", true);
 
         if (FFmpegDispatcher.wasFFmpegDetected()) {
@@ -426,37 +424,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
     }
 
-    /*
-    private void buildTextureGrabSection() {
-        IsometricUI.sectionHeader(rightColumn, "player_skin_grabbing", true);
-
-        if (!GraphicsEnvironment.isHeadless()) {
-            rightColumn.child(Components.button(Translate.gui("export_skin_to_clipboard"), button -> {
-                this.notify(Translate.gui("copied_skin_to_clipboard"));
-
-                NativeImage playerSkinImage = SkinGrabber.getPlayerSkin(player);
-                if (playerSkinImage != null) {
-                    try (playerSkinImage) {
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        WritableByteChannel channel = Channels.newChannel(stream);
-
-                        ((NativeImageInvoker) (Object) playerSkinImage).isometric$write(channel);
-
-                        ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
-                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
-                    } catch (IOException e) {
-                        IsometricRenders.LOGGER.error("mfw", e);
-                    }
-                }
-
-
-            }).horizontalSizing(Sizing.fixed(75)));
-        }
-
-        rightColumn.child(Components.button(Translate.gui("export_skin"), button -> skinExportScheduled = true));
-    }
-     */
-
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 
@@ -499,16 +466,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 this.exportAnimationButton.tooltip(this.memoryGuard.getStatusTooltip(this.estimateMemoryUsage(exportFrames.get())).stream().map(text -> ClientTooltipComponent.create(text.getVisualOrderText())).toList());
             }
 
-//            fill(matrices, viewportEndX + 160, 45, viewportEndX + 168, 53, GlobalProperties.backgroundColor | 255 << 24);
-
-//            client.textRenderer.draw(matrices, Translate.gui("hotkeys"), viewportEndX + 12, height - 20, 0xAAAAAA);
-//
-//            client.textRenderer.draw(matrices, Translate.gui("memory_warning1"), 10, height - 60, 0xAAAAAA);
-//            client.textRenderer.draw(matrices, Translate.gui("memory_warning2"), 10, height - 50, 0xAAAAAA);
-//            client.textRenderer.draw(matrices, Translate.gui("memory_warning3"), 10, height - 40, 0xAAAAAA);
-//            client.textRenderer.draw(matrices, Translate.gui("memory_warning4"), 10, height - 30, 0xAAAAAA);
-//            client.textRenderer.draw(matrices, Translate.gui("memory_warning5"), 10, height - 20, 0xAAAAAA);
-
             if (FileIO.taskCount() > 0) {
                 if (!this.ioStateComponent.hasParent()) {
                     this.notificationArea.child(this.ioStateComponent);
@@ -519,7 +476,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.captureScheduled) {
-            final ExportPathSpec exportPath = this.renderable.getExportPath();
+            ExportPathSpec defaultExportPath = this.renderable.getExportPath();
+            ExportPathSpec exportPath = this.customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(this.customFileName);
 
             AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
             Consumer<MinimapCalibratorData> dataConsumer = null;
@@ -542,7 +500,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                         if (data.get() != null) {
                             String fileText = data.get().toFileText(imageFile.getName());
-                            FileIO.saveText(fileText, exportPath.differentFileName("area_render_minimap_data")).whenComplete((textFile, textThrowable) -> {
+                            ExportPathSpec minimapExportPath = this.customFileName.isBlank()
+                                    ? defaultExportPath.differentFileName("area_render_minimap_data")
+                                    : defaultExportPath.differentFileName(this.customFileName + "_area_render_minimap_data");
+
+                            FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> {
                                 this.minecraft.execute(() -> this.notify(
                                         () -> Util.getPlatform().openFile(textFile),
                                         Translate.gui("exported_minimap_data_as"),
@@ -586,7 +548,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 this.renderedFrames.clear();
 
-                final ExportPathSpec animationTarget = this.renderable.getExportPath();
+                ExportPathSpec defaultExportPath = this.renderable.getExportPath();
+                ExportPathSpec exportPath = this.customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(this.customFileName);
+
                 CompletableFuture.allOf(exportFutures.toArray(CompletableFuture[]::new))
                         .whenComplete((file, throwable) -> {
                             overwriteLatest.set(overwriteValue);
@@ -596,7 +560,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                             this.minecraft.execute(() -> this.notify(Translate.gui("converting_image_sequence")));
 
                             FFmpegDispatcher.assemble(
-                                    animationTarget,
+                                    exportPath,
                                     ExportPathSpec.exportRoot().resolve("sequence/"),
                                     animationFormat,
                                     renderable.shouldCropForFfmpeg() ? ImageCropper.getFfmpegCropSize(renderable, collectedCropData) : ""
@@ -668,7 +632,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+    public boolean mouseClicked(@NonNull MouseButtonEvent click, boolean doubled) {
         if (!(this.renderable.getProperties() instanceof DefaultPropertyBundle properties))
             return super.mouseClicked(click, doubled);
 
@@ -713,6 +677,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         } else if (keyCode == GLFW.GLFW_KEY_F10) {
             this.drawOnlyBackground = !this.drawOnlyBackground;
         } else if (KEYBOARD_CONTROLS.containsKey(keyCode) && this.renderable instanceof DefaultRenderable) {
+            if (fileNameField != null && fileNameField.isFocused()) {
+                return true;
+            }
             KEYBOARD_CONTROLS.get(keyCode).accept((DefaultPropertyBundle) this.renderable.getProperties());
         }
         return true;
