@@ -51,6 +51,8 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
 
         BlockEntity blockEntity = null;
 
+        System.out.println("nbt = " + nbt);
+        System.out.println("state = " + state.toString());
         if (state.getBlock() instanceof EntityBlock provider) {
             blockEntity = provider.newBlockEntity(client.player.blockPosition(), state);
             prepareBlockEntity(state, blockEntity, nbt);
@@ -83,6 +85,7 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
         // renders the main stuff
         if (this.state.getRenderShape() != RenderShape.INVISIBLE) {
             this.client.getBlockRenderer().renderSingleBlock(this.state, matrices, vertexConsumers, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+            // todo: figure out liquid rendering (waterlogged / fluid states)
         }
 
 		super.drawSubmittedRenderFeatures();

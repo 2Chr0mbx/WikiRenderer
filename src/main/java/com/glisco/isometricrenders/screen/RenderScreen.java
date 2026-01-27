@@ -132,6 +132,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.leftAnchor.clearChildren();
         this.rightAnchor.clearChildren();
 
+        System.out.println("Hi");
+
         if (this.viewportBeginX < 200) {
             this.viewportEndX -= this.viewportBeginX;
             this.viewportBeginX = 0;
@@ -140,12 +142,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.leftAnchor.horizontalSizing(Sizing.fixed(0)).verticalSizing(Sizing.fixed(this.height));
             this.rightAnchor.positioning(Positioning.absolute(viewportEndX, 0)).horizontalSizing(Sizing.fixed(this.width - this.viewportEndX)).verticalSizing(Sizing.fixed(this.height));
 
-            this.rightAnchor.child(
-                    Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10))
-                            .child(leftColumn)
-                            .child(Components.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
-                            .child(rightColumn)
-                            .horizontalAlignment(HorizontalAlignment.CENTER))
+            this.rightAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10))
+                    .child(leftColumn)
+                    .child(Components.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
+                    .child(rightColumn)
+                    .horizontalAlignment(HorizontalAlignment.CENTER))
 
             );
         } else {
@@ -168,6 +169,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
         boolean notFaceFrameAreaRendering = !(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.getProperties().perPixel90DegreeRendering.get();
 
+        // todo maybe we dont need this line?
         ((ParticleEngineAccessor) Minecraft.getInstance().particleEngine).isometric$getParticles().clear();
         IsometricRenders.particleRestriction = this.renderable.getParticleRestriction();
 
@@ -714,6 +716,12 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             // discrd is called for any saved screens in schedule, but ignore that if this is the saved screen and is being reopened
             this.renderable.dispose();
         }
+
+        this.renderedFrames.forEach(GpuTexture::close);
+        this.renderedFrames.clear();
+        this.remainingAnimationFrames = 0;
+        this.exportAnimationButton.active = true;
+        this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
     }
 
     private void drawFramingHint(GuiGraphics context) {
