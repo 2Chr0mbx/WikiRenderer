@@ -2,6 +2,7 @@ package com.glisco.isometricrenders.render.area;
 
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.render.area.side_view.WalkabilityFilter;
+import com.glisco.isometricrenders.util.BlockOrthographicSort;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.BlendFunction;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldBlockMesh {
@@ -85,6 +87,7 @@ public class WorldBlockMesh {
     public final List<MeshSection> subMeshes = new ArrayList<>();
     private final HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
 
+    private BlockOrthographicSort orthographicTransparencySorting = null;
     private float lastUsedRotation;
     private double lastUsedSlant;
 
@@ -125,17 +128,19 @@ public class WorldBlockMesh {
             terrainSampler = RenderSystem.getDevice().createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST, maxAnisotropy, OptionalDouble.empty());
         }
 
+        if (IsometricRenders.orthographicSorting != null) {
+            this.orthographicTransparencySorting = IsometricRenders.orthographicSorting;
+        }
         //Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
 
         float currentRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
         double currentSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();
-        if (this.lastUsedRotation != currentRotation || this.lastUsedSlant != currentSlant) {
+        if ((this.lastUsedRotation != currentRotation || this.lastUsedSlant != currentSlant) && this.orthographicTransparencySorting != null) {
             this.lastUsedRotation = currentRotation;
             this.lastUsedSlant = currentSlant;
 
-            VertexSorting sortingMethod = this.getIsometricSortingMethod();
             for (MeshSection meshSection : subMeshes) {
-                meshSection.reSortTransparencyData(sortingMethod);
+                meshSection.reSortTransparencyData(this.orthographicTransparencySorting);
             }
         }
 
@@ -266,7 +271,7 @@ public class WorldBlockMesh {
      * an async executor
      */
     public synchronized void scheduleRebuild() {
-        if (this.buildFuture != null) return ;
+        if (this.buildFuture != null) return;
 
         this.buildProgress = 0;
         this.state = this.state != MeshState.NEW
@@ -274,17 +279,8 @@ public class WorldBlockMesh {
                 : MeshState.BUILDING;
 
         // todo: if i get around to properly adding iris shaders support, make sure mesh building isn't async when a shaderpack is active (and then look into shadow rendering)
-
-        this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync).whenComplete((unused, throwable) -> {
-            this.buildFuture = null;
-
-            if (throwable == null) {
-                state = MeshState.READY;
-            } else {
-                LOGGER.warn("World mesh building failed", throwable);
-                state = MeshState.CORRUPT;
-            }
-        });
+        this.orthographicTransparencySorting = IsometricRenders.orthographicSorting;
+        this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync);
     }
 
     private void buildMeshAsync() {
@@ -355,7 +351,8 @@ public class WorldBlockMesh {
             }
         }
 
-        VertexSorting isometricSortingMethod = getIsometricSortingMethod();
+        AtomicInteger subMeshesUploaded = new AtomicInteger();
+        Object lock = new Object();
 
         for (SubMesh data : subMeshes) {
 
@@ -422,9 +419,17 @@ public class WorldBlockMesh {
                     }
                 });
 
-                MeshSection meshSection = new MeshSection(bufferBuilderPack, builtMeshes, isometricSortingMethod);
+                MeshSection meshSection = new MeshSection(bufferBuilderPack, builtMeshes, this.orthographicTransparencySorting);
                 meshSection.upload();
                 this.subMeshes.add(meshSection);
+
+                synchronized (lock) {
+                    subMeshesUploaded.getAndIncrement();
+                    if (subMeshesUploaded.get() == subMeshes.size()) {
+                        this.buildFuture = null;
+                        this.state = MeshState.READY;
+                    }
+                }
             }));
 
         }
@@ -435,10 +440,6 @@ public class WorldBlockMesh {
     private VertexConsumer getOrCreateBuilder(SectionBufferBuilderPack bufferBuilderPack, Map<ChunkSectionLayer, BufferBuilder> builderStorage, ChunkSectionLayer layer) {
         return builderStorage.computeIfAbsent(layer, renderLayer ->
                 new BufferBuilder(bufferBuilderPack.buffer(layer), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK));
-    }
-
-    public VertexSorting getIsometricSortingMethod() {
-        return IsometricRenders.orthographicSorting;
     }
 
     public static class Builder {

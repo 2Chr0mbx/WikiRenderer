@@ -51,7 +51,7 @@ public class IsometricRenders implements ClientModInitializer {
 
 	public static Matrix4f renderableDrawProjectionMatrix = null;
 	public static GpuBufferSlice renderableDrawProjectionBuffer = null;
-    public static VertexSorting orthographicSorting = null;
+    public static BlockOrthographicSort orthographicSorting = null;
 
     @Override
     public void onInitializeClient() {
