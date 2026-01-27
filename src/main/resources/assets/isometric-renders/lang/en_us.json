@@ -165,6 +165,7 @@
   "gui.isometric-renders.exporter.idle": "Exporter Idle",
   "gui.isometric-renders.exporter.jobs": "Export Jobs: %s",
 
+  "gui.isometric-renders.using_derived_resolution": "Using Derived Resolution",
   "gui.isometric-renders.batch.remaining": "Remaining: %d/%d",
   "gui.isometric-renders.batch.start": "Start",
   "gui.isometric-renders.batch.reset": "Reset",

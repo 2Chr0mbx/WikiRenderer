@@ -5,12 +5,11 @@ import com.glisco.isometricrenders.render.RenderableDispatcher;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.FileIO;
 import com.glisco.isometricrenders.util.ParticleRestriction;
-import net.minecraft.client.renderer.MultiBufferSource;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BatchRenderable<R extends Renderable<?>> implements Renderable<BatchPropertyBundle> {

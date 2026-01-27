@@ -81,4 +81,8 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
         this.delegate.applyToViewMatrix(renderable, modelViewStack);
     }
 
+    @Override
+    public void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        IsometricUI.sectionHeader(container, "using_derived_resolution", true);
+    }
 }

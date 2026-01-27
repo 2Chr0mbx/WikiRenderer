@@ -88,7 +88,9 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
 
         Component customName = stack.getCustomName();
         if (customName != null) {
-            path = path.differentFileName(customName.getString());
+            String itemName = customName.getString();
+            String sanitizedItemName = itemName.replaceAll("[<>:\"/\\\\|?*\\x00-\\x1F]+", "_");
+            path = path.differentFileName(sanitizedItemName);
         }
 
         return path;
