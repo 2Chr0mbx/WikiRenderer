@@ -146,8 +146,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             this.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
         }
 
-        this.refreshEntities();
-
         if (!properties.hideEntities.get()) {
             this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
         }
@@ -156,7 +154,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
         this.drawParticles(standardStack.last().pose(), tickDelta);
 
-        super.drawSubmittedRenderFeatures();
     }
 
     private void drawBlockEntities(PoseStack standardStack, SubmitNodeStorage nodeStorage, CameraRenderState cameraRenderState, float tickDelta) {

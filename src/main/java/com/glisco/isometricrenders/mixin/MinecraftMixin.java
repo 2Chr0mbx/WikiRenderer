@@ -1,13 +1,19 @@
 package com.glisco.isometricrenders.mixin;
 
+import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.screen.ScreenSchedulerAndSaver;
 import com.glisco.isometricrenders.util.ClientRenderCallback;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
@@ -25,4 +31,10 @@ public class MinecraftMixin {
         ClientRenderCallback.EVENT.invoker().onRenderStart((Minecraft) (Object) this);
     }
 
+    @Inject(method = "getMainRenderTarget", at = @At("HEAD"), cancellable = true)
+    private void overrideMainRenderTarget(CallbackInfoReturnable<RenderTarget> cir) {
+        if (IsometricRenders.mainTargetOverride != null) {
+            cir.setReturnValue(IsometricRenders.mainTargetOverride);
+        }
+    }
 }

@@ -123,7 +123,7 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
 
     @Override
     public ParticleRestriction<?> getParticleRestriction() {
-        return ParticleRestriction.duringTick();
+        return ParticleRestriction.never();
     }
 
     @Override

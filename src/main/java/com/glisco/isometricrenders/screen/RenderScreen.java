@@ -14,6 +14,7 @@ import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.render.area.AreaPropertyBundle;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
+import com.glisco.isometricrenders.render.item.BlockStateRenderable;
 import com.glisco.isometricrenders.textures.TextureDataProvider;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
@@ -208,7 +209,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (this.renderable.getProperties() instanceof TickingPropertyBundle ticking) {
             IsometricUI.booleanControl(rightColumn, ticking.getTickProperty(), ticking.getOptionTranslationKey());
         }
-        if (this.renderable instanceof AreaRenderable) {
+        if (this.renderable instanceof AreaRenderable || this.renderable instanceof BlockStateRenderable) {
             IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
         }
 

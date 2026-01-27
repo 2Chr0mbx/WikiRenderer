@@ -132,7 +132,7 @@ public class WorldBlockMesh {
         if (IsometricRenders.orthographicSorting != null) {
             this.orthographicTransparencySorting = IsometricRenders.orthographicSorting;
         }
-        //Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
+        // Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
 
         float currentRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
         double currentSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();

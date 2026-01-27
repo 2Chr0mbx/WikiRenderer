@@ -116,7 +116,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 
         /* submit and render to vertexconsumers */
         particleBatch.submit(client.gameRenderer.getSubmitNodeStorage(), cameraRenderState);
-        drawSubmittedRenderFeatures();
+        this.drawSubmittedRenderFeatures();
         particleBatch.reset();
 
         ((CameraInvoker) camera).isometric$setRotation(previousYaw, previousPitch);

@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.feature.ParticleFeatureRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(ParticleFeatureRenderer.class)
+@Mixin(value = ParticleFeatureRenderer.class, priority = 2000)
 public class ParticleFeatureRendererMixin {
     @WrapOperation(
             method = "render",
