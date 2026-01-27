@@ -7,7 +7,6 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DestFactor;
-import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.platform.SourceFactor;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -36,25 +35,20 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
-import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
-import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldBlockMesh {
@@ -106,11 +100,11 @@ public class WorldBlockMesh {
 
         this.world = new MeshWorldOverrides(world, from, to);
 
-        this.cull = false;
+        this.cull = true;
         this.dimensions = AABB.encapsulatingFullBlocks(this.from, this.to);
 
-        this.lastUsedRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
-        this.lastUsedSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();
+        this.lastUsedRotation = Float.MAX_VALUE;
+        this.lastUsedSlant = Double.MAX_VALUE;
 
         this.scheduleRebuild();
     }
@@ -178,7 +172,7 @@ public class WorldBlockMesh {
             SectionBuffers buffers = bufferStorage.get(layer);
             if (buffers != null) {
                 if (infoIndex == -1) {
-                    infoIndex = list.size();
+                    infoIndex = 0;
                     list.add(new DynamicUniforms.ChunkSectionInfo(new Matrix4f(posMatrix), 0, 0, 0, 1.0F, width, height));
                 }
 
@@ -223,14 +217,6 @@ public class WorldBlockMesh {
     }
 
     /**
-     * Renamed to {@link #state()}
-     */
-    @Deprecated(forRemoval = true)
-    public MeshState getState() {
-        return this.state();
-    }
-
-    /**
      * How much of this mesh is built
      *
      * @return The build progress of this mesh
@@ -242,26 +228,6 @@ public class WorldBlockMesh {
     public HashMap<BlockPos, BlockEntity> getBlockEntities() {
         return blockEntities;
     }
-
-    /*
-    /**
-     * @return An object describing the entities and block
-     * entities in the area this mesh is covering, with positions
-     * relative to the mesh
-
-    public DynamicRenderInfo renderInfo() {
-        return this.renderInfo;
-    }
-    */
-    /*
-    /**
-     * Renamed to {@link #renderInfo()}
-
-    @Deprecated(forRemoval = true)
-    public DynamicRenderInfo getRenderInfo() {
-        return this.renderInfo();
-    }
-    */
 
     /**
      * @return The origin position of this mesh's area
@@ -276,24 +242,6 @@ public class WorldBlockMesh {
     public BlockPos endPos() {
         return this.to;
     }
-
-    /*
-    public boolean entitiesFrozen() {
-        return this.entitiesFrozen;
-    }
-
-    public void setFreezeEntities(boolean freezeEntities) {
-        this.freezeEntities = freezeEntities;
-    }
-
-    public boolean entitiesHidden() {
-        return this.entitiesHidden;
-    }
-
-    public void setHideEntities(boolean hideEntities) {
-        this.hideEntities = hideEntities;
-    }
-     */
 
     /**
      * @return The dimensions of this mesh's entire area
@@ -314,27 +262,11 @@ public class WorldBlockMesh {
     }
 
     /**
-     * Renamed to {@link #reset()}
-     */
-    @Deprecated(forRemoval = true)
-    public void clear() {
-        this.reset();
-    }
-
-    /**
      * Schedule a rebuild of this mesh on
-     * the main worker executor
+     * an async executor
      */
     public synchronized void scheduleRebuild() {
-        this.scheduleRebuild(Minecraft.getInstance());
-    }
-
-    /**
-     * Schedule a rebuild of this mesh,
-     * on the supplied executor
-     */
-    public synchronized CompletableFuture<Void> scheduleRebuild(Executor executor) {
-        if (this.buildFuture != null) return this.buildFuture;
+        if (this.buildFuture != null) return ;
 
         this.buildProgress = 0;
         this.state = this.state != MeshState.NEW
@@ -353,13 +285,9 @@ public class WorldBlockMesh {
                 state = MeshState.CORRUPT;
             }
         });
-
-        return this.buildFuture;
     }
 
     private void buildMeshAsync() {
-        //this.entitiesFrozen = this.freezeEntities;
-        //this.entitiesHidden = this.hideEntities;
         Minecraft.getInstance().executeBlocking((() -> {
             this.blockEntities.clear();
             this.subMeshes.forEach(MeshSection::close);
@@ -497,8 +425,6 @@ public class WorldBlockMesh {
                 MeshSection meshSection = new MeshSection(bufferBuilderPack, builtMeshes, isometricSortingMethod);
                 meshSection.upload();
                 this.subMeshes.add(meshSection);
-
-                // bufferBuilderPack.close();
             }));
 
         }
@@ -512,21 +438,8 @@ public class WorldBlockMesh {
     }
 
     public VertexSorting getIsometricSortingMethod() {
-        Vector3f virtualCamera = new Vector3f(0, 0, 1000);
-        virtualCamera.rotateX((float) Math.toRadians(-AreaPropertyBundle.INSTANCE.getUsedSlant()));
-        virtualCamera.rotateY((float) Math.toRadians(-AreaPropertyBundle.INSTANCE.getUsedRotation()));
-        return VertexSorting.byDistance(virtualCamera.x(), virtualCamera.y(), virtualCamera.z());
+        return IsometricRenders.orthographicSorting;
     }
-
-    /*
-    private VertexSorting createVertexSorting(SectionPos sectionPos) {
-        Camera camera = new Camera();
-        ((CameraInvoker) camera).isometric$setRotation(AreaPropertyBundle.INSTANCE.getUsedRotation() + 180f, (float) AreaPropertyBundle.INSTANCE.getUsedSlant());
-
-        Vec3 cameraPos = SectionRenderDispatcher.this.cameraPosition;
-        return VertexSorting.byDistance((float)(cameraPos.x - sectionPos.minBlockX()), (float)(cameraPos.y - sectionPos.minBlockY()), (float)(cameraPos.z - sectionPos.minBlockZ()));
-    }
-     */
 
     public static class Builder {
 
@@ -536,14 +449,10 @@ public class WorldBlockMesh {
         private final BlockPos end;
         private Set<MiniChunk> chunks = null;
 
-        public Builder(BlockAndTintGetter world, BlockPos origin, BlockPos end, TriFunction<Player, BlockPos, BlockPos, List<Entity>> entitySupplier) {
+        public Builder(BlockAndTintGetter world, BlockPos origin, BlockPos end) {
             this.world = world;
             this.origin = origin;
             this.end = end;
-        }
-
-        public Builder(Level world, BlockPos origin, BlockPos end) {
-            this(world, origin, end, (except, min, max) -> world.getEntities((Entity) null, AABB.encapsulatingFullBlocks(min, max), obj -> true));
         }
 
         public Builder(Level world, Set<MiniChunk> chunks, BlockPos origin, BlockPos end) {

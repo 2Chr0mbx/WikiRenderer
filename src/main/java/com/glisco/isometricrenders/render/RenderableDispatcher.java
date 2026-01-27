@@ -57,7 +57,7 @@ public class RenderableDispatcher {
 
         Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
         IsometricRenders.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
-
+        IsometricRenders.setSortingMethod(projectionMatrix, modelViewStack);
 
         renderable.setupLighting(modelViewStack);
         renderable.emitVerticesThenDraw(

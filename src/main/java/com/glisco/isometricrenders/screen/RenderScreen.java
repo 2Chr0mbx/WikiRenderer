@@ -87,6 +87,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     };
 
     public final Property<Boolean> tickParticles = Property.of(true);
+    private String customFileName = null;
 
     private Button exportAnimationButton;
 

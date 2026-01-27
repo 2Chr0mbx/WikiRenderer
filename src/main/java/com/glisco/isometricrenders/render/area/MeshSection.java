@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.SectionBuffers;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.util.EnumMap;
@@ -23,7 +24,7 @@ public class MeshSection implements AutoCloseable {
     private final SectionBufferBuilderPack bufferBuilderPack;
     private VertexSorting isometricSort;
 
-    public MeshSection(SectionBufferBuilderPack bufferBuilderPack, Map<ChunkSectionLayer, MeshData> builtMeshes, VertexSorting isometricSort) {
+    public MeshSection(SectionBufferBuilderPack bufferBuilderPack, Map<ChunkSectionLayer, MeshData> builtMeshes, @Nullable VertexSorting isometricSort) {
         this.bufferBuilderPack = bufferBuilderPack;
         this.builtMeshes = builtMeshes;
         this.isometricSort = isometricSort;

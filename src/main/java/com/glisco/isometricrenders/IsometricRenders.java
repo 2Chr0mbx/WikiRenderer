@@ -2,6 +2,7 @@ package com.glisco.isometricrenders;
 
 import com.glisco.isometricrenders.command.IsorenderCommand;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
+import com.glisco.isometricrenders.util.BlockOrthographicSort;
 import com.glisco.isometricrenders.util.FileIO;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.widget.AreaSelectionComponent;
@@ -10,6 +11,7 @@ import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexSorting;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Positioning;
@@ -25,6 +27,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +51,7 @@ public class IsometricRenders implements ClientModInitializer {
 
 	public static Matrix4f renderableDrawProjectionMatrix = null;
 	public static GpuBufferSlice renderableDrawProjectionBuffer = null;
+    public static VertexSorting orthographicSorting = null;
 
     @Override
     public void onInitializeClient() {
@@ -97,6 +101,10 @@ public class IsometricRenders implements ClientModInitializer {
 		inRenderableDraw = true;
     }
 
+    public static void setSortingMethod(Matrix4f projectionMatrix, Matrix4fStack modelViewStack) {
+        orthographicSorting = new BlockOrthographicSort(projectionMatrix, modelViewStack);
+    }
+
 	public static void endRenderableDraw() {
 		RenderSystem.setProjectionMatrix(prevProjectionMatrix, prevProjectionType);
 		prevProjectionType = null;
@@ -104,6 +112,7 @@ public class IsometricRenders implements ClientModInitializer {
 		renderableDrawProjectionMatrix = null;
 		renderableDrawProjectionBuffer = null;
 		inRenderableDraw = false;
+        orthographicSorting = null;
     }
 
     public static void beginRenderableTick() {
