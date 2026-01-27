@@ -64,13 +64,31 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
     }
 
     @Override
+    public float getUsedRotation() {
+        return this.spriteRendering.get() ? this.spriteRotation.get() : super.getUsedRotation();
+    }
+
+    @Override
     public double getUsedSlant() {
         return this.spriteRendering.get() ? spriteSlant.get() : super.getUsedSlant();
     }
 
     @Override
-    public float getUsedRotation() {
-        return this.spriteRendering.get() ? this.spriteRotation.get() : super.getUsedRotation();
+    public void modifyRotation(int amount) {
+        if (this.spriteRendering.get()) {
+            this.spriteRotation.modify(amount);
+        } else {
+            super.modifyRotation(amount);
+        }
+    }
+
+    @Override
+    public void modifySlant(double amount) {
+        if (this.spriteRendering.get()) {
+            this.spriteSlant.modify(amount);
+        } else {
+            super.modifySlant(amount);
+        }
     }
 
     @Override

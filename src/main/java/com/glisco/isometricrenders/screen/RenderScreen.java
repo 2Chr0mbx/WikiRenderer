@@ -72,10 +72,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_D, properties -> properties.xOffset.modify(1000));
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_A, properties -> properties.xOffset.modify(-1000));
 
-        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_UP, properties -> properties.slant.modify(-5D));
-        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_DOWN, properties -> properties.slant.modify(5D));
-        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_LEFT, properties -> properties.rotation.modify(-10));
-        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_RIGHT, properties -> properties.rotation.modify(10));
+        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_UP, properties -> properties.modifySlant(-5D));
+        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_DOWN, properties -> properties.modifySlant(5D));
+        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_LEFT, properties -> properties.modifyRotation(-10));
+        KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_RIGHT, properties -> properties.modifyRotation(10));
 
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_RIGHT_BRACKET, properties -> properties.scale.modify(10));
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_SLASH, properties -> properties.scale.modify(-10));
@@ -620,10 +620,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 properties.yOffset.modify((int) (50 * offsetY * yScaling));
                 return true;
             } else if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                properties.rotation.modify((int) (offsetX * 2));
+                properties.modifyRotation((int) (offsetX * 2));
                 return true;
             } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                properties.slant.modify(offsetY * 2);
+                properties.modifySlant(offsetY * 2);
                 return true;
             }
         }

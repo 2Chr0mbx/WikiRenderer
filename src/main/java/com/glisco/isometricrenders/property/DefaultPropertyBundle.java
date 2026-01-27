@@ -56,6 +56,22 @@ public class DefaultPropertyBundle implements PropertyBundle {
         this.exportResolution = exportResolution;
     }
 
+    public float getUsedRotation() {
+        return this.rotation.get() + rotationOffset;
+    }
+
+    public double getUsedSlant() {
+        return this.slant.get();
+    }
+
+    public void modifyRotation(int amount) {
+        this.rotation.modify(amount);
+    }
+
+    public void modifySlant(double amount) {
+        this.slant.modify(amount);
+    }
+
     @Override
     public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         IsometricUI.sectionHeader(container, "transform_options", false);
@@ -89,14 +105,6 @@ public class DefaultPropertyBundle implements PropertyBundle {
         modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
 
         this.updateAndApplyRotationOffset(modelViewStack);
-    }
-
-    public float getUsedRotation() {
-        return this.rotation.get() + rotationOffset;
-    }
-
-    public double getUsedSlant() {
-        return this.slant.get();
     }
 
     protected void updateAndApplyRotationOffset(Matrix4fStack modelViewStack) {

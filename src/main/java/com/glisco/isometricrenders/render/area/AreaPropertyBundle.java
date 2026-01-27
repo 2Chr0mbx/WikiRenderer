@@ -81,6 +81,59 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     @Override
+    public void setExportResolution(Renderable<?> renderable, int exportResolution) {
+        if (perPixel90DegreeRendering.get()) {
+            this.faceRenderingActualResolution = exportResolution;
+        } else {
+            super.setExportResolution(renderable, exportResolution);
+        }
+    }
+
+    @Override
+    public int getExportResolution(Renderable<?> renderable) {
+        if (this.perPixel90DegreeRendering.get()) {
+            return this.faceRenderingActualResolution;
+        } else {
+            return super.getExportResolution(renderable);
+        }
+    }
+
+    public int getPixelsPerBlockResolution() {
+        return pixelsPerBlockResolution;
+    }
+
+    public void setPixelsPerBlockResolution(int pixelsPerBlockResolution) {
+        this.pixelsPerBlockResolution = pixelsPerBlockResolution;
+    }
+
+    @Override
+    public float getUsedRotation() {
+        return this.perPixel90DegreeRendering.get() ? this.sideViewRotation.getRotationDegrees() : super.getUsedRotation();
+    }
+
+    @Override
+    public double getUsedSlant() {
+        return this.perPixel90DegreeRendering.get() ? this.sideViewSlant.getRotationDegrees() : super.getUsedSlant();
+    }
+
+    @Override
+    public void modifyRotation(int amount) {
+        if (this.perPixel90DegreeRendering.get()) return;
+        super.modifyRotation(amount);
+    }
+
+    @Override
+    public void modifySlant(double amount) {
+        if (this.perPixel90DegreeRendering.get()) return;
+        super.modifySlant(amount);
+    }
+
+    @Override
+    public String getOptionTranslationKey() {
+        return "block_animations";
+    }
+
+    @Override
     public void buildGuiControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         AreaRenderable renderable = (AreaRenderable) r;
         IsometricUI.sectionHeader(container, "transform_options", false);
@@ -205,32 +258,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     @Override
-    public void setExportResolution(Renderable<?> renderable, int exportResolution) {
-        if (perPixel90DegreeRendering.get()) {
-            this.faceRenderingActualResolution = exportResolution;
-        } else {
-            super.setExportResolution(renderable, exportResolution);
-        }
-    }
-
-    @Override
-    public int getExportResolution(Renderable<?> renderable) {
-        if (this.perPixel90DegreeRendering.get()) {
-            return this.faceRenderingActualResolution;
-        } else {
-            return super.getExportResolution(renderable);
-        }
-    }
-
-    public int getPixelsPerBlockResolution() {
-        return pixelsPerBlockResolution;
-    }
-
-    public void setPixelsPerBlockResolution(int pixelsPerBlockResolution) {
-        this.pixelsPerBlockResolution = pixelsPerBlockResolution;
-    }
-
-    @Override
     public void applyToViewMatrix(Renderable<?> r, Matrix4fStack modelViewStack) {
         AreaRenderable renderable = (AreaRenderable) r;
         AreaPropertyBundle properties = renderable.getProperties();
@@ -281,28 +308,5 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         }
 
         this.updateAndApplyRotationOffset(modelViewStack);
-    }
-
-    @Override
-    public float getUsedRotation() {
-        if (this.perPixel90DegreeRendering.get()) {
-            return this.sideViewRotation.getRotationDegrees();
-        } else {
-            return super.getUsedRotation();
-        }
-    }
-
-    @Override
-    public double getUsedSlant() {
-        if (this.perPixel90DegreeRendering.get()) {
-            return this.sideViewSlant.getRotationDegrees();
-        } else {
-            return super.getUsedSlant();
-        }
-    }
-
-    @Override
-    public String getOptionTranslationKey() {
-        return "block_animations";
     }
 }
