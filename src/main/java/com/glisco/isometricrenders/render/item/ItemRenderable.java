@@ -47,11 +47,6 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
     }
 
     @Override
-    public int getExportResolution() {
-        return super.getExportResolution();
-    }
-
-    @Override
     public void setupLighting(Matrix4f modelViewMatrix) {
         this.setupLighting(RENDER_STATE);
     }

@@ -18,7 +18,7 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle {
     }
 
     @Override
-    public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         IsometricUI.sectionHeader(container, "transform_options", false);
         IsometricUI.intControl(container, this.scale, "scale", 10);
     }

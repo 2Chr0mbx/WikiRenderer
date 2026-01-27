@@ -14,9 +14,6 @@ public class ScreenSchedulerAndSaver {
         } else {
             SCHEDULED_SCREEN = screen;
         }
-        // logic for my brain:
-        // - if opening render screen, if already in render screen, discard that render screen, unless its (somehow) reopening itself
-        // -  if opening saved screen, make sure not to discard it, therefore only discard if opening a new render screen
     }
 
     public static void setSavedScreen(RenderScreen screen) {

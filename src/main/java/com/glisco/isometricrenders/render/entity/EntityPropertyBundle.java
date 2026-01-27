@@ -92,9 +92,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
     }
 
     @Override
-    public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         IsometricUI.sectionHeader(container, "transform_options", false);
-        IsometricUI.booleanControl(container, spriteRendering, "sprite_rendering");
+        IsometricUI.booleanControl(container, this.spriteRendering, "sprite_rendering");
 
         this.spriteRendering.listen(((booleanProperty, value) -> {
             screen.guiRebuildScheduled = true;
@@ -104,18 +104,18 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             this.spriteSlant.set(0);
         }), false);
 
-        IsometricUI.intControl(container, scale, "scale", 10);
-        if (!spriteRendering.get()) {
-            IsometricUI.intControl(container, rotation, "rotation", 45);
-            IsometricUI.doubleControl(container, slant, "slant", 30);
-            IsometricUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+        IsometricUI.intControl(container, this.scale, "scale", 10);
+        if (!this.spriteRendering.get()) {
+            IsometricUI.intControl(container, this.rotation, "rotation", 45);
+            IsometricUI.doubleControl(container, this.slant, "slant", 30);
+            IsometricUI.intControl(container, this.rotationSpeed, "rotation_speed", 5);
         } else {
-            IsometricUI.intControl(container, spriteRotation, "rotation", 45);
-            IsometricUI.intControl(container, spriteSlant, "slant", 30);
+            IsometricUI.intControl(container, this.spriteRotation, "rotation", 45);
+            IsometricUI.intControl(container, this.spriteSlant, "slant", 30);
         }
 
         IsometricUI.sectionHeader(container, "presets", true);
-        if (!spriteRendering.get()) {
+        if (!this.spriteRendering.get()) {
             try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
                 builder.row.child(Components.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
@@ -139,27 +139,27 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
         IsometricUI.sectionHeader(container, "entity_data", true);
 
-        IsometricUI.booleanControl(container, useLiveEntity, "entity_data.use_live_entity");
+        IsometricUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
         this.useLiveEntity.listen(((booleanProperty, value) -> screen.guiRebuildScheduled = true), false);
 
-        if (useLiveEntity.get()) {
-            IsometricUI.booleanControl(container, freezePlayerArms, "entity_data.freeze_player_arms");
+        if (this.useLiveEntity.get()) {
+            IsometricUI.booleanControl(container, this.freezePlayerArms, "entity_data.freeze_player_arms");
         }
 
-        IsometricUI.intControl(container, yaw, "entity_data.yaw", 15);
-        IsometricUI.intControl(container, pitch, "entity_data.pitch", 5);
-        IsometricUI.intControl(container, entityRotation, "entity_data.rotation", 5);
+        IsometricUI.intControl(container, this.yaw, "entity_data.yaw", 15);
+        IsometricUI.intControl(container, this.pitch, "entity_data.pitch", 5);
+        IsometricUI.intControl(container, this.entityRotation, "entity_data.rotation", 5);
         if (renderable instanceof EntityRenderable entityRenderable) {
             Entity usedEntity = entityRenderable.getUsedEntity();
             if (usedEntity instanceof Player) {
-                IsometricUI.booleanControl(container, useSteveSkin, "entity_data.steve");
-                IsometricUI.booleanControl(container, forceSmallArms, "entity_data.small_arms");
+                IsometricUI.booleanControl(container, this.useSteveSkin, "entity_data.steve");
+                IsometricUI.booleanControl(container, this.forceSmallArms, "entity_data.small_arms");
             }
             if (usedEntity instanceof LivingEntity) {
-                IsometricUI.booleanControl(container, hideHeldItems, "entity_data.hide_held_items");
-                IsometricUI.booleanControl(container, hideArmor, "entity_data.hide_armor");
-                IsometricUI.booleanControl(container, hideEnchantments, "entity_data.hide_enchantments");
-                IsometricUI.booleanControl(container, invisible, "entity_data.invisible");
+                IsometricUI.booleanControl(container, this.hideHeldItems, "entity_data.hide_held_items");
+                IsometricUI.booleanControl(container, this.hideArmor, "entity_data.hide_armor");
+                IsometricUI.booleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments");
+                IsometricUI.booleanControl(container, this.invisible, "entity_data.invisible");
             }
         }
     }

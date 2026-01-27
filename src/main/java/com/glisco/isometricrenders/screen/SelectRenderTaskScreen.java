@@ -36,7 +36,7 @@ public class SelectRenderTaskScreen extends BaseOwoScreen<FlowLayout> {
                 .verticalAlignment(VerticalAlignment.CENTER);
 
         FlowLayout mainPanel = Containers.verticalFlow(Sizing.content(), Sizing.content());
-        mainPanel.surface(Surface.DARK_PANEL).padding(Insets.of(5)).horizontalAlignment(HorizontalAlignment.CENTER);
+        mainPanel.surface(Surface.PANEL).padding(Insets.of(5)).horizontalAlignment(HorizontalAlignment.CENTER);
 
         mainPanel.child(Components.label(Translate.gui("select_batch_operation")).shadow(true).margins(Insets.of(5).withBottom(10)));
 

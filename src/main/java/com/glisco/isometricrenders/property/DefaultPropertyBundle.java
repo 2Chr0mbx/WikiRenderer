@@ -73,7 +73,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     }
 
     @Override
-    public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         IsometricUI.sectionHeader(container, "transform_options", false);
         IsometricUI.intControl(container, scale, "scale", 10);
         IsometricUI.intControl(container, rotation, "rotation", 45);

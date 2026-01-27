@@ -1,6 +1,7 @@
 package com.glisco.isometricrenders.mixin;
 
 import com.glisco.isometricrenders.IsometricRenders;
+import com.glisco.isometricrenders.property.GlobalProperties;
 import com.glisco.isometricrenders.screen.RenderScreen;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import net.minecraft.client.Minecraft;
@@ -17,7 +18,7 @@ public class ParticleEngineMixin {
     @Inject(method = "add(Lnet/minecraft/client/particle/Particle;)V", at = @At("HEAD"), cancellable = true)
     public void stopParticles(Particle particle, CallbackInfo ci) {
         if (!(Minecraft.getInstance().screen instanceof RenderScreen screen)) return;
-        if (!screen.tickParticles.get()) {
+        if (!GlobalProperties.tickParticles.get()) {
             ci.cancel();
             return;
         }

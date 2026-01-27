@@ -13,6 +13,7 @@ public class GlobalProperties {
     public static Property<Boolean> overwriteLatest = Property.of(false);
 
     // Animation Options
+    public static Property<Boolean> tickParticles = Property.of(true);
     public static Property<Boolean> speedUpEnchantmentGlints = Property.of(false);
     public static IntProperty exportFramerate = IntProperty.of(25, 1, 300);
     public static IntProperty exportFrames = IntProperty.of(50, 1, 5000);

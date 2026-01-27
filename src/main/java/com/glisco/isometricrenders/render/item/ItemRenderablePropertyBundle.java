@@ -47,7 +47,7 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
     }
 
     @Override
-    public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         IsometricUI.sectionHeader(container, "transform_options", false);
         IsometricUI.intControl(container, scale, "scale", 10);
         IsometricUI.sectionHeader(container, "item_scale_warning_1", true);

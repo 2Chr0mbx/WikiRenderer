@@ -15,9 +15,11 @@ import org.joml.Matrix4fStack;
 
 public class BatchPropertyBundle extends DefaultPropertyBundle {
 
+    private final Renderable<?> renderable;
     private final PropertyBundle delegate;
 
-    public BatchPropertyBundle(PropertyBundle delegate) {
+    public BatchPropertyBundle(Renderable<?> renderable, PropertyBundle delegate) {
+        this.renderable = renderable;
         this.delegate = delegate;
 
         // A bit ugly, but we copy all property values from the delegate and hook
@@ -40,19 +42,19 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
 
     @Override
     public int getExportResolution(Renderable<?> renderable) {
-        return this.delegate.getExportResolution(renderable);
+        return this.delegate.getExportResolution(this.renderable);
     }
 
     @Override
     public void setExportResolution(Renderable<?> renderable, int exportResolution) {
-        this.delegate.setExportResolution(renderable, exportResolution);
+        this.delegate.setExportResolution(this.renderable, exportResolution);
     }
 
     @Override
-    public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         final BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
 
-        this.delegate.buildGuiControls(batchRenderable.currentDelegate, screen, container);
+        this.delegate.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
 
         IsometricUI.sectionHeader(container, "batch.controls", true);
         try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {

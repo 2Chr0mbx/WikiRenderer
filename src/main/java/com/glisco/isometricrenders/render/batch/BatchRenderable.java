@@ -32,7 +32,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
 
         this.contentType = ExportPathSpec.exportRoot().resolve("batches/")
                 .relativize(FileIO.next(ExportPathSpec.exportRoot().resolve("batches/" + source + "/"))).toString();
-        this.renderDelay = Math.max((int) Math.pow(getProperties().getExportResolution(this) / 1024f, 2) * 100L, 75);
+        this.renderDelay = Math.max((int) Math.pow(getProperties().getExportResolution(this.currentDelegate) / 1024f, 2) * 100L, 75);
     }
 
     public static <R extends Renderable<?>> BatchRenderable<?> of(String source, List<R> delegates) {
@@ -41,6 +41,11 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         } else {
             return new BatchRenderable<>(source, delegates);
         }
+    }
+
+    @Override
+    public int getExportResolution() {
+        return this.currentDelegate.getExportResolution();
     }
 
     @Override
@@ -59,7 +64,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
 
         if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && FileIO.taskCount() <= 5) {
             final ExportPathSpec exportPath = this.getExportPath();
-            RenderableDispatcher.drawIntoImage(this.currentDelegate, 0, getProperties().getExportResolution(this), this.shouldCrop(), null)
+            RenderableDispatcher.drawIntoImage(this.currentDelegate, 0, this.getExportResolution(), this.shouldCrop(), null)
                     .thenCompose(image -> FileIO.saveImage(image, exportPath).whenComplete((f, _t) -> image.close()));
 
             this.currentIndex++;
@@ -92,7 +97,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         this.batchActive = true;
         this.currentIndex = 0;
         this.lastRenderTime = System.currentTimeMillis();
-        this.renderDelay = Math.max((int) Math.pow(getProperties().getExportResolution(this) / 1024f, 2) * 100L, 75);
+        this.renderDelay = Math.max((int) Math.pow(this.getExportResolution() / 1024f, 2) * 100L, 75);
     }
 
     protected void reset() {
@@ -104,7 +109,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
 
     @Override
     public BatchPropertyBundle getProperties() {
-        return new BatchPropertyBundle(this.currentDelegate.getProperties());
+        return new BatchPropertyBundle(this.currentDelegate, this.currentDelegate.getProperties());
     }
 
     @Override

@@ -1,9 +1,6 @@
 package com.glisco.isometricrenders.render.area;
 
-import com.glisco.isometricrenders.property.DefaultCroppablePropertyBundle;
-import com.glisco.isometricrenders.property.IntProperty;
-import com.glisco.isometricrenders.property.Property;
-import com.glisco.isometricrenders.property.TickingPropertyBundle;
+import com.glisco.isometricrenders.property.*;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.render.area.side_view.MeshSideRotation;
 import com.glisco.isometricrenders.render.area.side_view.MeshSideSlant;
@@ -15,11 +12,15 @@ import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
+import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
 import org.joml.Matrix4fStack;
+
+import static com.glisco.isometricrenders.property.GlobalProperties.unsafe;
 
 public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
 
@@ -134,7 +135,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     @Override
-    public void buildGuiControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
+    public void buildMainGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         AreaRenderable renderable = (AreaRenderable) r;
         IsometricUI.sectionHeader(container, "transform_options", false);
 
@@ -255,6 +256,71 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         IsometricUI.booleanControl(container, hideArmor, "entity_data.hide_armor");
         IsometricUI.booleanControl(container, hideEnchantments, "entity_data.hide_enchantments");
         IsometricUI.booleanControl(container, invisible, "entity_data.invisible");
+    }
+
+    @Override
+    public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        TickingPropertyBundle.super.buildRenderOptionGUIControls(renderable, screen, container);
+        IsometricUI.booleanControl(container, this.emulateDaylight, "render_as_daytime");
+        IsometricUI.booleanControl(container, this.useFullBrightGamma, "full_bright");
+        IsometricUI.booleanControl(container, this.useNightVision, "night_vision");
+        IsometricUI.booleanControl(container, GlobalProperties.tickParticles, "particles");
+    }
+
+    @Override
+    public void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        if (!this.perPixel90DegreeRendering.get()) {
+            super.buildExportResolutionGUIControls(renderable, screen, container);
+        } else {
+            AreaRenderable areaRenderable = (AreaRenderable) renderable;
+
+            BlockPos cornerOne = areaRenderable.mesh.startPos();
+            BlockPos cornerTwo = areaRenderable.mesh.endPos();
+
+            int totalBlocksX = cornerTwo.getX() - cornerOne.getX() + 1;
+            int totalBlocksY = cornerTwo.getY() - cornerOne.getY() + 1;
+            int totalBlocksZ = cornerTwo.getZ() - cornerOne.getZ() + 1;
+            int highest = Math.max(totalBlocksY, Math.max(totalBlocksX, totalBlocksZ));
+
+            EditBox resolutionField = IsometricUI.labelledTextField(container, String.valueOf(this.getPixelsPerBlockResolution()), "block_resolution", Sizing.fixed(50));
+            resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
+            resolutionField.setResponder(s -> {
+                if (s.isBlank()) return;
+                int pixelsPerBlock = Integer.parseInt(s);
+
+                double bufferSize = highest * pixelsPerBlock;
+
+                if ((pixelsPerBlock < 4 || pixelsPerBlock > 256 || bufferSize > 16384) && !unsafe.get()) {
+                    screen.exportButton.active = false;
+                } else {
+                    if ((this.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && this.getPixelsPerBlockResolution() == 4)) {
+                        screen.guiRebuildScheduled = true;
+                    }
+                    this.setPixelsPerBlockResolution(pixelsPerBlock);
+                    screen.exportButton.active = true;
+                }
+            });
+
+            boolean allowMinimapExporting = this.areMinimapSettingsExportable();
+            if (allowMinimapExporting) {
+                IsometricUI.booleanControl(container, this.exportSideViewMinimapData, "export_minimap_data");
+            } else {
+                IsometricUI.sectionHeader(container, "minimap_disabled_notice_1", false);
+                IsometricUI.sectionHeader(container, "minimap_disabled_notice_2", false);
+            }
+
+            if (this.getPixelsPerBlockResolution() == 4) {
+                IsometricUI.booleanControl(container, this.halfPixelOffsetFor4x4, "half_pixel_offset_for_4x4");
+                IsometricUI.sectionHeader(container, "half_pixel_offset_for_4x4_note_1", true);
+                IsometricUI.sectionHeader(container, "half_pixel_offset_for_4x4_note_2", false);
+                IsometricUI.sectionHeader(container, "half_pixel_offset_for_4x4_note_3", false);
+            }
+        }
+    }
+
+    @Override
+    public boolean allowForRescaling() {
+        return !perPixel90DegreeRendering.get();
     }
 
     @Override

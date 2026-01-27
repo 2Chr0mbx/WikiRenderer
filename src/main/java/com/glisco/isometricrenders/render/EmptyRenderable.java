@@ -12,7 +12,7 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
 
     private static final PropertyBundle EMPTY_BUNDLE = new PropertyBundle() {
         @Override
-        public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {}
+        public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {}
 
         @Override
         public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {}

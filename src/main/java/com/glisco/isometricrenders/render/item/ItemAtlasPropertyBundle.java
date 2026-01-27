@@ -16,7 +16,7 @@ public class ItemAtlasPropertyBundle extends DefaultPropertyBundle {
     protected final IntProperty columns = IntProperty.of(20, 1, 500);
 
     @Override
-    public void buildGuiControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         IsometricUI.sectionHeader(container, "transform_options", false);
 
         IsometricUI.intControl(container, this.scale, "scale", 10);

@@ -14,7 +14,6 @@ import com.glisco.isometricrenders.render.TickingRenderable;
 import com.glisco.isometricrenders.render.area.AreaPropertyBundle;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
-import com.glisco.isometricrenders.render.item.BlockStateRenderable;
 import com.glisco.isometricrenders.textures.TextureDataProvider;
 import com.glisco.isometricrenders.util.*;
 import com.glisco.isometricrenders.widget.IOStateComponent;
@@ -22,6 +21,7 @@ import com.glisco.isometricrenders.widget.NotificationComponent;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.textures.GpuTexture;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
+import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -84,23 +84,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private final MemoryGuard memoryGuard = new MemoryGuard(0.75f);
 
-    public final Renderable<?> renderable;
-    private Consumer<File> exportCallback = (file) -> {
-    };
-
-    public final Property<Boolean> tickParticles = Property.of(true);
-    private String customFileName = "";
-
-    private Button exportAnimationButton;
-
-    private boolean drawOnlyBackground = false;
-    private boolean captureScheduled = false;
-    public boolean guiRebuildScheduled = false;
-
-    private int viewportBeginX;
-    private int viewportEndX;
-    private boolean hasBothColumns = false;
-
     private final FlowLayout notificationArea = Containers.verticalFlow(Sizing.content(), Sizing.content());
     private final IOStateComponent ioStateComponent = new IOStateComponent();
 
@@ -110,8 +93,23 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private final FlowLayout leftColumn = Containers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
     private final FlowLayout rightColumn = Containers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
 
+    public final Renderable<?> renderable;
+
+    private boolean drawOnlyBackground = false;
+    public boolean captureScheduled = false;
+    public boolean guiRebuildScheduled = false;
+
+    private int viewportBeginX;
+    private int viewportEndX;
+    private boolean hasBothColumns = false;
+
+    public ButtonComponent exportButton = null;
+    private Consumer<File> exportCallback = (file) -> {};
+    private Button exportAnimationButton;
     private final List<GpuTexture> renderedFrames = new ArrayList<>();
     private int remainingAnimationFrames;
+
+    private String customFileName = "";
     private EditBox fileNameField = null;
 
     public RenderScreen(Renderable<?> renderable) {
@@ -167,7 +165,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Override
     protected void build(FlowLayout rootComponent) {
         this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
-        boolean notFaceFrameAreaRendering = !(this.renderable instanceof AreaRenderable areaRenderable) || !areaRenderable.getProperties().perPixel90DegreeRendering.get();
 
         // todo maybe we dont need this line?
         ((ParticleEngineAccessor) Minecraft.getInstance().particleEngine).isometric$getParticles().clear();
@@ -176,184 +173,36 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.leftColumn.margins(Insets.top(20));
         this.rightColumn.margins(Insets.top(20));
 
-        rootComponent.child(leftAnchor.padding(Insets.left(10)).positioning(Positioning.absolute(0, 0)));
-        rootComponent.child(rightAnchor.padding(Insets.left(10)));
+        rootComponent.child(this.leftAnchor.padding(Insets.left(10)).positioning(Positioning.absolute(0, 0)));
+        rootComponent.child(this.rightAnchor.padding(Insets.left(10)));
 
-        rootComponent.child(
-                this.notificationArea.child(this.ioStateComponent.positioning(Positioning.relative(0, 100)))
-                        .horizontalAlignment(HorizontalAlignment.RIGHT)
-                        .verticalAlignment(VerticalAlignment.BOTTOM)
-                        .padding(Insets.of(5))
+        rootComponent.child(this.notificationArea.child(this.ioStateComponent.positioning(Positioning.relative(0, 100)))
+                .horizontalAlignment(HorizontalAlignment.RIGHT)
+                .verticalAlignment(VerticalAlignment.BOTTOM)
+                .padding(Insets.of(5))
         );
 
-        this.renderable.getProperties().buildGuiControls(this.renderable, this, this.leftColumn);
+        this.renderable.getProperties().buildMainGUIControls(this.renderable, this, this.leftColumn);
 
-        // ---
-
-        IsometricUI.sectionHeader(rightColumn, "render_options", false);
-
-        EditBox colorField = IsometricUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
-        colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
-        colorField.setValue("#" + String.format("%02X", backgroundColor >> 16) + String.format("%02X", backgroundColor >> 8 & 0xFF) + String.format("%02X", backgroundColor & 0xFF));
-        colorField.moveCursorToStart(false);
-        colorField.setResponder(s -> {
-            if (s.substring(1).length() < 6) return;
-            backgroundColor = Integer.parseInt(s.substring(1), 16);
-        });
-
-        if (renderable instanceof AreaRenderable areaRenderable) {
-            // put this here since being a render setting makes more sense
-            IsometricUI.booleanControl(rightColumn, areaRenderable.getProperties().emulateDaylight, "render_as_daytime");
-            IsometricUI.booleanControl(rightColumn, areaRenderable.getProperties().useFullBrightGamma, "full_bright");
-            IsometricUI.booleanControl(rightColumn, areaRenderable.getProperties().useNightVision, "night_vision");
-        }
-
-        if (this.renderable.getProperties() instanceof TickingPropertyBundle ticking) {
-            IsometricUI.booleanControl(rightColumn, ticking.getTickProperty(), ticking.getOptionTranslationKey());
-        }
-        if (this.renderable instanceof AreaRenderable || this.renderable instanceof BlockStateRenderable) {
-            IsometricUI.booleanControl(rightColumn, this.tickParticles, "particles");
-        }
-
+        IsometricUI.sectionHeader(this.rightColumn, "render_options", false);
+        this.renderable.getProperties().buildRenderOptionGUIControls(this.renderable, this, this.rightColumn);
         IsometricUI.sectionHeader(rightColumn, "export_options", true);
-        if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
-            Property<Boolean> cropProperty = croppablePropertyBundle.getCropProperty();
-            Property<ImageRescaleMode> resizeModeProperty = croppablePropertyBundle.getRescaleMode();
+        this.renderable.getProperties().buildExportOptionGUIControls(this.renderable, this, this.rightColumn);
+        this.renderable.getProperties().buildExportResolutionGUIControls(this.renderable, this, this.rightColumn);
 
-            IsometricUI.booleanControl(rightColumn, cropProperty, notFaceFrameAreaRendering ? "crop_and_rescale_" + resizeModeProperty.get().name().toLowerCase() : "crop");
-            cropProperty.listen((p, b) -> this.guiRebuildScheduled = true, false);
-
-            if (cropProperty.get() && notFaceFrameAreaRendering) {
-
-                rightColumn.child(Components.dropdown(Sizing.content())
-                        .button(Translate.gui("rescale_vertically"), b -> {
-                            resizeModeProperty.set(ImageRescaleMode.VERTICAL);
-                            this.guiRebuildScheduled = true;
-                        })
-                        .button(Translate.gui("rescale_horizontally"), b -> {
-                            resizeModeProperty.set(ImageRescaleMode.HORIZONTAL);
-                            this.guiRebuildScheduled = true;
-                        })
-                        .button(Translate.gui("dont_rescale"), b -> {
-                            resizeModeProperty.set(ImageRescaleMode.DISABLED);
-                            this.guiRebuildScheduled = true;
-                        })
-                        .closeWhenNotHovered(false)
-                        .padding(Insets.of(5))
-                        .surface(Surface.blur(10, 50))
-                );
-            }
-        }
-
-        IsometricUI.booleanControl(rightColumn, saveIntoRoot, "dump_into_root");
-        IsometricUI.booleanControl(rightColumn, overwriteLatest, "overwrite_latest");
-
-        final Button exportButton;
-        try (IsometricUI.RowBuilder builder = IsometricUI.row(rightColumn)) {
-            exportButton = Components.button(Translate.gui("export"), button -> this.captureScheduled = true);
-            builder.row.child(exportButton);
-
-            builder.row.child(Components.button(Translate.gui("open_folder"), button -> {
-                Util.getPlatform().openFile(this.renderable.getExportPath().resolveOffset().toFile());
-            }).margins(Insets.left(5)));
-        }
-
-        if (!GraphicsEnvironment.isHeadless()) {
-            rightColumn.child(Components.button(Translate.gui("export_to_clipboard"), button -> {
-                this.notify(Translate.gui("copied_to_clipboard"));
-
-                RenderableDispatcher.drawIntoImage(this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
-                        .whenComplete((image, t) -> {
-                            try (image) {
-                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                WritableByteChannel channel = Channels.newChannel(stream);
-
-                                ((NativeImageInvoker) (Object) image).isometric$write(channel);
-
-                                ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
-                                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
-                            } catch (IOException e) {
-                                IsometricRenders.LOGGER.error("mfw", e);
-                            }
-                        });
-            }).horizontalSizing(Sizing.fixed(75)));
-        }
-
-        if (notFaceFrameAreaRendering) {
-            String key = "renderer_resolution";
-            if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
-                if (croppablePropertyBundle.getCropProperty().get()) {
-                    key = "renderer_resolution_rescale_" + croppablePropertyBundle.getRescaleMode().get().name().toLowerCase();
-                }
-            }
-
-            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(renderable.getExportResolution()), key, Sizing.fixed(50));
-
-            resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
-            resolutionField.setResponder(s -> {
-                if (s.isBlank()) return;
-                int resolution = Integer.parseInt(s);
-
-                if ((resolution < 16 || resolution > 16384) && !unsafe.get()) {
-                    exportButton.active = false;
-                } else {
-                    renderable.getProperties().setExportResolution(renderable, resolution);
-                    exportButton.active = true;
-                }
-            });
-        } else {
-            AreaRenderable areaRenderable = (AreaRenderable) renderable;
-            AreaPropertyBundle properties = areaRenderable.getProperties();
-
-            BlockPos cornerOne = areaRenderable.mesh.startPos();
-            BlockPos cornerTwo = areaRenderable.mesh.endPos();
-
-            int totalBlocksX = cornerTwo.getX() - cornerOne.getX() + 1;
-            int totalBlocksY = cornerTwo.getY() - cornerOne.getY() + 1;
-            int totalBlocksZ = cornerTwo.getZ() - cornerOne.getZ() + 1;
-            int highest = Math.max(totalBlocksY, Math.max(totalBlocksX, totalBlocksZ));
-
-            EditBox resolutionField = IsometricUI.labelledTextField(rightColumn, String.valueOf(properties.getPixelsPerBlockResolution()), "block_resolution", Sizing.fixed(50));
-            resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
-            resolutionField.setResponder(s -> {
-                if (s.isBlank()) return;
-                int pixelsPerBlock = Integer.parseInt(s);
-
-                double bufferSize = highest * pixelsPerBlock;
-
-                if ((pixelsPerBlock < 4 || pixelsPerBlock > 256 || bufferSize > 16384) && !unsafe.get()) {
-                    exportButton.active = false;
-                } else {
-                    if ((properties.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && properties.getPixelsPerBlockResolution() == 4)) {
-                        guiRebuildScheduled = true;
-                    }
-                    properties.setPixelsPerBlockResolution(pixelsPerBlock);
-                    exportButton.active = true;
-                }
-            });
-
-            boolean allowMinimapExporting = properties.areMinimapSettingsExportable();
-            if (allowMinimapExporting) {
-                IsometricUI.booleanControl(rightColumn, properties.exportSideViewMinimapData, "export_minimap_data");
-            } else {
-                IsometricUI.sectionHeader(rightColumn, "minimap_disabled_notice_1", false);
-                IsometricUI.sectionHeader(rightColumn, "minimap_disabled_notice_2", false);
-            }
-
-            if (properties.getPixelsPerBlockResolution() == 4) {
-                IsometricUI.booleanControl(rightColumn, properties.halfPixelOffsetFor4x4, "half_pixel_offset_for_4x4");
-                IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_1", true);
-                IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_2", false);
-                IsometricUI.sectionHeader(rightColumn, "half_pixel_offset_for_4x4_note_3", false);
-            }
-        }
-
-        this.fileNameField = IsometricUI.labelledTextField(rightColumn, this.customFileName, "file_name", Sizing.fixed(120));
-        fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
-        fileNameField.setResponder(s -> this.customFileName = s);
+        this.fileNameField = IsometricUI.labelledTextField(this.rightColumn, this.customFileName, "file_name", Sizing.fixed(120));
+        this.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
+        this.fileNameField.setResponder(s -> this.customFileName = s);
 
         IsometricUI.sectionHeader(rightColumn, "animation_options", true);
+        this.buildFfmpegSection();
 
+        if (renderable instanceof TextureDataProvider textureProvider) {
+            textureProvider.buildTextureGrabSection(this, rightColumn);
+        }
+    }
+
+    private void buildFfmpegSection() {
         if (FFmpegDispatcher.wasFFmpegDetected()) {
             if (FFmpegDispatcher.ffmpegAvailable()) {
 
@@ -420,10 +269,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         } else {
             IsometricUI.sectionHeader(rightColumn, "detecting_ffmpeg", false);
             FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> this.guiRebuildScheduled = true);
-        }
-
-        if (renderable instanceof TextureDataProvider textureProvider) {
-            textureProvider.buildTextureGrabSection(this, rightColumn);
         }
     }
 
@@ -720,8 +565,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.renderedFrames.forEach(GpuTexture::close);
         this.renderedFrames.clear();
         this.remainingAnimationFrames = 0;
-        this.exportAnimationButton.active = true;
-        this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
+        if (this.exportAnimationButton != null) {
+            this.exportAnimationButton.active = true;
+            this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
+        }
     }
 
     private void drawFramingHint(GuiGraphics context) {

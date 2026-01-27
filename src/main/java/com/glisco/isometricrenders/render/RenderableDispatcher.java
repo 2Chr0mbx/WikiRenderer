@@ -7,8 +7,8 @@ import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
 import com.glisco.isometricrenders.util.ImageCropper;
 import com.glisco.isometricrenders.util.ImageRescaleMode;
-import com.glisco.isometricrenders.util.RenderTargetUtils;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -155,7 +155,7 @@ public class RenderableDispatcher {
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
         IsometricRenders.mainTargetOverride = null;
-        GpuTexture texture = RenderTargetUtils.cloneColorAttachment(target);
+        GpuTexture texture = cloneColorAttachment(target);
 
         // Release depth attachment and FBO to save on VRAM - we only need
         // the color attachment texture to later turn into an image
@@ -212,5 +212,18 @@ public class RenderableDispatcher {
         }, 0);
 
         return future;
+    }
+
+    private static GpuTexture cloneColorAttachment(RenderTarget renderTarget) {
+        GpuTexture original = renderTarget.getColorTexture();
+        assert original != null;
+
+        GpuTexture copy = RenderSystem.getDevice().createTexture(() -> "[IsometricRenders] Copy of: " + original.getLabel(),
+                GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT,
+                TextureFormat.RGBA8, renderTarget.width, renderTarget.height, 1, 1);
+
+        RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(original, copy, 0, 0, 0, 0, 0, renderTarget.width, renderTarget.height);
+
+        return copy;
     }
 }
