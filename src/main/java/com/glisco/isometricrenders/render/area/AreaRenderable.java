@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.object.armorstand.ArmorStandModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GlobalSettingsUniform;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -31,6 +32,7 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
@@ -148,8 +150,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         this.refreshEntities();
 
         if (!properties.hideEntities.get()) {
-            // if frozen dont use a tick delta, since that
-            this.drawEntities(cameraRenderState, this.entitiesFrozen ? tickDelta : tickDelta, standardStack, nodeStorage);
+            this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
         }
 
         Vec3 diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
@@ -205,8 +206,23 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             ClientLevel level = Minecraft.getInstance().level;
             assert level != null;
             BlockPos start = mesh.startPos();
-            BlockPos end = mesh.endPos();
-            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-1, -1, -1), end.offset(1, 1, 1)), e -> true);
+            BlockPos end = mesh.endPos().offset(1, 1, 1);
+            AABB areaBoundingBox = new AABB(start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
+            // without doing an offset below,
+
+            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), e -> {
+                AABB entityBounds = e.getBoundingBox();
+
+                if (e instanceof ArmorStand stand && stand.isMarker()) {
+                    // visible player head item - basically just offset the entity bounding box by the height, otherwise it's the base and not head
+                    entityBounds = EntityType.ARMOR_STAND.getDimensions().makeBoundingBox(stand.position());
+                }
+
+                // more accurate check i'd say
+                return  entityBounds.intersects(areaBoundingBox);
+            });
+
+            // System.out.println("armor stands found = " + armorStandsFound.get());
         }
 
         this.entities.removeIf(Entity::isRemoved);

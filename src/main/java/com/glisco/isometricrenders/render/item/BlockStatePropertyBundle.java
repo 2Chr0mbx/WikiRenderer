@@ -15,7 +15,7 @@ public class BlockStatePropertyBundle extends DefaultCroppablePropertyBundle imp
 
     @Override
     public String getOptionTranslationKey() {
-        return "animated_blocks";
+        return "block_animations";
     }
 
     @Override
