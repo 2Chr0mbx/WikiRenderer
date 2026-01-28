@@ -301,8 +301,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         matrices.mulPose(Axis.YP.rotationDegrees(-180));
         matrices.translate(0, -verticalOffset, 0);
         matrices.popPose();
-
-        this.drawParticles(matrices.last().pose(), tickDelta);
     }
 
     @Override
