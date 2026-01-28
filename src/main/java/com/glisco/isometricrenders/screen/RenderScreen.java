@@ -107,6 +107,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public RenderScreen(Renderable<?> renderable) {
         this.renderable = renderable;
         this.memoryGuard.update();
+
+        String defaultCustomFileName = renderable.getDefaultCustomFileName();
+        if (defaultCustomFileName != null) {
+            this.customFileName = defaultCustomFileName;
+        }
     }
 
     @Override

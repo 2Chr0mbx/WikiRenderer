@@ -7,6 +7,7 @@ import com.glisco.isometricrenders.util.FileIO;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
@@ -90,6 +91,11 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     @Override
     public ParticleRestriction<?> getParticleRestriction() {
         return this.currentDelegate.getParticleRestriction();
+    }
+
+    @Override
+    public @Nullable String getDefaultCustomFileName() {
+        return null;
     }
 
     protected void start() {

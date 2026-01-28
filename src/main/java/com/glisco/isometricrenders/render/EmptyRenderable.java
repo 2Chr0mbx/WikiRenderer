@@ -6,6 +6,7 @@ import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.renderer.MultiBufferSource;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
 public class EmptyRenderable implements Renderable<PropertyBundle> {
@@ -24,6 +25,8 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
 
         @Override
         public void setExportResolution(Renderable<?> renderable, int resolution) {}
+
+
     };
 
     @Override
@@ -40,5 +43,10 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
     @Override
     public ExportPathSpec getExportPath() {
         return ExportPathSpec.of("", "empty");
+    }
+
+    @Override
+    public @Nullable String getDefaultCustomFileName() {
+        return null;
     }
 }

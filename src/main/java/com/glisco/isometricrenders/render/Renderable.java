@@ -6,6 +6,7 @@ import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.mojang.blaze3d.vertex.PoseStack;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
@@ -32,6 +33,9 @@ public interface Renderable<P extends PropertyBundle> {
     P getProperties();
 
     ExportPathSpec getExportPath();
+
+    @Nullable
+    String getDefaultCustomFileName();
 
     default int getExportResolution() {
         return getProperties().getExportResolution(this);

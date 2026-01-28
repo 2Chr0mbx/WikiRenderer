@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.state.ParticlesRenderState;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
@@ -64,6 +65,11 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
         ((LightTextureAccessor) lightTexture).isometric$setUpdateLightTexture(true);
         lightTexture.updateLightTexture(1.0F);
+    }
+
+    @Override
+    public @Nullable String getDefaultCustomFileName() {
+        return null;
     }
 
     @Override

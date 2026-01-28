@@ -1,34 +1,27 @@
 package com.glisco.isometricrenders.render.item;
 
 import com.glisco.isometricrenders.mixin.access.ItemStackRenderStateAccessor;
-import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.textures.SkinGrabber;
 import com.glisco.isometricrenders.textures.TextureDataProvider;
 import com.glisco.isometricrenders.util.ExportPathSpec;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.Std140Builder;
-import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.registries.BuiltInRegistries;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
-import org.joml.Vector3f;
-import org.lwjgl.system.MemoryStack;
 
-import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBundle> implements TextureDataProvider {
 
@@ -81,20 +74,22 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
 
     @Override
     public ExportPathSpec getExportPath() {
-        ExportPathSpec path = ExportPathSpec.ofIdentified(
+        return ExportPathSpec.ofIdentified(
                 BuiltInRegistries.ITEM.getKey(this.stack.getItem()),
                 "item"
         );
+    }
 
-        Component customName = stack.getCustomName();
-        if (customName != null) {
-            String itemName = customName.getString();
-            String sanitizedItemName = itemName.replaceAll("[<>:\"/\\\\|?*\\x00-\\x1F]+", "_");
-            path = path.differentFileName(sanitizedItemName);
+    @Override
+    public @Nullable String getDefaultCustomFileName() {
+        Component customName = stack.getDisplayName();
+        String itemName = customName.getString();
+        String sanitizedName = itemName.replaceAll("[<>:\"/\\\\|?*\\x00-\\x1F]+", "_");
+        if (itemName.startsWith("[") && itemName.endsWith("]")) {
+            // idk why this is how it does it
+            sanitizedName = sanitizedName.substring(1, sanitizedName.length() - 1);
         }
-
-        return path;
-
+        return sanitizedName;
     }
 
     @Override
