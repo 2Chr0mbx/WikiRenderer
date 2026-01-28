@@ -80,7 +80,6 @@ public class RenderableDispatcher {
         ((LightTextureAccessor) lightTexture).isometric$setUpdateLightTexture(true);
         lightTexture.updateLightTexture(1.0F);
     }
-
     /**
      * Directly draws the given renderable into a {@link NativeImage} at the given resolution.
      * This method is essentially just a shorthand for {@code copyFramebufferIntoImage(drawIntoTexture(renderable, size))}
@@ -90,6 +89,18 @@ public class RenderableDispatcher {
      * @return The created image
      */
     public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
+        return drawIntoImage(renderable, tickDelta, size, size, 1, crop, calibrationDataCallback);
+    }
+
+    /**
+     * Directly draws the given renderable into a {@link NativeImage} at the given resolution.
+     * This method is essentially just a shorthand for {@code copyFramebufferIntoImage(drawIntoTexture(renderable, size))}
+     *
+     * @param renderable The renderable to draw
+     * @param size       The resolution to render at
+     * @return The created image
+     */
+    public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, int targetSize, int iterations, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
         GpuTexture texture = drawIntoTexture(renderable, tickDelta, size);
         CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).whenComplete((i, t) -> texture.close());
 
@@ -108,27 +119,31 @@ public class RenderableDispatcher {
                 }
 
                 return nativeImage;
-            }).thenCompose(i -> {
+            }).thenCompose(croppedImage -> {
                 ImageRescaleMode rescaleMode = ((CroppablePropertyBundle) renderable.getProperties()).getRescaleMode().get();
                 int axisSize = switch (rescaleMode) {
-                    case VERTICAL -> i.getHeight();
-                    case HORIZONTAL -> i.getWidth();
+                    case VERTICAL -> croppedImage.getHeight();
+                    case HORIZONTAL -> croppedImage.getWidth();
                     case DISABLED -> 0;
                 };
 
+                // todo: make this less arbitrary
+                boolean smallEnoughToRescaleAgain = targetSize <= 1200 && iterations < 5; // kinda arbitary number
+
                 if (rescaleMode == ImageRescaleMode.DISABLED
-                    || axisSize >= size
+                    || axisSize == targetSize
+                    || (!smallEnoughToRescaleAgain && axisSize > targetSize)
                     || (renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get())) {
-                    return CompletableFuture.completedFuture(i);
+                    return CompletableFuture.completedFuture(croppedImage);
                 } else {
                     double multiplier = (double) size / (double) axisSize;
-                    int newSize = (int) Math.ceil(size * multiplier);
+                    int newSize = (int) Math.ceil(targetSize * multiplier);
 
                     int maxTextureSize = RenderSystem.getDevice().getMaxTextureSize();
                     if (newSize > maxTextureSize) {
                         newSize = maxTextureSize;
                     }
-                    return drawIntoImage(renderable, tickDelta, newSize, false, null).thenApply(ImageCropper::cropTransparent);
+                    return drawIntoImage(renderable, tickDelta, newSize, targetSize, iterations + 1, smallEnoughToRescaleAgain, null).thenApply(ImageCropper::cropTransparent);
                 }
             });
         }
