@@ -279,7 +279,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             List<Runnable> toggleCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {
-                EntityRenderer<?, ?> renderer = renderDispatcher.getRenderer(entity);
+                EntityRenderer<?, ?> renderer = renderDispatcher.getRenderer(state);
                 if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
                     EntityModel<?> model = livingEntityRenderer.getModel();
                     ModelPart root = model.root();
