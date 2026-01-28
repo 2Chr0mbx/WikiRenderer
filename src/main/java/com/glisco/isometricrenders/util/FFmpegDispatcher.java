@@ -71,8 +71,9 @@ public class FFmpegDispatcher {
         boolean hasCrop = cropFilter != null && !cropFilter.isBlank();
         if (format == Format.GIF) {
             args.add("-filter_complex");
-            String filterChain = hasCrop ? "[0:v]" + cropFilter + ",split[v1][v2];" : "[0:v]split[v1][v2];";
-            args.add(filterChain + "[v1]palettegen=reserve_transparent=1:stats_mode=full[p];" + "[v2][p]paletteuse=alpha_threshold=255:dither=bayer:bayer_scale=5");
+            String chain1 = "format=rgba,split[split1][split2];[split1]drawbox=c=white@0.2:t=fill[bg];[bg][split2]overlay,";
+            String chain2 = hasCrop ? "[0:v]" + cropFilter + "," + chain1 + "split[v1][v2];" : "[0:v]" + chain1 + "split[v1][v2];";
+            args.add(chain2 + "[v1]palettegen=reserve_transparent=1:stats_mode=full[p];[v2][p]paletteuse=alpha_threshold=1:dither=bayer:bayer_scale=5");
         } else if (hasCrop) {
             // standard cropping for other formats
             args.add("-vf");
