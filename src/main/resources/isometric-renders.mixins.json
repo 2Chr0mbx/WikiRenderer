@@ -14,8 +14,6 @@
     "DefaultPlayerSkinMixin",
     "EquipmentLayerRendererMixin",
     "GLDebugMixin",
-    "GuiGraphicsMixin",
-    "GuiRendererMixin",
     "HumanoidArmorLayerMixin",
     "LevelRendererMixin",
     "LightTextureMixin",
@@ -41,12 +39,14 @@
     "access.ModelPartAccessor",
     "access.NativeImageInvoker",
     "access.ParticleEngineAccessor",
-    "access.WorldCoordinatesAccessor"
+    "access.WorldCoordinatesAccessor",
+    "access.MannequinAccessor",
+    "ui.GlyphRenderStateMixin",
+    "ui.GuiElementRenderStateMixin",
+    "ui.GuiRendererMixin",
+    "ui.GuiTextRenderStateMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "access.MannequinAccessor"
-  ]
+  }
 }

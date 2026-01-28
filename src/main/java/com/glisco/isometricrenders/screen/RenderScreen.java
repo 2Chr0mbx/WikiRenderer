@@ -417,6 +417,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     @Override
+    protected void drawComponentTooltip(GuiGraphics drawContext, int mouseX, int mouseY, float tickDelta) {
+        IsometricRenders.forceGuiDepthTesting = false;
+        super.drawComponentTooltip(drawContext, mouseX, mouseY, tickDelta);
+        IsometricRenders.forceGuiDepthTesting = true;
+    }
+
+    @Override
     public void tick() {
         if (this.minecraft.level.getGameTime() % 40 == 0) {
             this.memoryGuard.update();

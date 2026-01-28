@@ -1,18 +1,26 @@
-package com.glisco.isometricrenders.mixin;
+package com.glisco.isometricrenders.mixin.ui;
 
 import com.glisco.isometricrenders.IsometricRenders;
+import com.glisco.isometricrenders.util.ModifiedDepthPipelineRenderState;
+import com.glisco.isometricrenders.util.RenderPipelineOverrider;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.render.state.GuiElementRenderState;
+import net.minecraft.client.gui.render.state.GuiRenderState;
+import net.minecraft.client.gui.render.state.GuiTextRenderState;
 import net.minecraft.client.renderer.DynamicUniforms;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.gui.render.GuiRenderer;
 import org.joml.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+
+import java.util.function.Consumer;
 
 // note: disabling this breaks tooltip rendering, maybe more idk
 @Mixin(GuiRenderer.class)
@@ -42,5 +50,37 @@ public class GuiRendererMixin {
         if (IsometricRenders.inRenderableDraw)
             original.call(IsometricRenders.renderableDrawProjectionBuffer, ProjectionType.ORTHOGRAPHIC);
         else original.call(projectionMatrixBuffer, projectionType);
+    }
+
+    @WrapOperation(
+            method = "addElementToMesh",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/state/GuiElementRenderState;pipeline()Lcom/mojang/blaze3d/pipeline/RenderPipeline;")
+    )
+    private RenderPipeline overridePipeline(GuiElementRenderState renderStateInstance, Operation<RenderPipeline> original) {
+        RenderPipeline pipeline = original.call(renderStateInstance);
+
+        if (renderStateInstance instanceof ModifiedDepthPipelineRenderState bypass && bypass.isometric$shouldUseDepthTesting()) {
+            return RenderPipelineOverrider.getDepthTestingVariant(pipeline);
+        }
+
+        return pipeline;
+    }
+
+    @WrapOperation(
+            method = "prepareText",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/state/GuiRenderState;forEachText(Ljava/util/function/Consumer;)V")
+    )
+    private void iris$wrapTextIteration(GuiRenderState instance, Consumer<GuiTextRenderState> originalAction, Operation<Void> original) {
+        Consumer<GuiTextRenderState> wrappedAction = (guiTextRenderState) -> {
+            IsometricRenders.currentlyProcessingDepthTestText = ((ModifiedDepthPipelineRenderState) (Object) guiTextRenderState).isometric$shouldUseDepthTesting();
+
+            try {
+                originalAction.accept(guiTextRenderState);
+            } finally {
+                IsometricRenders.currentlyProcessingDepthTestText = false;
+            }
+        };
+
+        original.call(instance, wrappedAction);
     }
 }

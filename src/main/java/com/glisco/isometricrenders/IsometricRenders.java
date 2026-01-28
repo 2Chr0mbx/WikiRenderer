@@ -39,6 +39,7 @@ public class IsometricRenders implements ClientModInitializer {
 
     public static ParticleRestriction<?> particleRestriction = ParticleRestriction.always();
 
+    public static boolean currentlyProcessingDepthTestText;
     public static boolean forceGuiDepthTesting = true;
     public static boolean inSpriteEntityDraw = false;
     public static boolean inRenderableDraw = false;
