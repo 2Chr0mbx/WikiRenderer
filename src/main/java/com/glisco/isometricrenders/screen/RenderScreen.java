@@ -1,7 +1,6 @@
 package com.glisco.isometricrenders.screen;
 
 import com.glisco.isometricrenders.IsometricRenders;
-import com.glisco.isometricrenders.mixin.access.NativeImageInvoker;
 import com.glisco.isometricrenders.mixin.access.ParticleEngineAccessor;
 import com.glisco.isometricrenders.property.CroppablePropertyBundle;
 import com.glisco.isometricrenders.property.DefaultPropertyBundle;
@@ -11,7 +10,6 @@ import com.glisco.isometricrenders.render.DefaultRenderable;
 import com.glisco.isometricrenders.render.Renderable;
 import com.glisco.isometricrenders.render.RenderableDispatcher;
 import com.glisco.isometricrenders.render.TickingRenderable;
-import com.glisco.isometricrenders.render.area.AreaPropertyBundle;
 import com.glisco.isometricrenders.render.area.AreaRenderable;
 import com.glisco.isometricrenders.render.area.side_view.MinimapCalibratorData;
 import com.glisco.isometricrenders.textures.TextureDataProvider;
@@ -26,8 +24,6 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
-import io.wispforest.owo.ui.core.Color;
-import io.wispforest.owo.ui.core.Insets;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.CameraType;
@@ -39,7 +35,6 @@ import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.DyeColor;
@@ -47,13 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
-import java.awt.*;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -104,7 +93,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private boolean hasBothColumns = false;
 
     public ButtonComponent exportButton = null;
-    private Consumer<File> exportCallback = (file) -> {};
+    private Consumer<File> exportCallback = (file) -> {
+    };
     private Button exportAnimationButton;
     private final List<GpuTexture> renderedFrames = new ArrayList<>();
     private int remainingAnimationFrames;
@@ -272,7 +262,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-
         if (this.guiRebuildScheduled) {
             this.guiRebuildScheduled = false;
 
@@ -281,12 +270,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.leftColumn.clearChildren();
 
             this.rebuildWidgets();
-        }
-
-        if (this.drawOnlyBackground) {
-            context.fill(0, 0, this.width, this.height, backgroundColor | 255 << 24);
-        } else {
-            this.renderTransparentBackground(context);
         }
 
         Window window = minecraft.getWindow();
@@ -302,6 +285,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0)
         );
 
+        if (this.drawOnlyBackground) {
+            context.fill(0, 0, this.width, this.height, backgroundColor | 255 << 24);
+        } else {
+            this.renderTransparentBackground(context);
+        }
+
+        IsometricRenders.forceGuiDepthTesting = false;
         if (!this.drawOnlyBackground && this.uiAdapter != null) {
             drawFramingHint(context);
             drawGuiBackground(context);
@@ -423,6 +413,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         });
             }
         }
+        IsometricRenders.forceGuiDepthTesting = true;
     }
 
     @Override

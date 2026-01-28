@@ -61,4 +61,9 @@ public class NotificationComponent extends FlowLayout {
             this.queue(() -> this.parent.removeChild(this));
         }
     }
+
+    @Override
+    public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
+        super.draw(context, mouseX, mouseY, partialTicks, delta);
+    }
 }
