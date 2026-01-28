@@ -47,7 +47,7 @@
   "gui.isometric-renders.half_pixel_offset_for_4x4_note_2": "like fence lines not rendering,",
   "gui.isometric-renders.half_pixel_offset_for_4x4_note_3": "but may impact sharpness.",
   "gui.isometric-renders.reset_rotation_and_slant": "North & Above",
-  "gui.isometric-renders.per_pixel_90_degree_rendering": "Toggle Pixel-Precision Face Rendering",
+  "gui.isometric-renders.per_pixel_90_degree_rendering": "Pixel-Precision Face Rendering",
   "gui.isometric-renders.export_minimap_data": "Export Minimap Data",
 
   "gui.isometric-renders.item_scale_warning_1": "Note: It's recommended to",

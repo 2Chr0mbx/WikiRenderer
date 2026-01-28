@@ -46,7 +46,7 @@ public class IsometricUI {
     public static void intControl(FlowLayout container, IntProperty property, String name, int step) {
         try (RowBuilder builder = row(container)) {
             builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(19), property));
-            builder.row.child(new PropertySliderComponent(Sizing.fill(80), Translate.gui(name), step, property).margins(Insets.left(5)));
+            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.left(5)));
         }
     }
 
@@ -74,7 +74,7 @@ public class IsometricUI {
     public static void doubleControl(FlowLayout container, DoubleProperty property, String name, int step) {
         try (RowBuilder builder = row(container)) {
             builder.row.child(new DoublePropertyTextFieldComponent(Sizing.fill(19), property));
-            builder.row.child(new PropertySliderComponent(Sizing.fill(80), Translate.gui(name), step, property).margins(Insets.left(5)));
+            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.left(5)));
         }
     }
 

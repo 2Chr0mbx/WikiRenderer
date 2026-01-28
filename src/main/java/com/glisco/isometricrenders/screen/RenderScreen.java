@@ -126,7 +126,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.hasBothColumns = false;
 
             this.leftAnchor.horizontalSizing(Sizing.fixed(0)).verticalSizing(Sizing.fixed(this.height));
-            this.rightAnchor.positioning(Positioning.absolute(viewportEndX, 0)).horizontalSizing(Sizing.fixed(this.width - this.viewportEndX)).verticalSizing(Sizing.fixed(this.height));
+            this.rightAnchor.positioning(Positioning.absolute(viewportEndX + 5, 0)).horizontalSizing(Sizing.fixed(this.width - this.viewportEndX - 5)).verticalSizing(Sizing.fixed(this.height));
 
             this.rightAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10))
                     .child(leftColumn)
@@ -568,10 +568,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     private void drawFramingHint(GuiGraphics context) {
-        context.fill(viewportBeginX + 5, 0, viewportEndX - 5, 5, 0x90000000);
-        context.fill(viewportBeginX + 5, height - 5, viewportEndX - 5, height, 0x90000000);
-        context.fill(viewportBeginX, 0, viewportBeginX + 5, height, 0x90000000);
-        context.fill(viewportEndX - 5, 0, viewportEndX, height, 0x90000000);
+        context.fill(viewportBeginX, 0, viewportEndX, 0, 0x90000000);
+        context.fill(viewportBeginX, height, viewportEndX, height, 0x90000000);
+        context.fill(viewportBeginX, 0, viewportBeginX, height, 0x90000000);
+        context.fill(viewportEndX, 0, viewportEndX, height, 0x90000000);
     }
 
     private void drawGuiBackground(GuiGraphics context) {
