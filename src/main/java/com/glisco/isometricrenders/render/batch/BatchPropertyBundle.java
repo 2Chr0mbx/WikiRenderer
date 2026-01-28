@@ -78,7 +78,7 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
 
     @Override
     public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
-        this.delegate.applyToViewMatrix(renderable, modelViewStack);
+        this.delegate.applyToViewMatrix(this.renderable, modelViewStack);
     }
 
     @Override

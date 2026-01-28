@@ -2,6 +2,7 @@
   "key.category.isometric-renders.keybinds": "Isometric Renders",
   "key.isometric-renders.area_select": "Select Area",
   "key.isometric-renders.render_hovered_item_or_viewed_entity": "Render Hovered Item / Viewed Entity",
+  "key.isometric-renders.batch_render_inventory": "Render Inventory Items",
 
   "gui.isometric-renders.animations": "Tick Animations",
   "gui.isometric-renders.block_animations": "Tick Block Animations",
