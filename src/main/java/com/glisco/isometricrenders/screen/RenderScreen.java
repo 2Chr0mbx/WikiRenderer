@@ -23,6 +23,7 @@ import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.core.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -101,6 +102,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private String customFileName = "";
     private EditBox fileNameField = null;
+    private double[] scrollOffsetData = null;
 
     public RenderScreen(Renderable<?> renderable) {
         this.renderable = renderable;
@@ -117,6 +119,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.viewportBeginX = (int) ((this.width - this.height) * 0.5);
         this.viewportEndX = (int) (this.width - (this.width - this.height) * 0.5) + 1;
 
+        if (!guiRebuildScheduled) {
+            this.saveScrollOffsetDataIfPossible();
+        }
+
         this.leftAnchor.clearChildren();
         this.rightAnchor.clearChildren();
 
@@ -128,7 +134,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.leftAnchor.horizontalSizing(Sizing.fixed(0)).verticalSizing(Sizing.fixed(this.height));
             this.rightAnchor.positioning(Positioning.absolute(viewportEndX + 5, 0)).horizontalSizing(Sizing.fixed(this.width - this.viewportEndX - 5)).verticalSizing(Sizing.fixed(this.height));
 
-            this.rightAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10))
+            this.rightAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), (FlowLayout) Containers.verticalFlow(Sizing.content(), Sizing.content(10))
                     .child(leftColumn)
                     .child(Components.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
                     .child(rightColumn)
@@ -141,13 +147,53 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.leftAnchor.horizontalSizing(Sizing.fixed(viewportBeginX)).verticalSizing(Sizing.fixed(this.height));
             this.rightAnchor.positioning(Positioning.absolute(viewportEndX, 0)).horizontalSizing(Sizing.fixed(viewportBeginX)).verticalSizing(Sizing.fixed(this.height));
 
-            this.leftAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.leftColumn)));
-            this.rightAnchor.child(Containers.verticalScroll(Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.rightColumn)));
+            this.leftAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.leftColumn)));
+            this.rightAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.rightColumn)));
         }
 
         this.notificationArea.positioning(Positioning.absolute(this.viewportBeginX + 5, 5)).sizing(Sizing.fixed(this.height - 10));
 
         super.init();
+        this.applyScrollData();
+    }
+
+    private void saveScrollOffsetDataIfPossible() {
+        boolean hasScrollData = false;
+        double leftScrollStep = 0;
+        if (!this.leftAnchor.children().isEmpty()) {
+            NonResettingScrollContainer container = (NonResettingScrollContainer) this.leftAnchor.children().getFirst();
+            if (!container.children().isEmpty()) {
+                hasScrollData = true;
+                leftScrollStep = ((NonResettingScrollContainer) this.leftAnchor.children().getFirst()).getScrollOffset();
+            }
+        }
+
+        double rightScrollStep = 0;
+        if (!this.rightAnchor.children().isEmpty()) {
+            NonResettingScrollContainer container = (NonResettingScrollContainer) this.rightAnchor.children().getFirst();
+            if (!container.children().isEmpty()) {
+                hasScrollData = true;
+                rightScrollStep = ((NonResettingScrollContainer) this.rightAnchor.children().getFirst()).getScrollOffset();
+            }
+        }
+
+        if (hasScrollData) {
+            this.scrollOffsetData = new double[]{leftScrollStep, rightScrollStep};
+        }
+    }
+
+    public void applyScrollData() {
+        if (this.scrollOffsetData != null) {
+            double leftScrollStep = this.scrollOffsetData[0];
+            double rightScrollStep = this.scrollOffsetData[1];
+            if (!this.leftAnchor.children().isEmpty() && leftScrollStep != 0) {
+                ((NonResettingScrollContainer) this.leftAnchor.children().getFirst()).setScrollPosition(leftScrollStep);
+            }
+            if (!this.rightAnchor.children().isEmpty() && rightScrollStep != 0) {
+                ((NonResettingScrollContainer) this.rightAnchor.children().getFirst()).setScrollPosition(rightScrollStep);
+            }
+            this.scrollOffsetData = null;
+        }
     }
 
     @Override
@@ -263,13 +309,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         if (this.guiRebuildScheduled) {
-            this.guiRebuildScheduled = false;
-
+            this.saveScrollOffsetDataIfPossible();
             this.uiAdapter = null;
             this.rightColumn.clearChildren();
             this.leftColumn.clearChildren();
-
             this.rebuildWidgets();
+
+            this.guiRebuildScheduled = false;
         }
 
         Window window = minecraft.getWindow();

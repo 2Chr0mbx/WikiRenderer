@@ -24,11 +24,6 @@ public class BlockStatePropertyBundle extends DefaultCroppablePropertyBundle imp
     }
 
     @Override
-    protected int getDefaultScale() {
-        return 125; // what the mc wiki uses it seems, and what helps to match block states with regular item (block) renders
-    }
-
-    @Override
     public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         TickingPropertyBundle.super.buildRenderOptionGUIControls(renderable, screen, container);
         IsometricUI.booleanControl(container, GlobalProperties.tickParticles, "particles");
