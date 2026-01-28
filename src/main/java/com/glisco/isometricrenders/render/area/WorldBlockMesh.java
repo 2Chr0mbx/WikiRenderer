@@ -3,7 +3,7 @@ package com.glisco.isometricrenders.render.area;
 import com.glisco.isometricrenders.IsometricRenders;
 import com.glisco.isometricrenders.render.area.chunk.MiniChunk;
 import com.glisco.isometricrenders.render.area.side_view.WalkabilityFilter;
-import com.glisco.isometricrenders.util.BlockOrthographicSort;
+import com.glisco.isometricrenders.util.OrthographicSort;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.BlendFunction;
@@ -46,8 +46,6 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -88,7 +86,7 @@ public class WorldBlockMesh {
     public final List<MeshSection> subMeshes = new ArrayList<>();
     private final HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
 
-    private BlockOrthographicSort orthographicTransparencySorting = null;
+    private OrthographicSort orthographicTransparencySorting = null;
     private float lastUsedRotation;
     private double lastUsedSlant;
 

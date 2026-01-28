@@ -2,7 +2,7 @@ package com.glisco.isometricrenders;
 
 import com.glisco.isometricrenders.command.IsorenderCommand;
 import com.glisco.isometricrenders.util.AreaSelectionHelper;
-import com.glisco.isometricrenders.util.BlockOrthographicSort;
+import com.glisco.isometricrenders.util.OrthographicSort;
 import com.glisco.isometricrenders.util.FileIO;
 import com.glisco.isometricrenders.util.ParticleRestriction;
 import com.glisco.isometricrenders.widget.AreaSelectionComponent;
@@ -53,7 +53,7 @@ public class IsometricRenders implements ClientModInitializer {
 
 	public static Matrix4f renderableDrawProjectionMatrix = null;
 	public static GpuBufferSlice renderableDrawProjectionBuffer = null;
-    public static BlockOrthographicSort orthographicSorting = null;
+    public static OrthographicSort orthographicSorting = null;
 
     @Override
     public void onInitializeClient() {
@@ -104,7 +104,7 @@ public class IsometricRenders implements ClientModInitializer {
     }
 
     public static void setSortingMethod(Matrix4f projectionMatrix, Matrix4fStack modelViewStack) {
-        orthographicSorting = new BlockOrthographicSort(projectionMatrix, modelViewStack);
+        orthographicSorting = new OrthographicSort(projectionMatrix, modelViewStack);
     }
 
 	public static void endRenderableDraw() {

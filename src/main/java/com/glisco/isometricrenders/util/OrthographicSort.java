@@ -7,14 +7,14 @@ import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.jspecify.annotations.NonNull;
 
-public class BlockOrthographicSort implements VertexSorting {
+public class OrthographicSort implements VertexSorting {
 
     private final float m02;
     private final float m12;
     private final float m22;
     private final float m32;
 
-    public BlockOrthographicSort(Matrix4f projectionMatrix, Matrix4fStack modelViewStack) {
+    public OrthographicSort(Matrix4f projectionMatrix, Matrix4fStack modelViewStack) {
         Matrix4f modelViewProjectionMatrix = new Matrix4f(projectionMatrix).mul(modelViewStack);
         this.m02 = modelViewProjectionMatrix.m02();
         this.m12 = modelViewProjectionMatrix.m12();
