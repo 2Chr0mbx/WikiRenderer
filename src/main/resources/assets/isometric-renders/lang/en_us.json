@@ -145,8 +145,8 @@
   "gui.isometric-renders.memory_warning4": "are not recommended if you want",
   "gui.isometric-renders.memory_warning5": "your computer to survive",
 
-  "gui.isometric-renders.mesh_status": "Status: ",
   "gui.isometric-renders.mesh_building": "Building - %d%%",
+  "gui.isometric-renders.mesh_cancelled": "Cancelled - %d%%",
   "gui.isometric-renders.mesh_rebuilding": "Rebuilding - %d%%",
   "gui.isometric-renders.mesh_corrupt": {"text": "Corrupted - report this", "color": "red"},
   "gui.isometric-renders.mesh_ready": "Ready",
@@ -162,6 +162,7 @@
   "gui.isometric-renders.auto_refresh_visible_entities": "Auto-Refresh Visible Entities",
   "gui.isometric-renders.hide_text": "Hide Text",
   "gui.isometric-renders.rebuild_mesh": "Rebuild Mesh",
+  "gui.isometric-renders.stop_building": "Stop",
   "gui.isometric-renders.reset_offset_and_scale": "Reset Offset & Scale",
 
   "gui.isometric-renders.exporter.idle": "Exporter Idle",

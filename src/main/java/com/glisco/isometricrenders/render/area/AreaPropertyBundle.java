@@ -11,6 +11,7 @@ import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
@@ -69,7 +70,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public boolean areMinimapSettingsExportable() {
         return sideViewRotation == MeshSideRotation.NORTH && sideViewSlant == MeshSideSlant.ABOVE;
     }
-
 
     @Override
     public Property<Boolean> getTickProperty() {
@@ -201,22 +201,31 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WorldBlockMesh mesh = renderable.mesh;
 
         try (IsometricUI.RowBuilder builder = IsometricUI.row(container)) {
-            builder.row.child(Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild()).margins(Insets.top(10)));
+            ButtonComponent buildMeshButton = (ButtonComponent) Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild()).margins(Insets.top(10));
+            builder.row.child(buildMeshButton);
+
+            ButtonComponent stopBuildingButton = (ButtonComponent) Components.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding()).margins(Insets.of(10, 0, 5, 0));
+            stopBuildingButton.active = false;
+            builder.row.child(stopBuildingButton);
 
             IsometricUI.dynamicLabel(builder.row, () -> {
-                MutableComponent meshStatusText = Translate.gui("mesh_status");
+                MutableComponent meshStatusText;
                 if (!mesh.state().isBuildStage) {
-                    meshStatusText.append(Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN));
+                    meshStatusText = Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN);
                 } else {
-                    meshStatusText.append(Translate.gui(
+                    meshStatusText = Translate.gui(
                             switch (mesh.state()) {
                                 case BUILDING -> "mesh_building";
+                                case CANCELLED -> "mesh_cancelled";
                                 case CORRUPT -> "mesh_corrupt";
                                 default -> "mesh_rebuilding";
                             },
                             (int) (mesh.buildProgress() * 100)
-                    ).withStyle(ChatFormatting.RED));
+                    ).withStyle(ChatFormatting.RED);
                 }
+
+                buildMeshButton.active = mesh.canRebuild();
+                stopBuildingButton.active = mesh.state() == WorldBlockMesh.MeshState.BUILDING || mesh.state() == WorldBlockMesh.MeshState.REBUILDING;
 
                 return meshStatusText;
             }).margins(Insets.of(10, 0, 10, 0));

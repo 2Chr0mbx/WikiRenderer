@@ -51,12 +51,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldBlockMesh {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(WorldBlockMesh.class);
 
     public static final RenderPipeline CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
             .withLocation("pipeline/iso_cutout_terrain")
@@ -83,6 +82,7 @@ public class WorldBlockMesh {
     private MeshState state = MeshState.NEW;
     private float buildProgress = 0;
     private @Nullable CompletableFuture<Void> buildFuture = null;
+    private boolean buildCancelRequested = false;
 
     // Vertex storage
     public final List<MeshSection> subMeshes = new ArrayList<>();
@@ -263,8 +263,13 @@ public class WorldBlockMesh {
     public void reset() {
         this.subMeshes.forEach(MeshSection::close);
         this.subMeshes.clear();
+        this.blockEntities.clear();
 
         this.state = MeshState.NEW;
+    }
+
+    public boolean canRebuild() {
+        return this.buildFuture == null;
     }
 
     /**
@@ -282,6 +287,11 @@ public class WorldBlockMesh {
         // todo: if i get around to properly adding iris shaders support, make sure mesh building isn't async when a shaderpack is active (and then look into shadow rendering)
         this.orthographicTransparencySorting = IsometricRenders.orthographicSorting;
         this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync);
+    }
+
+    public synchronized void stopBuilding() {
+        this.buildCancelRequested = true;
+        this.state = MeshState.CANCELLED;
     }
 
     private void buildMeshAsync() {
@@ -312,7 +322,7 @@ public class WorldBlockMesh {
         }
 
         int scanningAreas = 0;
-
+        int currentScanIndex = 0;
         for (int x = from.getX(); x <= to.getX(); x += regionSize) {
             for (int z = from.getZ(); z <= to.getZ(); z += regionSize) {
                 // Calculate bounds for this specific sub-mesh
@@ -341,7 +351,11 @@ public class WorldBlockMesh {
             }
         }
 
-        int currentScanIndex = 0;
+        if (buildCancelRequested) {
+            this.buildFuture = null;
+            this.buildCancelRequested = false;
+            return;
+        }
 
         WalkabilityFilter walkabilityFilter = null;
         AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
@@ -353,8 +367,10 @@ public class WorldBlockMesh {
         }
 
         AtomicInteger subMeshesUploaded = new AtomicInteger();
-        Object lock = new Object();
+        AtomicInteger subMeshesToBeUploaded = new AtomicInteger();
+        AtomicBoolean cancelled = new AtomicBoolean(false);
 
+        Object lock = new Object();
         for (SubMesh data : subMeshes) {
 
             SectionBufferBuilderPack bufferBuilderPack = new SectionBufferBuilderPack();
@@ -367,6 +383,11 @@ public class WorldBlockMesh {
                     : null;
 
             for (Iterable<BlockPos> positions : data.positions) {
+                if (cancelled.get()) {
+                    bufferBuilderPack.close();
+                    return;
+                }
+
                 currentScanIndex++;
                 this.buildProgress = (float) currentScanIndex / (float) scanningAreas;
                 for (BlockPos pos : positions) {
@@ -410,7 +431,25 @@ public class WorldBlockMesh {
                 }
             }
 
-            Minecraft.getInstance().execute((() -> {
+            if (cancelled.get()) {
+                bufferBuilderPack.close();
+                return;
+            }
+
+            subMeshesToBeUploaded.incrementAndGet();
+            Minecraft.getInstance().executeBlocking((() -> {
+                subMeshesToBeUploaded.decrementAndGet();
+
+                if (cancelled.get() || buildCancelRequested) {
+                    cancelled.set(true);
+                    bufferBuilderPack.close();
+                    if (buildCancelRequested && subMeshesToBeUploaded.get() == 0) {
+                        this.buildFuture = null;
+                        this.buildCancelRequested = false;
+                    }
+                    return;
+                }
+
                 Map<ChunkSectionLayer, MeshData> builtMeshes = new HashMap<>();
 
                 builderStorage.forEach((layer, bufferBuilder) -> {
@@ -472,6 +511,7 @@ public class WorldBlockMesh {
 
     public enum MeshState {
         NEW(false, true),
+        CANCELLED(true, true),
         BUILDING(true, true),
         REBUILDING(true, true),
         READY(false, true),
