@@ -37,7 +37,7 @@ Items can be rendered in three ways:
 
 Below is an example of an enchanted compass made using `/wikirender item minecraft:compass[minecraft:enchantment_glint_override=true]`:
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/enchanted_compass_menu.png" width="400" alt="Enchanted Compass Menu">
+<img src="src/main/resources/assets/wikirenderer/readme_images/enchanted_compass_menu.png" width="600" alt="Enchanted Compass Menu">
 
 On the right is an option to speed up enchantment glint speeds. Normally, at 100% glint speed (seen in Minecraft's accessibility settings), a full loop of the glint animation takes 41.25 seconds, but this option speeds it up to 15 seconds, while barely being a noticeable difference.  The `Use Enchanted Items Timings` button then sets the animation timing settings to this duration.
 
@@ -45,7 +45,7 @@ On the right is an option to speed up enchantment glint speeds. Normally, at 100
 
 Player Heads can also be rendered, and you can also grab their texture data with included buttons:
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/player_head_item_render_menu.png" width="400" alt="Player Head Render Menu">
+<img src="src/main/resources/assets/wikirenderer/readme_images/player_head_item_render_menu.png" width="600" alt="Player Head Render Menu">
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/item_texture_grabbing.png" width="300" alt="Player Texture Copy Buttons">
 
@@ -62,15 +62,15 @@ Areas in the world can be rendered in three ways:
 
 Below is an example of the Hypixel Prototype lobby, rendered using `/wikirender area island 8 200`, featuring a variety of render options on both sides of the menu:
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/ptl_lobby_menu.png" width="400" alt="Hypixel Prototype Lobby">
+<img src="src/main/resources/assets/wikirenderer/readme_images/ptl_lobby_menu.png" width="600" alt="Hypixel Prototype Lobby">
 
 Area renders are quite configurable. You can control block and entity visibility, override certain types of data on visible entities, modify how lighting is handled, and more.
 
 ### Minimap Renders
 Area renders also feature topdown and side-view rendering modes, which allow you to create minimap images with adjustable texture resolution scaling. There is also a cave mode that lets you create underground images.
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/spiders_den_minimap_menu.png" width="400" alt="Hypixel SkyBlock Spider's Den Minimap Render">
-<img src="src/main/resources/assets/wikirenderer/readme_images/lapis_quarry_cave_mode.png" width="400" alt="Hypixel SkyBlock Lapis Quarry Cave Minimap Render">
+<img src="src/main/resources/assets/wikirenderer/readme_images/spiders_den_minimap_menu.png" width="600" alt="Hypixel SkyBlock Spider's Den Minimap Render">
+<img src="src/main/resources/assets/wikirenderer/readme_images/lapis_quarry_cave_mode.png" width="600" alt="Hypixel SkyBlock Lapis Quarry Cave Minimap Render">
 
 Minimap data can also be exported for use on the [Hypixel SkyBlock Fandom Wiki's Module:Minimap/Datasheet Minimap Calibrator tool](https://hypixel-skyblock.fandom.com/wiki/Module:Minimap/Datasheet).
 
@@ -83,12 +83,12 @@ Entities can be rendered in four ways:
 
 Below are examples of myself being rendered, both normally and in an optional sprite mode:
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/rendering_myself_menu.png" width="400" alt="Me wearing Diamond Armor and an Iron Helmet whilst holding a Golden Spear">
-**<img src="src/main/resources/assets/wikirenderer/readme_images/rendering_myself_sprite_menu.png" width="400" alt="A sprite of me wearing an iron helmet">**
+<img src="src/main/resources/assets/wikirenderer/readme_images/rendering_myself_menu.png" width="600" alt="Me wearing Diamond Armor and an Iron Helmet whilst holding a Golden Spear">
+<img src="src/main/resources/assets/wikirenderer/readme_images/rendering_myself_sprite_menu.png" width="600" alt="A sprite of me wearing an iron helmet">
 
 Similar to player head item renders, you can also grab the texture data of rendered players, as well as player heads worn or held by rendered entities.
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/entity_texture_grabbing.png" width="300" alt="Options to copy texture data">
+<img src="src/main/resources/assets/wikirenderer/readme_images/entity_texture_grabbing.png" width="600" alt="Options to copy texture data">
 
 ### Entity Lighting
 Entities are lit in a way where in isometric viewing angles (`45°`, `135°`, `225°`, and `315°`), the top is 100% brightness, the left side is 80% brightness, and the right side is 60% brightness. Sprites are rendered at 100% brightness.
@@ -114,7 +114,7 @@ Item Tooltips can be rendered in similar ways to item renders:
 
 Tooltips are rendered using per-pixel resolution scaling, defaulting at 4 image pixels per font pixel.
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/plasmaflux_tooltip_render.png" width="400" alt="Plasmaflux Power Orb Tooltip Menu">
+<img src="src/main/resources/assets/wikirenderer/readme_images/plasmaflux_tooltip_render.png" width="600" alt="Plasmaflux Power Orb Tooltip Menu">
 
 ## Batch Rendering
 There are several ways to multiple render items, blocks, or tooltips at once:
@@ -122,7 +122,7 @@ There are several ways to multiple render items, blocks, or tooltips at once:
 ### Inventories
 To render every item in your inventory, press the associated hotkey (default `k`), which will open a popup allowing you to render the items, block item states, tooltips, or items in an atlas:
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/bazaar_batch_render_menu.png" width="400" alt="Bazaar Inventory Batch Render Popup Menu">
+<img src="src/main/resources/assets/wikirenderer/readme_images/bazaar_batch_render_menu.png" width="600" alt="Bazaar Inventory Batch Render Popup Menu">
 
 ### Creative Tabs
 To render a creative tab:
@@ -131,7 +131,7 @@ To render a creative tab:
 
 Below is an example of every combat item rendered in an atlas using `/wikirender creative_tab minecraft:combat atlas`:
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/creative_tab_atlas_render.png" width="400" alt="Creative Mode Atlas Render">
+<img src="src/main/resources/assets/wikirenderer/readme_images/creative_tab_atlas_render.png" width="600" alt="Creative Mode Atlas Render">
 
 ### Tagged Items
 To render items, blocks or tooltips given a select tag:
@@ -140,7 +140,7 @@ To render items, blocks or tooltips given a select tag:
 
 Below is an example of a batch render of every flower using `/wikirender tag #minecraft:flowers batch items`. The left side of the screen shows 30 items remaining, and they can all be rendered by pressing the start button.
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/flower_batch_render.png" width="400" alt="Flower Batch Render">
+<img src="src/main/resources/assets/wikirenderer/readme_images/flower_batch_render.png" width="600" alt="Flower Batch Render">
 
 ### Namespace Items
 To render items, blocks or tooltips from a select namespace:
@@ -149,4 +149,4 @@ To render items, blocks or tooltips from a select namespace:
 
 Below is an example of an atlas render of every vanilla item using `/wikirender namespace minecraft atlas`.
 
-<img src="src/main/resources/assets/wikirenderer/readme_images/namespace_items_render.png" width="400" alt="Minecraft Items Batch Render">
+<img src="src/main/resources/assets/wikirenderer/readme_images/namespace_items_render.png" width="600" alt="Minecraft Items Batch Render">
