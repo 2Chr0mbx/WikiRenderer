@@ -161,6 +161,7 @@
   "gui.wikirenderer.freeze_player_arms": "Freeze Player Arms",
   "gui.wikirenderer.auto_refresh_visible_entities": "Auto-Refresh Visible Entities",
   "gui.wikirenderer.hide_text": "Hide Text",
+  "gui.wikirenderer.hide_player_nametags": "Hide Player Names",
   "gui.wikirenderer.rebuild_mesh": "Rebuild Mesh",
   "gui.wikirenderer.stop_building": "Stop",
   "gui.wikirenderer.reset_offset_and_scale": "Reset Offset & Scale",

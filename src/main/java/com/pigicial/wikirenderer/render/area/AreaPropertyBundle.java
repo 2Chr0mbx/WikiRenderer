@@ -243,6 +243,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WikiRendererUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
 
         WikiRendererUI.booleanControl(container, this.hideText, "hide_text");
+        this.hideText.listen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true, false);
+        if (!this.hideText.get()) {
+            WikiRendererUI.booleanControl(container, GlobalProperties.HIDE_NAMETAGS, "hide_player_nametags");
+        }
+
         WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
         WikiRendererUI.booleanControl(container, this.overrideRotations, "mesh_entity_data.override_rotations");
