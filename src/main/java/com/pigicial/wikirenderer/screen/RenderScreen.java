@@ -12,6 +12,7 @@ import com.pigicial.wikirenderer.render.RenderableDispatcher;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
+import com.pigicial.wikirenderer.render.batch.BatchRenderable;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.pigicial.wikirenderer.components.NotificationComponent;
@@ -100,8 +101,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private final List<GpuTexture> renderedFrames = new ArrayList<>();
     private int remainingAnimationFrames;
 
-    private String customFileName = "";
-    private EditBox fileNameField = null;
+    public String customFileName = "";
+    public EditBox fileNameField = null;
     private double[] scrollOffsetData = null;
 
     public RenderScreen(Renderable<?> renderable) {
@@ -228,10 +229,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         WikiRendererUI.sectionHeader(rightColumn, "export_options", true);
         this.renderable.getProperties().buildExportOptionGUIControls(this.renderable, this, this.rightColumn);
         this.renderable.getProperties().buildExportResolutionGUIControls(this.renderable, this, this.rightColumn);
-
-        this.fileNameField = WikiRendererUI.labelledTextField(this.rightColumn, this.customFileName, "file_name", Sizing.fixed(120));
-        this.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
-        this.fileNameField.setResponder(s -> this.customFileName = s);
+        this.renderable.getProperties().buildFileNameGUIControls(this.renderable, this, this.rightColumn);
 
         WikiRendererUI.sectionHeader(rightColumn, "animation_options", true);
         this.buildFfmpegSection();

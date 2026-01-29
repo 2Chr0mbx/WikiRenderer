@@ -91,6 +91,12 @@ public interface PropertyBundle {
         });
     }
 
+    default void buildFileNameGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        screen.fileNameField = WikiRendererUI.labelledTextField(container, screen.customFileName, "file_name", Sizing.fixed(120));
+        screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
+        screen.fileNameField.setResponder(s -> screen.customFileName = s);
+    }
+
     void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack);
 
     int getExportResolution(Renderable<?> renderable);

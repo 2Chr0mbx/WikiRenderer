@@ -85,4 +85,9 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
     public void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.sectionHeader(container, "using_derived_resolution", true);
     }
+
+    @Override
+    public void buildFileNameGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+
+    }
 }

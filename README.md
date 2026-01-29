@@ -86,6 +86,8 @@ Below are examples of myself being rendered, both normally and in an optional sp
 <img src="src/main/resources/assets/wikirenderer/readme_images/rendering_myself_menu.png" width="600" alt="Me wearing Diamond Armor and an Iron Helmet whilst holding a Golden Spear">
 <img src="src/main/resources/assets/wikirenderer/readme_images/rendering_myself_sprite_menu.png" width="600" alt="A sprite of me wearing an iron helmet">
 
+Entity renders have multiple options, such as the ability to use the live entity (useful for animated armor), freeze the arms, toggle item or enchantment visibility, and more.
+
 Similar to player head item renders, you can also grab the texture data of rendered players, as well as player heads worn or held by rendered entities.
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/entity_texture_grabbing.png" width="600" alt="Options to copy texture data">
