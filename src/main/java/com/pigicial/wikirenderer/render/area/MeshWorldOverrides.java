@@ -1,9 +1,7 @@
 package com.pigicial.wikirenderer.render.area;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.LightLayer;
@@ -15,10 +13,6 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
-
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.stream.StreamSupport;
 
 public class MeshWorldOverrides implements BlockAndTintGetter {
 
@@ -96,91 +90,7 @@ public class MeshWorldOverrides implements BlockAndTintGetter {
     }
 
     public boolean contains(BlockPos pos) {
-        boolean inArea = this.from.getX() <= pos.getX() && this.from.getY() <= pos.getY() && this.from.getZ() <= pos.getZ()
-                         && this.to.getX() >= pos.getX() && this.to.getY() >= pos.getY() && this.to.getZ() >= pos.getZ();
-
-        if (!inArea) {
-            return false;
-        }
-
-        if (false) {
-            int heightWalkThreshold = 3;
-            int airBlocksFoundInARow = 0;
-            Integer lastFloorY = null;
-            int ceiling = to.getY();
-            boolean wasAir = false;
-            boolean wasWalkable = false;
-
-            boolean hasSeenAir = false;
-            for (BlockPos blockPos : BlockPos.betweenClosed(pos.getX(), from.getY(), pos.getZ(), pos.getX(), to.getY(), pos.getZ())) {
-                BlockState state = delegate.getBlockState(blockPos);
-                if (state.isAir()) {
-                    wasAir = true;
-                    hasSeenAir = true;
-
-                    airBlocksFoundInARow++;
-                    if (airBlocksFoundInARow == heightWalkThreshold) {
-                        lastFloorY = blockPos.getY() - heightWalkThreshold;
-                        wasWalkable = true;
-                    }
-                } else {
-                    airBlocksFoundInARow = 0;
-                    if (wasAir) {
-                        wasAir = false;
-                        if (wasWalkable) {
-                            ceiling = blockPos.getY();
-                        }
-                        wasWalkable = false;
-                    }
-                }
-            }
-
-            if (!hasSeenAir || pos.getY() >= ceiling || (lastFloorY != null && pos.getY() > lastFloorY + 1)) {
-                return false;
-            }
-        }
-
-        // check for all stone
-        if (false) {
-            if (StreamSupport.stream(BlockPos.betweenClosed(pos.getX(), from.getY(), pos.getZ(), pos.getX(), to.getY(), pos.getZ()).spliterator(), false)
-                    .allMatch(p -> delegate.getBlockState(p).getBlock() == Blocks.STONE)) {
-                return false;
-            }
-            // check for air below
-            if (StreamSupport.stream(BlockPos.betweenClosed(pos.getX(), from.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ()).spliterator(), false)
-                    .anyMatch(p -> delegate.getBlockState(p).isAir())) {
-                return false;
-            }
-        }
-
-        /*
-        // if its all stone show as air (this creates voids that look nice for caves)
-        if (StreamSupport.stream(BlockPos.betweenClosed(pos.getX(), from.getY(), pos.getZ(), pos.getX(), to.getY(), pos.getZ()).spliterator(), false)
-                .allMatch(p -> this.delegate.getBlockState(p).is(BlockTags.MINEABLE_WITH_PICKAXE))) {
-            return false;
-        }
-
-        int highestFloorY = Minecraft.getInstance().player.getBlockY() - 1;
-        OptionalInt highestAllowed = OptionalInt.empty();
-        // show up to the highest non-stone-based block
-        for (BlockPos blockPos : BlockPos.betweenClosed(pos.getX(), from.getY(), pos.getZ(), pos.getX(), to.getY(), pos.getZ())) {
-            boolean isAir = this.delegate.getBlockState(blockPos).isAir();
-            if (isAir && (blockPos.getY() <= highestFloorY || highestAllowed.isEmpty())) {
-                highestAllowed = OptionalInt.of(blockPos.getY());
-            }
-        }
-
-        if (highestAllowed.isPresent() && pos.getY() > highestAllowed.getAsInt()) {
-            return false;
-        }
-
-        /*
-        if (StreamSupport.stream(BlockPos.betweenClosed(pos.getX(), from.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ()).spliterator(), false)
-                .anyMatch(p -> this.delegate.getBlockState(p).isAir())) {
-            return false;
-        }
-         */
-
-        return true;
+        return this.from.getX() <= pos.getX() && this.from.getY() <= pos.getY() && this.from.getZ() <= pos.getZ()
+               && this.to.getX() >= pos.getX() && this.to.getY() >= pos.getY() && this.to.getZ() >= pos.getZ();
     }
 }

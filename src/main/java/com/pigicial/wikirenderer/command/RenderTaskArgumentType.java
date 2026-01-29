@@ -30,9 +30,17 @@ public class RenderTaskArgumentType implements ArgumentType<BatchRenderTask> {
             reader.expect(' ');
             String second = reader.readString();
 
-            if (second.equals("items")) return BatchRenderTask.BATCH_ITEM;
-            if (second.equals("blocks")) return BatchRenderTask.BATCH_BLOCK;
-            if (second.equals("tooltips")) return BatchRenderTask.BATCH_TOOLTIP;
+            switch (second) {
+                case "items" -> {
+                    return BatchRenderTask.BATCH_ITEM;
+                }
+                case "blocks" -> {
+                    return BatchRenderTask.BATCH_BLOCK;
+                }
+                case "tooltips" -> {
+                    return BatchRenderTask.BATCH_TOOLTIP;
+                }
+            }
         }
 
         throw EXCEPTION.create();

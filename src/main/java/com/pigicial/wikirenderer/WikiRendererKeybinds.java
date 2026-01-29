@@ -38,6 +38,7 @@ public class WikiRendererKeybinds {
         KeyBindingHelper.registerKeyBinding(KEYBIND_BATCH_RENDER_INVENTORY);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (client.player == null) return;
 
             if (KEYBIND_SELECT.consumeClick()) {
                 if (client.player.isShiftKeyDown()) {
@@ -53,23 +54,21 @@ public class WikiRendererKeybinds {
             }
         });
 
-        ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            ScreenKeyboardEvents.afterKeyPress(screen).register((s, key) -> {
-                if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY).getValue()) {
-                    ItemStack hoveredSlot = getHoveredSlot(client);
-                    if (hoveredSlot != null) {
-                        ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ItemRenderable(hoveredSlot)));
-                    }
+        ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> ScreenKeyboardEvents.afterKeyPress(screen).register((s, key) -> {
+            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY).getValue()) {
+                ItemStack hoveredSlot = getHoveredSlot(client);
+                if (hoveredSlot != null) {
+                    ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ItemRenderable(hoveredSlot)));
                 }
+            }
 
-                if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY).getValue()) {
-                    List<ItemStack> items = getItems(client);
-                    if (items != null && !items.isEmpty()) {
-                        Minecraft.getInstance().setScreen(new SelectRenderTaskScreen(items));
-                    }
+            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY).getValue()) {
+                List<ItemStack> items = getItems(client);
+                if (items != null && !items.isEmpty()) {
+                    Minecraft.getInstance().setScreen(new SelectRenderTaskScreen(items));
                 }
-            });
-        });
+            }
+        }));
     }
 
     @Nullable

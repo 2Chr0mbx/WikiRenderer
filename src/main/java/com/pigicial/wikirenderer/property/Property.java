@@ -35,10 +35,6 @@ public class Property<T> implements BiConsumer<Property<T>, T> {
         this.invokeListeners();
     }
 
-    public T getDefaultValue() {
-        return defaultValue;
-    }
-
     public void listen(BiConsumer<Property<T>, T> listener) {
         this.listen(listener, true);
     }

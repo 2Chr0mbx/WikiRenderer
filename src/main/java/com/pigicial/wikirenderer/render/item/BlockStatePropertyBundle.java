@@ -19,13 +19,8 @@ public class BlockStatePropertyBundle extends DefaultCroppablePropertyBundle imp
     }
 
     @Override
-    public String getOptionTranslationKey() {
-        return "block_animations";
-    }
-
-    @Override
     public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         TickingPropertyBundle.super.buildRenderOptionGUIControls(renderable, screen, container);
-        WikiRendererUI.booleanControl(container, GlobalProperties.tickParticles, "particles");
+        WikiRendererUI.booleanControl(container, GlobalProperties.TICK_PARTICLES, "particles");
     }
 }

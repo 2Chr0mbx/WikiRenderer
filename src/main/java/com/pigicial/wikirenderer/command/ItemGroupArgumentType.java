@@ -32,7 +32,10 @@ public class ItemGroupArgumentType implements ArgumentType<CreativeModeTab> {
     @Override
     public CreativeModeTab parse(StringReader reader) throws CommandSyntaxException {
         Identifier id = Identifier.read(reader);
-        return CreativeModeTabs.allTabs().stream().filter(itemGroup -> BuiltInRegistries.CREATIVE_MODE_TAB.getKey(itemGroup).equals(id)).findAny().orElseThrow(() -> NO_ITEMGROUP.create(id));
+        return CreativeModeTabs.allTabs().stream().filter(itemGroup -> {
+            Identifier key = BuiltInRegistries.CREATIVE_MODE_TAB.getKey(itemGroup);
+            return key != null && key.equals(id);
+        }).findAny().orElseThrow(() -> NO_ITEMGROUP.create(id));
     }
 
     @Override

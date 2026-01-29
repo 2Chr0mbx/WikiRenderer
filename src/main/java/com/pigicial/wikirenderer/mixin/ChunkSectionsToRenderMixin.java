@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-// Override framebuffer used during AreaRenderable mesh render (World Mesher implementation detail)
 @Mixin(ChunkSectionsToRender.class)
 public class ChunkSectionsToRenderMixin {
 	@WrapOperation(method = "renderGroup", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;outputTarget()Lcom/mojang/blaze3d/pipeline/RenderTarget;"))

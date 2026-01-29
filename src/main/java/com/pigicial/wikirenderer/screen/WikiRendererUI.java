@@ -32,14 +32,13 @@ public class WikiRendererUI {
         }
     }
 
-    public static EditBox labelledTextField(FlowLayout container, IntProperty property, String key, Sizing sizing) {
+    public static void labelledTextField(FlowLayout container, IntProperty property, String key, Sizing sizing) {
         try (RowBuilder builder = row(container)) {
             TextBoxComponent textBox = new IntegerPropertyTextFieldComponent(sizing, property);
 
             builder.row.child(textBox);
             builder.row.child(Components.label(Translate.gui(key)).margins(Insets.left(8)));
 
-            return textBox;
         }
     }
 

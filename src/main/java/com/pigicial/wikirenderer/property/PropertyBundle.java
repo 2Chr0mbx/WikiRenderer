@@ -41,16 +41,16 @@ public interface PropertyBundle {
     }
 
     default void buildExportOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        WikiRendererUI.booleanControl(container, saveIntoRoot, "dump_into_root");
-        WikiRendererUI.booleanControl(container, overwriteLatest, "overwrite_latest");
+        WikiRendererUI.booleanControl(container, SAVE_INTO_ROOT, "dump_into_root");
+        WikiRendererUI.booleanControl(container, OVERWRITE_LATEST, "overwrite_latest");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
             screen.exportButton = Components.button(Translate.gui("export"), button -> screen.captureScheduled = true);
             builder.row.child(screen.exportButton);
 
-            builder.row.child(Components.button(Translate.gui("open_folder"), button -> {
-                Util.getPlatform().openFile(renderable.getExportPath().resolveOffset().toFile());
-            }).margins(Insets.left(5)));
+            builder.row.child(Components.button(Translate.gui("open_folder"), button ->
+                    Util.getPlatform().openFile(renderable.getExportPath().resolveOffset().toFile())
+            ).margins(Insets.left(5)));
         }
 
         if (!GraphicsEnvironment.isHeadless()) {
@@ -82,7 +82,7 @@ public interface PropertyBundle {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
-            if ((resolution < 16 || resolution > 16384) && !unsafe.get()) {
+            if ((resolution < 16 || resolution > 16384) && !UNSAFE.get()) {
                 screen.exportButton.active = false;
             } else {
                 renderable.getProperties().setExportResolution(renderable, resolution);

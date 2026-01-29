@@ -33,6 +33,7 @@ public class AreaSelectionHelper {
 
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
+        if (player == null) return;
 
         BlockPos pos1 = AreaSelectionHelper.pos1;
 

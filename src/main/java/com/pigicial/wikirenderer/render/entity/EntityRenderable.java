@@ -33,6 +33,7 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.decoration.Mannequin;
@@ -64,25 +65,28 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         this.clonedTickableEntity = clonedTickableEntity;
     }
 
+    @Nullable
     public static EntityRenderable of(EntityType<?> type, @Nullable CompoundTag nbt) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null) return null;
 
-        if (nbt == null) {
-            nbt = new CompoundTag();
-        }
-
+        if (nbt == null) nbt = new CompoundTag();
         nbt.putString("id", EntityType.getKey(type).toString());
 
         Entity entity = EntityType.loadEntityRecursive(nbt, minecraft.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
-        entity.absSnapTo(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
-
-        return new EntityRenderable(entity, entity);
+        if (entity != null) {
+            entity.absSnapTo(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
+            return new EntityRenderable(entity, entity);
+        } else {
+            return null;
+        }
     }
 
     public static EntityRenderable copyAsRenderable(Entity source) {
         return new EntityRenderable(source, copyEntityAndPassengers(source));
     }
 
+    @Nullable
     public static Entity copy(Entity source) {
         if (source instanceof Player player) {
             return copyPlayer(player);
@@ -96,14 +100,20 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         logging.close();
         nbt.putString("id", EntityType.getKey(source.getType()).toString());
 
-        Entity entity = EntityType.loadEntityRecursive(nbt, Minecraft.getInstance().level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
-        entity.getEntityData().assignValues(source.getEntityData().getNonDefaultValues());
-        if (entity instanceof LivingEntity living) {
+        Entity clonedEntity = EntityType.loadEntityRecursive(nbt, source.level(), EntitySpawnReason.LOAD, EntityProcessor.NOP);
+        if (clonedEntity == null) return null;
+        
+        List<SynchedEntityData.DataValue<?>> nonDefaultValues = source.getEntityData().getNonDefaultValues();
+        if (nonDefaultValues != null) {
+            clonedEntity.getEntityData().assignValues(nonDefaultValues);
+        }
+        
+        if (clonedEntity instanceof LivingEntity living) {
             living.hurtTime = 0;
             living.deathTime = 0;
         }
 
-        return entity;
+        return clonedEntity;
     }
 
     public static Entity copyEntityAndPassengers(Entity source) {
@@ -111,15 +121,15 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         List<Entity> entityStack = new ArrayList<>();
         applyToEntityAndPassengers(source, entity -> {
-            Entity clonedEntity = copy(entity);
-            if (clonedEntity.getVehicle() != null) {
-                clonedEntity.getVehicle().remove(Entity.RemovalReason.DISCARDED);
-            }
-            clonedEntity.getPassengers().forEach(passenger -> {
-                passenger.remove(Entity.RemovalReason.DISCARDED);
-            });
+            Entity entityClone = copy(entity);
+            if (entityClone != null) {
+                if (entityClone.getVehicle() != null) {
+                    entityClone.getVehicle().remove(Entity.RemovalReason.DISCARDED);
+                }
+                entityClone.getPassengers().forEach(passenger -> passenger.remove(Entity.RemovalReason.DISCARDED));
 
-            entityStack.add(clonedEntity);
+                entityStack.add(entityClone);
+            }
         });
 
         Entity bottomEntity = entityStack.getFirst();
@@ -139,7 +149,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         GameProfile originalProfile = originalPlayer.getGameProfile();
         GameProfile fakeProfile = new GameProfile(originalProfile.id(), originalProfile.name(), new PropertyMap(originalProfile.properties()));
 
-        EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(fakeProfile);
+        EntityComponent.RenderablePlayerEntity playerClone = EntityComponent.createRenderablePlayer(fakeProfile);
 
         ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(originalPlayer.problemPath(), WikiRenderer.LOGGER);
         TagValueOutput view = TagValueOutput.createWithContext(problemReporter, originalPlayer.registryAccess());
@@ -147,15 +157,19 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         CompoundTag nbt = view.buildResult();
         problemReporter.close();
-        try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(player.problemPath(), WikiRenderer.LOGGER)) {
-            player.load(TagValueInput.create(loggingRead, player.registryAccess(), nbt));
+        try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(playerClone.problemPath(), WikiRenderer.LOGGER)) {
+            playerClone.load(TagValueInput.create(loggingRead, playerClone.registryAccess(), nbt));
         }
+        
+        List<SynchedEntityData.DataValue<?>> nonDefaultValues = playerClone.getEntityData().getNonDefaultValues();
+        if (nonDefaultValues != null) {
+            playerClone.getEntityData().assignValues(nonDefaultValues);
+        }
+        
+        playerClone.hurtTime = 0;
+        playerClone.deathTime = 0;
 
-        player.hurtTime = 0;
-        player.deathTime = 0;
-        player.getEntityData().assignValues(player.getEntityData().getNonDefaultValues());
-
-        return player;
+        return playerClone;
     }
 
     private boolean isUsingLiveEntity() {
@@ -197,83 +211,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
 
-            state.outlineColor = 0; // remove glow
-            state.shadowPieces.clear(); // remove shadows
-            state.lightCoords = LightTexture.FULL_BRIGHT;
-
-            if (state instanceof LivingEntityRenderState livingState) {
-                livingState.yRot = properties.yaw.get();
-                livingState.xRot = properties.pitch.get();
-                livingState.bodyRot = properties.entityRotation.get();
-            }
-
-            // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
-            if (state instanceof AvatarRenderState avatarRenderState) {
-                if (!usingLiveEntity) {
-                    avatarRenderState.capeFlap = 0;
-                    avatarRenderState.capeLean = 0;
-                    avatarRenderState.capeLean2 = 0;
-                }
-
-                if (properties.useSteveSkin.get()) {
-                    avatarRenderState.skin = DefaultPlayerSkin.getDefaultSkin();
-                }
-                if (properties.forceSmallArms.get()) {
-                    avatarRenderState.skin = avatarRenderState.skin.with(PlayerSkin.Patch.create(
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.of(PlayerModelType.SLIM))
-                    );
-                }
-
-                if (properties.freezePlayerArms.get() || !isUsingLiveEntity()) {
-                    avatarRenderState.ageInTicks = 1; // 1 allows for an armor offset to fix z-fighting
-                }
-            }
-
-            if (state instanceof ArmedEntityRenderState armedEntityRenderState) {
-                if (properties.hideHeldItems.get()) {
-                    armedEntityRenderState.leftHandItemStack = ItemStack.EMPTY;
-                    armedEntityRenderState.rightHandItemStack = ItemStack.EMPTY;
-                    armedEntityRenderState.leftHandItemState.clear();
-                    armedEntityRenderState.rightHandItemState.clear();
-                    armedEntityRenderState.leftArmPose = HumanoidModel.ArmPose.EMPTY;
-                    armedEntityRenderState.rightArmPose = HumanoidModel.ArmPose.EMPTY;
-                } else if (properties.hideEnchantments.get()) {
-                    for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.leftHandItemState).wikirenderer$getLayers()) {
-                        layer.setFoilType(ItemStackRenderState.FoilType.NONE);
-                    }
-                    for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.rightHandItemState).wikirenderer$getLayers()) {
-                        layer.setFoilType(ItemStackRenderState.FoilType.NONE);
-                    }
-                }
-            }
-
-            if (state instanceof HumanoidRenderState humanoidRenderState) {
-                if (properties.hideArmor.get() || properties.spriteRendering.get()) {
-                    if (properties.hideArmor.get()) {
-                        humanoidRenderState.headItem.clear();
-                        humanoidRenderState.wornHeadType = null;
-                        humanoidRenderState.headEquipment = ItemStack.EMPTY;
-                    }
-                    humanoidRenderState.chestEquipment = ItemStack.EMPTY;
-                    humanoidRenderState.legsEquipment = ItemStack.EMPTY;
-                    humanoidRenderState.feetEquipment = ItemStack.EMPTY;
-                } else if (properties.hideEnchantments.get()) {
-                    humanoidRenderState.headEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-                    humanoidRenderState.chestEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-                    humanoidRenderState.legsEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-                    humanoidRenderState.feetEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
-                }
-            }
-
-            if (properties.invisible.get()) {
-                state.isInvisible = true;
-                if (state instanceof LivingEntityRenderState livingEntityRenderState) {
-                    livingEntityRenderState.isInvisibleToPlayer = true;
-                }
-            }
+            updateRenderState(state, properties, usingLiveEntity);
 
             matrices.pushPose();
 
@@ -301,6 +239,86 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         matrices.mulPose(Axis.YP.rotationDegrees(-180));
         matrices.translate(0, -verticalOffset, 0);
         matrices.popPose();
+    }
+
+    private void updateRenderState(EntityRenderState state, EntityPropertyBundle properties, boolean usingLiveEntity) {
+        state.outlineColor = 0; // remove glow
+        state.shadowPieces.clear(); // remove shadows
+        state.lightCoords = LightTexture.FULL_BRIGHT;
+
+        if (state instanceof LivingEntityRenderState livingState) {
+            livingState.yRot = properties.yaw.get();
+            livingState.xRot = properties.pitch.get();
+            livingState.bodyRot = properties.entityRotation.get();
+        }
+
+        // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
+        if (state instanceof AvatarRenderState avatarRenderState) {
+            if (!usingLiveEntity) {
+                avatarRenderState.capeFlap = 0;
+                avatarRenderState.capeLean = 0;
+                avatarRenderState.capeLean2 = 0;
+            }
+
+            if (properties.useSteveSkin.get()) {
+                avatarRenderState.skin = DefaultPlayerSkin.getDefaultSkin();
+            }
+            if (properties.forceSmallArms.get()) {
+                avatarRenderState.skin = avatarRenderState.skin.with(PlayerSkin.Patch.create(
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.empty(),
+                        Optional.of(PlayerModelType.SLIM))
+                );
+            }
+
+            if (properties.freezePlayerArms.get() || !isUsingLiveEntity()) {
+                avatarRenderState.ageInTicks = 1; // 1 allows for an armor offset to fix z-fighting
+            }
+        }
+
+        if (state instanceof ArmedEntityRenderState armedEntityRenderState) {
+            if (properties.hideHeldItems.get()) {
+                armedEntityRenderState.leftHandItemStack = ItemStack.EMPTY;
+                armedEntityRenderState.rightHandItemStack = ItemStack.EMPTY;
+                armedEntityRenderState.leftHandItemState.clear();
+                armedEntityRenderState.rightHandItemState.clear();
+                armedEntityRenderState.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+                armedEntityRenderState.rightArmPose = HumanoidModel.ArmPose.EMPTY;
+            } else if (properties.hideEnchantments.get()) {
+                for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.leftHandItemState).wikirenderer$getLayers()) {
+                    layer.setFoilType(ItemStackRenderState.FoilType.NONE);
+                }
+                for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.rightHandItemState).wikirenderer$getLayers()) {
+                    layer.setFoilType(ItemStackRenderState.FoilType.NONE);
+                }
+            }
+        }
+
+        if (state instanceof HumanoidRenderState humanoidRenderState) {
+            if (properties.hideArmor.get() || properties.spriteRendering.get()) {
+                if (properties.hideArmor.get()) {
+                    humanoidRenderState.headItem.clear();
+                    humanoidRenderState.wornHeadType = null;
+                    humanoidRenderState.headEquipment = ItemStack.EMPTY;
+                }
+                humanoidRenderState.chestEquipment = ItemStack.EMPTY;
+                humanoidRenderState.legsEquipment = ItemStack.EMPTY;
+                humanoidRenderState.feetEquipment = ItemStack.EMPTY;
+            } else if (properties.hideEnchantments.get()) {
+                humanoidRenderState.headEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                humanoidRenderState.chestEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                humanoidRenderState.legsEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+                humanoidRenderState.feetEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+            }
+        }
+
+        if (properties.invisible.get()) {
+            state.isInvisible = true;
+            if (state instanceof LivingEntityRenderState livingEntityRenderState) {
+                livingEntityRenderState.isInvisibleToPlayer = true;
+            }
+        }
     }
 
     @Override

@@ -12,7 +12,7 @@ import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.gui.components.EditBox;
 import org.joml.Matrix4fStack;
 
-import static com.pigicial.wikirenderer.property.GlobalProperties.unsafe;
+import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
 
 public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implements CroppablePropertyBundle {
     public static final TooltipPropertyBundle INSTANCE = new TooltipPropertyBundle();
@@ -37,7 +37,7 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
-            if ((resolution < 1 || resolution > 10) && !unsafe.get()) {
+            if ((resolution < 1 || resolution > 10) && !UNSAFE.get()) {
                 screen.exportButton.active = false;
             } else {
                 this.fontScaling.set(resolution);

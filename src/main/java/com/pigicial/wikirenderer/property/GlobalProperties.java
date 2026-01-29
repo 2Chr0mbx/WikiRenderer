@@ -8,15 +8,15 @@ public class GlobalProperties {
     public static int backgroundColor = 0x000000;
 
     //Export Options
-    public static Property<Boolean> unsafe = Property.of(false);
-    public static Property<Boolean> saveIntoRoot = Property.of(false);
-    public static Property<Boolean> overwriteLatest = Property.of(false);
+    public static final Property<Boolean> UNSAFE = Property.of(false);
+    public static final Property<Boolean> SAVE_INTO_ROOT = Property.of(false);
+    public static final Property<Boolean> OVERWRITE_LATEST = Property.of(false);
 
     // Animation Options
-    public static Property<Boolean> tickParticles = Property.of(true);
-    public static Property<Boolean> speedUpEnchantmentGlints = Property.of(false);
-    public static IntProperty exportFramerate = IntProperty.of(25, 1, 300);
-    public static IntProperty exportFrames = IntProperty.of(50, 1, 5000);
+    public static final Property<Boolean> TICK_PARTICLES = Property.of(true);
+    public static final Property<Boolean> SPEED_UP_ENCHANTMENT_GLINTS = Property.of(false);
+    public static final IntProperty EXPORT_FRAMERATE = IntProperty.of(25, 1, 300);
+    public static final IntProperty EXPORT_FRAMES = IntProperty.of(50, 1, 5000);
 
     public static FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
 }

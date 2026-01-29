@@ -44,12 +44,8 @@ public class LightTextureMixin {
                     ordinal = 2
             )
     )
-
     private Object forceHighGamma(OptionInstance<Double> instance, Operation<Double> original) {
-        if (WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useFullBrightGamma.get()) {
-            return 50D;
-        }
-        return original.call(instance);
+        return WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useFullBrightGamma.get() ? Double.valueOf(50D) : original.call(instance);
     }
 
     @ModifyExpressionValue(
@@ -61,11 +57,7 @@ public class LightTextureMixin {
             )
     )
     private boolean forceHasNightVision(boolean original) {
-        // If we're in an isometric render, force the 'if' check to succeed
-        if (WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useNightVision.get()) {
-            return true;
-        }
-        return original;
+        return (WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useNightVision.get()) || original;
     }
 
     @WrapOperation(
@@ -76,10 +68,6 @@ public class LightTextureMixin {
             )
     )
     private float forceFullNightVisionScale(LivingEntity entity, float f, Operation<Float> original) {
-        // If we're in an isometric render, force the scale to 1.0 (no flickering)
-        if (WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useNightVision.get()) {
-            return 1.0f;
-        }
-        return original.call(entity, f);
+        return WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useNightVision.get() ? 1.0f : original.call(entity, f);
     }
 }

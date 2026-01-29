@@ -100,6 +100,8 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         // present in vanilla
 
         Camera camera = Minecraft.getInstance().getEntityRenderDispatcher().camera;
+        if (camera == null) return;
+
         float previousYaw = camera.yRot();
         float previousPitch = camera.xRot();
 

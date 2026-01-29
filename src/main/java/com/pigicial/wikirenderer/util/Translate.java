@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.util;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
@@ -67,6 +68,9 @@ public class Translate {
     }
 
     public static void actionBar(String key, Object... args) {
-        Minecraft.getInstance().player.displayClientMessage(make(key, args), true);
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null) {
+            player.displayClientMessage(make(key, args), true);
+        }
     }
 }

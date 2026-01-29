@@ -17,7 +17,6 @@ public class EquipmentLayerRendererMixin {
             at = @At(value = "HEAD")
     )
     private void wikirenderer$beginArmorLayers(CallbackInfo ci, @Local(argsOnly = true) PoseStack poseStack) {
-        // Protect the rest of the render pipeline by pushing a local pose
         if (WikiRenderer.inRenderableDraw) {
             poseStack.pushPose();
         }

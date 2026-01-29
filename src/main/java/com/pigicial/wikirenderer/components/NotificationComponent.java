@@ -1,6 +1,5 @@
 package com.pigicial.wikirenderer.components;
 
-import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.LabelComponent;
@@ -59,15 +58,11 @@ public class NotificationComponent extends FlowLayout {
         }
 
         if (this.age > 10000) {
-            this.queue(() -> this.parent.removeChild(this));
+            this.queue(() -> {
+                if (this.parent != null) {
+                    this.parent.removeChild(this);
+                }
+            });
         }
-    }
-
-    @Override
-    public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
-        if (!WikiRenderer.forceGuiDepthTesting) {
-           // return;
-        }
-        super.draw(context, mouseX, mouseY, partialTicks, delta);
     }
 }

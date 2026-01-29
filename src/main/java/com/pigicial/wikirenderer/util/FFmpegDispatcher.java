@@ -64,7 +64,7 @@ public class FFmpegDispatcher {
                 "ffmpeg",
                 "-y",
                 "-f", "image2",
-                "-framerate", String.valueOf(GlobalProperties.exportFramerate.get()),
+                "-framerate", String.valueOf(GlobalProperties.EXPORT_FRAMERATE.get()),
                 "-i", "seq_%d.png"
         }));
 

@@ -1,9 +1,9 @@
 package com.pigicial.wikirenderer.render.item;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.util.ExportPathSpec;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.GuiGraphics;
@@ -41,7 +41,24 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
 
 		MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
 	    GuiRenderState state = new GuiRenderState();
-		AtlasManager atlasManager = client.getAtlasManager();
+        GuiRenderer renderer = this.getGuiRenderer(client, bufferSource, state);
+
+        List<ClientTooltipComponent> list = this.getTooltip();
+	    this.stack.getTooltipImage().ifPresent(datax -> list.add(list.isEmpty() ? 0 : 1, ClientTooltipComponent.create(datax)));
+
+        MouseHandler mouse = client.mouseHandler;
+        int xScale = (int) mouse.getScaledXPos(client.getWindow());
+        int yScale = (int) mouse.getScaledYPos(client.getWindow());
+
+        GuiGraphics guiGraphics = new GuiGraphics(client, state, xScale, yScale);
+        guiGraphics.renderTooltip(client.font, list, 0, 0, this::positionTooltip, this.stack.get(DataComponents.TOOLTIP_STYLE));
+
+		renderer.render(((GameRendererAccessor) client.gameRenderer).wikirenderer$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
+		renderer.close();
+    }
+
+    private GuiRenderer getGuiRenderer(Minecraft client, MultiBufferSource.BufferSource bufferSource, GuiRenderState state) {
+        AtlasManager atlasManager = client.getAtlasManager();
 
         List<PictureInPictureRenderer<?>> renderers = List.of(
                 new GuiEntityRenderer(bufferSource, client.getEntityRenderDispatcher()),
@@ -52,34 +69,25 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
                 new GuiProfilerChartRenderer(bufferSource)
         );
 
-        GuiRenderer renderer = new GuiRenderer(state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);
-
-	    List<ClientTooltipComponent> list = Screen.getTooltipFromItem(client, this.stack).stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).collect(Util.toMutableList());
-	    this.stack.getTooltipImage().ifPresent(datax -> list.add(list.isEmpty() ? 0 : 1, ClientTooltipComponent.create(datax)));
-
-        MouseHandler mouse = client.mouseHandler;
-        int xScale = (int) mouse.getScaledXPos(client.getWindow());
-        int yScale = (int) mouse.getScaledYPos(client.getWindow());
-
-        GuiGraphics guiGraphics = new GuiGraphics(client, state, xScale, yScale);
-        guiGraphics.renderTooltip(client.font, list, 0, 0, TooltipRenderable::positionTooltip, this.stack.get(DataComponents.TOOLTIP_STYLE));
-
-		renderer.render(((GameRendererAccessor) client.gameRenderer).wikirenderer$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
-		renderer.close();
+        return new GuiRenderer(state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);
     }
 
-    private static Vector2ic positionTooltip(int screenWidth, int screenHeight, int x, int y, int width, int height) {
+    private Vector2ic positionTooltip(int screenWidth, int screenHeight, int x, int y, int width, int height) {
         return new Vector2i(DefaultTooltipPositioner.INSTANCE.positionTooltip(screenWidth, screenHeight, x, y, width, height)).add(-12 - width / 2, 12 - height / 2);
     }
 
-    public int getTooltipSize() {
-        Minecraft minecraft = Minecraft.getInstance();
-        List<ClientTooltipComponent> list = Screen.getTooltipFromItem(minecraft, this.stack)
+    private List<ClientTooltipComponent> getTooltip() {
+        return Screen.getTooltipFromItem(Minecraft.getInstance(), this.stack)
                 .stream()
                 .map(Component::getVisualOrderText)
                 .map(ClientTooltipComponent::create)
                 .collect(Util.toMutableList());
+    }
 
+    public int getTooltipSize() {
+        Minecraft minecraft = Minecraft.getInstance();
+
+        List<ClientTooltipComponent> list = this.getTooltip();
         this.stack.getTooltipImage().ifPresent(data -> list.add(list.isEmpty() ? 0 : 1, ClientTooltipComponent.create(data)));
 
         int width = 0;

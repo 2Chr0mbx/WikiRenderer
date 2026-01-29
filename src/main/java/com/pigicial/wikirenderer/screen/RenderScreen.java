@@ -250,27 +250,27 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     WikiRendererUI.booleanControl(rightColumn, animatedCropProperty, "crop");
                 }
 
-                WikiRendererUI.booleanControl(rightColumn, speedUpEnchantmentGlints, "speed_up_enchantment_glints");
-                speedUpEnchantmentGlints.listen((p, v) -> guiRebuildScheduled = true, false);
+                WikiRendererUI.booleanControl(rightColumn, SPEED_UP_ENCHANTMENT_GLINTS, "speed_up_enchantment_glints");
+                SPEED_UP_ENCHANTMENT_GLINTS.listen((p, v) -> guiRebuildScheduled = true, false);
 
-                if (speedUpEnchantmentGlints.get()) {
+                if (SPEED_UP_ENCHANTMENT_GLINTS.get()) {
                     rightColumn.child(Components.button(Translate.gui("enchantment_glint_preset"), button -> {
                         int seconds = 120000 / 8000;
                         int framerate = 20;
-                        exportFramerate.set(framerate);
-                        exportFrames.set(seconds * framerate);
+                        EXPORT_FRAMERATE.set(framerate);
+                        EXPORT_FRAMES.set(seconds * framerate);
                     }).margins(Insets.vertical(5)));
                 }
 
-                WikiRendererUI.labelledTextField(rightColumn, exportFrames, "animation_frames", Sizing.fixed(30));
-                WikiRendererUI.labelledTextField(rightColumn, exportFramerate, "animation_framerate", Sizing.fixed(30));
+                WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMES, "animation_frames", Sizing.fixed(30));
+                WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMERATE, "animation_framerate", Sizing.fixed(30));
 
                 try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(rightColumn)) {
                     this.exportAnimationButton = Components.button(Translate.gui("export_animation"), button -> {
-                        if (this.memoryGuard.canFit(this.estimateMemoryUsage(exportFrames.get())) || this.minecraft.hasControlDown()) {
-                            this.remainingAnimationFrames = exportFrames.get();
+                        if (this.memoryGuard.canFit(this.estimateMemoryUsage(EXPORT_FRAMES.get())) || this.minecraft.hasControlDown()) {
+                            this.remainingAnimationFrames = EXPORT_FRAMES.get();
 
-                            this.minecraft.getFramerateLimitTracker().setFramerateLimit(exportFramerate.get());
+                            this.minecraft.getFramerateLimitTracker().setFramerateLimit(EXPORT_FRAMERATE.get());
                             WikiRenderer.skipNextWorldRender();
 
                             button.active = false;
@@ -350,7 +350,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             super.render(context, mouseX, mouseY, delta);
 
             if (this.exportAnimationButton != null) {
-                this.exportAnimationButton.tooltip(this.memoryGuard.getStatusTooltip(this.estimateMemoryUsage(exportFrames.get())).stream().map(text -> ClientTooltipComponent.create(text.getVisualOrderText())).toList());
+                this.exportAnimationButton.tooltip(this.memoryGuard.getStatusTooltip(this.estimateMemoryUsage(EXPORT_FRAMES.get())).stream().map(text -> ClientTooltipComponent.create(text.getVisualOrderText())).toList());
             }
 
             if (FileIO.taskCount() > 0) {
@@ -391,13 +391,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                                     ? defaultExportPath.differentFileName("area_render_minimap_data")
                                     : defaultExportPath.differentFileName(this.customFileName + "_area_render_minimap_data");
 
-                            FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> {
-                                this.minecraft.execute(() -> this.notify(
-                                        () -> Util.getPlatform().openFile(textFile),
-                                        Translate.gui("exported_minimap_data_as"),
-                                        Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
-                                ));
-                            });
+                            FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> this.minecraft.execute(() -> this.notify(
+                                    () -> Util.getPlatform().openFile(textFile),
+                                    Translate.gui("exported_minimap_data_as"),
+                                    Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
+                            )));
                         }
                     });
 
@@ -412,8 +410,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             if (--this.remainingAnimationFrames == 0) {
                 this.minecraft.getFramerateLimitTracker().setFramerateLimit(this.minecraft.options.framerateLimit().get());
 
-                Boolean overwriteValue = overwriteLatest.get();
-                overwriteLatest.set(false);
+                Boolean overwriteValue = OVERWRITE_LATEST.get();
+                OVERWRITE_LATEST.set(false);
 
                 List<CompletableFuture<File>> exportFutures = new ArrayList<>();
                 List<ImageCropper.CropData> collectedCropData = Collections.synchronizedList(new ArrayList<>());
@@ -440,7 +438,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
                 CompletableFuture.allOf(exportFutures.toArray(CompletableFuture[]::new))
                         .whenComplete((file, throwable) -> {
-                            overwriteLatest.set(overwriteValue);
+                            OVERWRITE_LATEST.set(overwriteValue);
                             if (throwable != null) return;
 
                             this.exportAnimationButton.setMessage(Translate.gui("converting"));
@@ -476,6 +474,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public void tick() {
+        if (this.minecraft.level == null) return;
+
         if (this.minecraft.level.getGameTime() % 40 == 0) {
             this.memoryGuard.update();
         }

@@ -43,10 +43,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implements TickingRenderable<AreaPropertyBundle> {
@@ -150,10 +147,11 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
         }
 
-        Vec3 diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
-        standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
-        this.drawParticles(standardStack.last().pose(), tickDelta);
-
+        if (client.player != null) {
+            Vec3 diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
+            standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
+            this.drawParticles(standardStack.last().pose(), tickDelta);
+        }
     }
 
     private void drawBlockEntities(PoseStack standardStack, SubmitNodeStorage nodeStorage, CameraRenderState cameraRenderState, float tickDelta) {
@@ -181,6 +179,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                         .stream()
                         .map(originalEntity -> {
                             Entity clonedEntity = EntityRenderable.copy(originalEntity);
+                            if (clonedEntity == null) return null;
+
                             clonedEntity.restoreFrom(originalEntity);
                             if (originalEntity instanceof LivingEntity livingOriginal && clonedEntity instanceof LivingEntity livingClone) {
                                 livingClone.yHeadRot = livingOriginal.yHeadRot;
@@ -192,6 +192,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                             clonedEntity.baseTick();
                             return clonedEntity;
                         })
+                        .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
             return;

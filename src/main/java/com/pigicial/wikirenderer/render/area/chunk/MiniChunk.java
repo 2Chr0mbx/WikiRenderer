@@ -2,7 +2,6 @@ package com.pigicial.wikirenderer.render.area.chunk;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,17 +21,6 @@ public class MiniChunk {
         this.endX = startX + (size - 1);
         this.startZ = startZ;
         this.endZ = startZ + (size - 1);
-    }
-
-    public boolean hasBlocks(Level level) {
-        for (BlockPos pos : BlockPos.betweenClosed(startX, level.getMinY(), startZ, endX, level.getMaxY(), endZ)) {
-            BlockState state = level.getBlockState(pos);
-            if (!state.isAir()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @Nullable

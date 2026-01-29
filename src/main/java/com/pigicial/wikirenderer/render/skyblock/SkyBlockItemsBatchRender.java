@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+@SuppressWarnings("unused")
 public class SkyBlockItemsBatchRender {
 
     public static void renderSBItems() {
@@ -38,9 +39,7 @@ public class SkyBlockItemsBatchRender {
                 return;
             }
             BatchRenderable<?> renderable = BatchRenderable.of("skyblock_items", renderables);
-            Minecraft.getInstance().executeBlocking(() -> {
-                ScreenSchedulerAndSaver.schedule(new RenderScreen(renderable));
-            });
+            Minecraft.getInstance().executeBlocking(() -> ScreenSchedulerAndSaver.schedule(new RenderScreen(renderable)));
         });
     }
 
@@ -48,9 +47,7 @@ public class SkyBlockItemsBatchRender {
         return CompletableFuture.supplyAsync(() -> {
             List<CompletableFuture<ItemRenderable>> futures = new ArrayList<>();
 
-            try {
-                HttpClient client = HttpClient.newHttpClient();
-
+            try (HttpClient client = HttpClient.newHttpClient()) {
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create("https://api.hypixel.net/v2/resources/skyblock/items"))
                         .header("Accept", "application/json")

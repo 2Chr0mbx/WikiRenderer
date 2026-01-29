@@ -55,12 +55,11 @@ public record MinimapCalibratorData(
         Vec2 mapTopLeft = projectToMapPlane(renderable, worldTopLeft);
         Vec2 mapBottomRight = projectToMapPlane(renderable, worldBottomRight);
 
-        MinimapCalibratorData minimapCalibratorData = new MinimapCalibratorData(
+        return new MinimapCalibratorData(
                 0, 0, mapTopLeft.x, mapTopLeft.y,
                 image.getWidth() - 1, image.getHeight() - 1, mapBottomRight.x, mapBottomRight.y,
                 image.getWidth(), image.getHeight()
         );
-        return minimapCalibratorData;
     }
 
     private static Map<ViewportCorner, Vec3> getViewportCorners(AreaRenderable renderable) {

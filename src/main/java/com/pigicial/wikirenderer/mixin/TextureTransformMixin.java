@@ -19,7 +19,7 @@ public class TextureTransformMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/OptionInstance;get()Ljava/lang/Object;")
     )
     private static Object redirectGlintSpeed(OptionInstance<Double> instance) {
-        if (WikiRenderer.inRenderableDraw && GlobalProperties.speedUpEnchantmentGlints.get()) {
+        if (WikiRenderer.inRenderableDraw && GlobalProperties.SPEED_UP_ENCHANTMENT_GLINTS.get()) {
             return 1.0D;
         } else {
             return instance.get();
@@ -28,7 +28,7 @@ public class TextureTransformMixin {
 
     @ModifyConstant(method = "setupGlintTexturing", constant = @Constant(longValue = 110000L))
     private static long changeHorizontalModulo(long original) {
-        if (WikiRenderer.inRenderableDraw && GlobalProperties.speedUpEnchantmentGlints.get()) {
+        if (WikiRenderer.inRenderableDraw && GlobalProperties.SPEED_UP_ENCHANTMENT_GLINTS.get()) {
             return 120000L; // 120,000L and 30,000L have a lowest common denominator of 120,000, whereas 110,000L and 30,000 require 330,000
         } else {
             return original;
@@ -37,7 +37,7 @@ public class TextureTransformMixin {
 
     @ModifyConstant(method = "setupGlintTexturing", constant = @Constant(floatValue = 110000.0F))
     private static float changeHorizontalDivisor(float original) {
-        if (WikiRenderer.inRenderableDraw && GlobalProperties.speedUpEnchantmentGlints.get()) {
+        if (WikiRenderer.inRenderableDraw && GlobalProperties.SPEED_UP_ENCHANTMENT_GLINTS.get()) {
             return 120000.0F;
         } else {
             return original;

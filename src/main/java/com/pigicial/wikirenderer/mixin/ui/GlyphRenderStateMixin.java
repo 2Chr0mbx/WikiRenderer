@@ -16,8 +16,7 @@ public abstract class GlyphRenderStateMixin implements ModifiedDepthPipelineRend
     private boolean wikirenderer$useDepthTesting;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void iris$grabContext(CallbackInfo ci) {
-        // This is called when 'new GlyphRenderState(...)' happens inside the lambda
+    private void wikirenderer$grabContext(CallbackInfo ci) {
         this.wikirenderer$useDepthTesting = WikiRenderer.currentlyProcessingDepthTestText;
     }
 

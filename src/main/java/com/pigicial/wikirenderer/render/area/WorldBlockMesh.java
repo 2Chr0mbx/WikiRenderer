@@ -67,7 +67,6 @@ public class WorldBlockMesh {
     public static boolean overrideCutoutRenderPipeline = false;
     public static GpuSampler terrainSampler = null;
 
-    // Render setup data
     public final BlockAndTintGetter world;
     public final BlockPos from;
     private final BlockPos to;
@@ -130,7 +129,6 @@ public class WorldBlockMesh {
         if (WikiRenderer.orthographicSorting != null) {
             this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
         }
-        // Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
 
         float currentRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
         double currentSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();
@@ -148,7 +146,6 @@ public class WorldBlockMesh {
             preparedSections.add(renderBlockLayers(meshSection.getBuffers(), matrices.last().pose()));
         }
 
-        // opaque runs first
         for (ChunkSectionLayerGroup sectionLayer : new ChunkSectionLayerGroup[]{ChunkSectionLayerGroup.OPAQUE, ChunkSectionLayerGroup.TRANSLUCENT, ChunkSectionLayerGroup.TRIPWIRE}) {
             overrideCutoutRenderPipeline = sectionLayer == ChunkSectionLayerGroup.OPAQUE;
             for (ChunkSectionsToRender sections : preparedSections) {
@@ -254,18 +251,6 @@ public class WorldBlockMesh {
         return dimensions;
     }
 
-    /**
-     * Reset this mesh to {@link MeshState#NEW}, releasing
-     * all vertex buffers in the process
-     */
-    public void reset() {
-        this.subMeshes.forEach(MeshSection::close);
-        this.subMeshes.clear();
-        this.blockEntities.clear();
-
-        this.state = MeshState.NEW;
-    }
-
     public boolean canRebuild() {
         return this.buildFuture == null;
     }
@@ -323,7 +308,6 @@ public class WorldBlockMesh {
         int currentScanIndex = 0;
         for (int x = from.getX(); x <= to.getX(); x += regionSize) {
             for (int z = from.getZ(); z <= to.getZ(); z += regionSize) {
-                // Calculate bounds for this specific sub-mesh
                 BlockPos subFrom = new BlockPos(x, from.getY(), z);
                 BlockPos subTo = new BlockPos(
                         Math.min(x + regionSize - 1, to.getX()),

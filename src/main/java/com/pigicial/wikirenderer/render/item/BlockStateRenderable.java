@@ -1,12 +1,11 @@
 package com.pigicial.wikirenderer.render.item;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.util.CameraOrientationUtil;
 import com.pigicial.wikirenderer.util.ExportPathSpec;
-import com.pigicial.wikirenderer.util.ParticleRestriction;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -42,12 +41,15 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
         this.blockEntity = blockEntity;
     }
 
+    @Nullable
     public static BlockStateRenderable of(Block block) {
         return of(block.defaultBlockState(), null);
     }
 
+    @Nullable
     public static BlockStateRenderable of(BlockState state, @Nullable CompoundTag nbt) {
         Minecraft client = Minecraft.getInstance();
+        if (client.player == null) return null;
 
         BlockEntity blockEntity = null;
 
@@ -59,11 +61,11 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
         return new BlockStateRenderable(state, blockEntity);
     }
 
+    @Nullable
     public static BlockStateRenderable copyOf(Level world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
-        CompoundTag data = world.getBlockEntity(pos) != null
-                ? world.getBlockEntity(pos).saveWithoutMetadata(world.registryAccess())
-                : null;
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        CompoundTag data = blockEntity != null ? blockEntity.saveWithoutMetadata(world.registryAccess()) : null;
 
         return of(state, data);
     }
@@ -88,6 +90,7 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
 
 		super.drawSubmittedRenderFeatures();
 
+        assert this.client.player != null;
         double xOffset = this.client.player.getX() % 1d;
         double zOffset = this.client.player.getZ() % 1d;
 
@@ -102,6 +105,7 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
 
     @Override
     public void tick(boolean tick) {
+        if (client.level == null || client.player == null) return;
         if (tick) {
             if (this.blockEntity != null && this.state.getTicker(client.level, this.blockEntity.getType()) != null) {
                 BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.blockEntity.getType());
@@ -123,11 +127,6 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     }
 
     @Override
-    public ParticleRestriction<?> getParticleRestriction() {
-        return ParticleRestriction.never();
-    }
-
-    @Override
     public ExportPathSpec getExportPath() {
         return ExportPathSpec.ofIdentified(
                 BuiltInRegistries.BLOCK.getKey(this.state.getBlock()),
@@ -137,6 +136,7 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
 
     private static void prepareBlockEntity(BlockState state, BlockEntity blockEntity, @Nullable CompoundTag nbt) {
         if (blockEntity == null) return;
+        if (Minecraft.getInstance().level == null) return;
 
         ((BlockEntityAccessor) blockEntity).wikirenderer$setBlockState(state);
         blockEntity.setLevel(Minecraft.getInstance().level);

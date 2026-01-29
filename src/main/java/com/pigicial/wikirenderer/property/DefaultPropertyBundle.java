@@ -15,9 +15,7 @@ import org.joml.Matrix4fStack;
 
 public class DefaultPropertyBundle implements PropertyBundle {
 
-    private static final DefaultPropertyBundle INSTANCE = new DefaultPropertyBundle();
-
-    public final IntProperty scale = IntProperty.of(this.getDefaultScale(), 0, 1000);
+    public final IntProperty scale = IntProperty.of(100, 0, 1000);
     public final IntProperty rotation = IntProperty.of(135, 0, 360).withRollover();
     public final DoubleProperty slant = DoubleProperty.of(this.getDefaultSlant(), -90, 90);
 
@@ -40,10 +38,6 @@ public class DefaultPropertyBundle implements PropertyBundle {
 
     protected int getDefaultExportResolution() {
         return 1000;
-    }
-
-    protected int getDefaultScale() {
-        return 100;
     }
 
     @Override
@@ -117,9 +111,5 @@ public class DefaultPropertyBundle implements PropertyBundle {
         } else {
             rotationOffset = 0;
         }
-    }
-
-    public static DefaultPropertyBundle get() {
-        return INSTANCE;
     }
 }

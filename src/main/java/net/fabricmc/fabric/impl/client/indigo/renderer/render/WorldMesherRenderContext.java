@@ -15,8 +15,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.NonNull;
 
-@SuppressWarnings("UnstableApiUsage")
 public class WorldMesherRenderContext extends AbstractTerrainRenderContext {
 
     private final BlockAndTintGetter blockView;
@@ -51,23 +51,23 @@ public class WorldMesherRenderContext extends AbstractTerrainRenderContext {
     }
 
     @Override
-    protected LightDataProvider createLightDataProvider(BlockRenderInfo blockInfo) {
+    protected @NonNull LightDataProvider createLightDataProvider(@NonNull BlockRenderInfo blockInfo) {
         // TODO: Use a cache whenever vanilla would use a cache (BrightnessCache.enabled)
         return new LightDataProvider() {
             @Override
-            public int light(BlockPos pos, BlockState state) {
+            public int light(@NonNull BlockPos pos, @NonNull BlockState state) {
                 return LevelRenderer.getLightColor(LevelRenderer.BrightnessGetter.DEFAULT, blockInfo.blockView, state, pos);
             }
 
             @Override
-            public float ao(BlockPos pos, BlockState state) {
+            public float ao(@NonNull BlockPos pos, @NonNull BlockState state) {
                 return AoLuminanceFix.INSTANCE.apply(blockInfo.blockView, pos, state);
             }
         };
     }
 
     @Override
-    protected VertexConsumer getVertexConsumer(ChunkSectionLayer layer) {
+    protected @NonNull VertexConsumer getVertexConsumer(@NonNull ChunkSectionLayer layer) {
         return this.bufferFunc.getBuffer(layer);
     }
 }

@@ -11,46 +11,40 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public enum BatchRenderTask {
-    ATLAS((source, renderables) -> {
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new ItemAtlasRenderable(source, new ArrayList<>(renderables))
-        ));
-    }),
-    BATCH_ITEM((source, renderables) -> {
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                BatchRenderable.of(
-                        source + "/items",
-                        renderables.stream()
-                                .map(ItemRenderable::new)
-                                .toList()
-                )
-        ));
-    }),
-    BATCH_TOOLTIP((source, renderables) -> {
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                BatchRenderable.of(
-                        source + "/tooltips",
-                        renderables.stream()
-                                .map(TooltipRenderable::new)
-                                .toList()
-                )
-        ));
-    }),
-    BATCH_BLOCK((source, renderables) -> {
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                BatchRenderable.of(
-                        source + "/blocks",
-                        renderables.stream()
-                                .filter(stack -> stack.getItem() instanceof BlockItem)
-                                .map(stack -> ((BlockItem) stack.getItem()).getBlock())
-                                .map(BlockStateRenderable::of)
-                                .toList()
-                )
-        ));
-    });
+    ATLAS((source, renderables) -> ScreenSchedulerAndSaver.schedule(new RenderScreen(
+            new ItemAtlasRenderable(source, new ArrayList<>(renderables))
+    ))),
+    BATCH_ITEM((source, renderables) -> ScreenSchedulerAndSaver.schedule(new RenderScreen(
+            BatchRenderable.of(
+                    source + "/items",
+                    renderables.stream()
+                            .map(ItemRenderable::new)
+                            .toList()
+            )
+    ))),
+    BATCH_TOOLTIP((source, renderables) -> ScreenSchedulerAndSaver.schedule(new RenderScreen(
+            BatchRenderable.of(
+                    source + "/tooltips",
+                    renderables.stream()
+                            .map(TooltipRenderable::new)
+                            .toList()
+            )
+    ))),
+    BATCH_BLOCK((source, renderables) -> ScreenSchedulerAndSaver.schedule(new RenderScreen(
+            BatchRenderable.of(
+                    source + "/blocks",
+                    renderables.stream()
+                            .filter(stack -> stack.getItem() instanceof BlockItem)
+                            .map(stack -> ((BlockItem) stack.getItem()).getBlock())
+                            .map(BlockStateRenderable::of)
+                            .filter(Objects::nonNull)
+                            .toList()
+            )
+    )));
 
     public final BiConsumer<String, Collection<ItemStack>> action;
 

@@ -35,7 +35,7 @@ public class WikiRenderer implements ClientModInitializer {
 
 	public static final String MOD_ID = "wikirenderer";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    public static final String VERSION = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata().getVersion().getFriendlyString();
+    public static final String VERSION = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata().getVersion().getFriendlyString();
 
     public static ParticleRestriction<?> particleRestriction = ParticleRestriction.always();
 
@@ -51,7 +51,6 @@ public class WikiRenderer implements ClientModInitializer {
 	public static ProjectionType prevProjectionType = null;
 	public static GpuBufferSlice prevProjectionMatrix = null;
 
-	public static Matrix4f renderableDrawProjectionMatrix = null;
 	public static GpuBufferSlice renderableDrawProjectionBuffer = null;
     public static OrthographicSort orthographicSorting = null;
 
@@ -69,6 +68,7 @@ public class WikiRenderer implements ClientModInitializer {
         HudElementRegistry.addLast(hudId, (matrixStack, tickDelta) -> {
             Minecraft client = Minecraft.getInstance();
             FlowLayout isometricHud = (FlowLayout) Hud.getComponent(hudId);
+            if (isometricHud == null) return;
 
             IOStateComponent ioState = isometricHud.childById(IOStateComponent.class, ioStateId);
             if ((ioState == null) == (FileIO.taskCount() > 0 && client.screen == null)) {
@@ -97,7 +97,6 @@ public class WikiRenderer implements ClientModInitializer {
 	public static void beginRenderableDraw(PerspectiveProjectionMatrixBuffer matrixStore, Matrix4f projectionMatrix) {
 		prevProjectionType = RenderSystem.getProjectionType();
 		prevProjectionMatrix = RenderSystem.getProjectionMatrixBuffer();
-		renderableDrawProjectionMatrix = projectionMatrix;
 		renderableDrawProjectionBuffer = matrixStore.getBuffer(projectionMatrix);
 		RenderSystem.setProjectionMatrix(renderableDrawProjectionBuffer, ProjectionType.ORTHOGRAPHIC);
 		inRenderableDraw = true;
@@ -111,7 +110,6 @@ public class WikiRenderer implements ClientModInitializer {
 		RenderSystem.setProjectionMatrix(prevProjectionMatrix, prevProjectionType);
 		prevProjectionType = null;
 		prevProjectionMatrix = null;
-		renderableDrawProjectionMatrix = null;
 		renderableDrawProjectionBuffer = null;
 		inRenderableDraw = false;
         orthographicSorting = null;

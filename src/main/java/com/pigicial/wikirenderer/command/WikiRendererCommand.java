@@ -1,8 +1,14 @@
 package com.pigicial.wikirenderer.command;
 
+import com.mojang.authlib.GameProfile;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockInputAccessor;
-import com.pigicial.wikirenderer.mixin.access.WorldCoordinatesAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.batch.BatchRenderTask;
@@ -14,13 +20,6 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.util.AreaSelectionHelper;
 import com.pigicial.wikirenderer.util.Translate;
-import com.mojang.authlib.GameProfile;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import io.wispforest.owo.ui.component.EntityComponent;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
@@ -158,13 +157,13 @@ public class WikiRendererCommand {
     }
 
     private static int disableUnsafe(CommandContext<FabricClientCommandSource> context) {
-        GlobalProperties.unsafe.set(false);
+        GlobalProperties.UNSAFE.set(false);
         Translate.commandFeedback(context, "unsafe_disabled");
         return 0;
     }
 
     private static int enableUnsafe(CommandContext<FabricClientCommandSource> context) {
-        GlobalProperties.unsafe.set(true);
+        GlobalProperties.UNSAFE.set(true);
         Translate.commandFeedback(context, "unsafe_enabled");
         return 0;
     }
@@ -239,9 +238,7 @@ public class WikiRendererCommand {
 
     private static int renderCreativeTab(CommandContext<FabricClientCommandSource> context) {
         BatchRenderTask task = RenderTaskArgumentType.getTask("task", context);
-        withItemGroupFromContext(context, (itemStacks, name) -> {
-            task.action.accept(name, itemStacks);
-        });
+        withItemGroupFromContext(context, (itemStacks, name) -> task.action.accept(name, itemStacks));
         return 0;
     }
 
@@ -259,9 +256,16 @@ public class WikiRendererCommand {
     }
 
     private static int renderHeldItem(CommandContext<FabricClientCommandSource> context) {
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new ItemRenderable(Minecraft.getInstance().player.getMainHandItem())
-        ));
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) return 0;
+
+        ItemStack mainHandItem = player.getMainHandItem();
+        if (mainHandItem.isEmpty()) {
+            Translate.commandError(context, "no_held_item");
+            return 0;
+        }
+
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(new ItemRenderable(mainHandItem)));
         return 0;
     }
 
@@ -273,9 +277,16 @@ public class WikiRendererCommand {
     }
 
     private static int renderHeldItemTooltip(CommandContext<FabricClientCommandSource> context) {
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new TooltipRenderable(Minecraft.getInstance().player.getMainHandItem())
-        ));
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) return 0;
+
+        ItemStack mainHandItem = player.getMainHandItem();
+        if (mainHandItem.isEmpty()) {
+            Translate.commandError(context, "no_held_item");
+            return 0;
+        }
+
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(new TooltipRenderable(mainHandItem)));
         return 0;
     }
 
@@ -283,7 +294,10 @@ public class WikiRendererCommand {
         CompoundTag entityNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
         Holder.Reference<EntityType<?>> entityReference = context.getArgument("entity", Holder.Reference.class);
 
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(EntityRenderable.of(entityReference.value(), entityNbt)));
+        EntityRenderable renderable = EntityRenderable.of(entityReference.value(), entityNbt);
+        if (renderable != null) {
+            ScreenSchedulerAndSaver.schedule(new RenderScreen(renderable));
+        }
 
         return 0;
     }
@@ -291,16 +305,20 @@ public class WikiRendererCommand {
     private static int renderEntityWithoutNbt(CommandContext<FabricClientCommandSource> context) {
         Holder.Reference<EntityType<?>> entityReference = context.getArgument("entity", Holder.Reference.class);
 
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                EntityRenderable.of(entityReference.value(), null)
-        ));
+        EntityRenderable renderable = EntityRenderable.of(entityReference.value(), null);
+        if (renderable != null) {
+            ScreenSchedulerAndSaver.schedule(new RenderScreen(renderable));
+        }
 
         return 0;
     }
 
     public static int renderTargetedEntity(CommandContext<FabricClientCommandSource> context) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) return 0;
+
         AttackRange attackRange = new AttackRange(0, 10, 0, 10, 0.3f, 10);
-        HitResult closesetHit = attackRange.getClosesetHit(Minecraft.getInstance().player, 1.0f, e -> {
+        HitResult closesetHit = attackRange.getClosesetHit(player, 1.0f, e -> {
 
             if (e instanceof LivingEntity livingEntity) {
                 if (livingEntity.isInvisible() || (livingEntity instanceof ArmorStand armorStand && armorStand.isMarker())) {
@@ -313,8 +331,7 @@ public class WikiRendererCommand {
                 }
             }
 
-            boolean pickable = e.isPickable();
-            return pickable;
+            return e.isPickable();
         });
 
         if (!(closesetHit instanceof EntityHitResult entityHitResult)) {
@@ -335,24 +352,26 @@ public class WikiRendererCommand {
         BlockState state = stateArg.getState();
         CompoundTag data = ((BlockInputAccessor) stateArg).wikirenderer$getTag();
 
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                BlockStateRenderable.of(state, data)
-        ));
+        BlockStateRenderable renderable = BlockStateRenderable.of(state, data);
+        if (renderable == null) return 0;
+
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(renderable));
         return 0;
     }
 
     private static int renderTargetedBlock(CommandContext<FabricClientCommandSource> context) {
         Minecraft client = Minecraft.getInstance();
+        if (client.level == null) return 0;
 
-        if (client.hitResult.getType() != HitResult.Type.BLOCK) {
+        if (client.hitResult instanceof BlockHitResult blockHitResult) {
+            BlockPos hitPos = blockHitResult.getBlockPos();
+            BlockStateRenderable renderable = BlockStateRenderable.copyOf(client.level, hitPos);
+            if (renderable != null) {
+                ScreenSchedulerAndSaver.schedule(new RenderScreen(renderable));
+            }
+        } else {
             Translate.commandError(context, "no_block");
-            return 0;
         }
-
-        BlockPos hitPos = ((BlockHitResult) client.hitResult).getBlockPos();
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                BlockStateRenderable.copyOf(client.level, hitPos)
-        ));
 
         return 0;
     }
@@ -405,10 +424,8 @@ public class WikiRendererCommand {
     }
 
     public static BlockPos getPosFromArgument(WorldCoordinates argument, FabricClientCommandSource source) {
-
-        WorldCoordinatesAccessor accessor = (WorldCoordinatesAccessor) (Object) argument;
         Vec3 pos = source.getPlayer().trackingPosition();
 
-        return BlockPos.containing(accessor.wikirenderer$getX().get(pos.x), accessor.wikirenderer$getY().get(pos.y), accessor.wikirenderer$getZ().get(pos.z));
+        return BlockPos.containing(argument.x().get(pos.x), argument.y().get(pos.y), argument.z().get(pos.z));
     }
 }

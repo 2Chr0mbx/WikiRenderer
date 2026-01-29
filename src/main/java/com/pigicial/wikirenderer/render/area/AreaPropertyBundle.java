@@ -20,7 +20,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
 import org.joml.Matrix4fStack;
 
-import static com.pigicial.wikirenderer.property.GlobalProperties.unsafe;
+import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
 
 public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
 
@@ -129,11 +129,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     @Override
-    public String getOptionTranslationKey() {
-        return "block_animations";
-    }
-
-    @Override
     public void buildMainGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         AreaRenderable renderable = (AreaRenderable) r;
         WikiRendererUI.sectionHeader(container, "transform_options", false);
@@ -234,17 +229,13 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WikiRendererUI.booleanControl(container, this.hideMesh, "hide_blocks");
 
         WikiRendererUI.booleanControl(container, this.hideEntities, "hide_entities");
-        this.hideEntities.listen((booleanProperty, hidden) -> {
-            screen.guiRebuildScheduled = true;
-        }, false);
+        this.hideEntities.listen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true, false);
         if (!this.hideEntities.get()) {
             WikiRendererUI.booleanControl(container, this.hidePlayers, "hide_players");
             WikiRendererUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
         }
         WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-        this.freezeEntities.listen((booleanProperty, hidden) -> {
-            screen.guiRebuildScheduled = true;
-        }, false);
+        this.freezeEntities.listen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true, false);
         if (!this.freezeEntities.get()) {
             WikiRendererUI.booleanControl(container, this.freezePlayerArms, "freeze_player_arms");
         }
@@ -272,7 +263,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WikiRendererUI.booleanControl(container, this.emulateDaylight, "render_as_daytime");
         WikiRendererUI.booleanControl(container, this.useFullBrightGamma, "full_bright");
         WikiRendererUI.booleanControl(container, this.useNightVision, "night_vision");
-        WikiRendererUI.booleanControl(container, GlobalProperties.tickParticles, "particles");
+        WikiRendererUI.booleanControl(container, GlobalProperties.TICK_PARTICLES, "particles");
     }
 
     @Override
@@ -298,7 +289,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
                 double bufferSize = highest * pixelsPerBlock;
 
-                if ((pixelsPerBlock < 4 || pixelsPerBlock > 256 || bufferSize > 16384) && !unsafe.get()) {
+                if ((pixelsPerBlock < 4 || pixelsPerBlock > 256 || bufferSize > 16384) && !UNSAFE.get()) {
                     screen.exportButton.active = false;
                 } else {
                     if ((this.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && this.getPixelsPerBlockResolution() == 4)) {
