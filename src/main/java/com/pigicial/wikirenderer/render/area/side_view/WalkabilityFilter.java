@@ -18,11 +18,15 @@ public class WalkabilityFilter {
 
     private final Map<Long, Integer> maxYLevelRenderMap = new HashMap<>();
     private final int walkableHeightRequirement;
+    private final int minFloorYLevel;
+    private final int maxFloorYLevel;
     private final boolean requireCeilingToShow;
 
-    public WalkabilityFilter(WorldBlockMesh mesh, int walkableHeightRequirement, boolean requireCeilingToShow) {
+    public WalkabilityFilter(WorldBlockMesh mesh, int walkableHeightRequirement, int minFloorYLevel, int maxFloorYLevel, boolean requireCeilingToShow) {
         this.mesh = mesh;
         this.walkableHeightRequirement = walkableHeightRequirement;
+        this.minFloorYLevel = minFloorYLevel;
+        this.maxFloorYLevel = maxFloorYLevel;
         this.requireCeilingToShow = requireCeilingToShow;
     }
 
@@ -33,11 +37,11 @@ public class WalkabilityFilter {
             for (int z = (int) dimensions.minZ; z <= dimensions.maxZ; z++) {
                 int passableBlocksAboveSolidBlockInARow = 0;
                 boolean wasPreviousBlockSolid = false;
-                boolean lastSolidBlockWasBedrock = false; // bedrock helps filter out dwarven mines weirdness
+                boolean disallowedFloor = false; // bedrock helps filter out dwarven mines weirdness
                 OptionalInt lastWalkableSolidBlockYLevel = OptionalInt.empty();
                 OptionalInt lastPreCeilingYLevel = OptionalInt.empty();
 
-                for (int y = (int) dimensions.minY; y <= dimensions.maxY; y++) {
+                for (int y = minFloorYLevel; y <= dimensions.maxY; y++) {
                     BlockPos blockPos = new BlockPos(x, y, z);
                     BlockState state = mesh.world.getBlockState(blockPos);
 
@@ -47,20 +51,19 @@ public class WalkabilityFilter {
                             passableBlocksAboveSolidBlockInARow++;
                         }
 
-                        if (!lastSolidBlockWasBedrock && passableBlocksAboveSolidBlockInARow >= walkableHeightRequirement) {
+                        if (!disallowedFloor && passableBlocksAboveSolidBlockInARow >= walkableHeightRequirement) {
                             lastWalkableSolidBlockYLevel = OptionalInt.of(y - passableBlocksAboveSolidBlockInARow);
                         }
 
                         wasPreviousBlockSolid = false;
                     } else {
-                        // maybe add a bedrock check
-                        if (!lastSolidBlockWasBedrock && passableBlocksAboveSolidBlockInARow >= walkableHeightRequirement) {
+                        if (!disallowedFloor && passableBlocksAboveSolidBlockInARow >= walkableHeightRequirement) {
                             lastPreCeilingYLevel = OptionalInt.of(y - 1);
                         }
                         wasPreviousBlockSolid = true;
                         passableBlocksAboveSolidBlockInARow = 0;
 
-                        lastSolidBlockWasBedrock = state.getBlock() == Blocks.BEDROCK;
+                        disallowedFloor = state.getBlock() == Blocks.BEDROCK || y > this.maxFloorYLevel;
                     }
                 }
 

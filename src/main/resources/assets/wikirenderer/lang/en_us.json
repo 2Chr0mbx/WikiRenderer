@@ -38,6 +38,8 @@
   "gui.wikirenderer.hide_blocks": "Hide Blocks",
   "gui.wikirenderer.walkability_filter": "Walkability Filter / \"Cave Mode\"",
   "gui.wikirenderer.walkable_blocks_threshold": "Walkable Blocks Threshold",
+  "gui.wikirenderer.min_floor_y_level": "Minimum Floor Y Level",
+  "gui.wikirenderer.max_floor_y_level": "Maximum Floor Y Level",
   "gui.wikirenderer.require_ceiling": "Require Ceilings for Walkable Areas",
   "gui.wikirenderer.cycle_rotation": "Cycle Rotation 90°",
   "gui.wikirenderer.cycle_slant": "Cycle Slant 90°",

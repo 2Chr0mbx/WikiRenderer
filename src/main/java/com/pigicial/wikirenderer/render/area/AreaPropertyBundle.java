@@ -188,6 +188,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             this.useWalkabilityFilter.listen((booleanProperty, value) -> screen.guiRebuildScheduled = true, false);
             if (this.useWalkabilityFilter.get()) {
                 WikiRendererUI.intControl(container, walkableBlocksThreshold, "walkable_blocks_threshold", 1);
+                WikiRendererUI.intControl(container, renderable.minFloorYLevelForOverhead, "min_floor_y_level", 1);
+                WikiRendererUI.intControl(container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level", 1);
                 WikiRendererUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");
             }
         }

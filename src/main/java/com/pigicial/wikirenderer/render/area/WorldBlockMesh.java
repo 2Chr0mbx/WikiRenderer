@@ -72,6 +72,7 @@ public class WorldBlockMesh {
     private final BlockPos to;
     @Nullable
     private final Set<MiniChunk> chunksToGrabBlocksFrom;
+    private AreaRenderable renderable;
 
     private final AABB dimensions;
     private final boolean cull;
@@ -108,6 +109,10 @@ public class WorldBlockMesh {
         this.lastUsedSlant = Double.MAX_VALUE;
 
         this.scheduleRebuild();
+    }
+
+    public void setRenderable(AreaRenderable renderable) {
+        this.renderable = renderable;
     }
 
     /**
@@ -343,7 +348,7 @@ public class WorldBlockMesh {
         AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
         if (properties.perPixel90DegreeRendering.get()) {
             if (properties.useWalkabilityFilter.get()) {
-                walkabilityFilter = new WalkabilityFilter(this, properties.walkableBlocksThreshold.get(), properties.requireCeilingForCaveMode.get());
+                walkabilityFilter = new WalkabilityFilter(this, properties.walkableBlocksThreshold.get(), renderable.minFloorYLevelForOverhead.get(),  renderable.maxFloorYLevelForOverhead.get(), properties.requireCeilingForCaveMode.get());
                 walkabilityFilter.cacheData();
             }
         }

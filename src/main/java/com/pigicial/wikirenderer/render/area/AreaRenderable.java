@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.area;
 
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
+import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.chunk.ChunkScanResult;
@@ -50,6 +51,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
     private final Minecraft client = Minecraft.getInstance();
 
+    protected final IntProperty minFloorYLevelForOverhead;
+    protected final IntProperty maxFloorYLevelForOverhead;
     public final WorldBlockMesh mesh;
     public final int ySize;
     public final int xSize;
@@ -65,6 +68,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         this.xSize = (int) dimensions.getXsize();
         this.ySize = (int) dimensions.getYsize();
         this.zSize = (int) dimensions.getZsize();
+        this.minFloorYLevelForOverhead = IntProperty.of((int) dimensions.minY, (int) dimensions.minY, (int) dimensions.maxY);
+        this.maxFloorYLevelForOverhead = IntProperty.of((int) dimensions.maxY, (int) dimensions.minY, (int) dimensions.maxY);
+        this.mesh.setRenderable(this);
     }
 
     public static AreaRenderable of(BlockPos origin, BlockPos end) {
