@@ -84,7 +84,7 @@ public class WalkabilityFilter {
     public boolean shouldRenderBlock(BlockPos pos) {
         long bit = xzToBit(pos.getX(), pos.getZ());
         Integer maxYLevelToRender = this.maxYLevelRenderMap.get(bit);
-        return maxYLevelToRender != null && pos.getY() <= maxYLevelToRender;
+        return maxYLevelToRender != null && pos.getY() >= minFloorYLevel && pos.getY() <= maxYLevelToRender;
     }
 
     protected long xzToBit(int x, int z) {

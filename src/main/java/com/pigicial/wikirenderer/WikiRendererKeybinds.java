@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer;
 
 import com.pigicial.wikirenderer.command.WikiRendererCommand;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
+import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
@@ -13,12 +14,15 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -80,6 +84,13 @@ public class WikiRendererKeybinds {
 
         Screen currentScreen = client.screen;
         if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
+            if (currentScreen.getFocused() instanceof EditBox) return null;
+            if (currentScreen instanceof CreativeModeInventoryScreen
+                && CreativeModeInventoryScreenAccessor.getSelectedTab() != null
+                && CreativeModeInventoryScreenAccessor.getSelectedTab().getType() == CreativeModeTab.Type.SEARCH) {
+                return null;
+            }
+
             Slot hoveredSlot = ((AbstractContainerScreenAccessor) containerScreen).getHoveredSlot();
             if (hoveredSlot == null) {
                 return null;
@@ -103,6 +114,13 @@ public class WikiRendererKeybinds {
 
         Screen currentScreen = client.screen;
         if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
+            if (currentScreen.getFocused() instanceof EditBox) return null;
+            if (currentScreen instanceof CreativeModeInventoryScreen
+                && CreativeModeInventoryScreenAccessor.getSelectedTab() != null
+                && CreativeModeInventoryScreenAccessor.getSelectedTab().getType() == CreativeModeTab.Type.SEARCH) {
+                return null;
+            }
+
             AbstractContainerMenu menu = ((AbstractContainerScreenAccessor) containerScreen).menu();
             return menu.slots.stream().map(Slot::getItem).filter(stack -> !stack.isEmpty()).toList();
         }

@@ -29,6 +29,7 @@
     "access.BlockEntityAccessor",
     "access.BlockInputAccessor",
     "access.CameraInvoker",
+    "access.CreativeModeInventoryScreenAccessor",
     "access.GameRendererAccessor",
     "access.ItemStackRenderStateAccessor",
     "access.LightTextureAccessor",
