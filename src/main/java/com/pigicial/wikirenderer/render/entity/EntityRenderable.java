@@ -1,5 +1,10 @@
 package com.pigicial.wikirenderer.render.entity;
 
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
@@ -10,11 +15,6 @@ import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.CameraOrientationUtil;
 import com.pigicial.wikirenderer.util.ExportPathSpec;
 import com.pigicial.wikirenderer.util.ParticleRestriction;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.PropertyMap;
-import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.EntityComponent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
@@ -102,12 +102,12 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         Entity clonedEntity = EntityType.loadEntityRecursive(nbt, source.level(), EntitySpawnReason.LOAD, EntityProcessor.NOP);
         if (clonedEntity == null) return null;
-        
+
         List<SynchedEntityData.DataValue<?>> nonDefaultValues = source.getEntityData().getNonDefaultValues();
         if (nonDefaultValues != null) {
             clonedEntity.getEntityData().assignValues(nonDefaultValues);
         }
-        
+
         if (clonedEntity instanceof LivingEntity living) {
             living.hurtTime = 0;
             living.deathTime = 0;
@@ -160,12 +160,12 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(playerClone.problemPath(), WikiRenderer.LOGGER)) {
             playerClone.load(TagValueInput.create(loggingRead, playerClone.registryAccess(), nbt));
         }
-        
+
         List<SynchedEntityData.DataValue<?>> nonDefaultValues = playerClone.getEntityData().getNonDefaultValues();
         if (nonDefaultValues != null) {
             playerClone.getEntityData().assignValues(nonDefaultValues);
         }
-        
+
         playerClone.hurtTime = 0;
         playerClone.deathTime = 0;
 
