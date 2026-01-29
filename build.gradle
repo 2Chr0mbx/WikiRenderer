@@ -46,6 +46,8 @@ processResources {
     filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
+
+    exclude "assets/wikirenderer/readme_images/**"
 }
 
 tasks.withType(JavaCompile).configureEach {
