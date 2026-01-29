@@ -250,6 +250,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
         WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
+        WikiRendererUI.sectionHeader(container, "entity_overrides", 10);
         WikiRendererUI.booleanControl(container, this.overrideRotations, "mesh_entity_data.override_rotations");
         WikiRendererUI.intControl(container, yaw, "entity_data.yaw", 15);
         WikiRendererUI.intControl(container, pitch, "entity_data.pitch", 5);

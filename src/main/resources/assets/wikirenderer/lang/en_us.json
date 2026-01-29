@@ -112,6 +112,7 @@
   "gui.wikirenderer.lighting_profile": "Lighting Profile",
 
   "gui.wikirenderer.area_overrides": "Overrides",
+  "gui.wikirenderer.entity_overrides": "Entity Overrides",
   "gui.wikirenderer.mesh_entity_data.override_rotations": "Override Rotations",
   "gui.wikirenderer.sprite_rendering": "Sprite Rendering",
   "gui.wikirenderer.entity_data": "Entity Data",
@@ -125,7 +126,7 @@
   "gui.wikirenderer.entity_data.hide_held_items": "Hide Held Items",
   "gui.wikirenderer.entity_data.hide_armor": "Hide Armor",
   "gui.wikirenderer.entity_data.hide_enchantments": "Hide Enchantments",
-  "gui.wikirenderer.entity_data.invisible": "Invisible",
+  "gui.wikirenderer.entity_data.invisible": "Toggle Invisibility",
 
   "gui.wikirenderer.render_options": "Render Options",
   "gui.wikirenderer.background_color": "Background Color (F10)",

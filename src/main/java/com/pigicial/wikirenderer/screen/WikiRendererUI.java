@@ -58,6 +58,15 @@ public class WikiRendererUI {
         return label;
     }
 
+    public static LabelComponent sectionHeader(FlowLayout container, String key, int topMargins) {
+        LabelComponent label = Components.label(Translate.gui(key)).shadow(true);
+        label.margins(Insets.top(topMargins));
+        label.margins(label.margins().get().withBottom(5));
+
+        container.child(label);
+        return label;
+    }
+
     public static DynamicLabelComponent dynamicLabel(FlowLayout container, Supplier<Component> content) {
         DynamicLabelComponent label = new DynamicLabelComponent(content).shadow(false);
         label.margins(Insets.bottom(5));
