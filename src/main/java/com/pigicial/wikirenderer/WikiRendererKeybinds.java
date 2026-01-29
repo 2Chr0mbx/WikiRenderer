@@ -4,6 +4,7 @@ import com.pigicial.wikirenderer.command.WikiRendererCommand;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
 import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
+import com.pigicial.wikirenderer.render.item.TooltipRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.screen.SelectRenderTaskScreen;
@@ -34,7 +35,8 @@ public class WikiRendererKeybinds {
     private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(WikiRenderer.MOD_ID, "keybinds"));
     public static final KeyMapping KEYBIND_SELECT = new KeyMapping("key.wikirenderer.area_select", GLFW.GLFW_KEY_C, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY = new KeyMapping("key.wikirenderer.render_hovered_item_or_viewed_entity", GLFW.GLFW_KEY_H, CATEGORY);
-    public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_M, CATEGORY);
+    public static final KeyMapping KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP = new KeyMapping("key.wikirenderer.render_hovered_item_tooltip", GLFW.GLFW_KEY_J, CATEGORY);
+    public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_K, CATEGORY);
 
     public static void registerKeyBinds() {
         KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT);
@@ -63,6 +65,13 @@ public class WikiRendererKeybinds {
                 ItemStack hoveredSlot = getHoveredSlot(client);
                 if (hoveredSlot != null) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ItemRenderable(hoveredSlot)));
+                }
+            }
+
+            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP).getValue()) {
+                ItemStack hoveredSlot = getHoveredSlot(client);
+                if (hoveredSlot != null) {
+                    ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new TooltipRenderable(hoveredSlot)));
                 }
             }
 
