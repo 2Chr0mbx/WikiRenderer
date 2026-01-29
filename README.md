@@ -1,7 +1,4 @@
 # WikiRenderer
-[![release](https://img.shields.io/github/v/release/Pigicial/?logo=github&style=for-the-badge)](https://github.com/Pigicial/Pigicial/releases)
-
-# Overview
 WikiRenderer is a heavily modified version of [Isometric Renders](https://github.com/gliscowo/isometric-renders) that allows you to create renders of game objects like parts
 of world, blocks, items and entities.
 
@@ -12,7 +9,9 @@ Not only is this version of the mod also designed for modded wikis in mind, but 
 features targeted for use on the [Hypixel SkyBlock Wiki](https://hypixel-skyblock.fandom.com).
 
 ## Dependencies
-WikiRenderer relies on [owo-lib](https://modrinth.com/mod/owo-lib), which hasn't formally been released for 1.21.11 yet. It has however been updated and is available in a [branch in the main repository](https://github.com/wisp-forest/owo-lib/tree/1.21.11), it just has to be manually built.
+WikiRenderer relies on [owo-lib](https://modrinth.com/mod/owo-lib), which hasn't formally been released for 1.21.11 yet. It has however been updated and is available in a [branch in the main repository](https://github.com/wisp-forest/owo-lib/tree/1.21.11), it just has to be manually built. 
+
+(A built version can also be found in the releases section here)
 
 # Usage
 WikiRenderer supports the following render types:
