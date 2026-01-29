@@ -1,45 +1,40 @@
 {
   "schemaVersion": 1,
-  "id": "isometric-renders",
+  "id": "wikirenderer",
   "version": "${version}",
-  "name": "Isometric Renders",
-  "description": "Creates high-resolution renders of game objects",
+  "name": "WikiRenderer",
+  "description": "Creates high-resolution renders of game objects.",
   "authors": [
-    "glisco"
+    "glisco",
+    "Pigicial",
+    "Skittlq"
   ],
   "contact": {
-    "issues": "https://github.com/gliscowo/isometric-renders/issues",
-    "sources": "https://github.com/gliscowo/isometric-renders"
+    "issues": "https://github.com/Pigicial/WikiRenderer/issues",
+    "sources": "https://github.com/Pigicial/WikiRenderer"
   },
   "license": "MIT",
-  "icon": "assets/isometric-renders/icon.png",
+  "icon": "assets/wikirenderer/icon.png",
   "environment": "client",
-  "accessWidener": "isometricrenders.accesswidener",
+  "accessWidener": "wikirenderer.accesswidener",
   "entrypoints": {
     "client": [
-      "com.glisco.isometricrenders.IsometricRenders"
+      "com.pigicial.wikirenderer.WikiRenderer"
     ],
     "exo": [
-      "com.glisco.isometricrenders.util.IsometricChannel"
+      "com.pigicial.wikirenderer.util.IsometricChannel"
     ]
   },
   "mixins": [
-    "isometric-renders.mixins.json"
+    "wikirenderer.mixins.json"
   ],
   "breaks": {
     "optifabric": "*"
   },
   "depends": {
-    "fabricloader": ">=0.11.3",
+    "fabricloader": ">=0.18.3",
     "fabric": ">=0.85.0",
     "minecraft": ">=1.20.11",
     "owo": ">=0.11.3"
-  },
-  "custom": {
-    "modmenu": {
-      "links": {
-        "modmenu.discord": "https://discord.gg/xrwHKktV2d"
-      }
-    }
   }
 }

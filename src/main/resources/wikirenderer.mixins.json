@@ -1,0 +1,52 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "mixinextras": {
+    "minVersion": "0.5.0"
+  },
+  "package": "com.pigicial.wikirenderer.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "plugin": "com.pigicial.wikirenderer.mixin.MixinPlugin",
+  "client": [
+    "BeaconRendererMixin",
+    "ChunkSectionsToRenderMixin",
+    "DefaultPlayerSkinMixin",
+    "EquipmentLayerRendererMixin",
+    "GLDebugMixin",
+    "HumanoidArmorLayerMixin",
+    "LevelRendererMixin",
+    "LightTextureMixin",
+    "LivingEntityRendererMixin",
+    "MinecraftMixin",
+    "MixinChunkSectionLayer",
+    "ParticleEngineMixin",
+    "ParticleFeatureRendererMixin",
+    "ProjectionTypeMixin",
+    "QuadParticleGroupMixin",
+    "ReloadableTextureMixin",
+    "TextureManagerMixin",
+    "TextureTransformMixin",
+    "access.AbstractContainerScreenAccessor",
+    "access.AbstractSliderButtonInvoker",
+    "access.BlockEntityAccessor",
+    "access.BlockInputAccessor",
+    "access.CameraInvoker",
+    "access.CheckBoxAccessor",
+    "access.GameRendererAccessor",
+    "access.ItemStackRenderStateAccessor",
+    "access.LevelRendererAccessor",
+    "access.LightTextureAccessor",
+    "access.MannequinAccessor",
+    "access.ModelPartAccessor",
+    "access.NativeImageInvoker",
+    "access.ParticleEngineAccessor",
+    "access.WorldCoordinatesAccessor",
+    "ui.GlyphRenderStateMixin",
+    "ui.GuiElementRenderStateMixin",
+    "ui.GuiRendererMixin",
+    "ui.GuiTextRenderStateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

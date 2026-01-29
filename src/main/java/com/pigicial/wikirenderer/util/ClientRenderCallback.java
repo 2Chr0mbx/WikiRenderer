@@ -1,0 +1,17 @@
+package com.pigicial.wikirenderer.util;
+
+import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.client.Minecraft;
+
+public interface ClientRenderCallback {
+
+    Event<ClientRenderCallback> EVENT = EventFactory.createArrayBacked(ClientRenderCallback.class, clientRenderCallbacks -> client -> {
+        for (ClientRenderCallback callback : clientRenderCallbacks) {
+            callback.onRenderStart(client);
+        }
+    });
+
+    void onRenderStart(Minecraft client);
+
+}

@@ -21,7 +21,7 @@ repositories {
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/isometricrenders.accesswidener")
+    accessWidenerPath = file("src/main/resources/wikirenderer.accesswidener")
 }
 
 dependencies {
