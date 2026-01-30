@@ -7,6 +7,7 @@
 
   "gui.wikirenderer.animations": "Tick Animations",
   "gui.wikirenderer.block_animations": "Tick Block Animations",
+  "gui.wikirenderer.entity_animations": "Tick Entity Animations",
   "gui.wikirenderer.particles": "Show Particles",
   "gui.wikirenderer.use_external_renderer": "Use External Renderer",
   "gui.wikirenderer.crop": "Crop",

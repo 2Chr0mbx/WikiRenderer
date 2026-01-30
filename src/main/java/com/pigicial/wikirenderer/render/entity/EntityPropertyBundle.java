@@ -1,13 +1,14 @@
 package com.pigicial.wikirenderer.render.entity;
 
+import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.TickingPropertyBundle;
 import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
-import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -18,10 +19,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.joml.Matrix4fStack;
 
-public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
+public class EntityPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
 
     public static final EntityPropertyBundle INSTANCE = new EntityPropertyBundle();
 
+    public final Property<Boolean> tick = Property.of(true);
     public final Property<Boolean> spriteRendering = Property.of(false);
     private final Property<Boolean> spriteCropping = Property.of(true);
     private int spriteExportResolution = 64;
@@ -29,7 +31,6 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
     private final IntProperty spriteSlant = IntProperty.of(0, -90, 90);
 
     public final Property<Boolean> useLiveEntity = Property.of(false);
-    public final Property<Boolean> freezePlayerArms = Property.of(true);
 
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
     public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
@@ -94,7 +95,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
     }
 
     @Override
-    public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildMainGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
+        EntityRenderable renderable = (EntityRenderable) r;
+
         WikiRendererUI.sectionHeader(container, "transform_options", false);
         WikiRendererUI.booleanControl(container, this.spriteRendering, "sprite_rendering");
 
@@ -141,13 +144,6 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
         WikiRendererUI.sectionHeader(container, "entity_data", true);
 
-        WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
-        this.useLiveEntity.listen(((booleanProperty, value) -> screen.guiRebuildScheduled = true), false);
-
-        if (this.useLiveEntity.get()) {
-            WikiRendererUI.booleanControl(container, this.freezePlayerArms, "entity_data.freeze_player_arms");
-        }
-
         WikiRendererUI.intControl(container, this.yaw, "entity_data.yaw", 15);
         WikiRendererUI.intControl(container, this.pitch, "entity_data.pitch", 5);
         WikiRendererUI.intControl(container, this.entityRotation, "entity_data.rotation", 5);
@@ -164,6 +160,23 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
                 WikiRendererUI.booleanControl(container, this.invisible, "entity_data.invisible");
             }
         }
+    }
+
+    @Override
+    public void buildRenderOptionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
+        EntityRenderable renderable = (EntityRenderable) r;
+
+        if (renderable.liveNonTickableEntity != null) {
+            WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
+            this.useLiveEntity.listen(((booleanProperty, value) -> {
+                screen.guiRebuildScheduled = true;
+                if (value) {
+                    tick.set(true);
+                }
+            }), false);
+        }
+
+        TickingPropertyBundle.super.buildRenderOptionGUIControls(r, screen, container);
     }
 
     @Override
@@ -190,5 +203,15 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
         if (!this.spriteRendering.get()) {
             super.updateAndApplyRotationOffset(modelViewStack);
         }
+    }
+
+    @Override
+    public Property<Boolean> getTickProperty() {
+        return this.tick;
+    }
+
+    @Override
+    public String getTickTranslationKey() {
+        return "entity_animations";
     }
 }

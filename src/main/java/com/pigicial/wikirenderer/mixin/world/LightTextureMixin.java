@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.mixin;
+package com.pigicial.wikirenderer.mixin.world;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;

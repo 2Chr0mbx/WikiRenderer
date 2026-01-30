@@ -9,9 +9,10 @@ public interface TickingPropertyBundle extends PropertyBundle {
 
     Property<Boolean> getTickProperty();
 
+    String getTickTranslationKey();
+
     @Override
     default void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        PropertyBundle.super.buildRenderOptionGUIControls(renderable, screen, container);
-        WikiRendererUI.booleanControl(container, this.getTickProperty(), "block_animations");
+        WikiRendererUI.booleanControl(container, this.getTickProperty(), this.getTickTranslationKey());
     }
 }

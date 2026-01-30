@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.mixin;
+package com.pigicial.wikirenderer.mixin.entity.sprite;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import net.minecraft.client.model.HumanoidModel;

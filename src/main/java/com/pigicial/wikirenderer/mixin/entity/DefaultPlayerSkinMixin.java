@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.mixin;
+package com.pigicial.wikirenderer.mixin.entity;
 
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.world.entity.player.PlayerSkin;

@@ -76,6 +76,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     @Override
+    public String getTickTranslationKey() {
+        return "block_animations";
+    }
+
+    @Override
     protected double getDefaultSlant() {
         return 35.264;
     }

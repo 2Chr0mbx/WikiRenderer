@@ -6,9 +6,9 @@ import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.mixin.access.ElytraAnimationStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
-import com.pigicial.wikirenderer.mixin.access.ModelPartAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.textures.SkinGrabber;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
@@ -17,9 +17,7 @@ import com.pigicial.wikirenderer.util.ExportPathSpec;
 import com.pigicial.wikirenderer.util.ParticleRestriction;
 import io.wispforest.owo.ui.component.EntityComponent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
@@ -57,10 +55,13 @@ import java.util.function.Consumer;
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider {
 
     private final Minecraft client = Minecraft.getInstance();
-    private final Entity liveNonTickableEntity;
-    public final Entity clonedTickableEntity;
+    private final long creationTimeMs = System.currentTimeMillis();
 
-    public EntityRenderable(Entity liveNonTickableEntity, Entity clonedTickableEntity) {
+    @Nullable
+    protected final Entity liveNonTickableEntity;
+    protected final Entity clonedTickableEntity;
+
+    public EntityRenderable(@Nullable Entity liveNonTickableEntity, Entity clonedTickableEntity) {
         this.liveNonTickableEntity = liveNonTickableEntity;
         this.clonedTickableEntity = clonedTickableEntity;
     }
@@ -76,7 +77,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         Entity entity = EntityType.loadEntityRecursive(nbt, minecraft.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
         if (entity != null) {
             entity.absSnapTo(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
-            return new EntityRenderable(entity, entity);
+            return new EntityRenderable(null, entity);
         } else {
             return null;
         }
@@ -169,11 +170,16 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         playerClone.hurtTime = 0;
         playerClone.deathTime = 0;
 
+        ElytraAnimationStateAccessor elytraData = (ElytraAnimationStateAccessor) playerClone.elytraAnimationState;
+        elytraData.isometric$setRotX((float) (Math.PI / 12));
+        elytraData.isometric$setRotZ((float) (-Math.PI / 12));
+        playerClone.elytraAnimationState.tick();
+
         return playerClone;
     }
 
     private boolean isUsingLiveEntity() {
-        return this.getProperties().useLiveEntity.get();
+        return liveNonTickableEntity != null && this.getProperties().useLiveEntity.get();
     }
 
     protected Entity getUsedEntity() {
@@ -198,10 +204,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
         SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
-        if (!usingLiveEntity) {
-            applyToEntityAndPassengers(usedEntity, Entity::rideTick);
-        }
-
         EntityPropertyBundle properties = this.getProperties();
         applyToEntityAndPassengers(usedEntity, entity -> {
             Vec3 offset = Vec3.ZERO;
@@ -210,28 +212,25 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             }
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
+            this.updateRenderState(state, properties, usingLiveEntity);
 
-            updateRenderState(state, properties, usingLiveEntity);
-
-            matrices.pushPose();
 
             List<Runnable> toggleCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {
                 EntityRenderer<?, ?> renderer = renderDispatcher.getRenderer(state);
                 if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
-                    EntityModel<?> model = livingEntityRenderer.getModel();
-                    ModelPart root = model.root();
-                    this.hideNonHeadParts(toggleCallbacks, root);
+                    EntitySpriteModelVisibilityUtil.hideNonHeadParts(livingEntityRenderer, toggleCallbacks);
                 }
 
                 WikiRenderer.inSpriteEntityDraw = true;
             }
 
+            matrices.pushPose();
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
-            WikiRenderer.inSpriteEntityDraw = false;
 
             matrices.popPose();
+            WikiRenderer.inSpriteEntityDraw = false;
             toggleCallbacks.forEach(Runnable::run);
         });
 
@@ -245,6 +244,14 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         state.outlineColor = 0; // remove glow
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightTexture.FULL_BRIGHT;
+
+        if (properties.tick.get()) {
+            if (!usingLiveEntity) {
+                state.ageInTicks = (System.currentTimeMillis() - creationTimeMs) / 50f;
+            } // otherwise just use the live entity state for more accuracy of what's being seen in the actual game
+        } else {
+            state.ageInTicks = 1;
+        }
 
         if (state instanceof LivingEntityRenderState livingState) {
             livingState.yRot = properties.yaw.get();
@@ -270,10 +277,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                         Optional.empty(),
                         Optional.of(PlayerModelType.SLIM))
                 );
-            }
-
-            if (properties.freezePlayerArms.get() || !isUsingLiveEntity()) {
-                avatarRenderState.ageInTicks = 1; // 1 allows for an armor offset to fix z-fighting
             }
         }
 
@@ -356,18 +359,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         action.accept(entity);
         if (entity.getPassengers().isEmpty()) return;
         for (Entity e : entity.getPassengers()) applyToEntityAndPassengers(e, action);
-    }
-
-    private void hideNonHeadParts(List<Runnable> toggleCallbacks, ModelPart part) {
-        Map<String, ModelPart> childParts = ((ModelPartAccessor) (Object) part).wikirenderer$getChildren();
-        childParts.forEach((identifier, modelPart) -> {
-            if (!identifier.equals("head")) {
-                boolean previouslySkippedDraw = modelPart.skipDraw;
-                modelPart.skipDraw = true;
-                toggleCallbacks.add(() -> modelPart.skipDraw = previouslySkippedDraw);
-                hideNonHeadParts(toggleCallbacks, modelPart);
-            }
-        });
     }
 
     @Override

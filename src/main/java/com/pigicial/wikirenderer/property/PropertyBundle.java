@@ -30,14 +30,7 @@ public interface PropertyBundle {
     void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container);
 
     default void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        EditBox colorField = WikiRendererUI.labelledTextField(container, "#000000", "background_color", Sizing.fixed(50));
-        colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
-        colorField.setValue("#" + String.format("%02X", backgroundColor >> 16) + String.format("%02X", backgroundColor >> 8 & 0xFF) + String.format("%02X", backgroundColor & 0xFF));
-        colorField.moveCursorToStart(false);
-        colorField.setResponder(s -> {
-            if (s.substring(1).length() < 6) return;
-            backgroundColor = Integer.parseInt(s.substring(1), 16);
-        });
+
     }
 
     default void buildExportOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {

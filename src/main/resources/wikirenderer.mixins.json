@@ -8,23 +8,7 @@
   "compatibilityLevel": "JAVA_16",
   "plugin": "com.pigicial.wikirenderer.mixin.MixinPlugin",
   "client": [
-    "BeaconRendererMixin",
-    "ChunkSectionsToRenderMixin",
-    "DefaultPlayerSkinMixin",
-    "EquipmentLayerRendererMixin",
-    "HumanoidArmorLayerMixin",
-    "HumanoidModelMixin",
-    "LevelRendererMixin",
-    "LightTextureMixin",
-    "LivingEntityRendererMixin",
     "MinecraftMixin",
-    "MixinChunkSectionLayer",
-    "ParticleEngineMixin",
-    "ParticleFeatureRendererMixin",
-    "ProjectionTypeMixin",
-    "QuadParticleGroupMixin",
-    "QuadrupedModelMixin",
-    "TextureManagerMixin",
     "TextureTransformMixin",
     "access.AbstractContainerScreenAccessor",
     "access.AbstractSliderButtonInvoker",
@@ -39,12 +23,36 @@
     "access.ModelPartAccessor",
     "access.NativeImageInvoker",
     "access.ParticleEngineAccessor",
+    "entity.DefaultPlayerSkinMixin",
+    "entity.sprite.EnergySwirlLayerMixin",
+    "entity.EquipmentLayerRendererMixin",
+    "entity.HumanoidArmorLayerMixin",
+    "entity.sprite.HumanoidModelMixin",
+    "entity.sprite.LivingEntityEmissiveLayerMixin",
+    "entity.LivingEntityRendererMixin",
+    "entity.sprite.QuadrupedModelMixin",
+    "entity.sprite.SimpleEquipmentLayerMixin",
+    "entity.sprite.VillagerProfessionLayerMixin",
+    "entity.sprite.WolfArmorLayerMixin",
     "ui.GlyphRenderStateMixin",
     "ui.GuiElementRenderStateMixin",
     "ui.GuiRendererMixin",
-    "ui.GuiTextRenderStateMixin"
+    "ui.GuiTextRenderStateMixin",
+    "world.BeaconRendererMixin",
+    "world.ChunkSectionsToRenderMixin",
+    "world.LevelRendererMixin",
+    "world.LightTextureMixin",
+    "world.MixinChunkSectionLayer",
+    "world.ParticleEngineMixin",
+    "world.ParticleFeatureRendererMixin",
+    "world.ProjectionTypeMixin",
+    "world.QuadParticleGroupMixin",
+    "world.TextureManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "mixins": [
+    "access.ElytraAnimationStateAccessor"
+  ]
 }

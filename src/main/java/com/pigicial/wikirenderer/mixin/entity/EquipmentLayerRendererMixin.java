@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.mixin;
+package com.pigicial.wikirenderer.mixin.entity;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.llamalad7.mixinextras.sugar.Local;

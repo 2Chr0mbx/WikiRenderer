@@ -12,7 +12,6 @@ import com.pigicial.wikirenderer.render.RenderableDispatcher;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
-import com.pigicial.wikirenderer.render.batch.BatchRenderable;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.pigicial.wikirenderer.components.NotificationComponent;
@@ -225,6 +224,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.renderable.getProperties().buildMainGUIControls(this.renderable, this, this.leftColumn);
 
         WikiRendererUI.sectionHeader(this.rightColumn, "render_options", false);
+        this.buildBackgroundColorGUIControls();
         this.renderable.getProperties().buildRenderOptionGUIControls(this.renderable, this, this.rightColumn);
         WikiRendererUI.sectionHeader(rightColumn, "export_options", true);
         this.renderable.getProperties().buildExportOptionGUIControls(this.renderable, this, this.rightColumn);
@@ -237,6 +237,17 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (renderable instanceof TextureDataProvider textureProvider) {
             textureProvider.buildTextureGrabSection(this, rightColumn);
         }
+    }
+
+    private void buildBackgroundColorGUIControls() {
+        EditBox colorField = WikiRendererUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
+        colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
+        colorField.setValue("#" + String.format("%02X", backgroundColor >> 16) + String.format("%02X", backgroundColor >> 8 & 0xFF) + String.format("%02X", backgroundColor & 0xFF));
+        colorField.moveCursorToStart(false);
+        colorField.setResponder(s -> {
+            if (s.substring(1).length() < 6) return;
+            backgroundColor = Integer.parseInt(s.substring(1), 16);
+        });
     }
 
     private void buildFfmpegSection() {
