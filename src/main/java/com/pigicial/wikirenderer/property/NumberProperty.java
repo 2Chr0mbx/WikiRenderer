@@ -14,6 +14,10 @@ public abstract class NumberProperty<T extends Number> extends Property<T> {
         this.span = getSpan(min, max);
     }
 
+    public boolean hasRollover() {
+        return allowRollover;
+    }
+
     protected abstract T getSpan(T min, T max);
 
     public abstract void modify(double by);

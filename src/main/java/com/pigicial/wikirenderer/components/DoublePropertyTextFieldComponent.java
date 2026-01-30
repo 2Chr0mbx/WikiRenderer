@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.property.DoubleProperty;
 import io.wispforest.owo.ui.component.TextBoxComponent;
+import io.wispforest.owo.ui.core.OwoUIDrawContext;
 import io.wispforest.owo.ui.core.Sizing;
 
 import java.util.Objects;
@@ -12,6 +13,8 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
     private final DoubleProperty setting;
     private String content = "";
     private boolean ignoringChange = false;
+
+    private boolean previouslyFocused = false;
 
     public DoublePropertyTextFieldComponent(Sizing horizontalSizing, DoubleProperty setting) {
         super(horizontalSizing);
@@ -40,23 +43,46 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
         this.setting.listen((doubleSetting, value) -> {
             if (!this.ignoringChange) {
                 this.ignoringChange = true;
-                String number = String.format("%.1f", value);
-                if (value.floatValue() == 35.264f) {
-                    number = "35.264"; // jank but whatever
-                }
-
-                this.text(number.endsWith(".0") ? number.substring(0, number.length() - 2) : number);
+                this.text(this.formatNumber(value));
                 this.ignoringChange = false;
             }
         });
     }
 
+    @Override
+    public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
+        super.draw(context, mouseX, mouseY, partialTicks, delta);
+        if (this.isFocused()) {
+            this.previouslyFocused = true;
+            return;
+        }
+
+        if (this.setting.hasRollover() && !this.isFocused() && previouslyFocused) {
+            this.ignoringChange = true;
+            this.text(this.formatNumber(setting.get()));
+            this.ignoringChange = false;
+        }
+    }
+
+    private String formatNumber(double value) {
+        String number = String.format("%.1f", value);
+        if ((float) value == 35.264f) {
+            number = "35.264"; // jank but whatever
+        }
+
+        return number.endsWith(".0") ? number.substring(0, number.length() - 2) : number;
+    }
+
     private Predicate<String> makeMatcher() {
         StringBuilder builder = new StringBuilder();
-        if (this.setting.min() < 0) builder.append("-?");
+        if (this.setting.min() < 0 || this.setting.hasRollover()) builder.append("-?");
 
         builder.append("\\d{0,");
-        builder.append(String.valueOf(Math.max(Math.abs(this.setting.min()), Math.abs(this.setting.max()))).length());
+        int maxNumberLength = String.valueOf(Math.max(Math.abs(this.setting.min()), Math.abs(this.setting.max()))).length();
+        if (setting.hasRollover()) {
+            maxNumberLength += 2; // probably enough extra
+        }
+        builder.append(maxNumberLength);
         builder.append("}");
         builder.append("\\.?\\d{0,3}"); // up to 3 decimals
 

@@ -33,8 +33,8 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     public final Property<Boolean> useLiveEntity = Property.of(false);
 
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
-    public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
-    public final IntProperty entityRotation = IntProperty.of(0, -90, 90).withRollover();
+    public final IntProperty pitch = IntProperty.of(0, -90, 90);
+    public final IntProperty entityRotation = IntProperty.of(0, -180, 180).withRollover();
     public final Property<Boolean> useSteveSkin = Property.of(false);
     public final Property<Boolean> hideHeldItems = Property.of(false);
     public final Property<Boolean> hideArmor = Property.of(false);

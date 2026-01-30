@@ -27,6 +27,20 @@ public class IntProperty extends NumberProperty<Integer> {
     }
 
     @Override
+    public void set(Integer value) {
+        if (allowRollover && (value > this.max || value < this.min)) {
+            if (value > this.max) {
+                value = (value - this.max) % this.max;
+            } else {
+                int range = this.max - this.min;
+                value = this.max - ((this.min - value) % range);
+            }
+        }
+
+        super.set(value);
+    }
+
+    @Override
     public void modify(double byDouble) {
         int by = (int) Math.round(byDouble);
         if (this.allowRollover) {

@@ -22,6 +22,20 @@ public class DoubleProperty extends NumberProperty<Double> {
     }
 
     @Override
+    public void set(Double value) {
+        if (allowRollover && (value > this.max || value < this.min)) {
+            if (value > this.max) {
+                value = (value - this.max) % this.max;
+            } else {
+                double range = this.max - this.min;
+                value = this.max - ((this.min - value) % range);
+            }
+        }
+
+        super.set(value);
+    }
+
+    @Override
     public void modify(double by) {
         if (allowRollover) {
             this.value += by;
