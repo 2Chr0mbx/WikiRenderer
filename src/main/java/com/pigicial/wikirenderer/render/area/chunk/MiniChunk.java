@@ -2,7 +2,6 @@ package com.pigicial.wikirenderer.render.area.chunk;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -38,15 +37,23 @@ public class MiniChunk {
             pos.setX(x);
             for (int z = this.startZ; z <= endZ; z++) {
                 pos.setZ(z);
-                int blockMaxY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
-                highestY = Math.max(highestY, blockMaxY);
 
-                // if it actually found something and didnt default to lowest
-                for (int y = minY; y <= blockMaxY; y++) {
+                // im not a big fan of this way of checking, but height maps were found to be unreliable (somehow)
+                for (int y = maxY; y >= minY; y--) {
                     pos.setY(y);
                     if (!level.getBlockState(pos).isAir()) {
                         foundAnyBlocks = true;
-                        lowestY = Math.min(lowestY, y);
+                        highestY = Math.max(highestY, y);
+                        int foundY = y;
+
+                        for (y = minY; y <= foundY; y++) {
+                            pos.setY(y);
+                            if (!level.getBlockState(pos).isAir()) {
+                                lowestY = Math.min(lowestY, y);
+                                break;
+                            }
+                        }
+
                         break;
                     }
                 }
