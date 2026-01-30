@@ -33,24 +33,34 @@ import java.util.List;
 public class WikiRendererKeybinds {
 
     private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(WikiRenderer.MOD_ID, "keybinds"));
-    public static final KeyMapping KEYBIND_SELECT = new KeyMapping("key.wikirenderer.area_select", GLFW.GLFW_KEY_C, CATEGORY);
+    public static final KeyMapping KEYBIND_SELECT_AREA = new KeyMapping("key.wikirenderer.area_select", GLFW.GLFW_KEY_C, CATEGORY);
+    public static final KeyMapping KEYBIND_SELECT_AREA_EXPAND = new KeyMapping("key.wikirenderer.area_select_expand", GLFW.GLFW_KEY_V, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY = new KeyMapping("key.wikirenderer.render_hovered_item_or_viewed_entity", GLFW.GLFW_KEY_H, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP = new KeyMapping("key.wikirenderer.render_hovered_item_tooltip", GLFW.GLFW_KEY_J, CATEGORY);
     public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_K, CATEGORY);
 
     public static void registerKeyBinds() {
-        KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT);
+        KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA);
+        KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA_EXPAND);
         KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY);
         KeyBindingHelper.registerKeyBinding(KEYBIND_BATCH_RENDER_INVENTORY);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
 
-            if (KEYBIND_SELECT.consumeClick()) {
+            if (KEYBIND_SELECT_AREA.consumeClick()) {
                 if (client.player.isShiftKeyDown()) {
                     AreaSelectionHelper.clear();
                 } else {
                     AreaSelectionHelper.select();
+                }
+                return;
+            }
+            if (KEYBIND_SELECT_AREA_EXPAND.consumeClick()) {
+                if (client.player.isShiftKeyDown()) {
+                    AreaSelectionHelper.clear();
+                } else {
+                    AreaSelectionHelper.expand();
                 }
                 return;
             }

@@ -37,7 +37,9 @@ public class AreaSelectionComponent extends FlowLayout {
                 .shadow(false).margins(Insets.bottom(10))
         );
 
-        this.child(Components.label(Translate.gui("hud.area_selection.clear_hint", KeyBindingHelper.getBoundKeyOf(WikiRendererKeybinds.KEYBIND_SELECT).getDisplayName())));
+        Component firstKeybind = KeyBindingHelper.getBoundKeyOf(WikiRendererKeybinds.KEYBIND_SELECT_AREA).getDisplayName();
+        Component secondKeybind = KeyBindingHelper.getBoundKeyOf(WikiRendererKeybinds.KEYBIND_SELECT_AREA_EXPAND).getDisplayName();
+        this.child(Components.label(Translate.gui("hud.area_selection.clear_hint", firstKeybind, secondKeybind)));
     }
 
     private static Supplier<Component> positionText(Supplier<BlockPos> pos, String name) {

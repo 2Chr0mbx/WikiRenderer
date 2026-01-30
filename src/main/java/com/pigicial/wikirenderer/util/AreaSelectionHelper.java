@@ -55,9 +55,11 @@ public class AreaSelectionHelper {
     }
 
     public static void select() {
-        final Minecraft client = Minecraft.getInstance();
-        final HitResult target = client.hitResult;
-        if ((target == null)) return;
+        HitResult target = Minecraft.getInstance().hitResult;
+        if (target == null) {
+            return;
+        }
+
         BlockPos targetPos = new BlockPos(target.getType() == HitResult.Type.BLOCK ? ((BlockHitResult) target).getBlockPos() : BlockPos.containing(target.getLocation()));
 
         if (pos1 == null) {
@@ -69,12 +71,40 @@ public class AreaSelectionHelper {
         }
     }
 
+    public static void expand() {
+        HitResult target = Minecraft.getInstance().hitResult;
+        if (target == null) {
+            return;
+        }
+
+        BlockPos targetPos = new BlockPos(target.getType() == HitResult.Type.BLOCK ? ((BlockHitResult) target).getBlockPos() : BlockPos.containing(target.getLocation()));
+
+        if (pos1 == null) {
+            pos1 = targetPos;
+            Translate.actionBar("selection_started");
+        } else {
+            if (pos2 == null) {
+                Translate.actionBar("selection_finished");
+                pos2 = targetPos;
+            } else {
+                Translate.actionBar("selection_expanded");
+
+                int minX = Math.min(Math.min(pos1.getX(), pos2.getX()), targetPos.getX());
+                int maxX = Math.max(Math.max(pos1.getX(), pos2.getX()), targetPos.getX());
+                int minY = Math.min(Math.min(pos1.getY(), pos2.getY()), targetPos.getY());
+                int maxY = Math.max(Math.max(pos1.getY(), pos2.getY()), targetPos.getY());
+                int minZ = Math.min(Math.min(pos1.getZ(), pos2.getZ()), targetPos.getZ());
+                int maxZ = Math.max(Math.max(pos1.getZ(), pos2.getZ()), targetPos.getZ());
+                pos1 = new BlockPos(minX, minY, minZ);
+                pos2 = new BlockPos(maxX, maxY, maxZ);
+            }
+        }
+    }
+
     public static boolean tryOpenScreen() {
         if (pos1 == null || pos2 == null) return false;
 
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                AreaRenderable.of(pos1, pos2)
-        ));
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(AreaRenderable.of(pos1, pos2)));
         return true;
     }
 }
