@@ -223,8 +223,8 @@
   "message.wikirenderer.unsafe_disabled": "Unsafe mode §adisabled§7",
   "message.wikirenderer.no_saved_menu": "No saved render found",
 
-  "message.wikirenderer.version": "Running Isometric Renders v%s",
-  "message.wikirenderer.command_hint": "Hint: Check the wiki to see the subcommands and what they do",
+  "message.wikirenderer.version": "Running WikiRenderer v%s",
+  "message.wikirenderer.command_hint": "Hint: Check the GitHub page to see the subcommands and what they do",
 
   "message.wikirenderer.selection_cleared": "§7[§cSelection cleared§7]",
   "message.wikirenderer.selection_started": "§7[§aSelection started§7]",
