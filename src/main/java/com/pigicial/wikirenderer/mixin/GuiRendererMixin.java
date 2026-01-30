@@ -1,26 +1,18 @@
-package com.pigicial.wikirenderer.mixin.ui;
+package com.pigicial.wikirenderer.mixin;
 
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.util.ModifiedDepthPipelineRenderState;
-import com.pigicial.wikirenderer.util.RenderPipelineOverrider;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.ProjectionType;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.render.state.GuiElementRenderState;
-import net.minecraft.client.gui.render.state.GuiRenderState;
-import net.minecraft.client.gui.render.state.GuiTextRenderState;
 import net.minecraft.client.renderer.DynamicUniforms;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.gui.render.GuiRenderer;
 import org.joml.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-
-import java.util.function.Consumer;
 
 // note: disabling this breaks tooltip rendering, maybe more idk
 @Mixin(GuiRenderer.class)
@@ -47,40 +39,10 @@ public class GuiRendererMixin {
     @WrapOperation(method = "draw", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setProjectionMatrix(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V"))
     private void cancelProjectionSet(GpuBufferSlice projectionMatrixBuffer, ProjectionType projectionType, Operation<Void> original) {
         // Something else may have overridden the projection matrix by this point, restore the original one used for the renderable.
-        if (WikiRenderer.inRenderableDraw)
+        if (WikiRenderer.inRenderableDraw) {
             original.call(WikiRenderer.renderableDrawProjectionBuffer, ProjectionType.ORTHOGRAPHIC);
-        else original.call(projectionMatrixBuffer, projectionType);
-    }
-
-    @WrapOperation(
-            method = "addElementToMesh",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/state/GuiElementRenderState;pipeline()Lcom/mojang/blaze3d/pipeline/RenderPipeline;")
-    )
-    private RenderPipeline overridePipeline(GuiElementRenderState renderStateInstance, Operation<RenderPipeline> original) {
-        RenderPipeline pipeline = original.call(renderStateInstance);
-
-        if (renderStateInstance instanceof ModifiedDepthPipelineRenderState bypass && bypass.wikirenderer$shouldUseDepthTesting()) {
-            return RenderPipelineOverrider.getDepthTestingVariant(pipeline);
+        } else {
+            original.call(projectionMatrixBuffer, projectionType);
         }
-
-        return pipeline;
-    }
-
-    @WrapOperation(
-            method = "prepareText",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/state/GuiRenderState;forEachText(Ljava/util/function/Consumer;)V")
-    )
-    private void iris$wrapTextIteration(GuiRenderState instance, Consumer<GuiTextRenderState> originalAction, Operation<Void> original) {
-        Consumer<GuiTextRenderState> wrappedAction = (guiTextRenderState) -> {
-            WikiRenderer.currentlyProcessingDepthTestText = ((ModifiedDepthPipelineRenderState) (Object) guiTextRenderState).wikirenderer$shouldUseDepthTesting();
-
-            try {
-                originalAction.accept(guiTextRenderState);
-            } finally {
-                WikiRenderer.currentlyProcessingDepthTestText = false;
-            }
-        };
-
-        original.call(instance, wrappedAction);
     }
 }

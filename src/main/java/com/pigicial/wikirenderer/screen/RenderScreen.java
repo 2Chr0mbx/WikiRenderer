@@ -1,6 +1,13 @@
 package com.pigicial.wikirenderer.screen;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.components.IOStateComponent;
+import com.pigicial.wikirenderer.components.NotificationComponent;
 import com.pigicial.wikirenderer.mixin.access.ParticleEngineAccessor;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
@@ -13,10 +20,6 @@ import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
-import com.pigicial.wikirenderer.components.IOStateComponent;
-import com.pigicial.wikirenderer.components.NotificationComponent;
-import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.textures.GpuTexture;
 import com.pigicial.wikirenderer.util.*;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -32,14 +35,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.render.TextureSetup;
+import net.minecraft.client.gui.render.state.BlitRenderState;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.DyeColor;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix3x2f;
+import org.joml.Matrix4fStack;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
@@ -47,6 +55,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -335,15 +344,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         Window window = minecraft.getWindow();
         boolean tick = renderable.getProperties() instanceof TickingPropertyBundle ticking && ticking.getTickProperty().get();
         float effectiveTickDelta = tick ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
-        RenderableDispatcher.drawIntoActiveFramebuffer(
-                this.renderable,
-                window.getWidth() / (float) window.getHeight(),
-                effectiveTickDelta,
-                this.hasBothColumns
-                        ? matrixStack -> {
-                }
-                        : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0)
-        );
+
+        Consumer<Matrix4fStack> positionTransformer = this.hasBothColumns ? null : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0);
+        RenderTarget renderedOutput = RenderableDispatcher.drawIntoDuplicateFramebuffer(this.renderable, effectiveTickDelta, positionTransformer);
 
         if (this.drawOnlyBackground) {
             context.fill(0, 0, this.width, this.height, backgroundColor | 255 << 24);
@@ -351,7 +354,22 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.renderTransparentBackground(context);
         }
 
-        WikiRenderer.forceGuiDepthTesting = false;
+        context.guiRenderState.submitGuiElement(new BlitRenderState(
+                RenderPipelines.GUI_TEXTURED,
+                TextureSetup.singleTexture(Objects.requireNonNull(renderedOutput.getColorTextureView()), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST)),
+                new Matrix3x2f(context.pose()),
+                0,
+                0,
+                window.getGuiScaledWidth(),
+                window.getGuiScaledHeight(),
+                0,
+                1,
+                1,
+                0,
+                -1,
+                null
+        ));
+
         if (!this.drawOnlyBackground && this.uiAdapter != null) {
             drawFramingHint(context);
             drawGuiBackground(context);
@@ -372,45 +390,52 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.captureScheduled) {
-            ExportPathSpec defaultExportPath = this.renderable.getExportPath();
-            ExportPathSpec exportPath = this.customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(this.customFileName);
-
-            AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
-            Consumer<MinimapCalibratorData> dataConsumer = null;
-            if (renderable instanceof AreaRenderable areaRenderable
-                && areaRenderable.getProperties().perPixel90DegreeRendering.get()
-                && areaRenderable.getProperties().exportSideViewMinimapData.get()
-                && areaRenderable.getProperties().areMinimapSettingsExportable()) {
-                dataConsumer = data::set;
-            }
-
-            RenderableDispatcher.drawIntoImage(this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
-                    .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((f, t) -> img.close()))
-                    .whenComplete((imageFile, throwable) -> {
-                        exportCallback.accept(imageFile);
-                        this.minecraft.execute(() -> this.notify(
-                                () -> Util.getPlatform().openFile(imageFile),
-                                Translate.gui("exported_as"),
-                                Component.literal(ExportPathSpec.exportRoot().relativize(imageFile.toPath()).toString())
-                        ));
-
-                        if (data.get() != null) {
-                            String fileText = data.get().toFileText(imageFile.getName());
-                            ExportPathSpec minimapExportPath = this.customFileName.isBlank()
-                                    ? defaultExportPath.differentFileName("area_render_minimap_data")
-                                    : defaultExportPath.differentFileName(this.customFileName + "_area_render_minimap_data");
-
-                            FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> this.minecraft.execute(() -> this.notify(
-                                    () -> Util.getPlatform().openFile(textFile),
-                                    Translate.gui("exported_minimap_data_as"),
-                                    Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
-                            )));
-                        }
-                    });
-
+            this.exportImage();
             this.captureScheduled = false;
         }
 
+        this.renderOrExportAnimationIfNecessary(effectiveTickDelta);
+    }
+
+    private void exportImage() {
+        ExportPathSpec defaultExportPath = this.renderable.getExportPath();
+        ExportPathSpec exportPath = this.customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(this.customFileName);
+
+        AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
+        Consumer<MinimapCalibratorData> dataConsumer = null;
+        if (renderable instanceof AreaRenderable areaRenderable
+            && areaRenderable.getProperties().perPixel90DegreeRendering.get()
+            && areaRenderable.getProperties().exportSideViewMinimapData.get()
+            && areaRenderable.getProperties().areMinimapSettingsExportable()) {
+            dataConsumer = data::set;
+        }
+
+        RenderableDispatcher.drawIntoImage(this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
+                .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((f, t) -> img.close()))
+                .whenComplete((imageFile, throwable) -> {
+                    exportCallback.accept(imageFile);
+                    this.minecraft.execute(() -> this.notify(
+                            () -> Util.getPlatform().openFile(imageFile),
+                            Translate.gui("exported_as"),
+                            Component.literal(ExportPathSpec.exportRoot().relativize(imageFile.toPath()).toString())
+                    ));
+
+                    if (data.get() != null) {
+                        String fileText = data.get().toFileText(imageFile.getName());
+                        ExportPathSpec minimapExportPath = this.customFileName.isBlank()
+                                ? defaultExportPath.differentFileName("area_render_minimap_data")
+                                : defaultExportPath.differentFileName(this.customFileName + "_area_render_minimap_data");
+
+                        FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> this.minecraft.execute(() -> this.notify(
+                                () -> Util.getPlatform().openFile(textFile),
+                                Translate.gui("exported_minimap_data_as"),
+                                Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
+                        )));
+                    }
+                });
+    }
+
+    private void renderOrExportAnimationIfNecessary(float effectiveTickDelta) {
         if (this.remainingAnimationFrames > 0) {
             this.renderedFrames.add(RenderableDispatcher.drawIntoTexture(this.renderable, effectiveTickDelta, renderable.getExportResolution()));
 
@@ -471,14 +496,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         });
             }
         }
-        WikiRenderer.forceGuiDepthTesting = true;
-    }
-
-    @Override
-    protected void drawComponentTooltip(GuiGraphics drawContext, int mouseX, int mouseY, float tickDelta) {
-        WikiRenderer.forceGuiDepthTesting = false;
-        super.drawComponentTooltip(drawContext, mouseX, mouseY, tickDelta);
-        WikiRenderer.forceGuiDepthTesting = true;
     }
 
     @Override

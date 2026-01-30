@@ -1,5 +1,15 @@
 package com.pigicial.wikirenderer.render;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.TextureFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.LightTextureAccessor;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
@@ -7,51 +17,36 @@ import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.util.ImageCropper;
 import com.pigicial.wikirenderer.util.ImageRescaleMode;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.pipeline.TextureTarget;
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.CommandEncoder;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.TextureFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.lwjgl.system.MemoryUtil;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class RenderableDispatcher {
 
     private static final PerspectiveProjectionMatrixBuffer PROJECTION_MATRIX_BUFFER = new PerspectiveProjectionMatrixBuffer("RenderableDispatcher");
+    private static RenderTarget previewTarget = null;
 
-    /**
-     * Renders the given renderable into the current framebuffer,
-     * with the projection matrix adjusted to compensate for the buffer's
-     * aspect ratio
-     *
-     * @param renderable  The renderable to draw
-     * @param aspectRatio The aspect ratio of the current framebuffer
-     * @param tickDelta   The tick delta to use
-     */
-    public static void drawIntoActiveFramebuffer(Renderable<?> renderable, float aspectRatio, float tickDelta, Consumer<Matrix4fStack> transformer) {
+    public static void drawIntoActiveFramebuffer(Renderable<?> renderable, float aspectRatio, float tickDelta, @Nullable Consumer<Matrix4fStack> transformer) {
         renderable.prepare();
 
         // view matrix = position/rotation/scale of camera
         // model/object matrix = position/rotation/scale of the model/object
-
-        // Prepare model view matrix
         Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
 
         modelViewStack.pushMatrix();
         modelViewStack.identity();
-        transformer.accept(modelViewStack);
+        if (transformer != null) {
+            transformer.accept(modelViewStack);
+        }
 
         renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
@@ -76,26 +71,11 @@ public class RenderableDispatcher {
         ((LightTextureAccessor) lightTexture).wikirenderer$setUpdateLightTexture(true);
         lightTexture.updateLightTexture(1.0F);
     }
-    /**
-     * Directly draws the given renderable into a {@link NativeImage} at the given resolution.
-     * This method is essentially just a shorthand for {@code copyFramebufferIntoImage(drawIntoTexture(renderable, size))}
-     *
-     * @param renderable The renderable to draw
-     * @param size       The resolution to render at
-     * @return The created image
-     */
+
     public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
         return drawIntoImage(renderable, tickDelta, size, size, 1, crop, calibrationDataCallback);
     }
 
-    /**
-     * Directly draws the given renderable into a {@link NativeImage} at the given resolution.
-     * This method is essentially just a shorthand for {@code copyFramebufferIntoImage(drawIntoTexture(renderable, size))}
-     *
-     * @param renderable The renderable to draw
-     * @param size       The resolution to render at
-     * @return The created image
-     */
     public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, int targetSize, int iterations, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
         GpuTexture texture = drawIntoTexture(renderable, tickDelta, size);
         CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).whenComplete((i, t) -> texture.close());
@@ -147,36 +127,64 @@ public class RenderableDispatcher {
         return image;
     }
 
-    /**
-     * Draws the given renderable into a new framebuffer. The FBO and depth attachment
-     * are deleted afterwards to save video memory, only the color attachment remains
-     *
-     * @param renderable The renderable to render
-     * @param size       The resolution to render aat
-     * @return The color attachment
-     */
-    @SuppressWarnings("ConstantConditions")
     public static GpuTexture drawIntoTexture(Renderable<?> renderable, float tickDelta, int size) {
         TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
-        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(target.getColorTexture(), 0, target.getDepthTexture(), 1.0);
+        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
+                Objects.requireNonNull(target.getColorTexture()),
+                0,
+                Objects.requireNonNull(target.getDepthTexture()),
+                1.0
+        );
 
         WikiRenderer.mainTargetOverride = target;
         RenderSystem.outputColorTextureOverride = target.getColorTextureView();
         RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
 
-        drawIntoActiveFramebuffer(renderable, 1, tickDelta, matrixStack -> {
-        });
+        RenderableDispatcher.drawIntoActiveFramebuffer(renderable, 1, tickDelta, null);
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
         WikiRenderer.mainTargetOverride = null;
-        GpuTexture texture = cloneColorAttachment(target);
 
         // Release depth attachment and FBO to save on VRAM - we only need
         // the color attachment texture to later turn into an image
+        GpuTexture texture = RenderableDispatcher.cloneColorAttachment(target);
         target.destroyBuffers();
-
         return texture;
+    }
+
+    public static RenderTarget drawIntoDuplicateFramebuffer(Renderable<?> renderable, float tickDelta, @Nullable Consumer<Matrix4fStack> transformer) {
+        Window window = Minecraft.getInstance().getWindow();
+        int width = window.getWidth();
+        int height = window.getHeight();
+
+        if (previewTarget == null) {
+            previewTarget = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Mirror Framebuffer", width, height, true);
+        } else {
+            if (previewTarget.width != width || previewTarget.height != height) {
+                previewTarget.resize(width, height);
+            }
+        }
+
+        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
+                Objects.requireNonNull(previewTarget.getColorTexture()),
+                0,
+                Objects.requireNonNull(previewTarget.getDepthTexture()),
+                1.0
+        );
+
+        WikiRenderer.mainTargetOverride = previewTarget;
+        RenderSystem.outputColorTextureOverride = previewTarget.getColorTextureView();
+        RenderSystem.outputDepthTextureOverride = previewTarget.getDepthTextureView();
+
+        float aspectRatio = width / (float) height;
+        RenderableDispatcher.drawIntoActiveFramebuffer(renderable, aspectRatio, tickDelta, transformer);
+
+        RenderSystem.outputColorTextureOverride = null;
+        RenderSystem.outputDepthTextureOverride = null;
+        WikiRenderer.mainTargetOverride = null;
+
+        return previewTarget;
     }
 
     /**
