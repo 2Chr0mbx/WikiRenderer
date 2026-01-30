@@ -375,7 +375,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                 modelViewStack.translate(halfPixelWorld, 0, halfPixelWorld);
             }
         } else {
-            final float scale = this.scale.get() / 1000f;
+            float scale = this.scale.get() / 1000f;
             modelViewStack.scale(scale, scale, scale);
 
             // offsets arent needed for side rendering because they're already perfectly aligned

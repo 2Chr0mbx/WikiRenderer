@@ -8,6 +8,7 @@
   "compatibilityLevel": "JAVA_16",
   "plugin": "com.pigicial.wikirenderer.mixin.MixinPlugin",
   "client": [
+    "GuiRendererMixin",
     "MinecraftMixin",
     "TextureTransformMixin",
     "access.AbstractContainerScreenAccessor",
@@ -23,6 +24,7 @@
     "access.ModelPartAccessor",
     "access.NativeImageInvoker",
     "access.ParticleEngineAccessor",
+    "access.ClientMannequinAccessor",
     "entity.DefaultPlayerSkinMixin",
     "entity.EquipmentLayerRendererMixin",
     "entity.HumanoidArmorLayerMixin",
@@ -34,7 +36,6 @@
     "entity.sprite.SimpleEquipmentLayerMixin",
     "entity.sprite.VillagerProfessionLayerMixin",
     "entity.sprite.WolfArmorLayerMixin",
-    "GuiRendererMixin",
     "world.BeaconRendererMixin",
     "world.ChunkSectionsToRenderMixin",
     "world.LevelRendererMixin",

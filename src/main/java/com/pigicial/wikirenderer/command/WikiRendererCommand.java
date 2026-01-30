@@ -1,6 +1,10 @@
 package com.pigicial.wikirenderer.command;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -13,6 +17,8 @@ import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.batch.BatchRenderTask;
 import com.pigicial.wikirenderer.render.entity.EntityRenderable;
+import com.pigicial.wikirenderer.render.entity.player.ProfileFetchMode;
+import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
 import com.pigicial.wikirenderer.render.item.BlockStateRenderable;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import com.pigicial.wikirenderer.render.item.TooltipRenderable;
@@ -30,6 +36,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.CompoundTagArgument;
 import net.minecraft.commands.arguments.ResourceArgument;
+import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -44,6 +51,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.Util;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -61,9 +69,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
@@ -103,10 +110,21 @@ public class WikiRendererCommand {
                                         .executes(WikiRendererCommand::renderEntityWithNbt))))
                 .then(literal("player")
                         .executes(WikiRendererCommand::renderSelf)
-                        .then(argument("player", StringArgumentType.string())
-                                .executes(WikiRendererCommand::renderPlayerWithoutNbt)
-                                .then(argument("nbt", CompoundTagArgument.compoundTag())
-                                        .executes(WikiRendererCommand::renderPlayerWithNbt))))
+                        .then(literal("name")
+                                .then(argument("name", StringArgumentType.string())
+                                        .executes(c -> renderPlayerByName(c, false))
+                                        .then(argument("nbt", CompoundTagArgument.compoundTag())
+                                                .executes(c -> renderPlayerByName(c, true)))))
+                        .then(literal("texture")
+                                .then(argument("texture", StringArgumentType.string())
+                                        .executes(c -> renderPlayerFromTexture(c, false))
+                                        .then(argument("nbt", CompoundTagArgument.compoundTag())
+                                                .executes(c -> renderPlayerFromTexture(c, true)))))
+                        .then(literal("uuid")
+                                .then(argument("uuid", UuidArgument.uuid())
+                                        .executes(c -> renderPlayerByUuid(c, false))
+                                        .then(argument("nbt", CompoundTagArgument.compoundTag())
+                                                .executes(c -> renderPlayerByUuid(c, true))))))
                 .then(literal("item")
                         .executes(WikiRendererCommand::renderHeldItem)
                         .then(argument("item", ItemArgument.item(access))
@@ -168,59 +186,80 @@ public class WikiRendererCommand {
         return 0;
     }
 
-    private static int renderPlayerWithNbt(CommandContext<FabricClientCommandSource> context) {
-        IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
-        if (server == null) {
-            Translate.commandError(context, "player_rendering_in_multiplayer");
-            return 0;
-        }
-
-        Optional<GameProfile> gameProfile = server.services().profileResolver().fetchByName(StringArgumentType.getString(context, "player"));
-        if (gameProfile.isEmpty()) {
-            Translate.commandError(context, "no_such_player");
-            return 0;
-        }
-
-        CompoundTag playerNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
-        EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(gameProfile.get());
-        try (ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(player.problemPath(), WikiRenderer.LOGGER)) {
-            player.load(TagValueInput.create(logging, server.registryAccess(), playerNbt));
-        }
-
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new EntityRenderable(player, player)
-        ));
-
-        return 0;
-    }
-
-    private static int renderPlayerWithoutNbt(CommandContext<FabricClientCommandSource> context) {
-        IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
-        if (server == null) {
-            Translate.commandError(context, "player_rendering_in_multiplayer");
-            return 0;
-        }
-
-        Optional<GameProfile> gameProfile = server.services().profileResolver().fetchByName(StringArgumentType.getString(context, "player"));
-        if (gameProfile.isEmpty()) {
-            Translate.commandError(context, "no_such_player");
-            return 0;
-        }
-
-        EntityComponent.RenderablePlayerEntity player = EntityComponent.createRenderablePlayer(gameProfile.get());
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new EntityRenderable(player, player)
-        ));
-
-        return 0;
-    }
-
     private static int renderSelf(CommandContext<FabricClientCommandSource> context) {
         LocalPlayer clientPlayer = Minecraft.getInstance().player;
 
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(EntityRenderable.copyAsRenderable(clientPlayer)));
+        return 0;
+    }
+
+    private static int renderPlayerByName(CommandContext<FabricClientCommandSource> context, boolean useNbt) {
+        String name = StringArgumentType.getString(context, "name");
+        GameProfile gameProfile = new GameProfile(UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)), name);
+
+        RenderablePlayerEntity player = new RenderablePlayerEntity(gameProfile, ProfileFetchMode.NAME);
+
+        if (useNbt) {
+            CompoundTag playerNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
+            try (ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(player.problemPath(), WikiRenderer.LOGGER)) {
+                player.load(TagValueInput.create(logging, player.registryAccess(), playerNbt));
+            }
+        }
+
         ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                EntityRenderable.copyAsRenderable(clientPlayer)
+                new EntityRenderable(null, player)
         ));
+
+        return 0;
+    }
+
+    private static int renderPlayerByUuid(CommandContext<FabricClientCommandSource> context, boolean useNbt) {
+        UUID id = context.getArgument("uuid", UUID.class);
+        GameProfile gameProfile = new GameProfile(id, id.toString());
+
+        RenderablePlayerEntity player = new RenderablePlayerEntity(gameProfile, ProfileFetchMode.UUID);
+
+        if (useNbt) {
+            CompoundTag playerNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
+            try (ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(player.problemPath(), WikiRenderer.LOGGER)) {
+                player.load(TagValueInput.create(logging, player.registryAccess(), playerNbt));
+            }
+
+            System.out.println("player items = " + playerNbt + ", " + player.getItemInHand(InteractionHand.MAIN_HAND));
+        }
+
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
+                new EntityRenderable(null, player)
+        ));
+
+        return 0;
+    }
+
+    private static int renderPlayerFromTexture(CommandContext<FabricClientCommandSource> context, boolean useNbt) {
+        String texture = StringArgumentType.getString(context, "texture");
+        String textureUrl = "https://textures.minecraft.net/texture/" + texture;
+        String json = String.format("{\"textures\":{\"SKIN\":{\"url\":\"%s\"}}}", textureUrl);
+        String base64 = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        Multimap<String, Property> propertyMap = ArrayListMultimap.create();
+        propertyMap.put("textures", new Property("textures", base64));
+
+        byte[] textureHash = texture.getBytes(StandardCharsets.UTF_8);
+        GameProfile gameProfile = new GameProfile(UUID.nameUUIDFromBytes(textureHash), "IsometricMannequin/" + texture, new PropertyMap(propertyMap));
+
+        RenderablePlayerEntity player = new RenderablePlayerEntity(gameProfile, ProfileFetchMode.TEXTURE);
+
+        if (useNbt) {
+            CompoundTag playerNbt = CompoundTagArgument.getCompoundTag(context, "nbt");
+            try (ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(player.problemPath(), WikiRenderer.LOGGER)) {
+                player.load(TagValueInput.create(logging, player.registryAccess(), playerNbt));
+            }
+        }
+
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(
+                new EntityRenderable(null, player)
+        ));
+
         return 0;
     }
 

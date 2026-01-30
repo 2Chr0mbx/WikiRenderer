@@ -6,17 +6,20 @@ import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.mixin.access.ClientMannequinAccessor;
 import com.pigicial.wikirenderer.mixin.access.ElytraAnimationStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
+import com.pigicial.wikirenderer.render.entity.player.ProfileFetchMode;
+import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
 import com.pigicial.wikirenderer.textures.SkinGrabber;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.CameraOrientationUtil;
 import com.pigicial.wikirenderer.util.ExportPathSpec;
 import com.pigicial.wikirenderer.util.ParticleRestriction;
-import io.wispforest.owo.ui.component.EntityComponent;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -50,6 +53,7 @@ import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider {
@@ -146,11 +150,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         return bottomEntity;
     }
 
-    public static EntityComponent.RenderablePlayerEntity copyPlayer(Player originalPlayer) {
+    public static RenderablePlayerEntity copyPlayer(Player originalPlayer) {
         GameProfile originalProfile = originalPlayer.getGameProfile();
         GameProfile fakeProfile = new GameProfile(originalProfile.id(), originalProfile.name(), new PropertyMap(originalProfile.properties()));
 
-        EntityComponent.RenderablePlayerEntity playerClone = EntityComponent.createRenderablePlayer(fakeProfile);
+        RenderablePlayerEntity playerClone = new RenderablePlayerEntity(fakeProfile, ProfileFetchMode.UUID);
 
         ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(originalPlayer.problemPath(), WikiRenderer.LOGGER);
         TagValueOutput view = TagValueOutput.createWithContext(problemReporter, originalPlayer.registryAccess());
@@ -209,6 +213,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             Vec3 offset = Vec3.ZERO;
             if (entity.isPassenger()) {
                 offset = entity.position().subtract(usedEntity.position());
+            }
+
+            if (entity instanceof ClientMannequin mannequin) {
+                this.updateMannequinSkin(mannequin);
             }
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
@@ -359,6 +367,21 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         action.accept(entity);
         if (entity.getPassengers().isEmpty()) return;
         for (Entity e : entity.getPassengers()) applyToEntityAndPassengers(e, action);
+    }
+
+    // alternative to the tick method, which has a bunch of other stuff done i dont want
+    private void updateMannequinSkin(ClientMannequin clientMannequin) {
+        ClientMannequinAccessor mannequin = (ClientMannequinAccessor) clientMannequin;
+
+        CompletableFuture<Optional<PlayerSkin>> skinLookup = mannequin.getSkinLookup();
+        if (skinLookup != null && skinLookup.isDone()) {
+            try {
+                skinLookup.get().ifPresent(mannequin::setSkin);
+                mannequin.setSkinLookup(null);
+            } catch (Exception ignored) {
+
+            }
+        }
     }
 
     @Override

@@ -34,10 +34,10 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
 
     @Override
     public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
-        final int columns = this.getProperties().columns.get();
-        final int rows = Mth.positiveCeilDiv(this.items.size(), columns);
+        int columns = this.getProperties().columns.get();
+        int rows = Mth.positiveCeilDiv(this.items.size(), columns);
 
-        final float spacing = 1.25f;
+        float spacing = 1.25f;
 
         matrices.scale(.1f, .1f, .1f);
         matrices.translate((-columns / 2f) * spacing - spacing / 2, (rows / 2f) * spacing + spacing / 2, 0);

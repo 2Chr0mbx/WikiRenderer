@@ -198,15 +198,16 @@ public class RenderableDispatcher {
     public static CompletableFuture<NativeImage> copyTextureIntoImage(@NotNull GpuTexture gpuTexture) {
         CompletableFuture<NativeImage> future = new CompletableFuture<>();
 
-        final int width = gpuTexture.getWidth(0);
-        final int height = gpuTexture.getHeight(0);
+        int width = gpuTexture.getWidth(0);
+        int height = gpuTexture.getHeight(0);
 
         // Optimized version of vanilla's ScreenshotRecorder.takeScreenshot
         // that simply copies an RGBA8 GpuTexture's contents to an RGBA NativeImage, with vertical flipping.
 
         // Color attachments [in vanilla] are always RGBA8, therefore != RGBA8 implies non-color attachment
-        if (gpuTexture.getFormat() != TextureFormat.RGBA8)
+        if (gpuTexture.getFormat() != TextureFormat.RGBA8) {
             throw new IllegalStateException("Tried to copy non-compatible texture into image");
+        }
 
         GpuBuffer gpuBuffer = RenderSystem.getDevice().createBuffer(() -> "WikiRenderer RenderableDispatcher.copyTextureIntoImage buffer", GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST, 4L * width * height);
         CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
@@ -215,9 +216,9 @@ public class RenderableDispatcher {
                 NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
 
                 // Skip redundant safety checks, do the memory copies directly.
-                final long stride = 4L * width;
-                final long srcBuf = MemoryUtil.memAddress(mappedView.data());
-                final long dstBuf = nativeImage.getPointer();
+                long stride = 4L * width;
+                long srcBuf = MemoryUtil.memAddress(mappedView.data());
+                long dstBuf = nativeImage.getPointer();
 
                 long src = srcBuf;
                 long dst = dstBuf + stride * (height - 1);

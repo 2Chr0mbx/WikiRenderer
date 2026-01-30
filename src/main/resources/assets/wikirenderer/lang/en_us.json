@@ -214,7 +214,7 @@
   "message.wikirenderer.chunks_found": "Successfully found %s connected %sx%s chunks within %s blocks.",
   "message.wikirenderer.closed": "Render menu saved, type /isorender reopen to reopen it.",
 
-  "message.wikirenderer.player_rendering_in_multiplayer": "Rendering players by names is only supported in Singleplayer",
+  "message.wikirenderer.no_such_player": "Couldn't find a player with this name",
 
   "message.wikirenderer.custom_lighting": "§aCustom Lighting: §7[§c%1$s §a%1$s §b%1$s§7]",
   "message.wikirenderer.current_profile": "Current Profile: %1$s",

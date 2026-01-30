@@ -52,7 +52,7 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
 
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        final BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
+        BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
 
         this.delegate.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
 

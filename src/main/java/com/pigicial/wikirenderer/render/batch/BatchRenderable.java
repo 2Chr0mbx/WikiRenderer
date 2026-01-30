@@ -63,7 +63,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         this.currentDelegate.emitVerticesThenDraw(matrix4fStack, matrices, vertexConsumers, tickDelta);
 
         if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && FileIO.taskCount() <= 5) {
-            final ExportPathSpec exportPath = this.getExportPath();
+            ExportPathSpec exportPath = this.getExportPath();
             RenderableDispatcher.drawIntoImage(this.currentDelegate, 0, this.getExportResolution(), this.shouldCrop(), null)
                     .thenCompose(image -> FileIO.saveImage(image, exportPath).whenComplete((f, _t) -> image.close()));
 
