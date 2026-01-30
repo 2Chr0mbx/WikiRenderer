@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.command;
+package com.pigicial.wikirenderer.command.arguments;
 
 import com.pigicial.wikirenderer.render.batch.BatchRenderTask;
 import com.mojang.brigadier.StringReader;

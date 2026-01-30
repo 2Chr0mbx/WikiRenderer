@@ -1,6 +1,6 @@
 package com.pigicial.wikirenderer;
 
-import com.pigicial.wikirenderer.command.WikiRendererCommand;
+import com.pigicial.wikirenderer.command.subcommands.RenderEntitySubCommand;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
 import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
@@ -66,7 +66,7 @@ public class WikiRendererKeybinds {
             }
 
             if (KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY.consumeClick()) {
-                WikiRendererCommand.renderTargetedEntity(null);
+                RenderEntitySubCommand.renderTargetedEntity(null);
             }
         });
 
