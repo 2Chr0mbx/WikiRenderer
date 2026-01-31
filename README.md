@@ -28,6 +28,8 @@ WikiRenderer supports the following render types:
     - Can also render multiple items into an atlas
 - Animated exports for items, entities, blocks states or world areas (in `.gif`, `.apng`, `.webp`, or `.mp4` formats)
 
+The main command is `/wikirender`, but `/wr` also exists as an alias.
+
 ## Items
 Items can be rendered in three ways:
 1. Hold an item and type `/wikirender item`

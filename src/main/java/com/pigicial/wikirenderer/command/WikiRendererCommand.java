@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.command.subcommands.*;
 import com.pigicial.wikirenderer.util.Translate;
@@ -19,22 +20,23 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.lit
 public class WikiRendererCommand {
 
     public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext access) {
-        LiteralArgumentBuilder<FabricClientCommandSource> builder = literal("wikirender").executes(context -> {
+        LiteralArgumentBuilder<FabricClientCommandSource> mainCommand = literal("wikirender").executes(context -> {
             showRootNodeHelp(context);
             return 0;
         });
 
-        registerSubCommand(builder, access, new ReopenSubCommand());
-        registerSubCommand(builder, access, new RenderAreaSubCommand());
-        registerSubCommand(builder, access, new RenderBlockSubCommand());
-        registerSubCommand(builder, access, new RenderEntitySubCommand());
-        registerSubCommand(builder, access, new RenderPlayerSubCommand());
-        registerSubCommand(builder, access, new RenderItemSubCommand());
-        registerSubCommand(builder, access, new RenderItemTooltipSubCommand());
-        registerSubCommand(builder, access, new GroupRenderSubCommand());
-        registerSubCommand(builder, access, new UnsafeSubCommand());
+        registerSubCommand(mainCommand, access, new ReopenSubCommand());
+        registerSubCommand(mainCommand, access, new RenderAreaSubCommand());
+        registerSubCommand(mainCommand, access, new RenderBlockSubCommand());
+        registerSubCommand(mainCommand, access, new RenderEntitySubCommand());
+        registerSubCommand(mainCommand, access, new RenderPlayerSubCommand());
+        registerSubCommand(mainCommand, access, new RenderItemSubCommand());
+        registerSubCommand(mainCommand, access, new RenderItemTooltipSubCommand());
+        registerSubCommand(mainCommand, access, new GroupRenderSubCommand());
+        registerSubCommand(mainCommand, access, new UnsafeSubCommand());
 
-        dispatcher.register(builder);
+        LiteralCommandNode<FabricClientCommandSource> registeredMainCommand = dispatcher.register(mainCommand);
+        dispatcher.register(literal("wr").redirect(registeredMainCommand));
     }
 
     private static void registerSubCommand(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandBuildContext access, WikiRendererSubCommand subCommand) {
