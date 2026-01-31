@@ -35,10 +35,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final Property<Boolean> hideEntities = Property.of(false);
     public final Property<Boolean> hidePlayers = Property.of(false);
     public final Property<Boolean> hideArmorStands = Property.of(false);
+    public final Property<Boolean> hideLivingEntities = Property.of(false);
+    public final Property<Boolean> hideText = Property.of(false);
     public final Property<Boolean> freezeEntities = Property.of(false);
     public final Property<Boolean> freezePlayerArms = Property.of(false);
     public final Property<Boolean> autoRefreshVisibleEntities = Property.of(true);
-    public final Property<Boolean> hideText = Property.of(false);
 
     public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
     public MeshSideRotation sideViewRotation = MeshSideRotation.NORTH;
@@ -240,7 +241,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         if (!this.hideEntities.get()) {
             WikiRendererUI.booleanControl(container, this.hidePlayers, "hide_players");
             WikiRendererUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
+            WikiRendererUI.booleanControl(container, this.hideLivingEntities, "hide_living_entities");
         }
+
         WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");
         this.freezeEntities.listen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true, false);
         if (!this.freezeEntities.get()) {

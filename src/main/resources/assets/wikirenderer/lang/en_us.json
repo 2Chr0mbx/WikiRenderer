@@ -163,6 +163,7 @@
   "gui.wikirenderer.hide_entities": "Hide All Entities",
   "gui.wikirenderer.hide_players": "Hide Players",
   "gui.wikirenderer.hide_armor_stands": "Hide Armor Stands",
+  "gui.wikirenderer.hide_living_entities": "Hide Living Entities",
   "gui.wikirenderer.freeze_entities": "Freeze Entities",
   "gui.wikirenderer.freeze_player_arms": "Freeze Player Arms",
   "gui.wikirenderer.auto_refresh_visible_entities": "Auto-Refresh Visible Entities",

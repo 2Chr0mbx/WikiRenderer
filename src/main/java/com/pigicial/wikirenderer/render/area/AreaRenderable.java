@@ -237,6 +237,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         this.entities.forEach(entity -> {
             if (entity instanceof Player && properties.hidePlayers.get()) return;
             if (entity instanceof ArmorStand && properties.hideArmorStands.get()) return;
+            if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) return;
 
             Vec3 offsetFromMesh = entity.getPosition(tickDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
 
