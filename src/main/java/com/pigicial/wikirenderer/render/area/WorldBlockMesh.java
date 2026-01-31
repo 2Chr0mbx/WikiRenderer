@@ -6,10 +6,6 @@ import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
 import com.pigicial.wikirenderer.util.OrthographicSort;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DestFactor;
-import com.mojang.blaze3d.platform.SourceFactor;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.AddressMode;
@@ -25,7 +21,6 @@ import net.minecraft.client.Options;
 import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.renderer.DynamicUniforms;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
@@ -36,7 +31,6 @@ import net.minecraft.client.renderer.chunk.SectionBuffers;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -55,15 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldBlockMesh {
 
-    public static final RenderPipeline CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
-            .withLocation("pipeline/iso_cutout_terrain")
-            .withFragmentShader(Identifier.fromNamespaceAndPath(WikiRenderer.MOD_ID, "cutout_layer_no_transparency"))
-            .withBlend(new BlendFunction(
-                    SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA,
-                    SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA
-            ))
-            .withShaderDefine("ALPHA_CUTOUT", 0.5f)
-            .build();
     public static boolean overrideCutoutRenderPipeline = false;
     public static GpuSampler terrainSampler = null;
 

@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.mixin.world;
 
+import com.pigicial.wikirenderer.render.CustomRenderPipelines;
 import com.pigicial.wikirenderer.render.area.WorldBlockMesh;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -18,7 +19,7 @@ public class MixinChunkSectionLayer {
         ChunkSectionLayer layer = (ChunkSectionLayer) (Object) this;
 
         if (layer == ChunkSectionLayer.CUTOUT && WorldBlockMesh.overrideCutoutRenderPipeline) {
-            cir.setReturnValue(WorldBlockMesh.CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING);
+            cir.setReturnValue(CustomRenderPipelines.CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING);
         }
     }
 

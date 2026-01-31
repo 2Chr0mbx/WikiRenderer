@@ -1,5 +1,8 @@
 package com.pigicial.wikirenderer.render.area;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.brigadier.context.CommandContext;
+import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
@@ -12,8 +15,6 @@ import com.pigicial.wikirenderer.util.CameraOrientationUtil;
 import com.pigicial.wikirenderer.util.ExportPathSpec;
 import com.pigicial.wikirenderer.util.ParticleRestriction;
 import com.pigicial.wikirenderer.util.Translate;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -121,6 +122,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             return;
         }
 
+        WikiRenderer.inAreaRenderDraw = true;
+
         GlobalSettingsUniform globalSettings = Minecraft.getInstance().gameRenderer.getGlobalSettingsUniform();
         globalSettings.update(
                 client.getWindow().getGuiScaledWidth(),
@@ -158,6 +161,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
             this.drawParticles(standardStack.last().pose(), tickDelta);
         }
+
+        WikiRenderer.inAreaRenderDraw = false;
     }
 
     private void drawBlockEntities(PoseStack standardStack, SubmitNodeStorage nodeStorage, CameraRenderState cameraRenderState, float tickDelta) {

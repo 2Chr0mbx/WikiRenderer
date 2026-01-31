@@ -40,6 +40,7 @@ public class WikiRenderer implements ClientModInitializer {
     public static ParticleRestriction<?> particleRestriction = ParticleRestriction.always();
 
     public static boolean inSpriteEntityDraw = false;
+    public static boolean inAreaRenderDraw = false;
     public static boolean inRenderableDraw = false;
     public static boolean inRenderableTick = false;
     public static boolean skipWorldRender = false;
