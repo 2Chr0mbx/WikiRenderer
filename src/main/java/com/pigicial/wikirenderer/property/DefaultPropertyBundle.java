@@ -1,11 +1,13 @@
 package com.pigicial.wikirenderer.property;
 
-import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.screen.WikiRendererUI;
-import com.pigicial.wikirenderer.screen.RenderScreen;
-import com.pigicial.wikirenderer.render.ClientRenderCallback;
-import com.pigicial.wikirenderer.util.Translate;
 import com.mojang.math.Axis;
+import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.render.ClientRenderCallback;
+import com.pigicial.wikirenderer.render.Renderable;
+import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
+import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.screen.WikiRendererUI;
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -23,6 +25,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public final IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
 
     public final IntProperty rotationSpeed = IntProperty.of(0, 0, 720);
+    public final Property<Boolean> syncRotationToAnimation = Property.of(false);
     public float rotationOffset = 0;
     protected boolean rotationOffsetUpdated = false;
 
@@ -73,6 +76,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
         WikiRendererUI.intControl(container, rotation, "rotation", 45);
         WikiRendererUI.doubleControl(container, slant, "slant", 30);
         WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+        WikiRendererUI.booleanControl(container, syncRotationToAnimation, "sync_rotation_to_animation_timings");
 
         WikiRendererUI.sectionHeader(container, "presets", true);
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
@@ -98,18 +102,34 @@ public class DefaultPropertyBundle implements PropertyBundle {
         modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
         modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
 
-        this.updateAndApplyRotationOffset(modelViewStack);
+        this.updateAndApplyRotationOffset(renderable, modelViewStack);
     }
 
-    protected void updateAndApplyRotationOffset(Matrix4fStack modelViewStack) {
-        if (rotationSpeed.get() != 0) {
-            if (!this.rotationOffsetUpdated) {
-                rotationOffset += Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() * rotationSpeed.get() * .05f;
-                this.rotationOffsetUpdated = true;
-            }
-            modelViewStack.rotate(Axis.YP.rotationDegrees(rotationOffset));
-        } else {
-            rotationOffset = 0;
+    protected void updateAndApplyRotationOffset(Renderable<?> renderable, Matrix4fStack modelViewStack) {
+        if (rotationSpeed.get() == 0) {
+            this.rotationOffset = 0;
+            return;
         }
+
+        if (!this.rotationOffsetUpdated) {
+            if (!this.syncRotationToAnimation.get()) {
+                this.rotationOffset += Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() * this.rotationSpeed.get() * .05f;
+                this.rotationOffsetUpdated = true;
+            } else {
+                AnimationHandler animationHandler = WikiRenderer.currentAnimationHandler;
+                if (animationHandler != null && !animationHandler.isFinished()) {
+                    int totalFrameCount = animationHandler.getAnimationFrames();
+                    int framesRenderedSoFar = totalFrameCount - animationHandler.getRemainingFrames();
+
+                    int frameRate = GlobalProperties.EXPORT_FRAMERATE.get();
+                    double secondsIntoAnimation = (double) framesRenderedSoFar / (double) frameRate;
+                    this.rotationOffset = (float) (secondsIntoAnimation * rotationSpeed.get());
+                } else {
+                    this.rotationOffset = 0;
+                }
+            }
+        }
+
+        modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotationOffset));
     }
 }

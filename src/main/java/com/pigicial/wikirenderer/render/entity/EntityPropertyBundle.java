@@ -114,6 +114,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.intControl(container, this.rotation, "rotation", 45);
             WikiRendererUI.doubleControl(container, this.slant, "slant", 30);
             WikiRendererUI.intControl(container, this.rotationSpeed, "rotation_speed", 5);
+            WikiRendererUI.booleanControl(container, syncRotationToAnimation, "sync_rotation_to_animation_timings");
         } else {
             WikiRendererUI.intControl(container, this.spriteRotation, "rotation", 45);
             WikiRendererUI.intControl(container, this.spriteSlant, "slant", 30);
@@ -195,13 +196,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         }
 
 
-        this.updateAndApplyRotationOffset(modelViewStack);
+        this.updateAndApplyRotationOffset(renderable, modelViewStack);
     }
 
     @Override
-    protected void updateAndApplyRotationOffset(Matrix4fStack modelViewStack) {
+    protected void updateAndApplyRotationOffset(Renderable<?> renderable, Matrix4fStack modelViewStack) {
         if (!this.spriteRendering.get()) {
-            super.updateAndApplyRotationOffset(modelViewStack);
+            super.updateAndApplyRotationOffset(renderable, modelViewStack);
         }
     }
 

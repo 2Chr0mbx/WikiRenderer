@@ -165,6 +165,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.intControl(container, rotation, "rotation", 45);
             WikiRendererUI.doubleControl(container, slant, "slant", 30);
             WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+            WikiRendererUI.booleanControl(container, syncRotationToAnimation, "sync_rotation_to_animation_timings");
 
             container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
                         this.xOffset.setToDefault();
@@ -386,8 +387,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
             modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
             modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
+            this.updateAndApplyRotationOffset(renderable, modelViewStack);
         }
-
-        this.updateAndApplyRotationOffset(modelViewStack);
     }
 }

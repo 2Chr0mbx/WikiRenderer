@@ -11,6 +11,7 @@ import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Positioning;
@@ -37,6 +38,7 @@ public class WikiRenderer implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     public static final String VERSION = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata().getVersion().getFriendlyString();
 
+    public static AnimationHandler currentAnimationHandler = null;
     public static ParticleRestriction<?> particleRestriction = ParticleRestriction.always();
     public static boolean inSpriteEntityDraw = false;
     public static boolean inAreaRenderDraw = false;

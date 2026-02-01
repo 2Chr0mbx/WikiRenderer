@@ -33,6 +33,7 @@
   "gui.wikirenderer.rotation": "Rotation",
   "gui.wikirenderer.slant": "Slant",
   "gui.wikirenderer.rotation_speed": "Rotation Degrees Per Second",
+  "gui.wikirenderer.sync_rotation_to_animation_timings": "Sync Rotation to Animation Timings",
   "gui.wikirenderer.dimetric": "Dimetric",
   "gui.wikirenderer.isometric": "Isometric",
   "gui.wikirenderer.dimetric_recommended": "Dimetric (Recommended)",
@@ -175,6 +176,15 @@
 
   "gui.wikirenderer.exporter.idle": "Exporter Idle",
   "gui.wikirenderer.exporter.jobs": "Export Jobs: %s",
+
+  "gui.wikirenderer.animation_mode_selected_instant_file_save": "Animation Mode: Disk-Intensive",
+  "gui.wikirenderer.animation_mode_selected_save_in_memory": "Animation Mode: Memory-Intensive",
+  "gui.wikirenderer.animation_mode_name_instant_file_save": "Disk-Intensive",
+  "gui.wikirenderer.animation_mode_name_save_in_memory": "Memory-Intensive",
+  "gui.wikirenderer.animation_mode_description_instant_file_save_1": "- Continuous Disk IO (possible lag)",
+  "gui.wikirenderer.animation_mode_description_instant_file_save_2": "- Low Ram Usage",
+  "gui.wikirenderer.animation_mode_description_save_in_memory_1": "- No Initial Disk IO",
+  "gui.wikirenderer.animation_mode_description_save_in_memory_2": "- High Ram Usage",
 
   "gui.wikirenderer.using_derived_resolution": "Using Derived Resolution",
   "gui.wikirenderer.batch.remaining": "Remaining: %d/%d",

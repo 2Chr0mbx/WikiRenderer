@@ -87,6 +87,12 @@ public class FileIO {
         } catch (IOException e) {
             WikiRenderer.LOGGER.warn("Could not clean up sequence directory", e);
         }
+
+        try {
+            Files.delete(sequencePath);
+        } catch (IOException e) {
+            WikiRenderer.LOGGER.warn("Could not delete up sequence directory", e);
+        }
     }
 
     public static int taskCount() {
