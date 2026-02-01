@@ -1,7 +1,6 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render;
 
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
-import com.pigicial.wikirenderer.render.Renderable;
 import net.minecraft.client.renderer.state.CameraRenderState;
 
 public class CameraOrientationUtil {

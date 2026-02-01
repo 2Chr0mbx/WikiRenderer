@@ -3,7 +3,7 @@ package com.pigicial.wikirenderer.render.area;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.area.chunk.MiniChunk;
 import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
-import com.pigicial.wikirenderer.util.OrthographicSort;
+import com.pigicial.wikirenderer.render.OrthographicSort;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderPass;

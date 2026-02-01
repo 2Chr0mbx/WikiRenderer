@@ -1,10 +1,10 @@
 package com.pigicial.wikirenderer.render.batch;
 
 import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.render.RenderableDispatcher;
-import com.pigicial.wikirenderer.util.ExportPathSpec;
-import com.pigicial.wikirenderer.util.FileIO;
-import com.pigicial.wikirenderer.util.ParticleRestriction;
+import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.export.FileIO;
+import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import org.jetbrains.annotations.Nullable;

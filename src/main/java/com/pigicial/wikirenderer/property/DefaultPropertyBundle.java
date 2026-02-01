@@ -3,7 +3,7 @@ package com.pigicial.wikirenderer.property;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
-import com.pigicial.wikirenderer.util.ClientRenderCallback;
+import com.pigicial.wikirenderer.render.ClientRenderCallback;
 import com.pigicial.wikirenderer.util.Translate;
 import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;

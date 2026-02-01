@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render.export;
 
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import net.fabricmc.loader.api.FabricLoader;

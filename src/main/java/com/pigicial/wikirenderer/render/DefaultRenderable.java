@@ -3,7 +3,6 @@ package com.pigicial.wikirenderer.render;
 import com.pigicial.wikirenderer.mixin.access.CameraInvoker;
 import com.pigicial.wikirenderer.mixin.access.LightTextureAccessor;
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
-import com.pigicial.wikirenderer.util.CameraOrientationUtil;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;

@@ -1,5 +1,6 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render.export;
 
+import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;

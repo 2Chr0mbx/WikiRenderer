@@ -1,6 +1,6 @@
 package com.pigicial.wikirenderer.property;
 
-import com.pigicial.wikirenderer.util.ImageRescaleMode;
+import com.pigicial.wikirenderer.render.export.ImageRescaleMode;
 
 public class DefaultCroppablePropertyBundle extends DefaultPropertyBundle implements CroppablePropertyBundle {
 

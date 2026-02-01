@@ -1,7 +1,8 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render.export.ffmpeg;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 

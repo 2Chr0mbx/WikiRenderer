@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer.mixin;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
-import com.pigicial.wikirenderer.util.ClientRenderCallback;
+import com.pigicial.wikirenderer.render.ClientRenderCallback;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;

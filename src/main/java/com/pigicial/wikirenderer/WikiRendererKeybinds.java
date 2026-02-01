@@ -8,7 +8,7 @@ import com.pigicial.wikirenderer.render.item.TooltipRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.screen.SelectRenderTaskScreen;
-import com.pigicial.wikirenderer.util.AreaSelectionHelper;
+import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;

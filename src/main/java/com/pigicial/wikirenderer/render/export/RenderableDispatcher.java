@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.render;
+package com.pigicial.wikirenderer.render.export;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -13,10 +13,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.LightTextureAccessor;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
+import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
-import com.pigicial.wikirenderer.util.ImageCropper;
-import com.pigicial.wikirenderer.util.ImageRescaleMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;

@@ -1,6 +1,6 @@
 package com.pigicial.wikirenderer.property;
 
-import com.pigicial.wikirenderer.util.FFmpegDispatcher;
+import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
 
 public class GlobalProperties {
 

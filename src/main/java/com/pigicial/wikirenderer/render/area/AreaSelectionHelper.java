@@ -1,8 +1,8 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render.area;
 
-import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
+import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;

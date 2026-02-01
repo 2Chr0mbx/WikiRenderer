@@ -14,8 +14,8 @@ import net.minecraft.core.BlockPos;
 
 import java.util.function.Supplier;
 
-import static com.pigicial.wikirenderer.util.AreaSelectionHelper.pos1;
-import static com.pigicial.wikirenderer.util.AreaSelectionHelper.pos2;
+import static com.pigicial.wikirenderer.render.area.AreaSelectionHelper.pos1;
+import static com.pigicial.wikirenderer.render.area.AreaSelectionHelper.pos2;
 
 public class AreaSelectionComponent extends FlowLayout {
 

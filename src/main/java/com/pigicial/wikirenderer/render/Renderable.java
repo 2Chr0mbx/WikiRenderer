@@ -2,8 +2,7 @@ package com.pigicial.wikirenderer.render;
 
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.PropertyBundle;
-import com.pigicial.wikirenderer.util.ExportPathSpec;
-import com.pigicial.wikirenderer.util.ParticleRestriction;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.jetbrains.annotations.Nullable;

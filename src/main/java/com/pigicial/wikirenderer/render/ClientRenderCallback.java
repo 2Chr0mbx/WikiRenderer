@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;

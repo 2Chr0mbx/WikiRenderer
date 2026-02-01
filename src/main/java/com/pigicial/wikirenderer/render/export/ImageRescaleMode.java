@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render.export;
 
 public enum ImageRescaleMode {
     VERTICAL,

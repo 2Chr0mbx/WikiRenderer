@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer.mixin.world;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.area.WorldBlockMesh;
-import com.pigicial.wikirenderer.util.AreaSelectionHelper;
+import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;

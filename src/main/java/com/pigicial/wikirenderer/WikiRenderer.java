@@ -1,10 +1,10 @@
 package com.pigicial.wikirenderer;
 
 import com.pigicial.wikirenderer.command.WikiRendererCommand;
-import com.pigicial.wikirenderer.util.AreaSelectionHelper;
-import com.pigicial.wikirenderer.util.OrthographicSort;
-import com.pigicial.wikirenderer.util.FileIO;
-import com.pigicial.wikirenderer.util.ParticleRestriction;
+import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
+import com.pigicial.wikirenderer.render.OrthographicSort;
+import com.pigicial.wikirenderer.render.export.FileIO;
+import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.components.AreaSelectionComponent;
 import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.mojang.blaze3d.ProjectionType;

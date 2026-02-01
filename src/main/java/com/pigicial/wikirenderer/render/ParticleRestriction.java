@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import net.minecraft.world.phys.AABB;

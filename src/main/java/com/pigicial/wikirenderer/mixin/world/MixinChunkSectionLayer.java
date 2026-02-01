@@ -1,6 +1,6 @@
 package com.pigicial.wikirenderer.mixin.world;
 
-import com.pigicial.wikirenderer.render.CustomRenderPipelines;
+import com.pigicial.wikirenderer.render.export.CustomRenderPipelines;
 import com.pigicial.wikirenderer.render.area.WorldBlockMesh;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;

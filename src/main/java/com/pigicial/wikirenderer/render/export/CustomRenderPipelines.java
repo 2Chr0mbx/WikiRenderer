@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.render;
+package com.pigicial.wikirenderer.render.export;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;

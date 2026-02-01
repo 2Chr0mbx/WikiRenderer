@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer.render;
 
 import com.pigicial.wikirenderer.property.PropertyBundle;
 import com.pigicial.wikirenderer.screen.RenderScreen;
-import com.pigicial.wikirenderer.util.ExportPathSpec;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.renderer.MultiBufferSource;

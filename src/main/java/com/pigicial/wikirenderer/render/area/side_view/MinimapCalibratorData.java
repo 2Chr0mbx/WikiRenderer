@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer.render.area.side_view;
 
 import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
-import com.pigicial.wikirenderer.util.ImageCropper;
+import com.pigicial.wikirenderer.render.export.ImageCropper;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;

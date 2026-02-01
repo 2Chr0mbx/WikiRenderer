@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
-import com.pigicial.wikirenderer.util.FileIO;
+import com.pigicial.wikirenderer.render.export.FileIO;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.OwoUIDrawContext;

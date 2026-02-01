@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.components;
 
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;

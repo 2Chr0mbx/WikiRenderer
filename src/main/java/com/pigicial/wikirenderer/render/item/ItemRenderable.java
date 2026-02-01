@@ -3,7 +3,7 @@ package com.pigicial.wikirenderer.render.item;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.textures.SkinGrabber;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
-import com.pigicial.wikirenderer.util.ExportPathSpec;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;

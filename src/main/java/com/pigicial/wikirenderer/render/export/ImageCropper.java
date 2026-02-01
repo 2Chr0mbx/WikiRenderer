@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render.export;
 
 import com.pigicial.wikirenderer.render.Renderable;
 import com.mojang.blaze3d.platform.NativeImage;

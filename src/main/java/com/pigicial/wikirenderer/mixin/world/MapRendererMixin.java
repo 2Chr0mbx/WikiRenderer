@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.mixin.world;
 
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.render.CustomRenderPipelines;
+import com.pigicial.wikirenderer.render.export.CustomRenderPipelines;
 import net.minecraft.client.renderer.MapRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;

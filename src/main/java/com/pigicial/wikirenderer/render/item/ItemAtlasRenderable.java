@@ -1,6 +1,6 @@
 package com.pigicial.wikirenderer.render.item;
 
-import com.pigicial.wikirenderer.util.ExportPathSpec;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.SubmitNodeStorage;
