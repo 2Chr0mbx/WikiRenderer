@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class FileIO {
 
@@ -71,6 +72,21 @@ public class FileIO {
 
 
         return future;
+    }
+
+    public static void deleteSequenceFilesFromPath(Path sequencePath) {
+        try (Stream<Path> p = Files.list(sequencePath)) {
+            p.filter(path -> path.getFileName().toString().matches("seq_\\d+\\.png"))
+                    .forEach(deletePath -> {
+                        try {
+                            Files.delete(deletePath);
+                        } catch (IOException e) {
+                            WikiRenderer.LOGGER.warn("Could not clean up sequence directory", e);
+                        }
+                    });
+        } catch (IOException e) {
+            WikiRenderer.LOGGER.warn("Could not clean up sequence directory", e);
+        }
     }
 
     public static int taskCount() {

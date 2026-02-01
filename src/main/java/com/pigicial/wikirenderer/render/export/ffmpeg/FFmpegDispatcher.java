@@ -3,12 +3,12 @@ package com.pigicial.wikirenderer.render.export.ffmpeg;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.export.FileIO;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,8 +57,7 @@ public class FFmpegDispatcher {
         });
     }
 
-    @SuppressWarnings("resource")
-    public static CompletableFuture<File> assemble(ExportPathSpec target, Path sourcePath, Format format, @Nullable String cropFilter) {
+    public static CompletableFuture<File> exportAnimation(ExportPathSpec target, Path sourcePath, Format format, @Nullable String cropFilter) {
         target.resolveOffset().toFile().mkdirs();
 
         List<String> args = new ArrayList<>(List.of(new String[]{
@@ -95,20 +94,7 @@ public class FFmpegDispatcher {
 
         try {
             return process.start().onExit().thenApply(exited -> {
-                try {
-                    Files.list(sourcePath)
-                            .filter(path -> path.getFileName().toString().matches("seq_\\d+\\.png"))
-                            .forEach(deletePath -> {
-                                try {
-                                    Files.delete(deletePath);
-                                } catch (IOException e) {
-                                    WikiRenderer.LOGGER.warn("Could not clean up sequence directory", e);
-                                }
-                            });
-                } catch (IOException e) {
-                    WikiRenderer.LOGGER.warn("Could not clean up sequence directory", e);
-                }
-
+                FileIO.deleteSequenceFilesFromPath(sourcePath);
                 return animationFile;
             });
         } catch (IOException e) {

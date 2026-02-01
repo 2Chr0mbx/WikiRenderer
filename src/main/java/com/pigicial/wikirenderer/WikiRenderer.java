@@ -38,7 +38,6 @@ public class WikiRenderer implements ClientModInitializer {
     public static final String VERSION = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata().getVersion().getFriendlyString();
 
     public static ParticleRestriction<?> particleRestriction = ParticleRestriction.always();
-
     public static boolean inSpriteEntityDraw = false;
     public static boolean inAreaRenderDraw = false;
     public static boolean inRenderableDraw = false;
@@ -89,10 +88,6 @@ public class WikiRenderer implements ClientModInitializer {
         });
     }
 
-    public static void skipNextWorldRender() {
-        skipWorldRender = true;
-    }
-
 	public static void beginRenderableDraw(PerspectiveProjectionMatrixBuffer matrixStore, Matrix4f projectionMatrix) {
 		prevProjectionType = RenderSystem.getProjectionType();
 		prevProjectionMatrix = RenderSystem.getProjectionMatrixBuffer();
@@ -112,13 +107,5 @@ public class WikiRenderer implements ClientModInitializer {
 		renderableDrawProjectionBuffer = null;
 		inRenderableDraw = false;
         orthographicSorting = null;
-    }
-
-    public static void beginRenderableTick() {
-        inRenderableTick = true;
-    }
-
-    public static void endRenderableTick() {
-        inRenderableTick = false;
     }
 }

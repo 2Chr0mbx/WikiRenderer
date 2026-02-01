@@ -1,9 +1,5 @@
 package com.pigicial.wikirenderer.render.area;
 
-import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.render.area.chunk.MiniChunk;
-import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
-import com.pigicial.wikirenderer.render.OrthographicSort;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -13,6 +9,10 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.*;
+import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.render.OrthographicSort;
+import com.pigicial.wikirenderer.render.area.chunk.MiniChunk;
+import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.impl.client.indigo.renderer.IndigoRenderer;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.WorldMesherRenderContext;
@@ -123,11 +123,15 @@ public class WorldBlockMesh {
         float currentRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
         double currentSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();
         if ((this.lastUsedRotation != currentRotation || this.lastUsedSlant != currentSlant) && this.orthographicTransparencySorting != null) {
-            this.lastUsedRotation = currentRotation;
-            this.lastUsedSlant = currentSlant;
+            boolean isProbablyLargeSpinningObjectShrunkenDown = renderable.getProperties().scale.get() <= 8 && renderable.getProperties().rotationSpeed.get() > 0;
+            if (!isProbablyLargeSpinningObjectShrunkenDown) {
+                // anything smaller than 10 you probably wont see transparency issues (i.e. rendering the skyblock hub)
+                this.lastUsedRotation = currentRotation;
+                this.lastUsedSlant = currentSlant;
 
-            for (MeshSection meshSection : subMeshes) {
-                meshSection.reSortTransparencyData(this.orthographicTransparencySorting);
+                for (MeshSection meshSection : subMeshes) {
+                    meshSection.reSortTransparencyData(this.orthographicTransparencySorting);
+                }
             }
         }
 
