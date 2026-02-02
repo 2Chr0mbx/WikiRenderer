@@ -14,6 +14,12 @@ base {
 repositories {
     maven { url 'https://maven.wispforest.io' }
     maven { url 'https://www.jitpack.io' }
+    maven {
+        url = uri("https://api.modrinth.com/maven")
+        content {
+            includeGroup("maven.modrinth")
+        }
+    }
     mavenLocal()
 
     maven { url = "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
@@ -30,13 +36,14 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.3")))
 
     modImplementation "io.wispforest:exo:${project.exo_version}"
     modImplementation "io.wispforest:owo-lib:${project.owo_version}"
     include "io.wispforest:owo-sentinel:${project.owo_version}"
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
+    compileOnly "maven.modrinth:iris:1.10.5+1.21.11-fabric"
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.3")))
 }
 
 processResources {

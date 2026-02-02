@@ -9,6 +9,7 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.*;
+import com.pigicial.wikirenderer.ShaderCheck;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.OrthographicSort;
 import com.pigicial.wikirenderer.render.area.chunk.MiniChunk;
@@ -261,9 +262,13 @@ public class WorldBlockMesh {
                 ? MeshState.REBUILDING
                 : MeshState.BUILDING;
 
-        // todo: if i get around to properly adding iris shaders support, make sure mesh building isn't async when a shaderpack is active (and then look into shadow rendering)
         this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
-        this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync);
+        if (ShaderCheck.isUsingShaders()) {
+            this.buildMeshAsync();
+            this.buildFuture = CompletableFuture.completedFuture(null);
+        } else {
+            this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync);
+        }
     }
 
     public synchronized void stopBuilding() {
