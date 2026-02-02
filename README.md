@@ -8,10 +8,7 @@ options right in-game in a menu.
 Not only is this version of the mod also designed for modded wikis in mind, but it also has a couple of additional
 features targeted for use on the [Hypixel SkyBlock Wiki](https://hypixel-skyblock.fandom.com).
 
-## Dependencies
-WikiRenderer relies on [owo-lib](https://modrinth.com/mod/owo-lib), which hasn't formally been released for 1.21.11 yet. It has however been updated and is available in a [branch in the main repository](https://github.com/wisp-forest/owo-lib/tree/1.21.11), it just has to be manually built. 
-
-(A built version can also be found in the releases section here)
+> Note: WikiRenderer relies on [owo-lib](https://modrinth.com/mod/owo-lib) for 1.21.11, which can be downloaded [here](https://modrinth.com/mod/owo-lib/versions).
 
 # Usage
 WikiRenderer supports the following render types:
