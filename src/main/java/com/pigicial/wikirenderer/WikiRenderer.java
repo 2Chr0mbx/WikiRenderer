@@ -12,8 +12,8 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
-import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.Positioning;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.hud.Hud;
@@ -63,7 +63,7 @@ public class WikiRenderer implements ClientModInitializer {
         String areaSelectionHintId = "area-selection-hint";
 
         Identifier hudId = Identifier.fromNamespaceAndPath(MOD_ID, "hud");
-        Hud.add(hudId, () -> Containers.verticalFlow(Sizing.content(), Sizing.content()).positioning(Positioning.absolute(20, 20)));
+        Hud.add(hudId, () -> UIContainers.verticalFlow(Sizing.content(), Sizing.content()).positioning(Positioning.absolute(20, 20)));
 
         HudElementRegistry.addLast(hudId, (matrixStack, tickDelta) -> {
             Minecraft client = Minecraft.getInstance();

@@ -1,6 +1,6 @@
 //file:noinspection GradlePackageVersionRange
 plugins {
-    id 'fabric-loom' version '1.14-SNAPSHOT'
+    id 'fabric-loom' version '1.15-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -12,9 +12,8 @@ base {
 }
 
 repositories {
-    maven { url "https://maven.wispforest.io/releases/" }
-
-    // TEMP: Experimental World Mesher
+    maven { url 'https://maven.wispforest.io' }
+    maven { url 'https://www.jitpack.io' }
     mavenLocal()
 
     maven { url = "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }

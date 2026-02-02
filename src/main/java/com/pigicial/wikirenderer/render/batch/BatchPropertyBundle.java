@@ -7,7 +7,7 @@ import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
-import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
@@ -58,12 +58,12 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
 
         WikiRendererUI.sectionHeader(container, "batch.controls", true);
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
-            ButtonComponent startButton = Components.button(Translate.gui("batch.start"), (ButtonComponent button) -> {
+            ButtonComponent startButton = UIComponents.button(Translate.gui("batch.start"), (ButtonComponent button) -> {
                 batchRenderable.start();
                 button.active = false;
             });
             builder.row.child(startButton.horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
-            builder.row.child(Components.button(Translate.gui("batch.reset"), (ButtonComponent button) -> {
+            builder.row.child(UIComponents.button(Translate.gui("batch.reset"), (ButtonComponent button) -> {
                 batchRenderable.reset();
                 startButton.active = true;
             }));

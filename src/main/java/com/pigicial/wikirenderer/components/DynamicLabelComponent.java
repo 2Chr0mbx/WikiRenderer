@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer.components;
 
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.core.Color;
-import io.wispforest.owo.ui.core.OwoUIDrawContext;
+import io.wispforest.owo.ui.core.OwoUIGraphics;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -39,11 +39,11 @@ public class DynamicLabelComponent extends LabelComponent {
     }
 
     @Override
-    public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
+    public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
         if (this.content.get().getString().isEmpty()) {
             return;
         }
         this.text(this.content.get());
-        super.draw(context, mouseX, mouseY, partialTicks, delta);
+        super.draw(graphics, mouseX, mouseY, partialTicks, delta);
     }
 }

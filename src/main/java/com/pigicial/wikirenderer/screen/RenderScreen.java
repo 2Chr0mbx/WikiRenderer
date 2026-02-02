@@ -25,10 +25,10 @@ import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
-import io.wispforest.owo.ui.component.Components;
-import io.wispforest.owo.ui.container.Containers;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
+import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -83,14 +83,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     public final MemoryGuard memoryGuard = new MemoryGuard(0.75f);
 
-    private final FlowLayout notificationArea = Containers.verticalFlow(Sizing.content(), Sizing.content());
+    private final FlowLayout notificationArea = UIContainers.verticalFlow(Sizing.content(), Sizing.content());
     private final IOStateComponent ioStateComponent = new IOStateComponent();
 
-    private final FlowLayout leftAnchor = Containers.verticalFlow(Sizing.content(), Sizing.content());
-    private final FlowLayout rightAnchor = Containers.verticalFlow(Sizing.content(), Sizing.content());
+    private final FlowLayout leftAnchor = UIContainers.verticalFlow(Sizing.content(), Sizing.content());
+    private final FlowLayout rightAnchor = UIContainers.verticalFlow(Sizing.content(), Sizing.content());
 
-    private final FlowLayout leftColumn = Containers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
-    private final FlowLayout rightColumn = Containers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
+    private final FlowLayout leftColumn = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
+    private final FlowLayout rightColumn = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
 
     public final Renderable<?> renderable;
 
@@ -125,7 +125,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     protected @NotNull OwoUIAdapter<FlowLayout> createAdapter() {
-        return OwoUIAdapter.create(this, Containers::horizontalFlow);
+        return OwoUIAdapter.create(this, UIContainers::horizontalFlow);
     }
 
     @Override
@@ -148,9 +148,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.leftAnchor.horizontalSizing(Sizing.fixed(0)).verticalSizing(Sizing.fixed(this.height));
             this.rightAnchor.positioning(Positioning.absolute(viewportEndX + 5, 0)).horizontalSizing(Sizing.fixed(this.width - this.viewportEndX - 5)).verticalSizing(Sizing.fixed(this.height));
 
-            this.rightAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), (FlowLayout) Containers.verticalFlow(Sizing.content(), Sizing.content(10))
+            this.rightAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), (FlowLayout) UIContainers.verticalFlow(Sizing.content(), Sizing.content(10))
                     .child(leftColumn)
-                    .child(Components.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
+                    .child(UIComponents.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
                     .child(rightColumn)
                     .horizontalAlignment(HorizontalAlignment.CENTER))
 
@@ -161,8 +161,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.leftAnchor.horizontalSizing(Sizing.fixed(viewportBeginX)).verticalSizing(Sizing.fixed(this.height));
             this.rightAnchor.positioning(Positioning.absolute(viewportEndX, 0)).horizontalSizing(Sizing.fixed(viewportBeginX)).verticalSizing(Sizing.fixed(this.height));
 
-            this.leftAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.leftColumn)));
-            this.rightAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), Containers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.rightColumn)));
+            this.leftAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), UIContainers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.leftColumn)));
+            this.rightAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), UIContainers.verticalFlow(Sizing.content(), Sizing.content(10)).child(this.rightColumn)));
         }
 
         this.notificationArea.positioning(Positioning.absolute(this.viewportBeginX + 5, 5)).sizing(Sizing.fixed(this.height - 10));
@@ -293,7 +293,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         SPEED_UP_ENCHANTMENT_GLINTS.listen((p, v) -> guiRebuildScheduled = true, false);
 
         if (SPEED_UP_ENCHANTMENT_GLINTS.get()) {
-            rightColumn.child(Components.button(Translate.gui("enchantment_glint_preset"), button -> {
+            rightColumn.child(UIComponents.button(Translate.gui("enchantment_glint_preset"), button -> {
                 int seconds = 120000 / 8000;
                 int framerate = 20;
                 EXPORT_FRAMERATE.set(framerate);
@@ -305,7 +305,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMERATE, "animation_framerate", Sizing.fixed(30));
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(rightColumn)) {
-            this.exportAnimationButton = Components.button(Translate.gui("export_animation"), button -> {
+            this.exportAnimationButton = UIComponents.button(Translate.gui("export_animation"), button -> {
                 int framesStoreInMemory = animationHandlingMode.isStoredInMemory() ? EXPORT_FRAMES.get() : 1;
                 if (this.memoryGuard.canFitInRam(memoryGuard.estimateMemoryMBUsage(renderable, framesStoreInMemory)) || this.minecraft.hasControlDown()) {
                     this.currentAnimationExportData = switch (animationHandlingMode) {
@@ -324,7 +324,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             });
             builder.row.child(this.exportAnimationButton.margins(Insets.right(5)));
 
-            builder.row.child(Components.button(Translate.gui("format." + animationFormat.extension), button -> {
+            builder.row.child(UIComponents.button(Translate.gui("format." + animationFormat.extension), button -> {
                 animationFormat = animationFormat.next();
                 button.setMessage(Translate.gui("format." + animationFormat.extension));
             }).horizontalSizing(Sizing.fixed(35)));
@@ -355,7 +355,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             case LIVE_FFMPEG -> Translate.gui("animation_mode_selected_live_ffmpeg");
         }).margins(Insets.of(10, 0, 5, 0));
 
-        rightColumn.child(Components.dropdown(Sizing.content())
+        rightColumn.child(UIComponents.dropdown(Sizing.content())
                 .button(Translate.gui("animation_mode_name_instant_file_save"), b -> animationHandlingMode = AnimationHandlingMode.DISK_INSTANT_SAVE)
                 .text(Translate.gui("animation_mode_description_instant_file_save_1"))
                 .text(Translate.gui("animation_mode_description_instant_file_save_2"))

@@ -5,7 +5,7 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.Translate;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
-import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import net.minecraft.network.chat.Component;
@@ -40,17 +40,17 @@ public interface TextureDataProvider {
                     Component typeText = Translate.gui("texture_type." + type.name().toLowerCase());
                     Component mergedText = Component.literal(contextText.getString() + " " + typeText.getString()); // jank
 
-                    builder.row.child(Components.label(mergedText).margins(Insets.of(0, 0, 0, 10)));
+                    builder.row.child(UIComponents.label(mergedText).margins(Insets.of(0, 0, 0, 10)));
 
-                    builder.row.child(Components.button(Translate.gui("open_url"), button -> Util.getPlatform().openUri(texture.getUrl())));
+                    builder.row.child(UIComponents.button(Translate.gui("open_url"), button -> Util.getPlatform().openUri(texture.getUrl())));
                     if (!GraphicsEnvironment.isHeadless()) {
-                        builder.row.child(Components.button(Translate.gui("copy_texture_id"), button -> {
+                        builder.row.child(UIComponents.button(Translate.gui("copy_texture_id"), button -> {
                             screen.notify(Translate.gui("copied_texture_id_to_clipboard"));
 
                             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(texture.getHash()), (clipboard, contents) -> {});
                         }));
 
-                        builder.row.child(Components.button(Translate.gui("copy_json"), button -> {
+                        builder.row.child(UIComponents.button(Translate.gui("copy_json"), button -> {
                             screen.notify(Translate.gui("copied_json_to_clipboard"));
 
                             String json = SkinGrabber.GSON.toJson(payload);

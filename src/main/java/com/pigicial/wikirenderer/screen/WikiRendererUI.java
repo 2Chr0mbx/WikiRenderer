@@ -5,11 +5,11 @@ import com.pigicial.wikirenderer.property.DoubleProperty;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.Property;
 import com.pigicial.wikirenderer.util.Translate;
-import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.TextBoxComponent;
-import io.wispforest.owo.ui.container.Containers;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.VerticalAlignment;
@@ -23,10 +23,10 @@ public class WikiRendererUI {
 
     public static EditBox labelledTextField(FlowLayout container, String content, String key, Sizing sizing) {
         try (RowBuilder builder = row(container)) {
-            TextBoxComponent textBox = Components.textBox(sizing, content);
+            TextBoxComponent textBox = UIComponents.textBox(sizing, content);
 
             builder.row.child(textBox);
-            builder.row.child(Components.label(Translate.gui(key)).margins(Insets.left(8)));
+            builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
 
             return textBox;
         }
@@ -37,7 +37,7 @@ public class WikiRendererUI {
             TextBoxComponent textBox = new IntegerPropertyTextFieldComponent(sizing, property);
 
             builder.row.child(textBox);
-            builder.row.child(Components.label(Translate.gui(key)).margins(Insets.left(8)));
+            builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
 
         }
     }
@@ -50,7 +50,7 @@ public class WikiRendererUI {
     }
 
     public static LabelComponent sectionHeader(FlowLayout container, String key, boolean separate) {
-        LabelComponent label = Components.label(Translate.gui(key)).shadow(true);
+        LabelComponent label = UIComponents.label(Translate.gui(key)).shadow(true);
         if (separate) label.margins(Insets.top(20));
         label.margins(label.margins().get().withBottom(5));
 
@@ -59,7 +59,7 @@ public class WikiRendererUI {
     }
 
     public static LabelComponent sectionHeader(FlowLayout container, String key, int topMargins) {
-        LabelComponent label = Components.label(Translate.gui(key)).shadow(true);
+        LabelComponent label = UIComponents.label(Translate.gui(key)).shadow(true);
         label.margins(Insets.top(topMargins));
         label.margins(label.margins().get().withBottom(5));
 
@@ -98,7 +98,7 @@ public class WikiRendererUI {
     }
 
     public static RowBuilder row(FlowLayout container) {
-        FlowLayout layout = Containers.horizontalFlow(Sizing.fill(100), Sizing.content());
+        FlowLayout layout = UIContainers.horizontalFlow(Sizing.fill(100), Sizing.content());
         layout.margins(Insets.of(5, 5, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
         return new RowBuilder(layout, container);
     }

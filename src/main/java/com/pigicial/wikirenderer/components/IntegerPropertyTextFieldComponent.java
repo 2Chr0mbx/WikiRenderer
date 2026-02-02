@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.property.IntProperty;
 import io.wispforest.owo.ui.component.TextBoxComponent;
-import io.wispforest.owo.ui.core.OwoUIDrawContext;
+import io.wispforest.owo.ui.core.OwoUIGraphics;
 import io.wispforest.owo.ui.core.Sizing;
 
 import java.util.Objects;
@@ -48,8 +48,8 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
     }
 
     @Override
-    public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
-        super.draw(context, mouseX, mouseY, partialTicks, delta);
+    public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
+        super.draw(graphics, mouseX, mouseY, partialTicks, delta);
         if (this.isFocused()) {
             this.previouslyFocused = true;
             return;

@@ -4,7 +4,7 @@ import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.OwoUIDrawContext;
+import io.wispforest.owo.ui.core.OwoUIGraphics;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.Surface;
 
@@ -20,10 +20,10 @@ public class IOStateComponent extends FlowLayout {
     }
 
     @Override
-    public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
+    public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
         if (FileIO.taskCount() > 0) {
-            super.draw(context, mouseX, mouseY, partialTicks, delta);
-            WikiRendererUI.drawExportProgressBar(context, this.x + 10, this.y + 25, 100, 50, 10);
+            super.draw(graphics, mouseX, mouseY, partialTicks, delta);
+            WikiRendererUI.drawExportProgressBar(graphics, this.x + 10, this.y + 25, 100, 50, 10);
         }
     }
 }

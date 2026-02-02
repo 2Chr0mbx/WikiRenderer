@@ -8,7 +8,7 @@ import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.ImageTransferable;
 import com.pigicial.wikirenderer.util.Translate;
-import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
@@ -38,16 +38,16 @@ public interface PropertyBundle {
         WikiRendererUI.booleanControl(container, OVERWRITE_LATEST, "overwrite_latest");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
-            screen.exportButton = Components.button(Translate.gui("export"), button -> screen.captureScheduled = true);
+            screen.exportButton = UIComponents.button(Translate.gui("export"), button -> screen.captureScheduled = true);
             builder.row.child(screen.exportButton);
 
-            builder.row.child(Components.button(Translate.gui("open_folder"), button ->
+            builder.row.child(UIComponents.button(Translate.gui("open_folder"), button ->
                     Util.getPlatform().openFile(renderable.getExportPath().resolveOffset().toFile())
             ).margins(Insets.left(5)));
         }
 
         if (!GraphicsEnvironment.isHeadless()) {
-            container.child(Components.button(Translate.gui("export_to_clipboard"), button -> {
+            container.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
                 screen.notify(Translate.gui("copied_to_clipboard"));
 
                 RenderableDispatcher.drawIntoImage(renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)

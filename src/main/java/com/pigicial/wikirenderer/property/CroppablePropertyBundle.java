@@ -5,7 +5,7 @@ import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.render.export.ImageRescaleMode;
 import com.pigicial.wikirenderer.util.Translate;
-import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
@@ -36,7 +36,7 @@ public interface CroppablePropertyBundle extends PropertyBundle {
         cropProperty.listen((p, b) -> screen.guiRebuildScheduled = true, false);
 
         if (cropProperty.get() && allowForRescaling) {
-            container.child(Components.dropdown(Sizing.content())
+            container.child(UIComponents.dropdown(Sizing.content())
                     .button(Translate.gui("rescale_vertically"), b -> {
                         resizeModeProperty.set(ImageRescaleMode.VERTICAL);
                         screen.guiRebuildScheduled = true;

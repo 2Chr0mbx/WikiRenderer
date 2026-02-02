@@ -10,9 +10,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 
-public class IsometricChannel extends ExoCommandChannel {
+public class WikiRendererChannel extends ExoCommandChannel {
 
-    public IsometricChannel() {
+    public WikiRendererChannel() {
         addCommand("open-screen", (port, arguments) -> {
             Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreen(new RenderScreen(Renderable.EMPTY)));
             return Exo.OK_RESPONSE;

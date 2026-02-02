@@ -10,7 +10,7 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
-import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
@@ -123,19 +123,19 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.sectionHeader(container, "presets", true);
         if (!this.spriteRendering.get()) {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
-                builder.row.child(Components.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(30D);
                 }).horizontalSizing(Sizing.content(5)).margins(Insets.right(5)));
 
-                builder.row.child(Components.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
                 }));
             }
         }
 
-        container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
+        container.child(UIComponents.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
                     this.xOffset.setToDefault();
                     this.yOffset.setToDefault();
                     this.scale.setToDefault();

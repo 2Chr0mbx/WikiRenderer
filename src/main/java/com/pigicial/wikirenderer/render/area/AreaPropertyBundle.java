@@ -9,7 +9,7 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.Translate;
 import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;
-import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
@@ -150,12 +150,12 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
         if (!this.perPixel90DegreeRendering.get()) {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
-                builder.row.child(Components.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(30D);
                 }).margins(Insets.right(5)));
 
-                builder.row.child(Components.button(Translate.gui("isometric_recommended"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("isometric_recommended"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
 
@@ -167,7 +167,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
             WikiRendererUI.booleanControl(container, syncRotationToAnimation, "sync_rotation_to_animation_timings");
 
-            container.child(Components.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
+            container.child(UIComponents.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
                         this.xOffset.setToDefault();
                         this.yOffset.setToDefault();
                         this.scale.setToDefault();
@@ -175,17 +175,17 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                     .margins(Insets.top(5)));
         } else {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
-                builder.row.child(Components.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
                     this.sideViewRotation = this.sideViewRotation.nextRotation();
                     screen.guiRebuildScheduled = true;
                 }).margins(Insets.right(5)));
 
-                builder.row.child(Components.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
                     this.sideViewSlant = this.sideViewSlant.nextSlant();
                     screen.guiRebuildScheduled = true;
                 }).margins(Insets.right(5)));
             }
-            container.child(Components.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
+            container.child(UIComponents.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
                 this.sideViewRotation = MeshSideRotation.NORTH;
                 this.sideViewSlant = MeshSideSlant.ABOVE;
                 screen.guiRebuildScheduled = true;
@@ -204,10 +204,10 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WorldBlockMesh mesh = renderable.mesh;
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
-            ButtonComponent buildMeshButton = (ButtonComponent) Components.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild()).margins(Insets.top(10));
+            ButtonComponent buildMeshButton = (ButtonComponent) UIComponents.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild()).margins(Insets.top(10));
             builder.row.child(buildMeshButton);
 
-            ButtonComponent stopBuildingButton = (ButtonComponent) Components.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding()).margins(Insets.of(10, 0, 5, 0));
+            ButtonComponent stopBuildingButton = (ButtonComponent) UIComponents.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding()).margins(Insets.of(10, 0, 5, 0));
             stopBuildingButton.active = false;
             builder.row.child(stopBuildingButton);
 
