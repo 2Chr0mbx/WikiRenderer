@@ -43,7 +43,6 @@ dependencies {
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
     compileOnly "maven.modrinth:iris:1.10.5+1.21.11-fabric"
-    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.3")))
 }
 
 processResources {
