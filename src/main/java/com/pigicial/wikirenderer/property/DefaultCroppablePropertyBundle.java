@@ -18,7 +18,7 @@ public class DefaultCroppablePropertyBundle extends DefaultPropertyBundle implem
     }
 
     @Override
-    public Property<Boolean> getFfmpegCropProperty() {
+    public Property<Boolean> getFFmpegCropProperty() {
         return ffmpegCrop;
     }
 

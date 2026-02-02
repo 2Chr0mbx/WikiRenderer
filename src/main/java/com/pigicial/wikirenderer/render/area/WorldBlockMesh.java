@@ -123,9 +123,9 @@ public class WorldBlockMesh {
         float currentRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
         double currentSlant = AreaPropertyBundle.INSTANCE.getUsedSlant();
         if ((this.lastUsedRotation != currentRotation || this.lastUsedSlant != currentSlant) && this.orthographicTransparencySorting != null) {
-            boolean isProbablyLargeSpinningObjectShrunkenDown = renderable.getProperties().scale.get() <= 8 && renderable.getProperties().rotationSpeed.get() > 0;
+            boolean isProbablyLargeSpinningObjectShrunkenDown = renderable.getProperties().scale.get() <= 15 && renderable.getProperties().rotationSpeed.get() > 0;
             if (!isProbablyLargeSpinningObjectShrunkenDown) {
-                // anything smaller than 10 you probably wont see transparency issues (i.e. rendering the skyblock hub)
+                // anything smaller than 15 you probably wont see transparency issues (i.e. rendering the skyblock hub)
                 this.lastUsedRotation = currentRotation;
                 this.lastUsedSlant = currentSlant;
 

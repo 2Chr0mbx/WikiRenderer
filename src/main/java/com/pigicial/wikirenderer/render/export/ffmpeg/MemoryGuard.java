@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.export.ffmpeg;
 
+import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -34,7 +35,7 @@ public class MemoryGuard {
 
         tooltip.add(this.usageText(memoryMB, this.availableRamMB(), this.canFitInRam(memoryMB)));
 
-        if (!this.canFit(memoryMB)) {
+        if (!canFitInRam(memoryMB)) {
             tooltip.add(Translate.gui("vram_ignore").withStyle(ChatFormatting.GRAY));
         }
 
@@ -61,12 +62,12 @@ public class MemoryGuard {
         }
     }
 
-    public int availableRamMB() {
-        return this.availableRamMB;
+    public int estimateMemoryMBUsage(Renderable<?> renderable, int frames) {
+        return (int) ((renderable.getExportResolution() * renderable.getExportResolution() * 4L * frames) / 1024L / 1024L);
     }
 
-    public boolean canFit(int memoryMB) {
-        return canFitInRam(memoryMB);
+    public int availableRamMB() {
+        return this.availableRamMB;
     }
 
     public boolean canFitInRam(int memoryMB) {

@@ -34,6 +34,9 @@ public abstract class AnimationHandler {
     protected boolean closed = false;
     private boolean finished = false;
 
+    private String currentFFmpegFrame = null;
+    private String currentFFmpegFps = null;
+
     protected AnimationHandler(RenderScreen screen, Renderable<?> renderable, int framesToRender) {
         this.screen = screen;
         this.renderable = renderable;
@@ -65,22 +68,24 @@ public abstract class AnimationHandler {
                             exportPath,
                             this.framesFolder,
                             GlobalProperties.animationFormat,
-                            renderable.shouldCropForFfmpeg() ? ImageCropper.getFfmpegCropSize(renderable, collectedCropData) : ""
-                    ).whenComplete((animationFile, animationThrowable) -> {
-                        this.screen.exportAnimationButton.active = true;
-                        this.screen.exportAnimationButton.setMessage(Translate.gui("export_animation"));
-                        this.screen.currentAnimationExportData = null;
-                        this.closed = true;
-                        WikiRenderer.currentAnimationHandler = null;
-
-                        Minecraft.getInstance().execute(() -> screen.notify(
-                                () -> Util.getPlatform().openFile(animationFile),
-                                Translate.gui("animation_saved"),
-                                Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
-                        ));
-                    });
-
+                            this,
+                            renderable.shouldCropForFFmpeg() ? ImageCropper.getFFmpegCropSize(renderable, collectedCropData) : ""
+                    ).whenComplete((animationFile, animationThrowable) -> this.finishAndCleanup(animationFile));
                 });
+    }
+
+    protected void finishAndCleanup(File animationFile) {
+        this.screen.exportAnimationButton.active = true;
+        this.screen.exportAnimationButton.setMessage(Translate.gui("export_animation"));
+        this.screen.currentAnimationExportData = null;
+        this.closed = true;
+        WikiRenderer.currentAnimationHandler = null;
+
+        Minecraft.getInstance().execute(() -> screen.notify(
+                () -> Util.getPlatform().openFile(animationFile),
+                Translate.gui("animation_saved"),
+                Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
+        ));
     }
 
     public boolean isFinished() {
@@ -100,5 +105,18 @@ public abstract class AnimationHandler {
 
     public int getRemainingFrames() {
         return this.remainingAnimationFrames;
+    }
+
+    public void setFFmpegData(String frame, String fps) {
+        this.currentFFmpegFrame = frame;
+        this.currentFFmpegFps = fps;
+    }
+
+    public String getCurrentFFmpegFrame() {
+        return currentFFmpegFrame;
+    }
+
+    public String getCurrentFFmpegFps() {
+        return currentFFmpegFps;
     }
 }

@@ -23,6 +23,7 @@
     "access.LightTextureAccessor",
     "access.MannequinAccessor",
     "access.ModelPartAccessor",
+    "access.NativeImageAccessor",
     "access.NativeImageInvoker",
     "access.ParticleEngineAccessor",
     "entity.DefaultPlayerSkinMixin",

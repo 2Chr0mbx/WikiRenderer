@@ -20,6 +20,7 @@ import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
 import com.pigicial.wikirenderer.render.export.ffmpeg.*;
+import com.pigicial.wikirenderer.render.export.ffmpeg.live.LiveRenderFFmpegAnimationHandler;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
@@ -80,7 +81,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         KEYBOARD_CONTROLS.put(GLFW.GLFW_KEY_SLASH, properties -> properties.scale.modify(-10));
     }
 
-    private final MemoryGuard memoryGuard = new MemoryGuard(0.75f);
+    public final MemoryGuard memoryGuard = new MemoryGuard(0.75f);
 
     private final FlowLayout notificationArea = Containers.verticalFlow(Sizing.content(), Sizing.content());
     private final IOStateComponent ioStateComponent = new IOStateComponent();
@@ -240,7 +241,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.renderable.getProperties().buildFileNameGUIControls(this.renderable, this, this.rightColumn);
 
         WikiRendererUI.sectionHeader(rightColumn, "animation_options", true);
-        this.buildFfmpegSection();
+        this.buildFFmpegSection();
 
         if (renderable instanceof TextureDataProvider textureProvider) {
             textureProvider.buildTextureGrabSection(this, rightColumn);
@@ -258,7 +259,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         });
     }
 
-    private void buildFfmpegSection() {
+    private void buildFFmpegSection() {
         if (!FFmpegDispatcher.wasFFmpegDetected()) {
             WikiRendererUI.sectionHeader(rightColumn, "detecting_ffmpeg", false);
             FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> this.guiRebuildScheduled = true);
@@ -284,7 +285,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
-            Property<Boolean> animatedCropProperty = croppablePropertyBundle.getFfmpegCropProperty();
+            Property<Boolean> animatedCropProperty = croppablePropertyBundle.getFFmpegCropProperty();
             WikiRendererUI.booleanControl(rightColumn, animatedCropProperty, "crop");
         }
 
@@ -306,12 +307,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(rightColumn)) {
             this.exportAnimationButton = Components.button(Translate.gui("export_animation"), button -> {
                 int framesStoreInMemory = animationHandlingMode.isStoredInMemory() ? EXPORT_FRAMES.get() : 1;
-                if (this.memoryGuard.canFit(this.estimateMemoryMBUsage(framesStoreInMemory)) || this.minecraft.hasControlDown()) {
+                if (this.memoryGuard.canFitInRam(memoryGuard.estimateMemoryMBUsage(renderable, framesStoreInMemory)) || this.minecraft.hasControlDown()) {
                     this.currentAnimationExportData = switch (animationHandlingMode) {
-                        case DISK_INSTANT_SAVE ->
-                                new InstantDiskSaveAnimationHandler(this, this.renderable, EXPORT_FRAMES.get());
-                        case MEMORY_CACHE ->
-                                new MemoryBasedAnimationHandler(this, this.renderable, EXPORT_FRAMES.get());
+                        case DISK_INSTANT_SAVE -> new InstantDiskSaveAnimationHandler(this, this.renderable, EXPORT_FRAMES.get());
+                        case MEMORY_CACHE -> new MemoryBasedAnimationHandler(this, this.renderable, EXPORT_FRAMES.get());
+                        case LIVE_FFMPEG -> new LiveRenderFFmpegAnimationHandler(this, this.renderable, EXPORT_FRAMES.get());
                     };
                     WikiRenderer.currentAnimationHandler = this.currentAnimationExportData;
 
@@ -331,13 +331,28 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         WikiRendererUI.dynamicLabel(rightColumn, () -> {
-            int remainingAnimationFrames = this.currentAnimationExportData == null ? 0 : this.currentAnimationExportData.getRemainingFrames();
-            return remainingAnimationFrames == 0 ? Component.empty() : Translate.gui("export_remaining_frames", remainingAnimationFrames);
+            if (this.currentAnimationExportData == null) {
+                return Component.empty();
+            } else if (this.currentAnimationExportData.getRemainingFrames() > 0) {
+                return Translate.gui("export_remaining_frames", this.currentAnimationExportData.getRemainingFrames());
+            } else if (this.currentAnimationExportData.getCurrentFFmpegFrame() != null) {
+                String frame = this.currentAnimationExportData.getCurrentFFmpegFrame();
+                int totalFrames = currentAnimationExportData.getAnimationFrames();
+                String exportFps = currentAnimationExportData.getCurrentFFmpegFps();
+                return Translate.gui("ffmpeg_data", frame, totalFrames, exportFps);
+            } else {
+                if (this.currentAnimationExportData instanceof LiveRenderFFmpegAnimationHandler) {
+                    return Translate.gui("setting_up_second_ffmpeg_pass");
+                } else {
+                    return Translate.gui("setting_up_ffmpeg");
+                }
+            }
         });
 
         WikiRendererUI.dynamicLabel(rightColumn, () -> switch (animationHandlingMode) {
             case DISK_INSTANT_SAVE -> Translate.gui("animation_mode_selected_instant_file_save");
             case MEMORY_CACHE -> Translate.gui("animation_mode_selected_save_in_memory");
+            case LIVE_FFMPEG -> Translate.gui("animation_mode_selected_live_ffmpeg");
         }).margins(Insets.of(10, 0, 5, 0));
 
         rightColumn.child(Components.dropdown(Sizing.content())
@@ -347,6 +362,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 .button(Translate.gui("animation_mode_name_save_in_memory"), b -> animationHandlingMode = AnimationHandlingMode.MEMORY_CACHE)
                 .text(Translate.gui("animation_mode_description_save_in_memory_1"))
                 .text(Translate.gui("animation_mode_description_save_in_memory_2"))
+                .button(Translate.gui("animation_mode_name_live_ffmpeg"), b -> animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG)
+                .text(Translate.gui("animation_mode_description_live_ffmpeg_1"))
+                .text(Translate.gui("animation_mode_description_live_ffmpeg_2"))
+                .text(Translate.gui("animation_mode_description_live_ffmpeg_3"))
                 .closeWhenNotHovered(false)
                 .padding(Insets.of(5))
                 .surface(Surface.blur(10, 10))
@@ -400,7 +419,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
             if (this.exportAnimationButton != null) {
                 int framesStoreInMemory = animationHandlingMode.isStoredInMemory() ? EXPORT_FRAMES.get() : 1;
-                int memoryMB = this.estimateMemoryMBUsage(framesStoreInMemory);
+                int memoryMB = memoryGuard.estimateMemoryMBUsage(renderable, framesStoreInMemory);
                 List<ClientTooltipComponent> tooltip = this.memoryGuard.getStatusTooltip(memoryMB)
                         .stream()
                         .map(text -> ClientTooltipComponent.create(text.getVisualOrderText()))
@@ -580,10 +599,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         return true;
-    }
-
-    private int estimateMemoryMBUsage(int frames) {
-        return (int) ((renderable.getExportResolution() * renderable.getExportResolution() * 4L * frames) / 1024L / 1024L);
     }
 
     public void scheduleCapture() {

@@ -7,8 +7,10 @@ import com.pigicial.wikirenderer.render.export.FileIO;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,12 +59,14 @@ public class FFmpegDispatcher {
         });
     }
 
-    public static CompletableFuture<File> exportAnimation(ExportPathSpec target, Path sourcePath, Format format, @Nullable String cropFilter) {
+    public static CompletableFuture<File> exportAnimation(ExportPathSpec target, Path sourcePath, Format format, AnimationHandler handler, @Nullable String cropFilter) {
         target.resolveOffset().toFile().mkdirs();
 
         List<String> args = new ArrayList<>(List.of(new String[]{
                 "ffmpeg",
                 "-y",
+                "-threads",
+                String.valueOf(Math.max(1, Runtime.getRuntime().availableProcessors())),
                 "-f", "image2",
                 "-framerate", String.valueOf(GlobalProperties.EXPORT_FRAMERATE.get()),
                 "-i", "seq_%d.png"
@@ -87,20 +91,52 @@ public class FFmpegDispatcher {
         File animationFile = target.resolveFile(format.extension);
         args.add(animationFile.getAbsolutePath());
 
-        ProcessBuilder process = new ProcessBuilder(args)
-                .redirectError(ProcessBuilder.Redirect.INHERIT)
-                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+        ProcessBuilder pb = new ProcessBuilder(args)
+                .redirectErrorStream(true)
                 .directory(sourcePath.toFile());
 
         try {
-            return process.start().onExit().thenApply(exited -> {
+            Process process = pb.start();
+
+            // Start a thread to read the output and parse frame/fps
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    parseFFmpegProgress(handler, line);
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
                 FileIO.deleteSequenceFilesFromPath(sourcePath);
-                return animationFile;
-            });
-        } catch (IOException e) {
+                return CompletableFuture.completedFuture(animationFile);
+            } else {
+                throw new RuntimeException("FFmpeg failed with exit code " + exitCode);
+            }
+        } catch (Exception e) {
             WikiRenderer.LOGGER.error("Could not launch ffmpeg", e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    public static void parseFFmpegProgress(AnimationHandler handler, String line) {
+        if (line.contains("frame=") && line.contains("fps=")) {
+            try {
+                String frame = extractValue(line, "frame=");
+                String fps = extractValue(line, "fps=");
+                handler.setFFmpegData(frame, fps);
+
+            } catch (Exception ignored) {
+                // FFmpeg lines can be messy, ignore malformed status updates
+            }
+        }
+    }
+
+    private static String extractValue(String line, String key) {
+        int start = line.indexOf(key) + key.length();
+        String sub = line.substring(start).trim();
+        int end = sub.indexOf(" ");
+        return end != -1 ? sub.substring(0, end) : sub;
     }
 
     public enum Format {
