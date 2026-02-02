@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.render.item;
 
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
-import com.pigicial.wikirenderer.textures.SkinGrabber;
+import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
@@ -94,7 +94,7 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
 
     @Override
     public @NotNull Map<String, MinecraftTexturesPayload> getTextureData() {
-        MinecraftTexturesPayload playerSkin = SkinGrabber.getPlayerHeadTextureData(this.stack);
+        MinecraftTexturesPayload playerSkin = PlayerTextureUtils.getPlayerHeadTextureData(this.stack);
         return playerSkin == null ? new HashMap<>() : Map.of("item", playerSkin);
     }
 }

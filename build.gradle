@@ -29,8 +29,8 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.3")))
 
     modImplementation "io.wispforest:exo:${project.exo_version}"
     modImplementation "io.wispforest:owo-lib:${project.owo_version}"

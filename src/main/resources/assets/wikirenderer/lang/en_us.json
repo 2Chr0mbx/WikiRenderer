@@ -93,7 +93,7 @@
   "gui.wikirenderer.no_ffmpeg_3": "https://ffmpeg.org/download.html",
   "gui.wikirenderer.vram": "Estimated VRAM usage: %s/%smb (%s)",
   "gui.wikirenderer.ram": "Estimated RAM usage: %s/%smb (%s)",
-  "gui.wikirenderer.vram_ignore": "Control-click to ignore",
+  "gui.wikirenderer.ram_ignore": "Control-click to ignore",
   "gui.wikirenderer.no_vram_info_warning": "Available VRAM could not be determined",
 
   "gui.wikirenderer.player_textures": "Player Textures",
@@ -158,7 +158,7 @@
   "gui.wikirenderer.mesh_building": "Building - %d%%",
   "gui.wikirenderer.mesh_cancelled": "Cancelled - %d%%",
   "gui.wikirenderer.mesh_rebuilding": "Rebuilding - %d%%",
-  "gui.wikirenderer.mesh_corrupt": {"text": "Corrupted - report this", "color": "red"},
+  "gui.wikirenderer.mesh_corrupt": "Corrupted - report this",
   "gui.wikirenderer.mesh_ready": "Ready",
   "gui.wikirenderer.full_bright": "Full Bright",
   "gui.wikirenderer.render_as_daytime": "Daytime Sky Lighting",
@@ -201,28 +201,13 @@
   "gui.wikirenderer.batch.controls": "Batch Controls",
 
   "gui.wikirenderer.hud.area_selection": "Area Selection",
-  "gui.wikirenderer.hud.area_selection.from": [
-    {"text": "From: "},
-    {"index": 0, "color": "gray"}
-  ],
-  "gui.wikirenderer.hud.area_selection.to": [
-    {"text": "To: "},
-    {"index": 0, "color": "gray"}
-  ],
-  "gui.wikirenderer.hud.area_selection.clear_hint": [
-    {"text": "To clear, press ", "color": "gray"},
-    {"index": 0, "color": "yellow"},
-    {"text": " or ", "color": "gray"},
-    {"index": 1, "color": "yellow"},
-    " while sneaking"
-  ],
+  "gui.wikirenderer.hud.area_selection.from": "From: %s",
+  "gui.wikirenderer.hud.area_selection.to": "To: %s",
+  "gui.wikirenderer.hud.area_selection.clear_hint": "To clear, press %s or %s while sneaking",
+  "gui.wikirenderer.click_to_open": "Click to open!",
 
-  "gui.wikirenderer.click_to_open": [
-    "",
-    {"text": "! ", "color": "gray", "bold": true},
-    "Click to open"
-  ],
-
+  "message.wikirenderer.loading_texture": "Loading player head texture...",
+  "message.wikirenderer.loading_texture_fail": "Invalid texture ID or base64.",
   "message.wikirenderer.no_held_item": "You're not holding an item.",
   "message.wikirenderer.no_block": "You're not looking at a block.",
   "message.wikirenderer.no_entity": "You're not looking at an entity.",

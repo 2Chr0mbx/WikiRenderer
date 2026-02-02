@@ -36,7 +36,7 @@ public class MemoryGuard {
         tooltip.add(this.usageText(memoryMB, this.availableRamMB(), this.canFitInRam(memoryMB)));
 
         if (!canFitInRam(memoryMB)) {
-            tooltip.add(Translate.gui("vram_ignore").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Translate.gui("ram_ignore").withStyle(ChatFormatting.GRAY));
         }
 
         return tooltip;

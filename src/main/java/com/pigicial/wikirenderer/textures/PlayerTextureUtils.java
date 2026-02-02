@@ -1,9 +1,12 @@
 package com.pigicial.wikirenderer.textures;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.util.UUIDTypeAdapter;
 import net.minecraft.core.component.DataComponents;
@@ -16,9 +19,9 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.UUID;
 
-public class SkinGrabber {
+public class PlayerTextureUtils {
 
-    protected static final Gson GSON = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).setPrettyPrinting().create();
+    public static final Gson GSON = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).setPrettyPrinting().create();
 
     @Nullable
     public static MinecraftTexturesPayload getPlayerHeadTextureData(ItemStack itemStack) {
@@ -45,5 +48,25 @@ public class SkinGrabber {
         String decodedSkin = new String(byteArray, StandardCharsets.UTF_8);
 
         return GSON.fromJson(decodedSkin, MinecraftTexturesPayload.class);
+    }
+
+    public static GameProfile createTexturedGameProfileFromID(String texture) {
+        String textureUrl = "https://textures.minecraft.net/texture/" + texture;
+        String json = String.format("{\"textures\":{\"SKIN\":{\"url\":\"%s\"}}}", textureUrl);
+        String base64 = Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        Multimap<String, Property> propertyMap = ArrayListMultimap.create();
+        propertyMap.put("textures", new Property("textures", base64));
+
+        byte[] textureHash = texture.getBytes(StandardCharsets.UTF_8);
+        return new GameProfile(UUID.nameUUIDFromBytes(textureHash), "WikiRendererTexture/" + texture, new PropertyMap(propertyMap));
+    }
+
+    public static GameProfile createTexturedGameProfileFromBase64(String base64) {
+        Multimap<String, Property> propertyMap = ArrayListMultimap.create();
+        propertyMap.put("textures", new Property("textures", base64));
+
+        byte[] textureHash = base64.getBytes(StandardCharsets.UTF_8);
+        return new GameProfile(UUID.nameUUIDFromBytes(textureHash), "WikiRendererTexture/" + base64, new PropertyMap(propertyMap));
     }
 }

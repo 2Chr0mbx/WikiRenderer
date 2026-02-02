@@ -13,7 +13,7 @@ import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.entity.player.ProfileFetchMode;
 import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
-import com.pigicial.wikirenderer.textures.SkinGrabber;
+import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
@@ -391,14 +391,14 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         Entity usedEntity = getUsedEntity();
 
         if (usedEntity instanceof Player player) {
-            MinecraftTexturesPayload playerTexture = SkinGrabber.getGameProfileTextureData(player.getGameProfile());
+            MinecraftTexturesPayload playerTexture = PlayerTextureUtils.getGameProfileTextureData(player.getGameProfile());
             if (playerTexture != null) {
                 textureData.put("player", playerTexture);
             }
         } else if (usedEntity instanceof Mannequin mannequin) {
             ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
             PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
-            MinecraftTexturesPayload playerTexture = SkinGrabber.getGameProfileTextureData(renderInfo.gameProfile());
+            MinecraftTexturesPayload playerTexture = PlayerTextureUtils.getGameProfileTextureData(renderInfo.gameProfile());
             if (playerTexture != null) {
                 textureData.put("player", playerTexture);
             }
@@ -407,7 +407,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         if (usedEntity instanceof LivingEntity livingEntity) {
             for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
                 ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
-                MinecraftTexturesPayload itemTextureData = SkinGrabber.getPlayerHeadTextureData(item);
+                MinecraftTexturesPayload itemTextureData = PlayerTextureUtils.getPlayerHeadTextureData(item);
                 if (itemTextureData != null) {
                     textureData.put(equipmentSlot.getName(), itemTextureData);
                 }

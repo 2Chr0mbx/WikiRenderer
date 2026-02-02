@@ -6,6 +6,7 @@ import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.UISounds;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -36,7 +37,7 @@ public class NotificationComponent extends FlowLayout {
         for (Component message : messages) {
             LabelComponent label = UIComponents.label(message);
             if (onClick != null) {
-                label.tooltip(Translate.gui("click_to_open")).cursorStyle(this.cursorStyle);
+                label.tooltip(Translate.gui("click_to_open").withStyle(ChatFormatting.GRAY)).cursorStyle(this.cursorStyle);
             }
 
             this.child(label);

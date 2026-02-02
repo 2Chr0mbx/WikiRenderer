@@ -7,7 +7,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.Surface;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -37,13 +37,16 @@ public class AreaSelectionComponent extends FlowLayout {
                 .shadow(false).margins(Insets.bottom(10))
         );
 
-        Component firstKeybind = KeyBindingHelper.getBoundKeyOf(WikiRendererKeybinds.KEYBIND_SELECT_AREA).getDisplayName();
-        Component secondKeybind = KeyBindingHelper.getBoundKeyOf(WikiRendererKeybinds.KEYBIND_SELECT_AREA_EXPAND).getDisplayName();
+        Component firstKeybind = Component.keybind(WikiRendererKeybinds.KEYBIND_SELECT_AREA.getName()).withStyle(ChatFormatting.YELLOW);
+        Component secondKeybind = Component.keybind(WikiRendererKeybinds.KEYBIND_SELECT_AREA_EXPAND.getName()).withStyle(ChatFormatting.YELLOW);
         this.child(UIComponents.label(Translate.gui("hud.area_selection.clear_hint", firstKeybind, secondKeybind)));
     }
 
-    private static Supplier<Component> positionText(Supplier<BlockPos> pos, String name) {
-        return () -> Translate.gui("hud.area_selection." + name, pos.get() == null ? "---" : pos.get().getX() + " " + pos.get().getY() + " " + pos.get().getZ());
+    private Supplier<Component> positionText(Supplier<BlockPos> pos, String name) {
+        return () -> {
+            Component positionText = Component.literal(pos.get() == null ? "---" : pos.get().getX() + " " + pos.get().getY() + " " + pos.get().getZ()).withStyle(ChatFormatting.GRAY);
+            return Translate.gui("hud.area_selection." + name, positionText);
+        };
     }
 
 }

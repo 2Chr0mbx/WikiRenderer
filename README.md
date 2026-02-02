@@ -34,7 +34,8 @@ The main command is `/wikirender`, but `/wr` also exists as an alias.
 Items can be rendered in three ways:
 1. Hold an item and type `/wikirender item`
 2. Hover over an item in your inventory and press the render hotkey (defaults to `h`)
-3. Type `/wikirender item <item>`, where `<item>` is something like `minecraft:diamond`
+3. Type `/wikirender item id <item>`, where `<item>` is something like `minecraft:diamond`
+4. Type `/wikirender item texture <item>`, where `<texture>` is the texture ID for a player head
 
 Below is an example of an enchanted compass made using `/wikirender item minecraft:compass[minecraft:enchantment_glint_override=true]`:
 

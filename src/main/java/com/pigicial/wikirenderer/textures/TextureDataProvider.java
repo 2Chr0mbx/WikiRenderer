@@ -53,7 +53,7 @@ public interface TextureDataProvider {
                         builder.row.child(UIComponents.button(Translate.gui("copy_json"), button -> {
                             screen.notify(Translate.gui("copied_json_to_clipboard"));
 
-                            String json = SkinGrabber.GSON.toJson(payload);
+                            String json = PlayerTextureUtils.GSON.toJson(payload);
                             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(json), (clipboard, contents) -> {});
                         }));
                     }
