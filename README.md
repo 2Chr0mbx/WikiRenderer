@@ -32,9 +32,9 @@ Items can be rendered in three ways:
 1. Hold an item and type `/wikirender item`
 2. Hover over an item in your inventory and press the render hotkey (defaults to `h`)
 3. Type `/wikirender item id <item>`, where `<item>` is something like `minecraft:diamond`
-4. Type `/wikirender item texture <item>`, where `<texture>` is the texture ID for a player head
+4. Type `/wikirender item texture <item>`, where `<texture>` is a texture ID or base64 of a texture ID for a player head
 
-Below is an example of an enchanted compass made using `/wikirender item minecraft:compass[minecraft:enchantment_glint_override=true]`:
+Below is an example of an enchanted compass made using `/wikirender item id minecraft:compass[minecraft:enchantment_glint_override=true]`:
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/enchanted_compass_menu.png" width="600" alt="Enchanted Compass Menu">
 
@@ -72,6 +72,12 @@ Area renders also feature topdown and side-view rendering modes, which allow you
 <img src="src/main/resources/assets/wikirenderer/readme_images/lapis_quarry_cave_mode.png" width="600" alt="Hypixel SkyBlock Lapis Quarry Cave Minimap Render">
 
 Minimap data can also be exported for use on the [Hypixel SkyBlock Fandom Wiki's Module:Minimap/Datasheet Minimap Calibrator tool](https://hypixel-skyblock.fandom.com/wiki/Module:Minimap/Datasheet).
+
+### Item Frame Minimaps
+On the topic of Minimaps, you can also use area rendering and side angle viewing to render pixel-perfect maps:
+
+<img src="src/main/resources/assets/wikirenderer/readme_images/item_frame_map_render_area.png" height="256" alt="Item Frame Map">
+<img src="src/main/resources/assets/wikirenderer/readme_images/item_frame_map_render.png" width="384" alt="Item Frame Map">
 
 ## Entities
 Entities can be rendered in four ways:
