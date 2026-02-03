@@ -32,11 +32,11 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
             this.xOffset.copyFrom(clonedFrom.xOffset);
             this.yOffset.copyFrom(clonedFrom.yOffset);
 
-            this.scale.listen(clonedFrom.scale);
-            this.rotation.listen(clonedFrom.rotation);
-            this.slant.listen(clonedFrom.slant);
-            this.xOffset.listen(clonedFrom.xOffset);
-            this.yOffset.listen(clonedFrom.yOffset);
+            this.scale.instantListen(clonedFrom.scale);
+            this.rotation.instantListen(clonedFrom.rotation);
+            this.slant.instantListen(clonedFrom.slant);
+            this.xOffset.instantListen(clonedFrom.xOffset);
+            this.yOffset.instantListen(clonedFrom.yOffset);
         }
     }
 

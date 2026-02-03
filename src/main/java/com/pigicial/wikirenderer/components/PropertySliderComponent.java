@@ -21,7 +21,7 @@ public class PropertySliderComponent extends SliderComponent {
         this.message(s -> text);
 
         this.onChanged().subscribe(this.setting::setFromProgress);
-        setting.listen((intSetting, integer) -> ((AbstractSliderButtonInvoker) this).wikirenderer$setValue(setting.progress()));
+        setting.instantListen((intSetting, integer) -> ((AbstractSliderButtonInvoker) this).wikirenderer$setValue(setting.progress()));
     }
 
     @Override

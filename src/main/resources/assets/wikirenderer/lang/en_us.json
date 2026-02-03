@@ -40,6 +40,7 @@
   "gui.wikirenderer.isometric_recommended": "Isometric (Recommended)",
 
   "gui.wikirenderer.hide_blocks": "Hide Blocks",
+  "gui.wikirenderer.hide_fluids": "Hide Fluids (Requires Rebuild)",
   "gui.wikirenderer.walkability_filter": "Walkability Filter / \"Cave Mode\"",
   "gui.wikirenderer.walkable_blocks_threshold": "Walkable Blocks Threshold",
   "gui.wikirenderer.min_floor_y_level": "Minimum Floor Y Level",

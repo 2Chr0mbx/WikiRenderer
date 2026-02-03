@@ -60,6 +60,9 @@ public class MeshWorldOverrides implements BlockAndTintGetter {
     @Override
     @NonNull
     public FluidState getFluidState(@NonNull BlockPos pos) {
+        if (AreaPropertyBundle.INSTANCE.hideFluids.get()) {
+            return Fluids.EMPTY.defaultFluidState();
+        }
         return this.contains(pos)
                 ? this.delegate.getFluidState(pos)
                 : Fluids.EMPTY.defaultFluidState();

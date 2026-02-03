@@ -290,7 +290,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         WikiRendererUI.booleanControl(rightColumn, SPEED_UP_ENCHANTMENT_GLINTS, "speed_up_enchantment_glints");
-        SPEED_UP_ENCHANTMENT_GLINTS.listen((p, v) -> guiRebuildScheduled = true, false);
+        SPEED_UP_ENCHANTMENT_GLINTS.futureListen((p, v) -> guiRebuildScheduled = true);
 
         if (SPEED_UP_ENCHANTMENT_GLINTS.get()) {
             rightColumn.child(UIComponents.button(Translate.gui("enchantment_glint_preset"), button -> {

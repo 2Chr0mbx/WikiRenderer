@@ -40,7 +40,7 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
             }
         });
 
-        this.setting.listen((doubleSetting, value) -> {
+        this.setting.instantListen((doubleSetting, value) -> {
             if (!this.ignoringChange) {
                 this.ignoringChange = true;
                 this.text(this.formatNumber(value));

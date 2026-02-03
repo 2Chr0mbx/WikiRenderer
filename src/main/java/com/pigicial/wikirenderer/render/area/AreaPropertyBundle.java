@@ -55,6 +55,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final Property<Boolean> requireCeilingForCaveMode = Property.of(false);
 
     public final Property<Boolean> hideMesh = Property.of(false);
+    public final Property<Boolean> hideFluids = Property.of(false);
     public final Property<Boolean> overrideRotations = Property.of(false);
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
     public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
@@ -140,13 +141,13 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WikiRendererUI.sectionHeader(container, "transform_options", false);
 
         WikiRendererUI.booleanControl(container, this.perPixel90DegreeRendering, "per_pixel_90_degree_rendering");
-        this.perPixel90DegreeRendering.listen((booleanProperty, value) -> {
+        this.perPixel90DegreeRendering.futureListen((booleanProperty, value) -> {
             if (value) {
                 this.sideViewRotation = MeshSideRotation.NORTH;
                 this.sideViewSlant = MeshSideSlant.ABOVE;
             }
             screen.guiRebuildScheduled = true;
-        }, false);
+        });
 
         if (!this.perPixel90DegreeRendering.get()) {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
@@ -192,7 +193,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             }).margins(Insets.right(5)));
 
             WikiRendererUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");
-            this.useWalkabilityFilter.listen((booleanProperty, value) -> screen.guiRebuildScheduled = true, false);
+            this.useWalkabilityFilter.futureListen((booleanProperty, value) -> screen.guiRebuildScheduled = true);
             if (this.useWalkabilityFilter.get()) {
                 WikiRendererUI.intControl(container, walkableBlocksThreshold, "walkable_blocks_threshold", 1);
                 WikiRendererUI.intControl(container, renderable.minFloorYLevelForOverhead, "min_floor_y_level", 1);
@@ -236,9 +237,13 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
         WikiRendererUI.sectionHeader(container, "area_overrides", true);
         WikiRendererUI.booleanControl(container, this.hideMesh, "hide_blocks");
+        this.hideMesh.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
+        if (!this.hideMesh.get()) {
+            WikiRendererUI.booleanControl(container, this.hideFluids, "hide_fluids");
+        }
 
         WikiRendererUI.booleanControl(container, this.hideEntities, "hide_entities");
-        this.hideEntities.listen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true, false);
+        this.hideEntities.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
         if (!this.hideEntities.get()) {
             WikiRendererUI.booleanControl(container, this.hidePlayers, "hide_players");
             WikiRendererUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
@@ -246,7 +251,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         }
 
         WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-        this.freezeEntities.listen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true, false);
+        this.freezeEntities.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
         if (!this.freezeEntities.get()) {
             WikiRendererUI.booleanControl(container, this.freezePlayerArms, "freeze_player_arms");
         }
@@ -254,7 +259,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WikiRendererUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
 
         WikiRendererUI.booleanControl(container, this.hideText, "hide_text");
-        this.hideText.listen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true, false);
+        this.hideText.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
         if (!this.hideText.get()) {
             WikiRendererUI.booleanControl(container, GlobalProperties.HIDE_NAMETAGS, "hide_player_nametags");
         }

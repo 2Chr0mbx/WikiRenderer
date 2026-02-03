@@ -101,13 +101,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.sectionHeader(container, "transform_options", false);
         WikiRendererUI.booleanControl(container, this.spriteRendering, "sprite_rendering");
 
-        this.spriteRendering.listen(((booleanProperty, value) -> {
+        this.spriteRendering.futureListen(((booleanProperty, value) -> {
             screen.guiRebuildScheduled = true;
             this.yaw.set(0);
             this.pitch.set(0);
             this.spriteRotation.set(180);
             this.spriteSlant.set(0);
-        }), false);
+        }));
 
         WikiRendererUI.intControl(container, this.scale, "scale", 10);
         if (!this.spriteRendering.get()) {
@@ -169,12 +169,12 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
         if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
-            this.useLiveEntity.listen(((booleanProperty, value) -> {
+            this.useLiveEntity.futureListen(((booleanProperty, value) -> {
                 screen.guiRebuildScheduled = true;
                 if (value) {
                     tick.set(true);
                 }
-            }), false);
+            }));
         }
 
         TickingPropertyBundle.super.buildRenderOptionGUIControls(r, screen, container);

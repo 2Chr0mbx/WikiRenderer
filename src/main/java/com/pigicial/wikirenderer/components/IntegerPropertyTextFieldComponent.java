@@ -38,13 +38,13 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
             }
         });
 
-        this.setting.listen((integerSetting, integer) -> {
+        this.setting.futureListen((integerSetting, integer) -> {
             if (!this.ignoringChange) {
                 this.ignoringChange = true;
                 this.text(String.valueOf(integer));
                 this.ignoringChange = false;
             }
-        }, false);
+        });
     }
 
     @Override

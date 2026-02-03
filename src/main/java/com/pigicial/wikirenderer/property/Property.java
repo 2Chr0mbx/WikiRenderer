@@ -35,15 +35,13 @@ public class Property<T> implements BiConsumer<Property<T>, T> {
         this.invokeListeners();
     }
 
-    public void listen(BiConsumer<Property<T>, T> listener) {
-        this.listen(listener, true);
+    public void instantListen(BiConsumer<Property<T>, T> listener) {
+        this.changeListeners.add(listener);
+        listener.accept(this, this.value);
     }
 
-    public void listen(BiConsumer<Property<T>, T> listener, boolean instantAccept) {
+    public void futureListen(BiConsumer<Property<T>, T> listener) {
         this.changeListeners.add(listener);
-        if (instantAccept) {
-            listener.accept(this, this.value);
-        }
     }
 
     public T get() {
