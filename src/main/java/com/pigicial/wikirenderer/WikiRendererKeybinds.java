@@ -43,6 +43,7 @@ public class WikiRendererKeybinds {
         KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA);
         KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA_EXPAND);
         KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY);
+        KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP);
         KeyBindingHelper.registerKeyBinding(KEYBIND_BATCH_RENDER_INVENTORY);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
