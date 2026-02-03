@@ -18,7 +18,7 @@ public class DynamicLabelComponent extends LabelComponent {
 
     public DynamicLabelComponent(Supplier<Component> content) {
         super(content.get());
-        super.color(Color.ofArgb(0xFFFFFF));
+        super.color(Color.WHITE);
         super.shadow(true);
         this.content = content;
     }
@@ -40,10 +40,11 @@ public class DynamicLabelComponent extends LabelComponent {
 
     @Override
     public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
-        if (this.content.get().getString().isEmpty()) {
+        Component newText = this.content.get();
+        if (newText.getString().isEmpty()) {
             return;
         }
-        this.text(this.content.get());
+        this.text(newText);
         super.draw(graphics, mouseX, mouseY, partialTicks, delta);
     }
 }

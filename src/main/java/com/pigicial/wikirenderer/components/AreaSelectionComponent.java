@@ -4,11 +4,11 @@ import com.pigicial.wikirenderer.WikiRendererKeybinds;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.Surface;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
@@ -27,25 +27,20 @@ public class AreaSelectionComponent extends FlowLayout {
 
         this.child(UIComponents.label(Translate.PREFIX).shadow(true).margins(Insets.bottom(10)));
 
-        this.child(UIComponents.label(Translate.gui("hud.area_selection")));
-        this.child(new DynamicLabelComponent(
-                positionText(() -> pos1, "from"))
-                .shadow(false).horizontalSizing(Sizing.fixed(Minecraft.getInstance().font.width(positionText(() -> pos1, "from").get())))
-        );
-        this.child(new DynamicLabelComponent(
-                positionText(() -> pos2, "to"))
-                .shadow(false).margins(Insets.bottom(10))
-        );
+        this.child(UIComponents.label(Translate.gui("hud.area_selection")).shadow(true));
+        this.child(new DynamicLabelComponent(positionText(() -> pos1, "from")).shadow(true).color(Color.ofFormatting(ChatFormatting.GRAY)));
+        this.child(new DynamicLabelComponent(positionText(() -> pos2, "to")).shadow(true).color(Color.ofFormatting(ChatFormatting.GRAY)).margins(Insets.bottom(10)));
 
         Component firstKeybind = Component.keybind(WikiRendererKeybinds.KEYBIND_SELECT_AREA.getName()).withStyle(ChatFormatting.YELLOW);
         Component secondKeybind = Component.keybind(WikiRendererKeybinds.KEYBIND_SELECT_AREA_EXPAND.getName()).withStyle(ChatFormatting.YELLOW);
-        this.child(UIComponents.label(Translate.gui("hud.area_selection.clear_hint", firstKeybind, secondKeybind)));
+        this.child(UIComponents.label(Translate.gui("hud.area_selection.clear_hint", firstKeybind, secondKeybind)).shadow(true));
     }
 
-    private Supplier<Component> positionText(Supplier<BlockPos> pos, String name) {
+    private Supplier<Component> positionText(Supplier<BlockPos> positionSupplier, String key) {
         return () -> {
-            Component positionText = Component.literal(pos.get() == null ? "---" : pos.get().getX() + " " + pos.get().getY() + " " + pos.get().getZ()).withStyle(ChatFormatting.GRAY);
-            return Translate.gui("hud.area_selection." + name, positionText);
+            BlockPos position = positionSupplier.get();
+            Component positionText = Component.literal(position == null ? "---" : position.getX() + " " + position.getY() + " " + position.getZ());
+            return Translate.gui("hud.area_selection." + key, positionText);
         };
     }
 
