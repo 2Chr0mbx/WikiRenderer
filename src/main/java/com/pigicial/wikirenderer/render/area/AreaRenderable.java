@@ -21,6 +21,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GlobalSettingsUniform;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
@@ -256,7 +257,11 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
     private void updateEntityState(Entity entity, EntityRenderState state) {
         AreaPropertyBundle properties = this.getProperties();
-        state.lightCoords = client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0); // entry.light();
+        if (properties.useFullBrightGamma.get() || properties.emulateDaylight.get()) {
+            state.lightCoords = LightTexture.FULL_BRIGHT;
+        } else {
+            state.lightCoords = client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0);
+        }
         state.outlineColor = 0; // remove glow
 
         if (this.entitiesFrozen && (state instanceof AvatarRenderState avatarRenderState)) {
