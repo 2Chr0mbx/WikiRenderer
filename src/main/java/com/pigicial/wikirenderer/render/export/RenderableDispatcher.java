@@ -95,7 +95,12 @@ public class RenderableDispatcher {
 
                 return nativeImage;
             }).thenCompose(croppedImage -> {
-                ImageRescaleMode rescaleMode = ((CroppablePropertyBundle) renderable.getProperties()).getRescaleMode().get();
+                CroppablePropertyBundle croppablePropertyBundle = (CroppablePropertyBundle) renderable.getProperties();
+                ImageRescaleMode rescaleMode = croppablePropertyBundle.getRescaleMode().get();
+                if (!croppablePropertyBundle.allowForRescaling()) {
+                    rescaleMode = ImageRescaleMode.DISABLED;
+                }
+
                 int axisSize = switch (rescaleMode) {
                     case VERTICAL -> croppedImage.getHeight();
                     case HORIZONTAL -> croppedImage.getWidth();
