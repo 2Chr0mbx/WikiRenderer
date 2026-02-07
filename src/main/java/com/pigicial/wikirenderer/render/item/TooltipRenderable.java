@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
@@ -50,8 +51,12 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
         int xScale = (int) mouse.getScaledXPos(client.getWindow());
         int yScale = (int) mouse.getScaledYPos(client.getWindow());
 
+        if (getProperties().hideBackground.get()) {
+            WikiRenderer.skipTooltipBackgroundRender = true;
+        }
         GuiGraphics guiGraphics = new GuiGraphics(client, state, xScale, yScale);
         guiGraphics.renderTooltip(client.font, list, 0, 0, this::positionTooltip, this.stack.get(DataComponents.TOOLTIP_STYLE));
+        WikiRenderer.skipTooltipBackgroundRender = false;
 
 		renderer.render(((GameRendererAccessor) client.gameRenderer).wikirenderer$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
 		renderer.close();

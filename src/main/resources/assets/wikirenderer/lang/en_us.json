@@ -118,6 +118,7 @@
   "gui.wikirenderer.copied_json_to_clipboard": "Copied profile JSON to clipboard",
 
   "gui.wikirenderer.transform_options": "Transform Options",
+  "gui.wikirenderer.tooltip_options": "Tooltip Options",
   "gui.wikirenderer.presets": "Presets",
   "gui.wikirenderer.lighting_profile": "Lighting Profile",
 
@@ -147,6 +148,7 @@
   "gui.wikirenderer.renderer_resolution_rescale_disabled": "Resolution",
   "gui.wikirenderer.block_resolution": "Block Resolution",
   "gui.wikirenderer.font_resolution": "Font Resolution",
+  "gui.wikirenderer.hide_tooltip_background": "Hide Tooltip Background",
   "gui.wikirenderer.file_name": "File Name",
   "gui.wikirenderer.hotkeys": "F10: Toggle UI  F12: Export",
 

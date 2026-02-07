@@ -45,6 +45,7 @@ public class WikiRenderer implements ClientModInitializer {
     public static boolean inRenderableDraw = false;
     public static boolean inRenderableTick = false;
     public static boolean skipWorldRender = false;
+    public static boolean skipTooltipBackgroundRender = false;
 
     public static RenderTarget mainTargetOverride = null;
 

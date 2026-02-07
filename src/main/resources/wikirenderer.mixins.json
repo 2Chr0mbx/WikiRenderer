@@ -8,6 +8,7 @@
   "compatibilityLevel": "JAVA_16",
   "plugin": "com.pigicial.wikirenderer.mixin.MixinPlugin",
   "client": [
+    "GuiGraphicsMixin",
     "GuiRendererMixin",
     "MinecraftMixin",
     "TextureTransformMixin",
