@@ -31,7 +31,7 @@ public class WalkabilityFilter {
     }
 
     public void cacheData() {
-        AABB dimensions = mesh.dimensions();
+        AABB dimensions = mesh.bounds.buildBoundingBox();
 
         for (int x = (int) dimensions.minX; x <= dimensions.maxX; x++) {
             for (int z = (int) dimensions.minZ; z <= dimensions.maxZ; z++) {
@@ -46,7 +46,7 @@ public class WalkabilityFilter {
                     BlockState state = mesh.world.getBlockState(blockPos);
 
                     boolean isPassable = state.getCollisionShape(mesh.world, blockPos).isEmpty();
-                    if (isPassable) { // air, fluid, buttons, etc
+                    if (isPassable || state.is(Blocks.BARRIER)) { // air, fluid, buttons, etc
                         if (passableBlocksAboveSolidBlockInARow > 0 || wasPreviousBlockSolid) {
                             passableBlocksAboveSolidBlockInARow++;
                         }

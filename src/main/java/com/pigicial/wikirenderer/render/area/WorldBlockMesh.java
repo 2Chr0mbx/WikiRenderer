@@ -12,7 +12,7 @@ import com.mojang.blaze3d.vertex.*;
 import com.pigicial.wikirenderer.ShaderCheck;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.OrthographicSort;
-import com.pigicial.wikirenderer.render.area.chunk.MiniChunk;
+import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.impl.client.indigo.renderer.IndigoRenderer;
@@ -33,11 +33,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -54,13 +52,9 @@ public class WorldBlockMesh {
     public static GpuSampler terrainSampler = null;
 
     public final BlockAndTintGetter world;
-    public final BlockPos from;
-    private final BlockPos to;
-    @Nullable
-    private final Set<MiniChunk> chunksToGrabBlocksFrom;
+    public final MeshBounds bounds;
     private AreaRenderable renderable;
 
-    private final AABB dimensions;
     private final boolean cull;
 
     private MeshState state = MeshState.NEW;
@@ -76,36 +70,26 @@ public class WorldBlockMesh {
     private float lastUsedRotation;
     private double lastUsedSlant;
 
-    private WorldBlockMesh(
+    public WorldBlockMesh(
             BlockAndTintGetter world,
-            BlockPos from,
-            BlockPos to,
-            @Nullable Set<MiniChunk> chunks
+            MeshBounds bounds
     ) {
-        this.from = from;
-        this.to = to;
-        this.chunksToGrabBlocksFrom = chunks;
+        this.bounds = bounds;
 
-        this.world = new MeshWorldOverrides(world, from, to);
+        this.world = new MeshWorldOverrides(world, bounds);
 
         this.cull = true;
-        this.dimensions = AABB.encapsulatingFullBlocks(this.from, this.to);
 
         this.lastUsedRotation = Float.MAX_VALUE;
         this.lastUsedSlant = Double.MAX_VALUE;
 
-        this.scheduleRebuild();
+        this.scheduleRebuild(true);
     }
 
     public void setRenderable(AreaRenderable renderable) {
         this.renderable = renderable;
     }
 
-    /**
-     * Renders this world mesh into the current framebuffer, translated using the given matrix
-     *
-     * @param matrices The translation matrices. This is applied to the entire mesh
-     */
     public void drawBlocks(PoseStack matrices) {
         if (!this.canRender()) {
             throw new IllegalStateException("World mesh not prepared!");
@@ -225,36 +209,11 @@ public class WorldBlockMesh {
         return blockEntities;
     }
 
-    /**
-     * @return The origin position of this mesh's area
-     */
-    public BlockPos startPos() {
-        return this.from;
-    }
-
-    /**
-     * @return The end position of this mesh's area
-     */
-    public BlockPos endPos() {
-        return this.to;
-    }
-
-    /**
-     * @return The dimensions of this mesh's entire area
-     */
-    public AABB dimensions() {
-        return dimensions;
-    }
-
     public boolean canRebuild() {
         return this.buildFuture == null;
     }
 
-    /**
-     * Schedule a rebuild of this mesh on
-     * an async executor
-     */
-    public synchronized void scheduleRebuild() {
+    public synchronized void scheduleRebuild(boolean async) {
         if (this.buildFuture != null) return;
 
         this.buildProgress = 0;
@@ -263,11 +222,11 @@ public class WorldBlockMesh {
                 : MeshState.BUILDING;
 
         this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
-        if (ShaderCheck.isUsingShaders()) {
-            this.buildMeshAsync();
+        if (ShaderCheck.isUsingShaders() || !async) {
             this.buildFuture = CompletableFuture.completedFuture(null);
+            this.buildMesh();
         } else {
-            this.buildFuture = CompletableFuture.runAsync(this::buildMeshAsync);
+            this.buildFuture = CompletableFuture.runAsync(this::buildMesh);
         }
     }
 
@@ -276,7 +235,7 @@ public class WorldBlockMesh {
         this.state = MeshState.CANCELLED;
     }
 
-    private void buildMeshAsync() {
+    private synchronized void buildMesh() {
         Minecraft.getInstance().executeBlocking((() -> {
             this.blockEntities.clear();
             this.subMeshes.forEach(MeshSection::close);
@@ -292,43 +251,24 @@ public class WorldBlockMesh {
         }
 
         List<SubMesh> subMeshes = new ArrayList<>();
-        int regionSize = 64;
-        if (this.chunksToGrabBlocksFrom != null) {
-            MiniChunk firstChunk = chunksToGrabBlocksFrom.stream().findAny().orElseThrow();
-            int chunkSize = (firstChunk.endX - firstChunk.startX) + 1;
-            // the region size needs to be an interval of the mini chunk size, otherwise certain mini chunks can be missing
-            while (chunkSize < 64) {
-                chunkSize *= 2;
-            }
-            regionSize = chunkSize;
-        }
-
         int scanningAreas = 0;
+        int regionSize = this.bounds.getSizeForSubMesh();
+        BlockPos minCorner = this.bounds.getMinCorner();
+        BlockPos maxCorner = this.bounds.getMaxCorner();
+
         int currentScanIndex = 0;
-        for (int x = from.getX(); x <= to.getX(); x += regionSize) {
-            for (int z = from.getZ(); z <= to.getZ(); z += regionSize) {
-                BlockPos subFrom = new BlockPos(x, from.getY(), z);
+        for (int x = minCorner.getX(); x <= maxCorner.getX(); x += regionSize) {
+            for (int z = minCorner.getZ(); z <= maxCorner.getZ(); z += regionSize) {
+                BlockPos subFrom = new BlockPos(x, minCorner.getY(), z);
                 BlockPos subTo = new BlockPos(
-                        Math.min(x + regionSize - 1, to.getX()),
-                        to.getY(),
-                        Math.min(z + regionSize - 1, to.getZ())
+                        Math.min(x + regionSize - 1, maxCorner.getX()),
+                        maxCorner.getY(),
+                        Math.min(z + regionSize - 1, maxCorner.getZ())
                 );
 
-                if (this.chunksToGrabBlocksFrom == null) {
-                    subMeshes.add(new SubMesh(List.of(BlockPos.betweenClosed(subFrom, subTo))));
-                    scanningAreas++;
-                } else {
-                    // combine the mini chunks (between 4x4-16x16, based on the user command input) into one bigger 64x64 section
-                    List<Iterable<BlockPos>> miniChunkBlocksForThisMesh = new ArrayList<>();
-                    for (MiniChunk chunk : this.chunksToGrabBlocksFrom) {
-                        if (chunk.isWithin(subFrom.getX(), subFrom.getZ(), subTo.getX(), subTo.getZ())) {
-                            miniChunkBlocksForThisMesh.add(BlockPos.betweenClosed(chunk.startX, from.getY(), chunk.startZ, chunk.endX, to.getY(), chunk.endZ));
-                            scanningAreas++;
-                        }
-                    }
-
-                    subMeshes.add(new SubMesh(miniChunkBlocksForThisMesh));
-                }
+                List<Iterable<BlockPos>> positions = bounds.buildBlockPositionsForSubMesh(subFrom, subTo);
+                scanningAreas += positions.size();
+                subMeshes.add(new SubMesh(positions));
             }
         }
 
@@ -342,7 +282,7 @@ public class WorldBlockMesh {
         AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
         if (properties.perPixel90DegreeRendering.get()) {
             if (properties.useWalkabilityFilter.get()) {
-                walkabilityFilter = new WalkabilityFilter(this, properties.walkableBlocksThreshold.get(), renderable.minFloorYLevelForOverhead.get(),  renderable.maxFloorYLevelForOverhead.get(), properties.requireCeilingForCaveMode.get());
+                walkabilityFilter = new WalkabilityFilter(this, properties.walkableBlocksThreshold.get(), renderable.minFloorYLevelForOverhead.get(), renderable.maxFloorYLevelForOverhead.get(), properties.requireCeilingForCaveMode.get());
                 walkabilityFilter.cacheData();
             }
         }
@@ -380,7 +320,7 @@ public class WorldBlockMesh {
                         continue;
                     }
 
-                    BlockPos renderPos = pos.subtract(from);
+                    BlockPos renderPos = pos.subtract(bounds.getMinCorner());
                     if (world.getBlockEntity(pos) != null) {
                         blockEntities.put(renderPos, world.getBlockEntity(pos));
                     }
@@ -461,33 +401,6 @@ public class WorldBlockMesh {
     private VertexConsumer getOrCreateBuilder(SectionBufferBuilderPack bufferBuilderPack, Map<ChunkSectionLayer, BufferBuilder> builderStorage, ChunkSectionLayer layer) {
         return builderStorage.computeIfAbsent(layer, renderLayer ->
                 new BufferBuilder(bufferBuilderPack.buffer(layer), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK));
-    }
-
-    public static class Builder {
-
-        private final BlockAndTintGetter world;
-
-        private final BlockPos origin;
-        private final BlockPos end;
-        private Set<MiniChunk> chunks = null;
-
-        public Builder(BlockAndTintGetter world, BlockPos origin, BlockPos end) {
-            this.world = world;
-            this.origin = origin;
-            this.end = end;
-        }
-
-        public Builder(Level world, Set<MiniChunk> chunks, BlockPos origin, BlockPos end) {
-            this(world, origin, end);
-            this.chunks = chunks;
-        }
-
-        public WorldBlockMesh build() {
-            BlockPos start = new BlockPos(Math.min(origin.getX(), end.getX()), Math.min(origin.getY(), end.getY()), Math.min(origin.getZ(), end.getZ()));
-            BlockPos target = new BlockPos(Math.max(origin.getX(), end.getX()), Math.max(origin.getY(), end.getY()), Math.max(origin.getZ(), end.getZ()));
-
-            return new WorldBlockMesh(world, start, target, chunks);
-        }
     }
 
     public enum MeshState {

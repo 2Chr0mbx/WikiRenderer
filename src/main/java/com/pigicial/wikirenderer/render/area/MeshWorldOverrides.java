@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.area;
 
+import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -17,12 +18,11 @@ import org.jspecify.annotations.NonNull;
 public class MeshWorldOverrides implements BlockAndTintGetter {
 
     private final BlockAndTintGetter delegate;
-    private final BlockPos from, to;
+    private final MeshBounds bounds;
 
-    public MeshWorldOverrides(BlockAndTintGetter delegate, BlockPos from, BlockPos to) {
+    public MeshWorldOverrides(BlockAndTintGetter delegate, MeshBounds bounds) {
         this.delegate = delegate;
-        this.from = from;
-        this.to = to;
+        this.bounds = bounds;
     }
 
     @Override
@@ -93,7 +93,6 @@ public class MeshWorldOverrides implements BlockAndTintGetter {
     }
 
     public boolean contains(BlockPos pos) {
-        return this.from.getX() <= pos.getX() && this.from.getY() <= pos.getY() && this.from.getZ() <= pos.getZ()
-               && this.to.getX() >= pos.getX() && this.to.getY() >= pos.getY() && this.to.getZ() >= pos.getZ();
+        return bounds.isInBounds(pos);
     }
 }

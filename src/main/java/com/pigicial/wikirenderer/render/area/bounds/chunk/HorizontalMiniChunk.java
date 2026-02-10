@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.render.area.chunk;
+package com.pigicial.wikirenderer.render.area.bounds.chunk;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -7,14 +7,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class MiniChunk {
+public class HorizontalMiniChunk {
     public final int startX;
     public final int endX;
     public final int startZ;
     public final int endZ;
     private final int size;
 
-    public MiniChunk(int startX, int startZ, int size) {
+    public HorizontalMiniChunk(int startX, int startZ, int size) {
         this.startX = startX;
         this.size = size;
         this.endX = startX + (size - 1);
@@ -67,23 +67,27 @@ public class MiniChunk {
         }
     }
 
-    public List<MiniChunk> createNeighbors() {
+    public List<HorizontalMiniChunk> createNeighbors() {
         return List.of(
-                new MiniChunk(startX + size, startZ, size),
-                new MiniChunk(startX, startZ + size, size),
-                new MiniChunk(startX - size, startZ, size),
-                new MiniChunk(startX, startZ - size, size)
+                new HorizontalMiniChunk(startX + size, startZ, size),
+                new HorizontalMiniChunk(startX, startZ + size, size),
+                new HorizontalMiniChunk(startX - size, startZ, size),
+                new HorizontalMiniChunk(startX, startZ - size, size)
         );
     }
 
-    public boolean isWithin(int startX, int startZ, int endX, int endZ) {
+    public boolean isWithinLargerMesh(int startX, int startZ, int endX, int endZ) {
         return this.startX >= startX && this.endX <= endX && this.startZ >= startZ && this.endZ <= endZ;
+    }
+
+    public boolean isBlockInThisMesh(int x, int z) {
+        return x >= this.startX && x <= this.endX && z >= this.startZ && z <= this.endZ;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        MiniChunk miniChunk = (MiniChunk) o;
+        HorizontalMiniChunk miniChunk = (HorizontalMiniChunk) o;
         return startX == miniChunk.startX && startZ == miniChunk.startZ && size == miniChunk.size;
     }
 

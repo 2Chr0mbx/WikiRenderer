@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.render.area.chunk;
+package com.pigicial.wikirenderer.render.area.bounds.chunk;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -10,21 +10,21 @@ import java.util.Set;
 public class MiniChunkScanner {
     @Nullable
     public static ChunkScanResult getConnectedChunks(Level level, BlockPos origin, int chunkSize, int blockLimit) {
-        Set<MiniChunk> scannedChunks = new HashSet<>();
-        Set<MiniChunk> validChunks = new HashSet<>();
-        Set<MiniChunk> chunksToScan = new HashSet<>();
+        Set<HorizontalMiniChunk> scannedChunks = new HashSet<>();
+        Set<HorizontalMiniChunk> validChunks = new HashSet<>();
+        Set<HorizontalMiniChunk> chunksToScan = new HashSet<>();
 
         Integer lowestY = null;
         Integer highestY = null;
 
-        MiniChunk startingChunk = new MiniChunk(origin.getX(), origin.getZ(), chunkSize);
+        HorizontalMiniChunk startingChunk = new HorizontalMiniChunk(origin.getX(), origin.getZ(), chunkSize);
         chunksToScan.add(startingChunk);
 
         while (!chunksToScan.isEmpty()) {
-            Set<MiniChunk> clonedChunksToScan = new HashSet<>(chunksToScan);
+            Set<HorizontalMiniChunk> clonedChunksToScan = new HashSet<>(chunksToScan);
             chunksToScan.clear();
 
-            for (MiniChunk chunk : clonedChunksToScan) {
+            for (HorizontalMiniChunk chunk : clonedChunksToScan) {
                 scannedChunks.add(chunk);
 
                 if (chunk.higherAxisDistance(origin) > blockLimit) continue;
@@ -36,7 +36,7 @@ public class MiniChunkScanner {
                 if (highestY == null || heightData.maxY() > highestY) highestY = heightData.maxY();
 
                 validChunks.add(chunk);
-                for (MiniChunk newChunk : chunk.createNeighbors()) {
+                for (HorizontalMiniChunk newChunk : chunk.createNeighbors()) {
                     if (!scannedChunks.contains(newChunk)) {
                         chunksToScan.add(newChunk);
                     }

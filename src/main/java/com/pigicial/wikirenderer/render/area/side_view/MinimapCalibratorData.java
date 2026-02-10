@@ -4,6 +4,8 @@ import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.export.ImageCropper;
 import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -63,11 +65,16 @@ public record MinimapCalibratorData(
     }
 
     private static Map<ViewportCorner, Vec3> getViewportCorners(AreaRenderable renderable) {
+        AABB boundingBox = renderable.mesh.bounds.buildBoundingBox();
+        int xSize = (int) boundingBox.getXsize();
+        int ySize = (int) boundingBox.getYsize();
+        int zSize = (int) boundingBox.getZsize();
+
         Matrix4f projection = new Matrix4f().setOrtho(-1, 1, -1, 1, -100, 100);
 
         Matrix4fStack modelView = new Matrix4fStack(2);
         renderable.getProperties().applyToViewMatrix(renderable, modelView);
-        modelView.translate(-renderable.xSize / 2f, -renderable.ySize / 2f, -renderable.zSize / 2f);
+        modelView.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
         Matrix4f combined = new Matrix4f(projection).mul(modelView);
         combined.invert();
@@ -105,7 +112,8 @@ public record MinimapCalibratorData(
             halfPixelWorldOffset = 0.5f / (float) pixelsPerBlock;
         }
 
-        return new Vec3(pos.x - halfPixelWorldOffset, pos.y, pos.z - halfPixelWorldOffset).add(renderable.mesh.startPos().getX(), renderable.mesh.startPos().getY(), renderable.mesh.startPos().getZ());
+        BlockPos minCorner = renderable.mesh.bounds.getMinCorner();
+        return new Vec3(pos.x - halfPixelWorldOffset, pos.y, pos.z - halfPixelWorldOffset).add(minCorner.getX(), minCorner.getY(), minCorner.getZ());
     }
 
     public String toFileText(String imageFileName) {

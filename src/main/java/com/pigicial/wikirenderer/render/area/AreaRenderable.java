@@ -9,9 +9,12 @@ import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.TickingRenderable;
-import com.pigicial.wikirenderer.render.area.chunk.ChunkScanResult;
-import com.pigicial.wikirenderer.render.area.chunk.MiniChunk;
-import com.pigicial.wikirenderer.render.area.chunk.MiniChunkScanner;
+import com.pigicial.wikirenderer.render.area.bounds.ChunkScannedMeshBounds;
+import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
+import com.pigicial.wikirenderer.render.area.bounds.SingleCuboidMeshBounds;
+import com.pigicial.wikirenderer.render.area.bounds.chunk.ChunkScanResult;
+import com.pigicial.wikirenderer.render.area.bounds.chunk.HorizontalMiniChunk;
+import com.pigicial.wikirenderer.render.area.bounds.chunk.MiniChunkScanner;
 import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.util.Translate;
@@ -56,9 +59,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     protected final IntProperty minFloorYLevelForOverhead;
     protected final IntProperty maxFloorYLevelForOverhead;
     public final WorldBlockMesh mesh;
-    public final int ySize;
-    public final int xSize;
-    public final int zSize;
 
     protected List<Entity> entities = new ArrayList<>();
     private boolean entitiesFrozen;
@@ -66,17 +66,16 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     public AreaRenderable(WorldBlockMesh mesh) {
         this.mesh = mesh;
 
-        AABB dimensions = mesh.dimensions();
-        this.xSize = (int) dimensions.getXsize();
-        this.ySize = (int) dimensions.getYsize();
-        this.zSize = (int) dimensions.getZsize();
+        AABB dimensions = mesh.bounds.buildBoundingBox();
         this.minFloorYLevelForOverhead = IntProperty.of((int) dimensions.minY, (int) dimensions.minY, (int) dimensions.maxY);
         this.maxFloorYLevelForOverhead = IntProperty.of((int) dimensions.maxY, (int) dimensions.minY, (int) dimensions.maxY);
         this.mesh.setRenderable(this);
     }
 
-    public static AreaRenderable of(BlockPos origin, BlockPos end) {
-        return new AreaRenderable(new WorldBlockMesh.Builder(Minecraft.getInstance().level, origin, end).build());
+    public static AreaRenderable of(BlockPos start, BlockPos end) {
+        MeshBounds bounds = new SingleCuboidMeshBounds(start, end);
+        WorldBlockMesh mesh = new WorldBlockMesh(Minecraft.getInstance().level, bounds);
+        return new AreaRenderable(mesh);
     }
 
     @Nullable
@@ -90,28 +89,15 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             return null;
         }
 
-        Set<MiniChunk> chunks = scanResult.chunks();
+        Set<HorizontalMiniChunk> chunks = scanResult.chunks();
         if (chunks.isEmpty()) {
             Translate.commandError(commandContext, "no_valid_chunks");
             return null;
         }
 
-        int minX = chunks.stream().mapToInt(c -> c.startX).min().getAsInt();
-        int maxX = chunks.stream().mapToInt(c -> c.endX).max().getAsInt();
-        int minZ = chunks.stream().mapToInt(c -> c.startZ).min().getAsInt();
-        int maxZ = chunks.stream().mapToInt(c -> c.endZ).max().getAsInt();
-        BlockPos firstPos = new BlockPos(minX, scanResult.minY(), minZ);
-        BlockPos secondPos = new BlockPos(maxX, scanResult.maxY(), maxZ);
-
-        Translate.commandFeedback(commandContext, "chunks_found",
-                chunks.size(),
-                chunkSize,
-                chunkSize,
-                scanLimit
-        );
-
-
-        return new AreaRenderable(new WorldBlockMesh.Builder(level, chunks, firstPos, secondPos).build());
+        MeshBounds bounds = new ChunkScannedMeshBounds(scanResult);
+        WorldBlockMesh mesh = new WorldBlockMesh(Minecraft.getInstance().level, bounds);
+        return new AreaRenderable(mesh);
     }
 
     @Override
@@ -119,7 +105,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         if (!mesh.canRender()) {
             if (mesh.state() == WorldBlockMesh.MeshState.CORRUPT) return;
 
-            mesh.scheduleRebuild();
+            mesh.scheduleRebuild(true);
             return;
         }
 
@@ -133,6 +119,11 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 new Camera(), // Passing a new/empty camera sets pos to 0,0,0
                 false
         );
+
+        AABB boundingBox = this.mesh.bounds.buildBoundingBox();
+        double xSize = boundingBox.getXsize();
+        double ySize = boundingBox.getYsize();
+        double zSize = boundingBox.getZsize();
 
         AreaPropertyBundle properties = getProperties();
         if (!properties.hideMesh.get()) {
@@ -158,7 +149,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         }
 
         if (client.player != null) {
-            Vec3 diff = Vec3.atLowerCornerOf(mesh.startPos()).subtract(client.player.trackingPosition());
+            Vec3 diff = Vec3.atLowerCornerOf(mesh.bounds.getMinCorner()).subtract(client.player.trackingPosition());
             standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
             this.drawParticles(standardStack.last().pose(), tickDelta);
         }
@@ -214,8 +205,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         if (getProperties().autoRefreshVisibleEntities.get() || this.entitiesFrozen) {
             ClientLevel level = Minecraft.getInstance().level;
             assert level != null;
-            BlockPos start = mesh.startPos();
-            BlockPos end = mesh.endPos().offset(1, 1, 1);
+            BlockPos start = mesh.bounds.getMinCorner();
+            BlockPos end = mesh.bounds.getMaxCorner().offset(1, 1, 1);
             AABB areaBoundingBox = new AABB(start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
 
             this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), e -> {
@@ -245,7 +236,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             if (entity instanceof ArmorStand && properties.hideArmorStands.get()) return;
             if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) return;
 
-            Vec3 offsetFromMesh = entity.getPosition(tickDelta).subtract(mesh.startPos().getX(), mesh.startPos().getY(), mesh.startPos().getZ());
+            BlockPos meshStartPos = mesh.bounds.getMinCorner();
+            Vec3 offsetFromMesh = entity.getPosition(tickDelta).subtract(meshStartPos.getX(), meshStartPos.getY(), meshStartPos.getZ());
 
             EntityRenderState state = entityDispatcher.extractEntity(entity, tickDelta);
             this.updateEntityState(entity, state);
@@ -367,15 +359,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
     @Override
     public ParticleRestriction<?> getParticleRestriction() {
-        AABB dimensions = this.mesh.dimensions();
-        return ParticleRestriction.inArea(new AABB(
-                dimensions.minX,
-                dimensions.minY,
-                dimensions.minZ,
-                dimensions.maxX,
-                dimensions.maxY,
-                dimensions.maxZ
-        ));
+        AABB dimensions = this.mesh.bounds.buildBoundingBox();
+        return ParticleRestriction.inArea(dimensions);
     }
 
     @Override

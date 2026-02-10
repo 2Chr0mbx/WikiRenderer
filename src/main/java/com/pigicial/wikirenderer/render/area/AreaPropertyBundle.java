@@ -2,6 +2,8 @@ package com.pigicial.wikirenderer.render.area;
 
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.render.Renderable;
+import com.pigicial.wikirenderer.render.area.bounds.ExpandableMeshBounds;
+import com.pigicial.wikirenderer.render.area.side_view.ExpansionSide;
 import com.pigicial.wikirenderer.render.area.side_view.MeshSideRotation;
 import com.pigicial.wikirenderer.render.area.side_view.MeshSideSlant;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
@@ -19,6 +21,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
 import org.joml.Matrix4fStack;
+
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 
 import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
 
@@ -53,6 +58,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final Property<Boolean> useWalkabilityFilter = Property.of(false);
     public final IntProperty walkableBlocksThreshold = IntProperty.of(2, 1, 20);
     public final Property<Boolean> requireCeilingForCaveMode = Property.of(false);
+    public final Property<Boolean> showMeshExpansionControls = Property.of(false);
 
     public final Property<Boolean> hideMesh = Property.of(false);
     public final Property<Boolean> hideFluids = Property.of(false);
@@ -195,17 +201,48 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");
             this.useWalkabilityFilter.futureListen((booleanProperty, value) -> screen.guiRebuildScheduled = true);
             if (this.useWalkabilityFilter.get()) {
-                WikiRendererUI.intControl(container, walkableBlocksThreshold, "walkable_blocks_threshold", 1);
+                WikiRendererUI.intControl(container, this.walkableBlocksThreshold, "walkable_blocks_threshold", 1);
                 WikiRendererUI.intControl(container, renderable.minFloorYLevelForOverhead, "min_floor_y_level", 1);
                 WikiRendererUI.intControl(container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level", 1);
                 WikiRendererUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");
+            }
+
+            if (renderable.mesh.bounds instanceof ExpandableMeshBounds expandableMeshBounds && sideViewSlant == MeshSideSlant.ABOVE) {
+                WikiRendererUI.booleanControl(container, this.showMeshExpansionControls, "show_expansion_buttons");
+                this.showMeshExpansionControls.futureListen((booleanProperty, value) -> screen.guiRebuildScheduled = true);
+
+                if (showMeshExpansionControls.get()) {
+                    for (ExpansionSide expansionSide : ExpansionSide.values()) {
+                        try (WikiRendererUI.RowBuilder rowBuilder = WikiRendererUI.row(container)) {
+                            rowBuilder.row.child(UIComponents.button(Translate.gui("minus_five"), button -> {
+                                expandableMeshBounds.move(expansionSide, sideViewRotation, -5);
+                                renderable.mesh.scheduleRebuild(false);
+                            }));
+                            rowBuilder.row.child(UIComponents.button(Translate.gui("minus_one"), button -> {
+                                expandableMeshBounds.move(expansionSide, sideViewRotation, -1);
+                                renderable.mesh.scheduleRebuild(false);
+                            }));
+                            rowBuilder.row.child(UIComponents.button(Translate.gui("plus_one"), button -> {
+                                expandableMeshBounds.move(expansionSide, sideViewRotation, 1);
+                                renderable.mesh.scheduleRebuild(false);
+                            }));
+                            rowBuilder.row.child(UIComponents.button(Translate.gui("plus_five"), button -> {
+                                expandableMeshBounds.move(expansionSide, sideViewRotation, 5);
+                                renderable.mesh.scheduleRebuild(false);
+                            }));
+
+
+                            rowBuilder.row.child(UIComponents.label(Translate.gui(expansionSide.name().toLowerCase())).margins(Insets.of(0, 0, 10, 10)));
+                        }
+                    }
+                }
             }
         }
 
         WorldBlockMesh mesh = renderable.mesh;
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
-            ButtonComponent buildMeshButton = (ButtonComponent) UIComponents.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild()).margins(Insets.top(10));
+            ButtonComponent buildMeshButton = (ButtonComponent) UIComponents.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild(true)).margins(Insets.top(10));
             builder.row.child(buildMeshButton);
 
             ButtonComponent stopBuildingButton = (ButtonComponent) UIComponents.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding()).margins(Insets.of(10, 0, 5, 0));
@@ -234,6 +271,16 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                 return meshStatusText;
             }).margins(Insets.of(10, 0, 10, 0));
         }
+
+        container.child(UIComponents.button(Translate.gui("copy_coordinates"), button -> {
+            screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
+
+            BlockPos minCorner = mesh.bounds.getMinCorner();
+            BlockPos maxCorner = mesh.bounds.getMaxCorner();
+            String command = "/wikirender area pos " + minCorner.getX() + " " + minCorner.getY() + " " + minCorner.getZ() + " " + maxCorner.getX() + " " + maxCorner.getY() + " " + maxCorner.getZ();
+
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {});
+        }));
 
         WikiRendererUI.sectionHeader(container, "area_overrides", true);
         WikiRendererUI.booleanControl(container, this.hideMesh, "hide_blocks");
@@ -295,8 +342,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         } else {
             AreaRenderable areaRenderable = (AreaRenderable) renderable;
 
-            BlockPos cornerOne = areaRenderable.mesh.startPos();
-            BlockPos cornerTwo = areaRenderable.mesh.endPos();
+            BlockPos cornerOne = areaRenderable.mesh.bounds.getMinCorner();
+            BlockPos cornerTwo = areaRenderable.mesh.bounds.getMaxCorner();
 
             int totalBlocksX = cornerTwo.getX() - cornerOne.getX() + 1;
             int totalBlocksY = cornerTwo.getY() - cornerOne.getY() + 1;
@@ -351,8 +398,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
         if (properties.perPixel90DegreeRendering.get()) {
             WorldBlockMesh mesh = renderable.mesh;
-            BlockPos cornerOne = mesh.startPos();
-            BlockPos cornerTwo = mesh.endPos();
+            BlockPos cornerOne = mesh.bounds.getMinCorner();
+            BlockPos cornerTwo = mesh.bounds.getMaxCorner();
 
             Direction.Axis[] visibleAxes = switch (properties.sideViewSlant) {
                 case BELOW, ABOVE -> new Direction.Axis[]{Direction.Axis.X, Direction.Axis.Z};
