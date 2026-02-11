@@ -56,8 +56,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
     private final Minecraft client = Minecraft.getInstance();
 
-    protected final IntProperty minFloorYLevelForOverhead;
-    protected final IntProperty maxFloorYLevelForOverhead;
+    public final IntProperty minFloorYLevelForOverhead;
+    public final IntProperty maxFloorYLevelForOverhead;
     public final WorldBlockMesh mesh;
 
     protected List<Entity> entities = new ArrayList<>();

@@ -1,5 +1,7 @@
 package com.pigicial.wikirenderer.render.area.side_view;
 
+import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;
+import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.WorldBlockMesh;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
@@ -20,13 +22,26 @@ public class WalkabilityFilter {
     private final int walkableHeightRequirement;
     private final int minFloorYLevel;
     private final int maxFloorYLevel;
+    private final int dontSearchForHigherFloorsThreshold;
     private final boolean requireCeilingToShow;
 
-    public WalkabilityFilter(WorldBlockMesh mesh, int walkableHeightRequirement, int minFloorYLevel, int maxFloorYLevel, boolean requireCeilingToShow) {
+    public WalkabilityFilter(WorldBlockMesh mesh, AreaRenderable renderable) {
+        this(
+                mesh,
+                renderable.getProperties().walkableBlocksThreshold.get(),
+                renderable.minFloorYLevelForOverhead.get(),
+                renderable.maxFloorYLevelForOverhead.get(),
+                renderable.getProperties().dontSearchForHigherFloorsThreshold.get(),
+                renderable.getProperties().requireCeilingForCaveMode.get()
+        );
+    }
+
+    public WalkabilityFilter(WorldBlockMesh mesh, int walkableHeightRequirement, int minFloorYLevel, int maxFloorYLevel, int dontSearchForHigherFloorsThreshold, boolean requireCeilingToShow) {
         this.mesh = mesh;
         this.walkableHeightRequirement = walkableHeightRequirement;
         this.minFloorYLevel = minFloorYLevel;
         this.maxFloorYLevel = maxFloorYLevel;
+        this.dontSearchForHigherFloorsThreshold = dontSearchForHigherFloorsThreshold;
         this.requireCeilingToShow = requireCeilingToShow;
     }
 
@@ -37,7 +52,7 @@ public class WalkabilityFilter {
             for (int z = (int) dimensions.minZ; z <= dimensions.maxZ; z++) {
                 int passableBlocksAboveSolidBlockInARow = 0;
                 boolean wasPreviousBlockSolid = false;
-                boolean disallowedFloor = false; // bedrock helps filter out dwarven mines weirdness
+                boolean disallowedFloor = false;
                 OptionalInt lastWalkableSolidBlockYLevel = OptionalInt.empty();
                 OptionalInt lastPreCeilingYLevel = OptionalInt.empty();
 
@@ -46,7 +61,7 @@ public class WalkabilityFilter {
                     BlockState state = mesh.world.getBlockState(blockPos);
 
                     boolean isPassable = state.getCollisionShape(mesh.world, blockPos).isEmpty();
-                    if (isPassable || state.is(Blocks.BARRIER)) { // air, fluid, buttons, etc
+                    if (isPassable || state.is(Blocks.BARRIER)) {
                         if (passableBlocksAboveSolidBlockInARow > 0 || wasPreviousBlockSolid) {
                             passableBlocksAboveSolidBlockInARow++;
                         }
@@ -61,9 +76,10 @@ public class WalkabilityFilter {
                             lastPreCeilingYLevel = OptionalInt.of(y - 1);
                         }
                         wasPreviousBlockSolid = true;
+                        if (!disallowedFloor) {
+                            disallowedFloor = y > this.maxFloorYLevel || passableBlocksAboveSolidBlockInARow >= dontSearchForHigherFloorsThreshold;
+                        }
                         passableBlocksAboveSolidBlockInARow = 0;
-
-                        disallowedFloor = state.getBlock() == Blocks.BEDROCK || y > this.maxFloorYLevel;
                     }
                 }
 

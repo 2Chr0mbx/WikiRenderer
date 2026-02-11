@@ -282,7 +282,7 @@ public class WorldBlockMesh {
         AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
         if (properties.perPixel90DegreeRendering.get()) {
             if (properties.useWalkabilityFilter.get()) {
-                walkabilityFilter = new WalkabilityFilter(this, properties.walkableBlocksThreshold.get(), renderable.minFloorYLevelForOverhead.get(), renderable.maxFloorYLevelForOverhead.get(), properties.requireCeilingForCaveMode.get());
+                walkabilityFilter = new WalkabilityFilter(this, renderable);
                 walkabilityFilter.cacheData();
             }
         }

@@ -56,6 +56,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     private int faceRenderingActualResolution = this.getDefaultExportResolution();
 
     public final Property<Boolean> useWalkabilityFilter = Property.of(false);
+    public final IntProperty dontSearchForHigherFloorsThreshold = IntProperty.of(255, 0, 255);
     public final IntProperty walkableBlocksThreshold = IntProperty.of(2, 1, 20);
     public final Property<Boolean> requireCeilingForCaveMode = Property.of(false);
     public final Property<Boolean> showMeshExpansionControls = Property.of(false);
@@ -202,6 +203,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             this.useWalkabilityFilter.futureListen((booleanProperty, value) -> screen.guiRebuildScheduled = true);
             if (this.useWalkabilityFilter.get()) {
                 WikiRendererUI.intControl(container, this.walkableBlocksThreshold, "walkable_blocks_threshold", 1);
+                WikiRendererUI.intControl(container, this.dontSearchForHigherFloorsThreshold, "dont_search_for_higher_floors_threshold", 1);
                 WikiRendererUI.intControl(container, renderable.minFloorYLevelForOverhead, "min_floor_y_level", 1);
                 WikiRendererUI.intControl(container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level", 1);
                 WikiRendererUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");

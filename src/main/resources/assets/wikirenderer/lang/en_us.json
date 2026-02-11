@@ -43,6 +43,7 @@
   "gui.wikirenderer.hide_fluids": "Hide Fluids (Requires Rebuild)",
   "gui.wikirenderer.walkability_filter": "Walkability Filter / \"Cave Mode\"",
   "gui.wikirenderer.walkable_blocks_threshold": "Walkable Blocks Threshold",
+  "gui.wikirenderer.dont_search_for_higher_floors_threshold": "Highest Floor Blocks Threshold",
   "gui.wikirenderer.min_floor_y_level": "Minimum Floor Y Level",
   "gui.wikirenderer.max_floor_y_level": "Maximum Floor Y Level",
   "gui.wikirenderer.require_ceiling": "Require Ceilings for Walkable Areas",
