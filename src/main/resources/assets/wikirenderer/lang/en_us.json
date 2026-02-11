@@ -127,7 +127,7 @@
   "gui.wikirenderer.minus_five": "-5",
   "gui.wikirenderer.show_expansion_buttons": "Show Expansion Buttons",
   "gui.wikirenderer.instant_rebuild_on_expand": "Instant-Rebuild",
-  "gui.wikirenderer.copy_coordinates": "Copy Render Command",
+  "gui.wikirenderer.copy_render_command": "Copy Render Command",
   "gui.wikirenderer.copied_coordinates_command_to_clipboard": "Copied render command to clipboard",
 
   "gui.wikirenderer.transform_options": "Transform Options",
@@ -140,6 +140,8 @@
   "gui.wikirenderer.mesh_entity_data.override_rotations": "Override Rotations",
   "gui.wikirenderer.sprite_rendering": "Sprite Rendering",
   "gui.wikirenderer.entity_data": "Entity Data",
+  "gui.wikirenderer.copy_entity_coordinates": "Copy Coordinates",
+  "gui.wikirenderer.copied_entity_coordinates_to_clipboard": "Copied Entity Coordinates to Clipboard",
   "gui.wikirenderer.entity_data.use_live_entity": "Use Live Entity",
   "gui.wikirenderer.entity_data.freeze_player_arms": "Freeze Player Arms",
   "gui.wikirenderer.entity_data.yaw": "Yaw",

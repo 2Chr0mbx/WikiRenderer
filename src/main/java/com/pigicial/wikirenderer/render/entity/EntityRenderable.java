@@ -388,31 +388,33 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     public @NotNull Map<String, MinecraftTexturesPayload> getTextureData() {
         Map<String, MinecraftTexturesPayload> textureData = new LinkedHashMap<>();
 
-        Entity usedEntity = getUsedEntity();
-
-        if (usedEntity instanceof Player player) {
-            MinecraftTexturesPayload playerTexture = PlayerTextureUtils.getGameProfileTextureData(player.getGameProfile());
-            if (playerTexture != null) {
-                textureData.put("player", playerTexture);
-            }
-        } else if (usedEntity instanceof Mannequin mannequin) {
-            ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
-            PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
-            MinecraftTexturesPayload playerTexture = PlayerTextureUtils.getGameProfileTextureData(renderInfo.gameProfile());
-            if (playerTexture != null) {
-                textureData.put("player", playerTexture);
-            }
-        }
-
-        if (usedEntity instanceof LivingEntity livingEntity) {
-            for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
-                ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
-                MinecraftTexturesPayload itemTextureData = PlayerTextureUtils.getPlayerHeadTextureData(item);
-                if (itemTextureData != null) {
-                    textureData.put(equipmentSlot.getName(), itemTextureData);
+        applyToEntityAndPassengers(getUsedEntity(), usedEntity -> {
+            if (usedEntity instanceof Player player) {
+                MinecraftTexturesPayload playerTexture = PlayerTextureUtils.getGameProfileTextureData(player.getGameProfile());
+                if (playerTexture != null) {
+                    textureData.put("player", playerTexture);
+                }
+            } else if (usedEntity instanceof Mannequin mannequin) {
+                ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
+                PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
+                MinecraftTexturesPayload playerTexture = PlayerTextureUtils.getGameProfileTextureData(renderInfo.gameProfile());
+                if (playerTexture != null) {
+                    textureData.put("player", playerTexture);
                 }
             }
-        }
+
+            if (usedEntity instanceof LivingEntity livingEntity) {
+                for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
+                    ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
+                    MinecraftTexturesPayload itemTextureData = PlayerTextureUtils.getPlayerHeadTextureData(item);
+                    if (itemTextureData != null) {
+                        textureData.put(equipmentSlot.getName(), itemTextureData);
+                    }
+                }
+            }
+        });
+
+
 
         return textureData;
     }

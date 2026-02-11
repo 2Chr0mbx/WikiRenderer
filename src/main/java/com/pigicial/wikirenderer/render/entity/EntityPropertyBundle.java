@@ -17,7 +17,12 @@ import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
+
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.text.DecimalFormat;
 
 public class EntityPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
 
@@ -144,6 +149,15 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 .margins(Insets.top(5)));
 
         WikiRendererUI.sectionHeader(container, "entity_data", true);
+        container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
+            Vec3 coords = renderable.getUsedEntity().position();
+
+            DecimalFormat df = new DecimalFormat("0.#######");
+            String text = df.format(coords.x) + " " + df.format(coords.y) + " " + df.format(coords.z);
+
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (clipboard, contents) -> {});
+            screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
+        }));
 
         WikiRendererUI.intControl(container, this.yaw, "entity_data.yaw", 15);
         WikiRendererUI.intControl(container, this.pitch, "entity_data.pitch", 5);

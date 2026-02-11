@@ -274,7 +274,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             }).margins(Insets.of(10, 0, 10, 0));
         }
 
-        container.child(UIComponents.button(Translate.gui("copy_coordinates"), button -> {
+        container.child(UIComponents.button(Translate.gui("copy_render_command"), button -> {
             screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
 
             BlockPos minCorner = mesh.bounds.getMinCorner();
