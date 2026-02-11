@@ -29,7 +29,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     protected GpuBuffer lightingBuffer;
 
     @Override
-    public void setupLighting(Matrix4f modelViewMatrix) {
+    public void setupLighting() {
         float rotation = (float) Math.toRadians(getProperties().getUsedRotation());
 
         // you might be wondering: what are these numbers from? how did I get them

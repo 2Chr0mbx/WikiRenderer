@@ -40,26 +40,17 @@ public class RenderableDispatcher {
         // view matrix = position/rotation/scale of camera
         // model/object matrix = position/rotation/scale of the model/object
         Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
-
         modelViewStack.pushMatrix();
         modelViewStack.identity();
-        if (transformer != null) {
-            transformer.accept(modelViewStack);
-        }
-
+        if (transformer != null) transformer.accept(modelViewStack);
         renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
         Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
         WikiRenderer.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
         WikiRenderer.setSortingMethod(projectionMatrix, modelViewStack);
 
-        renderable.setupLighting(modelViewStack);
-        renderable.emitVerticesThenDraw(
-                modelViewStack,
-                new PoseStack(),
-                Minecraft.getInstance().renderBuffers().bufferSource(),
-                tickDelta
-        );
+        renderable.setupLighting();
+        renderable.emitVerticesThenDraw(modelViewStack, new PoseStack(), tickDelta);
         renderable.drawSubmittedRenderFeatures();
 
         WikiRenderer.endRenderableDraw();

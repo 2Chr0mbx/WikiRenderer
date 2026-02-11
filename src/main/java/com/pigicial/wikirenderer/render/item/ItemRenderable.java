@@ -40,7 +40,7 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
     }
 
     @Override
-    public void setupLighting(Matrix4f modelViewMatrix) {
+    public void setupLighting() {
         this.setupLighting(RENDER_STATE);
     }
 
@@ -57,7 +57,7 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         ((ItemStackRenderStateAccessor) RENDER_STATE).wikirenderer$setDisplayContext(ItemDisplayContext.GUI);
         RENDER_STATE.submit(matrices, Minecraft.getInstance().gameRenderer.getSubmitNodeStorage(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
     }

@@ -37,12 +37,11 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         Minecraft client = Minecraft.getInstance();
 
-		MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
 	    GuiRenderState state = new GuiRenderState();
-        GuiRenderer renderer = this.getGuiRenderer(client, bufferSource, state);
+        GuiRenderer renderer = this.getGuiRenderer(client, state);
 
         List<ClientTooltipComponent> list = this.getTooltip();
 	    this.stack.getTooltipImage().ifPresent(datax -> list.add(list.isEmpty() ? 0 : 1, ClientTooltipComponent.create(datax)));
@@ -62,8 +61,9 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
 		renderer.close();
     }
 
-    private GuiRenderer getGuiRenderer(Minecraft client, MultiBufferSource.BufferSource bufferSource, GuiRenderState state) {
+    private GuiRenderer getGuiRenderer(Minecraft client, GuiRenderState state) {
         AtlasManager atlasManager = client.getAtlasManager();
+        MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
 
         List<PictureInPictureRenderer<?>> renderers = List.of(
                 new GuiEntityRenderer(bufferSource, client.getEntityRenderDispatcher()),

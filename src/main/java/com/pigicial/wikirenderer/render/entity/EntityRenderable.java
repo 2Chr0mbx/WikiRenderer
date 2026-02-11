@@ -195,7 +195,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         matrices.pushPose();
 
         boolean usingLiveEntity = isUsingLiveEntity();
@@ -351,7 +351,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public void setupLighting(Matrix4f modelViewMatrix) {
+    public void setupLighting() {
         if (this.getProperties().spriteRendering.get()) {
             float rotation = (float) Math.toRadians(getProperties().getUsedRotation());
 
@@ -359,7 +359,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             Vector3f faceLight = new Vector3f(0, 0, -1).rotateY((float) (Math.PI - rotation)).normalize();
             this.setupLighting(faceLight, faceLight);
         } else {
-            super.setupLighting(modelViewMatrix);
+            super.setupLighting();
         }
     }
 

@@ -54,13 +54,13 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     @Override
-    public void setupLighting(Matrix4f modelViewMatrix) {
-        this.currentDelegate.setupLighting(modelViewMatrix);
+    public void setupLighting() {
+        this.currentDelegate.setupLighting();
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
-        this.currentDelegate.emitVerticesThenDraw(matrix4fStack, matrices, vertexConsumers, tickDelta);
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+        this.currentDelegate.emitVerticesThenDraw(matrix4fStack, matrices, tickDelta);
 
         if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && FileIO.taskCount() <= 5) {
             ExportPathSpec exportPath = this.getExportPath();

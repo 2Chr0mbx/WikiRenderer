@@ -33,7 +33,7 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         int columns = this.getProperties().columns.get();
         int rows = Mth.positiveCeilDiv(this.items.size(), columns);
 
@@ -80,7 +80,7 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
     }
 
     @Override
-    public void setupLighting(Matrix4f modelViewMatrix) {
+    public void setupLighting() {
 
     }
 

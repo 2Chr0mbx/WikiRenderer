@@ -71,7 +71,7 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         matrices.pushPose();
         matrices.translate(-0.5, -0.5, -0.5);
 
@@ -84,7 +84,8 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
 
         // renders the main stuff
         if (this.state.getRenderShape() != RenderShape.INVISIBLE) {
-            this.client.getBlockRenderer().renderSingleBlock(this.state, matrices, vertexConsumers, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+            MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+            this.client.getBlockRenderer().renderSingleBlock(this.state, matrices, bufferSource, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
             // todo: figure out liquid rendering (waterlogged / fluid states)
         }
 

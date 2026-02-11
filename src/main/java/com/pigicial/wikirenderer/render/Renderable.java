@@ -15,9 +15,9 @@ public interface Renderable<P extends PropertyBundle> {
 
     default void prepare() {}
 
-    default void setupLighting(Matrix4f modelViewMatrix) {}
+    default void setupLighting() {}
 
-    void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack poseStack, MultiBufferSource vertexConsumers, float tickDelta);
+    void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack poseStack, float tickDelta);
 
     void drawSubmittedRenderFeatures();
 

@@ -23,12 +23,16 @@ import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.renderer.DynamicUniforms;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.chunk.SectionBuffers;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
@@ -178,6 +182,22 @@ public class WorldBlockMesh {
         GpuBufferSlice[] gpuBufferSlices = RenderSystem.getDynamicUniforms()
                 .writeChunkSections(list.toArray(new DynamicUniforms.ChunkSectionInfo[0]));
         return new ChunkSectionsToRender(gpuTextureView, enumMap, maxIndicesRequired, gpuBufferSlices);
+    }
+
+    public void drawBlockEntities(PoseStack standardStack, SubmitNodeStorage nodeStorage, CameraRenderState cameraRenderState, float tickDelta) {
+        BlockEntityRenderDispatcher blockEntityDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
+        this.blockEntities.forEach((blockPos, entity) -> {
+            standardStack.pushPose();
+            standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+
+            BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
+            if (state != null) {
+                blockEntityDispatcher.submit(state, standardStack, nodeStorage, cameraRenderState);
+            }
+
+            standardStack.popPose();
+        });
+        renderable.drawSubmittedRenderFeatures();
     }
 
     /**

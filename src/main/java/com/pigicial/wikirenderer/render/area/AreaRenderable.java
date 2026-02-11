@@ -101,7 +101,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack standardStack, MultiBufferSource vertexConsumers, float tickDelta) {
+    public void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack standardStack, float tickDelta) {
         if (!mesh.canRender()) {
             if (mesh.state() == WorldBlockMesh.MeshState.CORRUPT) return;
 
@@ -126,22 +126,19 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         double zSize = boundingBox.getZsize();
 
         AreaPropertyBundle properties = getProperties();
-        if (!properties.hideMesh.get()) {
-            PoseStack meshStack = new PoseStack();
-            meshStack.mulPose(modelViewStack);
-            meshStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
-            this.mesh.drawBlocks(meshStack);
-        }
+        SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
+        CameraRenderState cameraRenderState = CameraOrientationUtil.createRenderState(this);
 
         standardStack.setIdentity();
         standardStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
-        SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
-
-        CameraRenderState cameraRenderState = CameraOrientationUtil.createRenderState(this);
-
         if (!properties.hideMesh.get()) {
-            this.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
+            PoseStack meshStack = new PoseStack();
+            meshStack.mulPose(modelViewStack);
+            meshStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
+
+            this.mesh.drawBlocks(meshStack);
+            this.mesh.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
         }
 
         if (!properties.hideEntities.get()) {
@@ -155,22 +152,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         }
 
         WikiRenderer.inAreaRenderDraw = false;
-    }
-
-    private void drawBlockEntities(PoseStack standardStack, SubmitNodeStorage nodeStorage, CameraRenderState cameraRenderState, float tickDelta) {
-        BlockEntityRenderDispatcher blockEntityDispatcher = client.getBlockEntityRenderDispatcher();
-        mesh.getBlockEntities().forEach((blockPos, entity) -> {
-            standardStack.pushPose();
-            standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-
-            BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
-            if (state != null) {
-                blockEntityDispatcher.submit(state, standardStack, nodeStorage, cameraRenderState);
-            }
-
-            standardStack.popPose();
-        });
-        super.drawSubmittedRenderFeatures();
     }
 
     private void refreshEntities() {
