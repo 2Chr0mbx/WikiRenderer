@@ -19,7 +19,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
-import org.lwjgl.util.freetype.FreeType;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
