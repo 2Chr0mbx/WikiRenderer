@@ -12,27 +12,11 @@ public interface Renderable<P extends PropertyBundle> {
 
     Renderable<PropertyBundle> EMPTY = new EmptyRenderable();
 
-    default void prepare() {}
-
-    default void onScreenHandle(RenderScreen screen) {}
-
-    default void setupLighting() {}
-
-    default boolean usesWorldLightMap() {
-        return false;
-    }
+    void setupLighting();
 
     void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack modelViewStack, PoseStack poseStack, float tickDelta);
 
     void drawSubmittedRenderFeatures();
-
-    default void cleanUp() {}
-
-    default void dispose() {}
-
-    default ParticleRestriction<?> getParticleRestriction() {
-        return ParticleRestriction.never();
-    }
 
     P getProperties();
 
@@ -42,6 +26,18 @@ public interface Renderable<P extends PropertyBundle> {
     String getCustomFileName();
 
     void setCustomFileName(@Nullable String fileName);
+
+    default void prepare() {}
+
+    default void onScreenHandle(RenderScreen screen) {}
+
+    default ParticleRestriction<?> getParticleRestriction() {
+        return ParticleRestriction.never();
+    }
+
+    default void cleanUp() {}
+
+    default void dispose() {}
 
     default int getExportResolution() {
         return getProperties().getExportResolution(this);

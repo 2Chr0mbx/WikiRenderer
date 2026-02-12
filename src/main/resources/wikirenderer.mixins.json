@@ -40,6 +40,7 @@
     "entity.sprite.VillagerProfessionLayerMixin",
     "entity.sprite.WolfArmorLayerMixin",
     "world.BeaconRendererMixin",
+    "world.BlockEntityRenderDispatcherMixin",
     "world.ChunkSectionsToRenderMixin",
     "world.LevelRendererMixin",
     "world.LightTextureMixin",

@@ -253,22 +253,22 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
             WikiRendererUI.dynamicLabel(builder.row, () -> {
                 MutableComponent meshStatusText;
-                if (!mesh.state().isBuildStage) {
+                if (!mesh.getMeshState().isBuildStage) {
                     meshStatusText = Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN);
                 } else {
                     meshStatusText = Translate.gui(
-                            switch (mesh.state()) {
+                            switch (mesh.getMeshState()) {
                                 case BUILDING -> "mesh_building";
                                 case CANCELLED -> "mesh_cancelled";
                                 case CORRUPT -> "mesh_corrupt";
                                 default -> "mesh_rebuilding";
                             },
-                            (int) (mesh.buildProgress() * 100)
+                            (int) (mesh.getBuildProgress() * 100)
                     ).withStyle(ChatFormatting.RED);
                 }
 
                 buildMeshButton.active = mesh.canRebuild();
-                stopBuildingButton.active = mesh.state() == WorldBlockMesh.MeshState.BUILDING || mesh.state() == WorldBlockMesh.MeshState.REBUILDING;
+                stopBuildingButton.active = mesh.getMeshState() == WorldBlockMesh.MeshState.BUILDING || mesh.getMeshState() == WorldBlockMesh.MeshState.REBUILDING;
 
                 return meshStatusText;
             }).margins(Insets.of(10, 0, 10, 0));

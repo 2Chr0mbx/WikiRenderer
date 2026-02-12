@@ -17,6 +17,7 @@ import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
+import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
@@ -227,9 +228,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         this.renderable.getProperties().buildMainGUIControls(this.renderable, this, this.leftColumn);
 
-        WikiRendererUI.sectionHeader(this.rightColumn, "render_options", false);
+        if (renderable instanceof TextureDataProvider textureProvider) {
+            textureProvider.buildTextureGrabSection(this, leftColumn);
+        }
+
+        WikiRendererUI.sectionHeader(rightColumn, "render_options", false);
         this.buildBackgroundColorGUIControls();
         this.renderable.getProperties().buildRenderOptionGUIControls(this.renderable, this, this.rightColumn);
+
         WikiRendererUI.sectionHeader(rightColumn, "export_options", true);
         this.renderable.getProperties().buildExportOptionGUIControls(this.renderable, this, this.rightColumn);
         this.renderable.getProperties().buildExportResolutionGUIControls(this.renderable, this, this.rightColumn);
@@ -237,10 +243,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         WikiRendererUI.sectionHeader(rightColumn, "animation_options", true);
         this.buildFFmpegSection();
-
-        if (renderable instanceof TextureDataProvider textureProvider) {
-            textureProvider.buildTextureGrabSection(this, rightColumn);
-        }
     }
 
     private void buildBackgroundColorGUIControls() {

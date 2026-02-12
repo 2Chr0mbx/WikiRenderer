@@ -40,7 +40,6 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
@@ -59,15 +58,11 @@ public class WorldBlockMesh {
     public final MeshBounds bounds;
     private AreaRenderable renderable;
 
-    private final boolean cull;
-
+    public final List<MeshSection> builtSubMeshes = new ArrayList<>();
     private MeshState state = MeshState.NEW;
+    private CompletableFuture<Void> buildFuture = null;
     private float buildProgress = 0;
-    private @Nullable CompletableFuture<Void> buildFuture = null;
     private boolean buildCancelRequested = false;
-
-    // Vertex storage
-    public final List<MeshSection> subMeshes = new ArrayList<>();
     private final HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
 
     private OrthographicSort orthographicTransparencySorting = null;
@@ -79,11 +74,7 @@ public class WorldBlockMesh {
             MeshBounds bounds
     ) {
         this.bounds = bounds;
-
         this.world = new MeshWorldOverrides(world, bounds);
-
-        this.cull = true;
-
         this.lastUsedRotation = Float.MAX_VALUE;
         this.lastUsedSlant = Double.MAX_VALUE;
 
@@ -118,14 +109,14 @@ public class WorldBlockMesh {
                 this.lastUsedRotation = currentRotation;
                 this.lastUsedSlant = currentSlant;
 
-                for (MeshSection meshSection : subMeshes) {
+                for (MeshSection meshSection : builtSubMeshes) {
                     meshSection.reSortTransparencyData(this.orthographicTransparencySorting);
                 }
             }
         }
 
         List<ChunkSectionsToRender> preparedSections = new ArrayList<>();
-        for (MeshSection meshSection : subMeshes) {
+        for (MeshSection meshSection : builtSubMeshes) {
             preparedSections.add(renderBlockLayers(meshSection.getBuffers(), matrices.last().pose()));
         }
 
@@ -200,33 +191,16 @@ public class WorldBlockMesh {
         renderable.drawSubmittedRenderFeatures();
     }
 
-    /**
-     * Checks whether this mesh is ready for rendering
-     */
     public boolean canRender() {
         return this.state.canRender;
     }
 
-    /**
-     * Returns the current state of this mesh, used to indicate building progress and rendering availability
-     *
-     * @return The current {@code MeshState} constant
-     */
-    public MeshState state() {
+    public MeshState getMeshState() {
         return this.state;
     }
 
-    /**
-     * How much of this mesh is built
-     *
-     * @return The build progress of this mesh
-     */
-    public float buildProgress() {
+    public float getBuildProgress() {
         return this.buildProgress;
-    }
-
-    public HashMap<BlockPos, BlockEntity> getBlockEntities() {
-        return blockEntities;
     }
 
     public boolean canRebuild() {
@@ -258,8 +232,8 @@ public class WorldBlockMesh {
     private synchronized void buildMesh() {
         Minecraft.getInstance().executeBlocking((() -> {
             this.blockEntities.clear();
-            this.subMeshes.forEach(MeshSection::close);
-            this.subMeshes.clear();
+            this.builtSubMeshes.forEach(MeshSection::close);
+            this.builtSubMeshes.clear();
         }));
 
         Minecraft client = Minecraft.getInstance();
@@ -365,6 +339,7 @@ public class WorldBlockMesh {
                     if (renderContext != null) {
                         renderContext.tessellateBlock(state, pos, model, poseStack);
                     } else {
+                        boolean cull = true; // for later searching
                         blockRenderDispatcher.getModelRenderer().render(this.world, model, state, pos, poseStack, blockLayer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, blockLayer), cull, state.getSeed(pos), OverlayTexture.NO_OVERLAY);
                     }
 
@@ -402,7 +377,7 @@ public class WorldBlockMesh {
 
                 MeshSection meshSection = new MeshSection(bufferBuilderPack, builtMeshes, this.orthographicTransparencySorting);
                 meshSection.upload();
-                this.subMeshes.add(meshSection);
+                this.builtSubMeshes.add(meshSection);
 
                 synchronized (lock) {
                     subMeshesUploaded.getAndIncrement();

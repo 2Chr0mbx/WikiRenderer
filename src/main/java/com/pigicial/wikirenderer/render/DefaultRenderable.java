@@ -66,6 +66,10 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         }
     }
 
+    protected boolean usesWorldLightMap() {
+        return false;
+    }
+
     protected void updateWorldLightmap() {
         // block lighting / general light map, not light direction (which is handled above)
         LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
