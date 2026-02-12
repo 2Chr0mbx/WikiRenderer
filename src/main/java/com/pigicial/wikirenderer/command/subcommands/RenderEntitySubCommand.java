@@ -25,6 +25,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.item.component.AttackRange;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -85,7 +86,6 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
 
         AttackRange attackRange = new AttackRange(0, 10, 0, 10, 0.3f, 10);
         HitResult closestHit = attackRange.getClosesetHit(player, 1.0f, e -> {
-
             if (e instanceof LivingEntity livingEntity) {
                 if (livingEntity.isInvisible() || (livingEntity instanceof ArmorStand armorStand && armorStand.isMarker())) {
                     for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
@@ -93,7 +93,7 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
                             return true;
                         }
                     }
-                    return false;
+                    return livingEntity instanceof Creeper c && c.isPowered();
                 }
             }
 
