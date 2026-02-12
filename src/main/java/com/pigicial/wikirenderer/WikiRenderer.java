@@ -1,16 +1,16 @@
 package com.pigicial.wikirenderer;
 
-import com.pigicial.wikirenderer.command.WikiRendererCommand;
-import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
-import com.pigicial.wikirenderer.render.OrthographicSort;
-import com.pigicial.wikirenderer.render.export.FileIO;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
-import com.pigicial.wikirenderer.components.AreaSelectionComponent;
-import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.pigicial.wikirenderer.command.WikiRendererCommand;
+import com.pigicial.wikirenderer.components.AreaSelectionComponent;
+import com.pigicial.wikirenderer.components.IOStateComponent;
+import com.pigicial.wikirenderer.render.OrthographicSort;
+import com.pigicial.wikirenderer.render.ParticleRestriction;
+import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
+import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
@@ -46,6 +46,7 @@ public class WikiRenderer implements ClientModInitializer {
     public static boolean inRenderableTick = false;
     public static boolean skipWorldRender = false;
     public static boolean skipTooltipBackgroundRender = false;
+    public static boolean overrideGlint = false;
 
     public static RenderTarget mainTargetOverride = null;
 

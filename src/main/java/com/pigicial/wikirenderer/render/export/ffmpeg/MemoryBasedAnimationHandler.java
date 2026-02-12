@@ -27,7 +27,7 @@ public class MemoryBasedAnimationHandler extends AnimationHandler {
     public void renderAndSaveFrame(float effectiveTickDelta) {
         if (this.closed || this.remainingAnimationFrames <= 0) return;
 
-        GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.renderable, effectiveTickDelta, renderable.getExportResolution());
+        GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.screen, this.renderable, effectiveTickDelta, renderable.getExportResolution());
 
         WikiRenderer.skipWorldRender = true;
 

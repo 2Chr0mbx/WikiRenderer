@@ -8,6 +8,7 @@
   "compatibilityLevel": "JAVA_16",
   "plugin": "com.pigicial.wikirenderer.mixin.MixinPlugin",
   "client": [
+    "FramerateLimitTrackerMixin",
     "GuiGraphicsMixin",
     "GuiRendererMixin",
     "MinecraftMixin",
@@ -54,6 +55,7 @@
     "defaultRequire": 1
   },
   "mixins": [
+    "ItemStackMixin",
     "access.ElytraAnimationStateAccessor"
   ]
 }

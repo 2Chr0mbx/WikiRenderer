@@ -53,6 +53,9 @@ public class ImageCropper {
     }
 
     public static String getFFmpegCropSize(Renderable<?> renderable, List<CropData> dataList) {
+        if (!renderable.shouldCropForFFmpeg()) {
+            return "";
+        }
         int exportResolution = renderable.getProperties().getExportResolution(renderable);
 
         int offsetFromLeft = dataList.stream().mapToInt(CropData::minX).min().orElseThrow();

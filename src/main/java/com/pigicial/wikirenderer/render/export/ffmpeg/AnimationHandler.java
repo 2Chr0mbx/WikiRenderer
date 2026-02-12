@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public abstract class AnimationHandler {
+public abstract class AnimationHandler implements AutoCloseable {
     protected final List<ImageCropper.CropData> collectedCropData = Collections.synchronizedList(new ArrayList<>());
 
     protected final RenderScreen screen;
@@ -51,7 +51,7 @@ public abstract class AnimationHandler {
     protected final void mergeFilesIntoFinalResult(List<CompletableFuture<File>> fileFutures, boolean overwriteValue) {
         this.finished = true;
         ExportPathSpec defaultExportPath = this.renderable.getExportPath();
-        ExportPathSpec exportPath = screen.customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(screen.customFileName);
+        ExportPathSpec exportPath = defaultExportPath.differentFileName(renderable.getCustomFileName());
 
         CompletableFuture.allOf(fileFutures.toArray(CompletableFuture[]::new))
                 .whenComplete((v_, throwable) -> {
@@ -69,7 +69,7 @@ public abstract class AnimationHandler {
                             this.framesFolder,
                             GlobalProperties.animationFormat,
                             this,
-                            renderable.shouldCropForFFmpeg() ? ImageCropper.getFFmpegCropSize(renderable, collectedCropData) : ""
+                            ImageCropper.getFFmpegCropSize(renderable, collectedCropData)
                     ).whenComplete((animationFile, animationThrowable) -> this.finishAndCleanup(animationFile));
                 });
     }
@@ -79,21 +79,26 @@ public abstract class AnimationHandler {
         this.screen.exportAnimationButton.setMessage(Translate.gui("export_animation"));
         this.screen.currentAnimationExportData = null;
         this.closed = true;
+        this.collectedCropData.clear();
         WikiRenderer.currentAnimationHandler = null;
 
-        Minecraft.getInstance().execute(() -> screen.notify(
-                () -> Util.getPlatform().openFile(animationFile),
-                Translate.gui("animation_saved"),
-                Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
-        ));
+        if (GlobalProperties.popupAnimationFiles) {
+            Minecraft.getInstance().execute(() -> screen.notify(
+                    () -> Util.getPlatform().openFile(animationFile),
+                    Translate.gui("animation_saved"),
+                    Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
+            ));
+        }
     }
 
     public boolean isFinished() {
         return this.finished || this.closed;
     }
 
+    @Override
     public void close() {
         this.closed = true;
+        this.collectedCropData.clear();
         if (remainingAnimationFrames > 0) {
             FileIO.deleteSequenceFilesFromPath(this.framesFolder);
         }

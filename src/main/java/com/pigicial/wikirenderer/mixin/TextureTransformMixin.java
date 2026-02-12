@@ -2,8 +2,10 @@ package com.pigicial.wikirenderer.mixin;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.renderer.rendertype.TextureTransform;
+import net.minecraft.util.Util;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
@@ -42,5 +44,26 @@ public class TextureTransformMixin {
         } else {
             return original;
         }
+    }
+
+    @Redirect(
+            method = "setupGlintTexturing",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Util;getMillis()J")
+    )
+    private static long changeGlintTiming() {
+        if (WikiRenderer.inRenderableDraw && GlobalProperties.SYNC_ENCHANTMENT_GLINTS_TO_EXPORT.get()) {
+            AnimationHandler animationHandler = WikiRenderer.currentAnimationHandler;
+            if (animationHandler != null && !animationHandler.isFinished()) {
+                int totalFrameCount = animationHandler.getAnimationFrames();
+                int framesRenderedSoFar = totalFrameCount - animationHandler.getRemainingFrames();
+
+                int frameRate = GlobalProperties.EXPORT_FRAMERATE.get();
+                double secondsIntoAnimation = (double) framesRenderedSoFar / (double) frameRate;
+                return (long) (secondsIntoAnimation * 1000);
+            } else {
+                return 0;
+            }
+        }
+        return Util.getMillis();
     }
 }

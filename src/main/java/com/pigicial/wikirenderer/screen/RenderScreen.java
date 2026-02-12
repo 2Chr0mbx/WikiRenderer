@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.screen;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.FramerateLimitTracker;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
@@ -109,18 +110,12 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Nullable
     public AnimationHandler currentAnimationExportData = null;
 
-    public String customFileName = "";
     public EditBox fileNameField = null;
     private double[] scrollOffsetData = null;
 
     public RenderScreen(Renderable<?> renderable) {
         this.renderable = renderable;
         this.memoryGuard.update();
-
-        String defaultCustomFileName = renderable.getDefaultCustomFileName();
-        if (defaultCustomFileName != null) {
-            this.customFileName = defaultCustomFileName;
-        }
     }
 
     @Override
@@ -301,27 +296,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }).margins(Insets.vertical(5)));
         }
 
+        WikiRendererUI.booleanControl(rightColumn, SYNC_ENCHANTMENT_GLINTS_TO_EXPORT, "sync_and_speed_up_glint_rendering");
+
         WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMES, "animation_frames", Sizing.fixed(30));
         WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMERATE, "animation_framerate", Sizing.fixed(30));
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(rightColumn)) {
-            this.exportAnimationButton = UIComponents.button(Translate.gui("export_animation"), button -> {
-                int framesStoreInMemory = animationHandlingMode.isStoredInMemory() ? EXPORT_FRAMES.get() : 1;
-                if (this.memoryGuard.canFitInRam(memoryGuard.estimateMemoryMBUsage(renderable, framesStoreInMemory)) || this.minecraft.hasControlDown()) {
-                    this.currentAnimationExportData = switch (animationHandlingMode) {
-                        case DISK_INSTANT_SAVE -> new InstantDiskSaveAnimationHandler(this, this.renderable, EXPORT_FRAMES.get());
-                        case MEMORY_CACHE -> new MemoryBasedAnimationHandler(this, this.renderable, EXPORT_FRAMES.get());
-                        case LIVE_FFMPEG -> new LiveRenderFFmpegAnimationHandler(this, this.renderable, EXPORT_FRAMES.get());
-                    };
-                    WikiRenderer.currentAnimationHandler = this.currentAnimationExportData;
-
-                    this.minecraft.getFramerateLimitTracker().setFramerateLimit(EXPORT_FRAMERATE.get());
-                    WikiRenderer.skipWorldRender = true;
-
-                    button.active = false;
-                    button.setMessage(Translate.gui("exporting"));
-                }
-            });
+            this.exportAnimationButton = UIComponents.button(Translate.gui("export_animation"), button -> this.queueAnimationExport());
             builder.row.child(this.exportAnimationButton.margins(Insets.right(5)));
 
             builder.row.child(UIComponents.button(Translate.gui("format." + animationFormat.extension), button -> {
@@ -365,11 +346,26 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 .button(Translate.gui("animation_mode_name_live_ffmpeg"), b -> animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG)
                 .text(Translate.gui("animation_mode_description_live_ffmpeg_1"))
                 .text(Translate.gui("animation_mode_description_live_ffmpeg_2"))
-                .text(Translate.gui("animation_mode_description_live_ffmpeg_3"))
                 .closeWhenNotHovered(false)
                 .padding(Insets.of(5))
                 .surface(Surface.blur(10, 10))
         );
+    }
+
+    public void queueAnimationExport() {
+        int framesStoreInMemory = animationHandlingMode.isStoredInMemory() ? EXPORT_FRAMES.get() : 1;
+        if (this.memoryGuard.canFitInRam(memoryGuard.estimateMemoryMBUsage(renderable, framesStoreInMemory)) || this.minecraft.hasControlDown()) {
+            this.currentAnimationExportData = animationHandlingMode.createAnimationHandler(this, renderable);
+            WikiRenderer.currentAnimationHandler = this.currentAnimationExportData;
+
+            if (!SYNC_ENCHANTMENT_GLINTS_TO_EXPORT.get()) {
+                this.minecraft.getFramerateLimitTracker().setFramerateLimit(EXPORT_FRAMERATE.get());
+            }
+            WikiRenderer.skipWorldRender = true;
+
+            this.exportAnimationButton.active = false;
+            this.exportAnimationButton.setMessage(Translate.gui("exporting"));
+        }
     }
 
     @Override
@@ -388,8 +384,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         boolean tick = renderable.getProperties() instanceof TickingPropertyBundle ticking && ticking.getTickProperty().get();
         float effectiveTickDelta = tick ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
 
+        // basically just for batch rendering
+        this.renderable.onScreenHandle(this);
+
         Consumer<Matrix4fStack> positionTransformer = this.hasBothColumns ? null : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0);
-        RenderTarget renderedOutput = RenderableDispatcher.drawIntoDuplicateFramebuffer(this.renderable, effectiveTickDelta, positionTransformer);
+        RenderTarget renderedOutput = RenderableDispatcher.drawIntoDuplicateFramebuffer(this, this.renderable, effectiveTickDelta, positionTransformer);
 
         if (this.drawOnlyBackground) {
             context.fill(0, 0, this.width, this.height, backgroundColor | 255 << 24);
@@ -439,16 +438,17 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.captureScheduled) {
-            this.exportImage();
+            this.exportImage(true);
             this.captureScheduled = false;
         }
 
         this.renderOrExportAnimationIfNecessary(effectiveTickDelta);
     }
 
-    private void exportImage() {
+    public void exportImage(boolean popupText) {
         ExportPathSpec defaultExportPath = this.renderable.getExportPath();
-        ExportPathSpec exportPath = this.customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(this.customFileName);
+        String customFileName = renderable.getCustomFileName();
+        ExportPathSpec exportPath = customFileName == null || customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(customFileName);
 
         AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
         Consumer<MinimapCalibratorData> dataConsumer = null;
@@ -459,35 +459,48 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             dataConsumer = data::set;
         }
 
-        RenderableDispatcher.drawIntoImage(this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
+        RenderableDispatcher.drawIntoImage(this, this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
                 .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((f, t) -> img.close()))
                 .whenComplete((imageFile, throwable) -> {
                     if (this.exportCallback != null) {
                         this.exportCallback.accept(imageFile);
                     }
-                    this.minecraft.execute(() -> this.notify(
-                            () -> Util.getPlatform().openFile(imageFile),
-                            Translate.gui("exported_as"),
-                            Component.literal(ExportPathSpec.exportRoot().relativize(imageFile.toPath()).toString())
-                    ));
+
+                    if (popupText) {
+                        this.minecraft.execute(() -> this.notify(
+                                () -> Util.getPlatform().openFile(imageFile),
+                                Translate.gui("exported_as"),
+                                Component.literal(ExportPathSpec.exportRoot().relativize(imageFile.toPath()).toString())
+                        ));
+                    }
 
                     if (data.get() != null) {
                         String fileText = data.get().toFileText(imageFile.getName());
-                        ExportPathSpec minimapExportPath = this.customFileName.isBlank()
+                        ExportPathSpec minimapExportPath = customFileName == null || customFileName.isBlank()
                                 ? defaultExportPath.differentFileName("area_render_minimap_data")
-                                : defaultExportPath.differentFileName(this.customFileName + "_area_render_minimap_data");
+                                : defaultExportPath.differentFileName(customFileName + "_area_render_minimap_data");
 
-                        FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> this.minecraft.execute(() -> this.notify(
-                                () -> Util.getPlatform().openFile(textFile),
-                                Translate.gui("exported_minimap_data_as"),
-                                Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
-                        )));
+                        FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> {
+                            if (popupText) {
+                                this.minecraft.execute(() -> this.notify(
+                                        () -> Util.getPlatform().openFile(textFile),
+                                        Translate.gui("exported_minimap_data_as"),
+                                        Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
+                                ));
+                            }
+                        });
                     }
                 });
     }
 
     private void renderOrExportAnimationIfNecessary(float effectiveTickDelta) {
         if (this.currentAnimationExportData != null) {
+            if (SYNC_ENCHANTMENT_GLINTS_TO_EXPORT.get()) {
+                // overrides tabbing out lowering the fps cap
+                FramerateLimitTracker framerateLimitTracker = Minecraft.getInstance().getFramerateLimitTracker();
+                framerateLimitTracker.setFramerateLimit(Minecraft.getInstance().options.framerateLimit().get());
+                framerateLimitTracker.onInputReceived();
+            }
             this.currentAnimationExportData.renderAndSaveFrame(effectiveTickDelta);
         }
     }

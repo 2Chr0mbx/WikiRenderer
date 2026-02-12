@@ -4,7 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
+import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.util.ItemNameUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.GuiGraphics;
@@ -26,9 +29,10 @@ import org.joml.Matrix4fStack;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
+import java.util.Collection;
 import java.util.List;
 
-public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> {
+public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> implements DynamicBatchLabelProvider {
 
     private final ItemStack stack;
 
@@ -37,7 +41,7 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         Minecraft client = Minecraft.getInstance();
 
 	    GuiRenderState state = new GuiRenderState();
@@ -117,4 +121,15 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
         return ExportPathSpec.of("tooltip", BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath());
     }
 
+    @Override
+    public String buildFileName(String preset) {
+        String id = BuiltInRegistries.ITEM.getKey(this.stack.getItem()).getPath();
+        String name = ItemNameUtil.getItemDisplayName(this.stack);
+        return preset.replace("%id%", id).replace("%name%", name);
+    }
+
+    @Override
+    public Collection<String> buildPresetExamples() {
+        return List.of("label_example.item_id", "label_example.item_name");
+    }
 }

@@ -17,6 +17,7 @@ import com.pigicial.wikirenderer.render.area.bounds.chunk.HorizontalMiniChunk;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.MiniChunkScanner;
 import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.Translate;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Camera;
@@ -101,7 +102,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack standardStack, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack modelViewStack, PoseStack standardStack, float tickDelta) {
         if (!mesh.canRender()) {
             if (mesh.state() == WorldBlockMesh.MeshState.CORRUPT) return;
 

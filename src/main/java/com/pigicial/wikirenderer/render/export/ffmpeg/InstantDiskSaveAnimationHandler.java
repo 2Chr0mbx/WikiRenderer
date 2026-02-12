@@ -34,7 +34,7 @@ public final class InstantDiskSaveAnimationHandler extends AnimationHandler {
         }
         // delay until ram is available
 
-        GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.renderable, effectiveTickDelta, renderable.getExportResolution());
+        GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.screen, this.renderable, effectiveTickDelta, renderable.getExportResolution());
 
         WikiRenderer.skipWorldRender = true;
 

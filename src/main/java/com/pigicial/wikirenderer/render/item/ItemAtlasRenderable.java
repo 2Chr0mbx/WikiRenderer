@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.item;
 
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -33,7 +34,7 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         int columns = this.getProperties().columns.get();
         int rows = Mth.positiveCeilDiv(this.items.size(), columns);
 

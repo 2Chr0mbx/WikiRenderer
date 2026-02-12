@@ -13,10 +13,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +82,7 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
                 tag.entries().stream()
                         .map(Holder::value)
                         .map(Item::getDefaultInstance)
+                        .filter(item -> !item.isEmpty())
                         .toList()
         );
     }

@@ -43,7 +43,7 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
     public void renderAndSaveFrame(float effectiveTickDelta) {
         if (this.closed || this.remainingAnimationFrames <= 0) return;
 
-        GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.renderable, effectiveTickDelta, renderable.getExportResolution());
+        GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.screen, this.renderable, effectiveTickDelta, renderable.getExportResolution());
         WikiRenderer.skipWorldRender = true;
 
         // makes new file each frame
@@ -65,6 +65,7 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
             CompletableFuture.allOf(this.frameFileExportFutures.toArray(CompletableFuture[]::new))
                     .whenComplete((unused, throwable) -> {
                         try {
+                            this.frameFileExportFutures.clear();
                             this.session.close();
                             Minecraft.getInstance().getFramerateLimitTracker().setFramerateLimit(Minecraft.getInstance().options.framerateLimit().get());
                             this.exportFinalFromMaster(GlobalProperties.animationFormat, ImageCropper.getFFmpegCropSize(this.renderable, collectedCropData));
@@ -77,7 +78,7 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
 
     private void exportFinalFromMaster(FFmpegDispatcher.Format format, String cropFilter) {
         ExportPathSpec defaultExportPath = this.renderable.getExportPath();
-        ExportPathSpec exportPath = screen.customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(screen.customFileName);
+        ExportPathSpec exportPath = defaultExportPath.differentFileName(renderable.getCustomFileName());
 
         exportPath.resolveOffset().toFile().mkdirs();
         File animationFile = exportPath.resolveFile(format.extension);
@@ -139,9 +140,26 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
             } catch (Exception e) {
                 throw new RuntimeException("FFmpeg export failed", e);
             }
-        }).whenComplete((f, animationThrowable) -> {
-            this.finishAndCleanup(f);
-        });
+        }).whenComplete((f, animationThrowable) -> this.finishAndCleanup(f));
     }
 
+    @Override
+    protected void finishAndCleanup(File animationFile) {
+        super.finishAndCleanup(animationFile);
+        try {
+            this.session.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to close FFmpeg session", e);
+        }
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        try {
+            this.session.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to close FFmpeg session", e);
+        }
+    }
 }

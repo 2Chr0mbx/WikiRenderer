@@ -59,6 +59,7 @@
   "gui.wikirenderer.per_pixel_90_degree_rendering": "Pixel-Precision Face Rendering",
   "gui.wikirenderer.export_minimap_data": "Export Minimap Data",
 
+  "gui.wikirenderer.force_enchanted": "Force Enchantment Glint",
   "gui.wikirenderer.item_scale_warning_1": "Note: It's recommended to",
   "gui.wikirenderer.item_scale_warning_2": "keep scale at 100% for items!",
 
@@ -75,6 +76,7 @@
 
   "gui.wikirenderer.animation_options": "Animation Options",
   "gui.wikirenderer.speed_up_enchantment_glints": "Speed up Enchant Glints (15s loop)",
+  "gui.wikirenderer.sync_and_speed_up_glint_rendering": "Sync Glints to Animation (renders faster)",
   "gui.wikirenderer.enchantment_glint_preset": "Use Enchanted Items Timings",
   "gui.wikirenderer.animation_frames": "Animation Frames",
   "gui.wikirenderer.animation_framerate": "Animation Framerate",
@@ -163,6 +165,8 @@
   "gui.wikirenderer.renderer_resolution_rescale_disabled": "Resolution",
   "gui.wikirenderer.block_resolution": "Block Resolution",
   "gui.wikirenderer.font_resolution": "Font Resolution",
+  "gui.wikirenderer.item_resolution": "Item Resolution",
+  "gui.wikirenderer.player_head_resolution": "Player Head Resolution",
   "gui.wikirenderer.hide_tooltip_background": "Hide Tooltip Background",
   "gui.wikirenderer.file_name": "File Name",
   "gui.wikirenderer.hotkeys": "F10: Toggle UI  F12: Export",
@@ -209,14 +213,23 @@
   "gui.wikirenderer.animation_mode_description_save_in_memory_1": "- Disk IO Delayed To End",
   "gui.wikirenderer.animation_mode_description_save_in_memory_2": "- Limited By Available Ram",
   "gui.wikirenderer.animation_mode_description_live_ffmpeg_1": "- No Temp Files using Disk IO",
-  "gui.wikirenderer.animation_mode_description_live_ffmpeg_2": "- Lower Ram Usage",
-  "gui.wikirenderer.animation_mode_description_live_ffmpeg_3": "- Slowest",
+  "gui.wikirenderer.animation_mode_description_live_ffmpeg_2": "- Ram Usage Controlled by FFmpeg",
 
   "gui.wikirenderer.using_derived_resolution": "Using Derived Resolution",
   "gui.wikirenderer.batch.remaining": "Remaining: %d/%d",
   "gui.wikirenderer.batch.start": "Start",
   "gui.wikirenderer.batch.reset": "Reset",
+  "gui.wikirenderer.batch.next": "Next",
   "gui.wikirenderer.batch.controls": "Batch Controls",
+  "gui.wikirenderer.batch.export_as_animations": "Export as Animations",
+  "gui.wikirenderer.batch.file_name_preset": "File Name Preset",
+  "gui.wikirenderer.batch.label_presets": "Label Presets:",
+  "gui.wikirenderer.batch.name_previews": "Name Previews:",
+
+  "gui.wikirenderer.label_example.item_id": "%id% - The item's Minecraft ID",
+  "gui.wikirenderer.label_example.item_name": "%name% - The item's display name",
+  "gui.wikirenderer.label_example.block_id": "%id% - The block's Minecraft ID",
+  "gui.wikirenderer.label_example.block_name": "%name% - The block's display name",
 
   "gui.wikirenderer.hud.area_selection": "Area Selection",
   "gui.wikirenderer.hud.area_selection.from": "From: %s",

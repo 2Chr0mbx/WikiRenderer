@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.export;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -35,7 +36,10 @@ public record ExportPathSpec(String rootOffset, String filename, boolean ignoreS
         return new ExportPathSpec(newOffset, this.filename, this.ignoreSaveIntoRoot);
     }
 
-    public ExportPathSpec differentFileName(String newFileName) {
+    public ExportPathSpec differentFileName(@Nullable String newFileName) {
+        if (newFileName == null || newFileName.isEmpty()) {
+            return this;
+        }
         return new ExportPathSpec(this.rootOffset, newFileName, this.ignoreSaveIntoRoot);
     }
 

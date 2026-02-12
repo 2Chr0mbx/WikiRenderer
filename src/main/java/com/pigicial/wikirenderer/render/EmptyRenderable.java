@@ -25,12 +25,10 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
 
         @Override
         public void setExportResolution(Renderable<?> renderable, int resolution) {}
-
-
     };
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {}
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {}
 
     @Override
     public void drawSubmittedRenderFeatures() {}
@@ -46,7 +44,12 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
     }
 
     @Override
-    public @Nullable String getDefaultCustomFileName() {
-        return null;
+    public @Nullable String getCustomFileName() {
+        return "empty";
+    }
+
+    @Override
+    public void setCustomFileName(@Nullable String fileName) {
+
     }
 }

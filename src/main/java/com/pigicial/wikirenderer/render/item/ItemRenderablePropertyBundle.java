@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.item;
 
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
+import com.pigicial.wikirenderer.property.Property;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
@@ -10,6 +11,7 @@ import org.joml.Matrix4fStack;
 
 public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle {
 
+    public final Property<Boolean> forceEnchantmentGlints = Property.of(false);
     protected int playerHeadsExportResolution = 300;
 
     @Override
@@ -50,7 +52,8 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.sectionHeader(container, "transform_options", false);
         WikiRendererUI.intControl(container, scale, "scale", 10);
-        WikiRendererUI.sectionHeader(container, "item_scale_warning_1", true);
+        WikiRendererUI.sectionHeader(container, "item_scale_warning_1", 10);
         WikiRendererUI.sectionHeader(container, "item_scale_warning_2", false);
+        WikiRendererUI.booleanControl(container, forceEnchantmentGlints, "force_enchanted");
     }
 }

@@ -13,6 +13,7 @@ import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.entity.player.ProfileFetchMode;
 import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
@@ -195,7 +196,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         matrices.pushPose();
 
         boolean usingLiveEntity = isUsingLiveEntity();
@@ -221,7 +222,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
             this.updateRenderState(state, properties, usingLiveEntity);
-
 
             List<Runnable> toggleCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {

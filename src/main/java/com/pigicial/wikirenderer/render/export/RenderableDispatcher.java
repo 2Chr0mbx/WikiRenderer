@@ -16,6 +16,7 @@ import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
@@ -32,9 +33,10 @@ import java.util.function.Consumer;
 public class RenderableDispatcher {
 
     private static final PerspectiveProjectionMatrixBuffer PROJECTION_MATRIX_BUFFER = new PerspectiveProjectionMatrixBuffer("RenderableDispatcher");
+    private static final Matrix4f ORTHOGRAPHIC_MATRIX = new Matrix4f();
     private static RenderTarget previewTarget = null;
 
-    public static void drawIntoActiveFramebuffer(Renderable<?> renderable, float aspectRatio, float tickDelta, @Nullable Consumer<Matrix4fStack> transformer) {
+    public static void drawIntoActiveFramebuffer(RenderScreen renderScreen, Renderable<?> renderable, float aspectRatio, float tickDelta, @Nullable Consumer<Matrix4fStack> transformer) {
         renderable.prepare();
 
         // view matrix = position/rotation/scale of camera
@@ -45,12 +47,12 @@ public class RenderableDispatcher {
         if (transformer != null) transformer.accept(modelViewStack);
         renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
-        Matrix4f projectionMatrix = new Matrix4f().setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
+        Matrix4f projectionMatrix = ORTHOGRAPHIC_MATRIX.setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
         WikiRenderer.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
         WikiRenderer.setSortingMethod(projectionMatrix, modelViewStack);
 
         renderable.setupLighting();
-        renderable.emitVerticesThenDraw(modelViewStack, new PoseStack(), tickDelta);
+        renderable.emitVerticesThenDraw(renderScreen, modelViewStack, new PoseStack(), tickDelta);
         renderable.drawSubmittedRenderFeatures();
 
         WikiRenderer.endRenderableDraw();
@@ -62,12 +64,12 @@ public class RenderableDispatcher {
         lightTexture.updateLightTexture(1.0F);
     }
 
-    public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
-        return drawIntoImage(renderable, tickDelta, size, size, 1, crop, calibrationDataCallback);
+    public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
+        return drawIntoImage(renderScreen, renderable, tickDelta, size, size, 1, crop, calibrationDataCallback);
     }
 
-    public static CompletableFuture<NativeImage> drawIntoImage(Renderable<?> renderable, float tickDelta, int size, int targetSize, int iterations, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
-        GpuTexture texture = drawIntoTexture(renderable, tickDelta, size);
+    public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size, int targetSize, int iterations, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
+        GpuTexture texture = drawIntoTexture(renderScreen, renderable, tickDelta, size);
         CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).whenComplete((i, t) -> texture.close());
 
         boolean sideRendering = renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get();
@@ -114,7 +116,7 @@ public class RenderableDispatcher {
                     if (newSize > maxTextureSize) {
                         newSize = maxTextureSize;
                     }
-                    return drawIntoImage(renderable, tickDelta, newSize, targetSize, iterations + 1, smallEnoughToRescaleAgain, null).thenApply(ImageCropper::cropTransparent);
+                    return drawIntoImage(renderScreen, renderable, tickDelta, newSize, targetSize, iterations + 1, smallEnoughToRescaleAgain, null).thenApply(ImageCropper::cropTransparent);
                 }
             });
         }
@@ -122,7 +124,7 @@ public class RenderableDispatcher {
         return image;
     }
 
-    public static GpuTexture drawIntoTexture(Renderable<?> renderable, float tickDelta, int size) {
+    public static GpuTexture drawIntoTexture(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size) {
         TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
                 Objects.requireNonNull(target.getColorTexture()),
@@ -135,7 +137,7 @@ public class RenderableDispatcher {
         RenderSystem.outputColorTextureOverride = target.getColorTextureView();
         RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
 
-        RenderableDispatcher.drawIntoActiveFramebuffer(renderable, 1, tickDelta, null);
+        RenderableDispatcher.drawIntoActiveFramebuffer(renderScreen, renderable, 1, tickDelta, null);
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
@@ -148,7 +150,7 @@ public class RenderableDispatcher {
         return texture;
     }
 
-    public static RenderTarget drawIntoDuplicateFramebuffer(Renderable<?> renderable, float tickDelta, @Nullable Consumer<Matrix4fStack> transformer) {
+    public static RenderTarget drawIntoDuplicateFramebuffer(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, @Nullable Consumer<Matrix4fStack> transformer) {
         Window window = Minecraft.getInstance().getWindow();
         int width = window.getWidth();
         int height = window.getHeight();
@@ -173,7 +175,7 @@ public class RenderableDispatcher {
         RenderSystem.outputDepthTextureOverride = previewTarget.getDepthTextureView();
 
         float aspectRatio = width / (float) height;
-        RenderableDispatcher.drawIntoActiveFramebuffer(renderable, aspectRatio, tickDelta, transformer);
+        RenderableDispatcher.drawIntoActiveFramebuffer(renderScreen, renderable, aspectRatio, tickDelta, transformer);
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;

@@ -28,7 +28,7 @@ public class FFmpegSession implements AutoCloseable {
         this.width = width;
         this.height = height;
         this.buffer = ByteBuffer.allocateDirect(width * height * 4);
-        this.buffer.order(ByteOrder.nativeOrder()); // Ensure ints align with system memory
+        this.buffer.order(ByteOrder.nativeOrder());
 
         List<String> args = new ArrayList<>(List.of(
                 "ffmpeg",
@@ -39,10 +39,9 @@ public class FFmpegSession implements AutoCloseable {
                 "-framerate", String.valueOf(GlobalProperties.EXPORT_FRAMERATE.get()),
                 "-i", "-",
 
-                // MUCH faster for 5K resolution than x264
                 "-c:v", "prores_ks",
-                "-profile:v", "4",       // ProRes 4444 (Supports Alpha)
-                "-vendor", "apl0",       // Identifies as Apple ProRes
+                "-profile:v", "4",
+                "-vendor", "apl0",
                 "-bits_per_mb", "8000",
                 "-pix_fmt", "yuva444p10le",
 
@@ -86,6 +85,7 @@ public class FFmpegSession implements AutoCloseable {
     @Override
     public void close() throws Exception {
         if (channel != null) channel.close();
+        this.buffer.clear();
         if (process != null) {
             process.waitFor();
         }

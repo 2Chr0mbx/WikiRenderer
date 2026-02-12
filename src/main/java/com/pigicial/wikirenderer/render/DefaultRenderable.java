@@ -27,6 +27,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     public static final Frustum ALWAYS_TRUE_PARTICLE_FRUSTUM = new Frustum(new Matrix4f(), new Matrix4f());
 
     protected GpuBuffer lightingBuffer;
+    protected String customFileName = null;
 
     @Override
     public void setupLighting() {
@@ -67,11 +68,6 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     }
 
     @Override
-    public @Nullable String getDefaultCustomFileName() {
-        return null;
-    }
-
-    @Override
     public void dispose() {
         if (this.lightingBuffer != null) {
             this.lightingBuffer.close();
@@ -88,6 +84,16 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         // Draw all buffers
         Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
         Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
+    }
+
+    @Override
+    public @Nullable String getCustomFileName() {
+        return this.customFileName;
+    }
+
+    @Override
+    public void setCustomFileName(@Nullable String fileName) {
+        this.customFileName = fileName;
     }
 
     protected void drawParticles(Matrix4f transform, float tickDelta) {

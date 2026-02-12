@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.PropertyBundle;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.jetbrains.annotations.Nullable;
@@ -15,9 +16,11 @@ public interface Renderable<P extends PropertyBundle> {
 
     default void prepare() {}
 
+    default void onScreenHandle(RenderScreen screen) {}
+
     default void setupLighting() {}
 
-    void emitVerticesThenDraw(Matrix4fStack modelViewStack, PoseStack poseStack, float tickDelta);
+    void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack modelViewStack, PoseStack poseStack, float tickDelta);
 
     void drawSubmittedRenderFeatures();
 
@@ -34,7 +37,9 @@ public interface Renderable<P extends PropertyBundle> {
     ExportPathSpec getExportPath();
 
     @Nullable
-    String getDefaultCustomFileName();
+    String getCustomFileName();
+
+    void setCustomFileName(@Nullable String fileName);
 
     default int getExportResolution() {
         return getProperties().getExportResolution(this);

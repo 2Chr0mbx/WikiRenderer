@@ -1,14 +1,13 @@
 package com.pigicial.wikirenderer.render.batch;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.MultiBufferSource;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
 import java.util.List;
@@ -25,10 +24,11 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     private long lastRenderTime;
 
     private boolean batchActive;
+    private boolean firstAnimationStarted;
 
     private BatchRenderable(String source, List<R> delegates) {
         this.delegates = delegates;
-        this.reset();
+        this.reset(null);
 
         this.contentType = ExportPathSpec.exportRoot().resolve("batches/")
                 .relativize(FileIO.next(ExportPathSpec.exportRoot().resolve("batches/" + source + "/"))).toString();
@@ -59,18 +59,35 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
-        this.currentDelegate.emitVerticesThenDraw(matrix4fStack, matrices, tickDelta);
-
+    public void onScreenHandle(RenderScreen renderScreen) {
+        GlobalProperties.popupAnimationFiles = this.batchActive;
         if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && FileIO.taskCount() <= 5) {
-            ExportPathSpec exportPath = this.getExportPath();
-            RenderableDispatcher.drawIntoImage(this.currentDelegate, 0, this.getExportResolution(), this.shouldCrop(), null)
-                    .thenCompose(image -> FileIO.saveImage(image, exportPath).whenComplete((f, _t) -> image.close()));
 
-            this.currentIndex++;
-            this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
-            this.lastRenderTime = System.currentTimeMillis();
+            if (BatchPropertyBundle.EXPORT_AS_ANIMATIONS.get()) {
+                if (renderScreen.currentAnimationExportData == null) {
+                    if (!firstAnimationStarted) {
+                        firstAnimationStarted = true;
+                    } else {
+                        this.currentDelegate.dispose();
+                        this.currentIndex++;
+                        this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
+                        this.lastRenderTime = System.currentTimeMillis();
+                    }
+                    renderScreen.queueAnimationExport();
+                }
+            } else {
+                renderScreen.exportImage(false);
+                this.currentDelegate.dispose();
+                this.currentIndex++;
+                this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
+                this.lastRenderTime = System.currentTimeMillis();
+            }
         }
+    }
+
+    @Override
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+        this.currentDelegate.emitVerticesThenDraw(renderScreen, matrix4fStack, matrices, tickDelta);
     }
 
     @Override
@@ -93,11 +110,6 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         return this.currentDelegate.getParticleRestriction();
     }
 
-    @Override
-    public @Nullable String getDefaultCustomFileName() {
-        return null;
-    }
-
     protected void start() {
         this.batchActive = true;
         this.currentIndex = 0;
@@ -105,11 +117,26 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         this.renderDelay = Math.max((int) Math.pow(this.getExportResolution() / 1024f, 2) * 100L, 75);
     }
 
-    protected void reset() {
+    protected void reset(@Nullable RenderScreen screen) {
         this.batchActive = false;
         this.lastRenderTime = -1;
         this.currentIndex = -1;
         this.currentDelegate = this.delegates.getFirst();
+        this.firstAnimationStarted = false;
+
+        if (screen != null && screen.currentAnimationExportData != null) {
+            screen.currentAnimationExportData.close();
+            screen.currentAnimationExportData = null;
+        }
+    }
+
+    protected void increaseIndex() {
+        if (this.currentIndex >= this.delegates.size()) {
+            this.currentIndex = 0;
+        } else {
+            this.currentIndex++;
+        }
+        this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
     }
 
     @Override
@@ -120,6 +147,20 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     @Override
     public ExportPathSpec getExportPath() {
         return this.currentDelegate.getExportPath().relocate("batches/" + this.contentType);
+    }
+
+    @Override
+    public @Nullable String getCustomFileName() {
+        if (this.currentDelegate instanceof DynamicBatchLabelProvider provider && BatchPropertyBundle.fileNameFormatter != null) {
+            return provider.buildFileName(BatchPropertyBundle.fileNameFormatter);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void setCustomFileName(@Nullable String fileName) {
+        BatchPropertyBundle.fileNameFormatter = fileName;
     }
 
 }

@@ -5,7 +5,10 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
+import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.util.ItemNameUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -27,7 +30,10 @@ import net.minecraft.world.level.storage.TagValueInput;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
-public class BlockStateRenderable extends ItemBasedRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle> {
+import java.util.Collection;
+import java.util.List;
+
+public class BlockStateRenderable extends ItemBasedRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle>, DynamicBatchLabelProvider {
 
     public static final BlockStatePropertyBundle PROPERTIES = new BlockStatePropertyBundle();
 
@@ -70,8 +76,27 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
         return of(state, data);
     }
 
+    private static void prepareBlockEntity(BlockState state, BlockEntity blockEntity, @Nullable CompoundTag nbt) {
+        if (blockEntity == null) return;
+        if (Minecraft.getInstance().level == null) return;
+
+        ((BlockEntityAccessor) blockEntity).wikirenderer$setBlockState(state);
+        blockEntity.setLevel(Minecraft.getInstance().level);
+
+        if (nbt == null) return;
+
+        CompoundTag nbtCopy = nbt.copy();
+
+        nbtCopy.putInt("x", 0);
+        nbtCopy.putInt("y", 0);
+        nbtCopy.putInt("z", 0);
+        try (ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(blockEntity.problemPath(), WikiRenderer.LOGGER)) {
+            blockEntity.loadWithComponents(TagValueInput.create(logging, blockEntity.getLevel().registryAccess(), nbtCopy));
+        }
+    }
+
     @Override
-    public void emitVerticesThenDraw(Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         matrices.pushPose();
         matrices.translate(-0.5, -0.5, -0.5);
 
@@ -135,22 +160,16 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
         );
     }
 
-    private static void prepareBlockEntity(BlockState state, BlockEntity blockEntity, @Nullable CompoundTag nbt) {
-        if (blockEntity == null) return;
-        if (Minecraft.getInstance().level == null) return;
+    @Override
+    public String buildFileName(String preset) {
+        String id = BuiltInRegistries.BLOCK.getKey(this.state.getBlock()).getPath();
+        String name = this.state.getBlock().getName().toString();
+        return preset.replace("%block_id%", id).replace("%name%", name);
 
-        ((BlockEntityAccessor) blockEntity).wikirenderer$setBlockState(state);
-        blockEntity.setLevel(Minecraft.getInstance().level);
+    }
 
-        if (nbt == null) return;
-
-        CompoundTag nbtCopy = nbt.copy();
-
-        nbtCopy.putInt("x", 0);
-        nbtCopy.putInt("y", 0);
-        nbtCopy.putInt("z", 0);
-		try (ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(blockEntity.problemPath(), WikiRenderer.LOGGER)) {
-			blockEntity.loadWithComponents(TagValueInput.create(logging, blockEntity.getLevel().registryAccess(), nbtCopy));
-		}
+    @Override
+    public Collection<String> buildPresetExamples() {
+        return List.of("label_example.block_id", "label_example.block_name");
     }
 }

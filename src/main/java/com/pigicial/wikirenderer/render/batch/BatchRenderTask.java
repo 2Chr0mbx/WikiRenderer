@@ -22,6 +22,7 @@ public enum BatchRenderTask {
             BatchRenderable.of(
                     source + "/items",
                     renderables.stream()
+                            .filter(item -> !item.isEmpty())
                             .map(ItemRenderable::new)
                             .toList()
             )
@@ -30,6 +31,7 @@ public enum BatchRenderTask {
             BatchRenderable.of(
                     source + "/tooltips",
                     renderables.stream()
+                            .filter(item -> !item.isEmpty())
                             .map(TooltipRenderable::new)
                             .toList()
             )
@@ -38,6 +40,7 @@ public enum BatchRenderTask {
             BatchRenderable.of(
                     source + "/blocks",
                     renderables.stream()
+                            .filter(item -> !item.isEmpty())
                             .filter(stack -> stack.getItem() instanceof BlockItem)
                             .map(stack -> ((BlockItem) stack.getItem()).getBlock())
                             .map(BlockStateRenderable::of)

@@ -50,7 +50,7 @@ public interface PropertyBundle {
             container.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
                 screen.notify(Translate.gui("copied_to_clipboard"));
 
-                RenderableDispatcher.drawIntoImage(renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
+                RenderableDispatcher.drawIntoImage(screen, renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
                         .whenComplete((image, t) -> {
                             try (image) {
                                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -85,9 +85,9 @@ public interface PropertyBundle {
     }
 
     default void buildFileNameGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        screen.fileNameField = WikiRendererUI.labelledTextField(container, screen.customFileName, "file_name", Sizing.fixed(120));
+        screen.fileNameField = WikiRendererUI.labelledTextField(container, renderable.getCustomFileName(), "file_name", Sizing.fixed(120));
         screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
-        screen.fileNameField.setResponder(s -> screen.customFileName = s);
+        screen.fileNameField.setResponder(renderable::setCustomFileName);
     }
 
     void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack);
