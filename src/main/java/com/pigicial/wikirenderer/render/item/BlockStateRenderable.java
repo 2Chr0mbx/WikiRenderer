@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.item;
 
+import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
@@ -8,6 +9,8 @@ import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
+import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -17,22 +20,28 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.PlayerHeadBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-public class BlockStateRenderable extends ItemBasedRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle>, DynamicBatchLabelProvider {
+public class BlockStateRenderable extends ItemBasedRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle>, DynamicBatchLabelProvider, TextureDataProvider {
 
     public static final BlockStatePropertyBundle PROPERTIES = new BlockStatePropertyBundle();
 
@@ -169,5 +178,20 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     @Override
     public Collection<String> buildPresetExamples() {
         return List.of("label_example.block_id", "label_example.block_name");
+    }
+
+    @Override
+    public @NotNull Map<String, MinecraftTexturesPayload> getTextureData() {
+        Map<String, MinecraftTexturesPayload> textureData = new LinkedHashMap<>();
+        if (this.blockEntity instanceof SkullBlockEntity skullBlockEntity) {
+            ResolvableProfile profile = skullBlockEntity.getOwnerProfile();
+            if (profile != null) {
+                MinecraftTexturesPayload texture = PlayerTextureUtils.getGameProfileTextureData(profile.partialProfile());
+                if (texture != null) {
+                    textureData.put("block", texture);
+                }
+            }
+        }
+        return textureData;
     }
 }

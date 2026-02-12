@@ -129,8 +129,6 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.intControl(container, this.spriteRotation, "rotation", 45);
             WikiRendererUI.intControl(container, this.spriteSlant, "slant", 30);
         }
-
-        WikiRendererUI.sectionHeader(container, "presets", true);
         if (!this.spriteRendering.get()) {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
                 builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {

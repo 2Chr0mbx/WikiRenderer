@@ -104,6 +104,7 @@
   "gui.wikirenderer.player_textures": "Player Textures",
   "gui.wikirenderer.texture_context.item": "Item",
   "gui.wikirenderer.texture_context.player": "Player",
+  "gui.wikirenderer.texture_context.block": "Block",
   "gui.wikirenderer.texture_context.mainhand": "Main Hand",
   "gui.wikirenderer.texture_context.offhand": "Off Hand",
   "gui.wikirenderer.texture_context.feet": "Boots",
