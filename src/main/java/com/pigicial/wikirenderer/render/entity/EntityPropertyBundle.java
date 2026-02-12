@@ -19,6 +19,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
+import org.lwjgl.util.freetype.FreeType;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -100,6 +101,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     }
 
     @Override
+    public boolean supportsAutomaticRotations() {
+        return !this.spriteRendering.get();
+    }
+
+    @Override
     public void buildMainGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         EntityRenderable renderable = (EntityRenderable) r;
 
@@ -119,7 +125,6 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.intControl(container, this.rotation, "rotation", 45);
             WikiRendererUI.doubleControl(container, this.slant, "slant", 30);
             WikiRendererUI.intControl(container, this.rotationSpeed, "rotation_speed", 5);
-            WikiRendererUI.booleanControl(container, syncRotationToAnimation, "sync_rotation_to_animation_timings");
         } else {
             WikiRendererUI.intControl(container, this.spriteRotation, "rotation", 45);
             WikiRendererUI.intControl(container, this.spriteSlant, "slant", 30);

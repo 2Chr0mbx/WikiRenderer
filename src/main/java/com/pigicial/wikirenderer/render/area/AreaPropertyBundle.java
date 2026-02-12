@@ -143,6 +143,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     @Override
+    public boolean supportsAutomaticRotations() {
+        return !this.perPixel90DegreeRendering.get();
+    }
+
+    @Override
     public void buildMainGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         AreaRenderable renderable = (AreaRenderable) r;
         WikiRendererUI.sectionHeader(container, "transform_options", false);
@@ -173,7 +178,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.intControl(container, rotation, "rotation", 45);
             WikiRendererUI.doubleControl(container, slant, "slant", 30);
             WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
-            WikiRendererUI.booleanControl(container, syncRotationToAnimation, "sync_rotation_to_animation_timings");
 
             container.child(UIComponents.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
                         this.xOffset.setToDefault();

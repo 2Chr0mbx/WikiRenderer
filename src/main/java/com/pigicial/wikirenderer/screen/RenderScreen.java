@@ -17,7 +17,6 @@ import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
-import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
@@ -286,6 +285,15 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             WikiRendererUI.booleanControl(rightColumn, animatedCropProperty, "crop");
         }
 
+        WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMES, "animation_frames", Sizing.fixed(30));
+        WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMERATE, "animation_framerate", Sizing.fixed(30));
+
+        if (renderable.getProperties() instanceof DefaultPropertyBundle defaultBundle) {
+            if (defaultBundle.supportsAutomaticRotations()) {
+                WikiRendererUI.booleanControl(rightColumn, SYNC_ROTATION_TO_ANIMATION, "sync_rotation_to_animation");
+            }
+        }
+
         WikiRendererUI.booleanControl(rightColumn, SPEED_UP_ENCHANTMENT_GLINTS, "speed_up_enchantment_glints");
         SPEED_UP_ENCHANTMENT_GLINTS.futureListen((p, v) -> guiRebuildScheduled = true);
 
@@ -299,9 +307,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         WikiRendererUI.booleanControl(rightColumn, SYNC_ENCHANTMENT_GLINTS_TO_EXPORT, "sync_and_speed_up_glint_rendering");
-
-        WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMES, "animation_frames", Sizing.fixed(30));
-        WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMERATE, "animation_framerate", Sizing.fixed(30));
+        WikiRendererUI.booleanControl(rightColumn, SET_ANIMATION_FPS_CAP, "render_with_game_timings");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(rightColumn)) {
             this.exportAnimationButton = UIComponents.button(Translate.gui("export_animation"), button -> this.queueAnimationExport());
@@ -360,7 +366,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.currentAnimationExportData = animationHandlingMode.createAnimationHandler(this, renderable);
             WikiRenderer.currentAnimationHandler = this.currentAnimationExportData;
 
-            if (!SYNC_ENCHANTMENT_GLINTS_TO_EXPORT.get()) {
+            if (SET_ANIMATION_FPS_CAP.get()) {
                 this.minecraft.getFramerateLimitTracker().setFramerateLimit(EXPORT_FRAMERATE.get());
             }
             WikiRenderer.skipWorldRender = true;
@@ -497,7 +503,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private void renderOrExportAnimationIfNecessary(float effectiveTickDelta) {
         if (this.currentAnimationExportData != null) {
-            if (SYNC_ENCHANTMENT_GLINTS_TO_EXPORT.get()) {
+            if (!SET_ANIMATION_FPS_CAP.get()) {
                 // overrides tabbing out lowering the fps cap
                 FramerateLimitTracker framerateLimitTracker = Minecraft.getInstance().getFramerateLimitTracker();
                 framerateLimitTracker.setFramerateLimit(Minecraft.getInstance().options.framerateLimit().get());

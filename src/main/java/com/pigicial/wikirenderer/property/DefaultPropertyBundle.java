@@ -24,7 +24,6 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public final IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
 
     public final IntProperty rotationSpeed = IntProperty.of(0, 0, 720);
-    public final Property<Boolean> syncRotationToAnimation = Property.of(false);
     public float rotationOffset = 0;
     public boolean rotationOffsetUpdated = false;
 
@@ -69,6 +68,10 @@ public class DefaultPropertyBundle implements PropertyBundle {
         this.slant.modify(amount);
     }
 
+    public boolean supportsAutomaticRotations() {
+        return false;
+    }
+
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.sectionHeader(container, "transform_options", false);
@@ -76,7 +79,6 @@ public class DefaultPropertyBundle implements PropertyBundle {
         WikiRendererUI.intControl(container, rotation, "rotation", 45);
         WikiRendererUI.doubleControl(container, slant, "slant", 30);
         WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
-        WikiRendererUI.booleanControl(container, syncRotationToAnimation, "sync_rotation_to_animation_timings");
 
         WikiRendererUI.sectionHeader(container, "presets", true);
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
@@ -110,7 +112,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
         }
 
         if (!this.rotationOffsetUpdated) {
-            if (!this.syncRotationToAnimation.get()) {
+            if (!GlobalProperties.SYNC_ROTATION_TO_ANIMATION.get()) {
                 this.rotationOffset += Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() * this.rotationSpeed.get() * .05f;
                 this.rotationOffsetUpdated = true;
             } else {
