@@ -37,15 +37,8 @@ public class ChunkScannedMeshBounds implements MeshBounds {
 
     @Override
     public boolean isInBounds(BlockPos pos) {
-        if (pos.getY() > maxY || pos.getY() < minY) return false;
-
-        // todo: this might not be the best for performance
-        for (HorizontalMiniChunk miniChunk : chunksToGrabBlocksFrom) {
-            if (miniChunk.isBlockInThisMesh(pos.getX(), pos.getZ())) {
-                return true;
-            }
-        }
-        return false;
+        return this.minX <= pos.getX() && this.minY <= pos.getY() && this.minZ <= pos.getZ()
+               && this.maxX >= pos.getX() && this.maxY >= pos.getY() && this.maxZ >= pos.getZ();
     }
 
     @Override
