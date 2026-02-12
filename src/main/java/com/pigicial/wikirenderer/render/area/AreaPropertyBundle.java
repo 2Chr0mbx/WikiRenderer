@@ -440,8 +440,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             modelViewStack.translate(this.xOffset.get() / 2600f, this.yOffset.get() / -2600f, 0);
 
             modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
-            modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
-            this.updateAndApplyRotationOffset(renderable, modelViewStack);
+            modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get() + this.updateAndGetSpinningRotationOffset()));
         }
     }
 }

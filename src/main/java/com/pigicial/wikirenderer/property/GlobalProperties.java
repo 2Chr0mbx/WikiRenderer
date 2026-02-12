@@ -20,5 +20,4 @@ public class GlobalProperties {
     public static final IntProperty EXPORT_FRAMES = IntProperty.of(50, 1, 5000);
     public static AnimationHandlingMode animationHandlingMode = AnimationHandlingMode.DISK_INSTANT_SAVE;
     public static FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
-    public static boolean popupAnimationFiles = true;
 }

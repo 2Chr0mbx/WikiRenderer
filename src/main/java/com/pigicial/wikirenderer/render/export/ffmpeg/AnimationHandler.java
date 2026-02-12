@@ -82,13 +82,11 @@ public abstract class AnimationHandler implements AutoCloseable {
         this.collectedCropData.clear();
         WikiRenderer.currentAnimationHandler = null;
 
-        if (GlobalProperties.popupAnimationFiles) {
-            Minecraft.getInstance().execute(() -> screen.notify(
-                    () -> Util.getPlatform().openFile(animationFile),
-                    Translate.gui("animation_saved"),
-                    Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
-            ));
-        }
+        Minecraft.getInstance().execute(() -> screen.notify(
+                () -> Util.getPlatform().openFile(animationFile),
+                Translate.gui("animation_saved"),
+                Component.literal(ExportPathSpec.exportRoot().relativize(animationFile.toPath()).toString())
+        ));
     }
 
     public boolean isFinished() {

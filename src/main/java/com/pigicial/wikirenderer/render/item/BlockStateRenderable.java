@@ -3,12 +3,11 @@ package com.pigicial.wikirenderer.render.item;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
-import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
+import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
-import com.pigicial.wikirenderer.util.ItemNameUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -163,9 +162,8 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     @Override
     public String buildFileName(String preset) {
         String id = BuiltInRegistries.BLOCK.getKey(this.state.getBlock()).getPath();
-        String name = this.state.getBlock().getName().toString();
-        return preset.replace("%block_id%", id).replace("%name%", name);
-
+        String name = this.state.getBlock().asItem().getName().getString();
+        return preset.replace("%id%", id).replace("%name%", name);
     }
 
     @Override

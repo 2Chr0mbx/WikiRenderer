@@ -29,6 +29,10 @@ public interface PropertyBundle {
 
     void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container);
 
+    default void onRenderStart() {
+
+    }
+
     default void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
 
     }

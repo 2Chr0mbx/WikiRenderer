@@ -2,7 +2,6 @@ package com.pigicial.wikirenderer.property;
 
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.render.ClientRenderCallback;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
 import com.pigicial.wikirenderer.screen.RenderScreen;
@@ -27,12 +26,13 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public final IntProperty rotationSpeed = IntProperty.of(0, 0, 720);
     public final Property<Boolean> syncRotationToAnimation = Property.of(false);
     public float rotationOffset = 0;
-    protected boolean rotationOffsetUpdated = false;
+    public boolean rotationOffsetUpdated = false;
 
     private int exportResolution = this.getDefaultExportResolution();
 
-    public DefaultPropertyBundle() {
-        ClientRenderCallback.EVENT.register(client -> this.rotationOffsetUpdated = false);
+    @Override
+    public void onRenderStart() {
+        this.rotationOffsetUpdated = false;
     }
 
     protected double getDefaultSlant() {
@@ -100,15 +100,13 @@ public class DefaultPropertyBundle implements PropertyBundle {
         modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
 
         modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
-        modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
-
-        this.updateAndApplyRotationOffset(renderable, modelViewStack);
+        modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get() + this.updateAndGetSpinningRotationOffset()));
     }
 
-    protected void updateAndApplyRotationOffset(Renderable<?> renderable, Matrix4fStack modelViewStack) {
+    public float updateAndGetSpinningRotationOffset() {
         if (rotationSpeed.get() == 0) {
             this.rotationOffset = 0;
-            return;
+            return 0;
         }
 
         if (!this.rotationOffsetUpdated) {
@@ -130,6 +128,6 @@ public class DefaultPropertyBundle implements PropertyBundle {
             }
         }
 
-        modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotationOffset));
+        return rotationOffset;
     }
 }

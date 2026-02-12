@@ -26,10 +26,7 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GlobalSettingsUniform;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -99,6 +96,11 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         MeshBounds bounds = new ChunkScannedMeshBounds(scanResult);
         WorldBlockMesh mesh = new WorldBlockMesh(Minecraft.getInstance().level, bounds);
         return new AreaRenderable(mesh);
+    }
+
+    @Override
+    public boolean usesWorldLightMap() {
+        return true;
     }
 
     @Override

@@ -61,7 +61,13 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         }
         RenderSystem.setShaderLights(this.lightingBuffer.slice());
 
+        if (this.usesWorldLightMap()) {
+            this.updateWorldLightmap();
+        }
+    }
 
+    protected void updateWorldLightmap() {
+        // block lighting / general light map, not light direction (which is handled above)
         LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
         ((LightTextureAccessor) lightTexture).wikirenderer$setUpdateLightTexture(true);
         lightTexture.updateLightTexture(1.0F);
@@ -74,9 +80,9 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
             this.lightingBuffer = null;
         }
 
-        LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
-        ((LightTextureAccessor) lightTexture).wikirenderer$setUpdateLightTexture(true);
-        lightTexture.updateLightTexture(1.0F);
+        if (this.usesWorldLightMap()) {
+            this.updateWorldLightmap();
+        }
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.pigicial.wikirenderer.render.batch;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
@@ -14,6 +13,7 @@ import java.util.List;
 
 public class BatchRenderable<R extends Renderable<?>> implements Renderable<BatchPropertyBundle> {
 
+    private final BatchPropertyBundle properties;
     protected final List<R> delegates;
     private final String contentType;
 
@@ -29,10 +29,12 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     private BatchRenderable(String source, List<R> delegates) {
         this.delegates = delegates;
         this.reset(null);
+        this.properties = new BatchPropertyBundle(this, this.currentDelegate.getProperties()); // properties is the same regardless of the index
 
         this.contentType = ExportPathSpec.exportRoot().resolve("batches/")
                 .relativize(FileIO.next(ExportPathSpec.exportRoot().resolve("batches/" + source + "/"))).toString();
         this.renderDelay = Math.max((int) Math.pow(getProperties().getExportResolution(this.currentDelegate) / 1024f, 2) * 100L, 75);
+
     }
 
     public static <R extends Renderable<?>> BatchRenderable<?> of(String source, List<R> delegates) {
@@ -41,11 +43,6 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         } else {
             return new BatchRenderable<>(source, delegates);
         }
-    }
-
-    @Override
-    public int getExportResolution() {
-        return this.currentDelegate.getExportResolution();
     }
 
     @Override
@@ -60,7 +57,6 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
 
     @Override
     public void onScreenHandle(RenderScreen renderScreen) {
-        GlobalProperties.popupAnimationFiles = this.batchActive;
         if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && FileIO.taskCount() <= 5) {
 
             if (BatchPropertyBundle.EXPORT_AS_ANIMATIONS.get()) {
@@ -141,7 +137,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
 
     @Override
     public BatchPropertyBundle getProperties() {
-        return new BatchPropertyBundle(this.currentDelegate, this.currentDelegate.getProperties());
+        return this.properties;
     }
 
     @Override

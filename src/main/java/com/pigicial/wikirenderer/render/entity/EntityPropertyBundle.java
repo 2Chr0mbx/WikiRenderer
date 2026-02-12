@@ -206,17 +206,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             modelViewStack.rotate(Axis.YP.rotationDegrees(this.spriteRotation.get()));
         } else {
             modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
-            modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get()));
-        }
-
-
-        this.updateAndApplyRotationOffset(renderable, modelViewStack);
-    }
-
-    @Override
-    protected void updateAndApplyRotationOffset(Renderable<?> renderable, Matrix4fStack modelViewStack) {
-        if (!this.spriteRendering.get()) {
-            super.updateAndApplyRotationOffset(renderable, modelViewStack);
+            modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get() + this.updateAndGetSpinningRotationOffset()));
         }
     }
 

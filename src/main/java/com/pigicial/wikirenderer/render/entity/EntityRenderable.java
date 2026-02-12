@@ -10,20 +10,19 @@ import com.pigicial.wikirenderer.mixin.access.ClientMannequinAccessor;
 import com.pigicial.wikirenderer.mixin.access.ElytraAnimationStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
+import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
+import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.entity.player.ProfileFetchMode;
 import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
-import com.pigicial.wikirenderer.render.CameraOrientationUtil;
-import com.pigicial.wikirenderer.render.export.ExportPathSpec;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -49,7 +48,6 @@ import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 
@@ -361,6 +359,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         } else {
             super.setupLighting();
         }
+    }
+
+    @Override
+    public boolean usesWorldLightMap() {
+        return true;
     }
 
     private static void applyToEntityAndPassengers(Entity entity, Consumer<Entity> action) {

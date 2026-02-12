@@ -25,25 +25,27 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
     public static final Property<Boolean> EXPORT_AS_ANIMATIONS = Property.of(false);
     public static String fileNameFormatter = "%name%";
 
-    private final Renderable<?> renderable;
-    private final PropertyBundle delegate;
+    private final BatchRenderable<?> batchRenderable;
+    private final PropertyBundle actualProperties;
 
-    public BatchPropertyBundle(Renderable<?> renderable, PropertyBundle delegate) {
-        this.renderable = renderable;
-        this.delegate = delegate;
+    public BatchPropertyBundle(BatchRenderable<?> batchRenderable, PropertyBundle actualProperties) {
+        this.batchRenderable = batchRenderable;
+        this.actualProperties = actualProperties;
 
         // A bit ugly, but we copy all property values from the delegate and hook
         // the delegate onto our properties - this makes sure we don't always reset
         // the properties and that the mouse and keyboard controls actually affect the delegate
-        if (this.delegate instanceof DefaultPropertyBundle clonedFrom) {
+        if (this.actualProperties instanceof DefaultPropertyBundle clonedFrom) {
             this.scale.copyFrom(clonedFrom.scale);
             this.rotation.copyFrom(clonedFrom.rotation);
+            this.rotationSpeed.copyFrom(clonedFrom.rotationSpeed);
             this.slant.copyFrom(clonedFrom.slant);
             this.xOffset.copyFrom(clonedFrom.xOffset);
             this.yOffset.copyFrom(clonedFrom.yOffset);
 
             this.scale.instantListen(clonedFrom.scale);
             this.rotation.instantListen(clonedFrom.rotation);
+            this.rotationSpeed.instantListen(clonedFrom.rotationSpeed);
             this.slant.instantListen(clonedFrom.slant);
             this.xOffset.instantListen(clonedFrom.xOffset);
             this.yOffset.instantListen(clonedFrom.yOffset);
@@ -51,10 +53,30 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
     }
 
     @Override
+    public void onRenderStart() {
+        this.actualProperties.onRenderStart();
+    }
+
+    @Override
+    public void applyToViewMatrix(Renderable<?> ignored, Matrix4fStack modelViewStack) {
+        this.actualProperties.applyToViewMatrix(this.batchRenderable.currentDelegate, modelViewStack);
+    }
+
+    @Override
+    public float updateAndGetSpinningRotationOffset() {
+        if (this.batchRenderable.currentDelegate instanceof DefaultPropertyBundle delegateProperties) {
+            this.rotationOffset = delegateProperties.updateAndGetSpinningRotationOffset();
+            return this.rotationOffset;
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
 
-        this.delegate.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
+        this.actualProperties.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
 
         WikiRendererUI.sectionHeader(container, "batch.controls", true);
         WikiRendererUI.booleanControl(container, EXPORT_AS_ANIMATIONS, "batch.export_as_animations");
@@ -80,29 +102,29 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
     }
 
     @Override
-    public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
-        this.delegate.applyToViewMatrix(this.renderable, modelViewStack);
+    public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        this.actualProperties.buildRenderOptionGUIControls(renderable, screen, container);
     }
 
     @Override
-    public int getExportResolution(Renderable<?> renderable) {
-        if (this.renderable instanceof ItemRenderable itemRenderable) {
+    public int getExportResolution(Renderable<?> ignored) {
+        if (this.batchRenderable.currentDelegate instanceof ItemRenderable itemRenderable) {
             if (itemRenderable.stack.is(Items.PLAYER_HEAD)) {
                 return PLAYER_HEAD_RESOLUTION_PROPERTY.get();
             } else {
                 return ITEM_RESOLUTION_PROPERTY.get();
             }
         }
-        return super.getExportResolution(this.renderable);
+        return super.getExportResolution(this.batchRenderable); // this.batchRenderable is not needed here really
     }
 
     @Override
     public void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        if (this.renderable instanceof ItemRenderable) {
+        if (this.batchRenderable.currentDelegate instanceof ItemRenderable) {
             WikiRendererUI.labelledTextField(container, ITEM_RESOLUTION_PROPERTY, "item_resolution", Sizing.fixed(50));
             WikiRendererUI.labelledTextField(container, PLAYER_HEAD_RESOLUTION_PROPERTY, "player_head_resolution", Sizing.fixed(50));
         } else {
-            super.buildExportResolutionGUIControls(this.renderable, screen, container);
+            super.buildExportResolutionGUIControls(this.batchRenderable.currentDelegate, screen, container);
         }
     }
 
@@ -113,7 +135,7 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
         screen.fileNameField.setResponder(renderable::setCustomFileName);
 
         BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
-        if (!batchRenderable.delegates.isEmpty() && this.renderable instanceof DynamicBatchLabelProvider labelProvider) {
+        if (!batchRenderable.delegates.isEmpty() && this.batchRenderable.currentDelegate instanceof DynamicBatchLabelProvider labelProvider) {
             WikiRendererUI.sectionHeader(container, "batch.label_presets", 10);
             for (String exampleKey : labelProvider.buildPresetExamples()) {
                 WikiRendererUI.sectionHeader(container, exampleKey, false);
