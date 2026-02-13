@@ -16,11 +16,13 @@ import java.util.Objects;
 @Mixin(MapRenderer.class)
 public class MapRendererMixin {
 
+
     @Redirect(
             method = "render",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/rendertype/RenderTypes;text(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/rendertype/RenderType;"
+                    target = "Lnet/minecraft/client/renderer/rendertype/RenderTypes;text(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/rendertype/RenderType;",
+                    ordinal = 0
             )
     )
     private RenderType useMaxBrightnessMap(Identifier identifier, MapRenderState mapRenderState) {
