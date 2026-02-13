@@ -69,7 +69,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     }
 
     public boolean supportsAutomaticRotations() {
-        return false;
+        return true;
     }
 
     @Override
