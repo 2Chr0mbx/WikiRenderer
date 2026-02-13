@@ -70,12 +70,16 @@ public class MeshWorldOverrides implements BlockAndTintGetter {
 
     @Override
     public int getBrightness(@NonNull LightLayer type, @NonNull BlockPos pos) {
-        return BlockAndTintGetter.super.getBrightness(type, pos);
+        return this.contains(pos)
+                ? BlockAndTintGetter.super.getBrightness(type, pos)
+                : type == LightLayer.SKY ? 15 : 0;
     }
 
     @Override
     public int getRawBrightness(@NonNull BlockPos pos, int ambientDarkness) {
-        return BlockAndTintGetter.super.getRawBrightness(pos, ambientDarkness);
+        return this.contains(pos)
+                ? BlockAndTintGetter.super.getRawBrightness(pos, ambientDarkness)
+                : 15;
     }
 
     @Override
