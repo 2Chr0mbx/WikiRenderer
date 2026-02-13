@@ -13,6 +13,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.LightTextureAccessor;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
@@ -126,9 +127,10 @@ public class RenderableDispatcher {
 
     public static GpuTexture drawIntoTexture(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size) {
         TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
+        int backgroundColor = GlobalProperties.SHOW_BACKGROUND_COLOR_IN_EXPORTS.get() ? GlobalProperties.backgroundColor : 0;
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
                 Objects.requireNonNull(target.getColorTexture()),
-                0,
+                backgroundColor,
                 Objects.requireNonNull(target.getDepthTexture()),
                 1.0
         );
@@ -163,9 +165,10 @@ public class RenderableDispatcher {
             }
         }
 
+        int backgroundColor = GlobalProperties.SHOW_BACKGROUND_COLOR_IN_EXPORTS.get() ? GlobalProperties.backgroundColor : 0;
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
                 Objects.requireNonNull(previewTarget.getColorTexture()),
-                0,
+                backgroundColor,
                 Objects.requireNonNull(previewTarget.getDepthTexture()),
                 1.0
         );

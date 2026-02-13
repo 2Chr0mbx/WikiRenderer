@@ -31,6 +31,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
+import io.wispforest.owo.ui.util.FocusHandler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.CameraType;
@@ -247,12 +248,18 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private void buildBackgroundColorGUIControls() {
         EditBox colorField = WikiRendererUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
         colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
-        colorField.setValue("#" + String.format("%02X", backgroundColor >> 16) + String.format("%02X", backgroundColor >> 8 & 0xFF) + String.format("%02X", backgroundColor & 0xFF));
+        colorField.setValue(String.format("#%06X", backgroundColor & 0xFFFFFF));
         colorField.moveCursorToStart(false);
         colorField.setResponder(s -> {
-            if (s.substring(1).length() < 6) return;
-            backgroundColor = Integer.parseInt(s.substring(1), 16);
+            String text = s.startsWith("#") ? s.substring(1) : s;
+            if (text.length() < 6) {
+                return;
+            }
+
+            backgroundColor = Integer.parseInt(s.substring(1), 16) | 0xFF000000;
         });
+
+        WikiRendererUI.booleanControl(rightColumn, SHOW_BACKGROUND_COLOR_IN_EXPORTS, "show_background_color_in_exports");
     }
 
     private void buildFFmpegSection() {
@@ -613,9 +620,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         } else if (keyCode == GLFW.GLFW_KEY_F10) {
             this.drawOnlyBackground = !this.drawOnlyBackground;
         } else if (KEYBOARD_CONTROLS.containsKey(keyCode) && this.renderable instanceof DefaultRenderable) {
-            if (fileNameField != null && fileNameField.isFocused()) {
+            FocusHandler focusHandler = this.uiAdapter.rootComponent.focusHandler();
+            if (focusHandler != null && focusHandler.focused() instanceof EditBox) {
                 return true;
             }
+
             KEYBOARD_CONTROLS.get(keyCode).accept((DefaultPropertyBundle) this.renderable.getProperties());
         }
 

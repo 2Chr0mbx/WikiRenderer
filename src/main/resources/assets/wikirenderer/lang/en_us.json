@@ -160,6 +160,7 @@
 
   "gui.wikirenderer.render_options": "Render Options",
   "gui.wikirenderer.background_color": "Background Color (F10)",
+  "gui.wikirenderer.show_background_color_in_exports": "Show Background Colors in Exports",
   "gui.wikirenderer.export_options": "Export Options",
   "gui.wikirenderer.renderer_resolution": "Resolution",
   "gui.wikirenderer.renderer_resolution_rescale_vertical": "Resolution (Target Height)",

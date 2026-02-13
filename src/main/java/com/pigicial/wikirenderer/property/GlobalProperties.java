@@ -5,6 +5,7 @@ import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
 
 public class GlobalProperties {
 
+    public static final Property<Boolean> SHOW_BACKGROUND_COLOR_IN_EXPORTS = Property.of(false);
     public static int backgroundColor = 0x000000;
 
     public static final Property<Boolean> UNSAFE = Property.of(false);
