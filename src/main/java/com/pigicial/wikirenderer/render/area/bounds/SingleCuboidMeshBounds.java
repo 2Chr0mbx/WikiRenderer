@@ -70,13 +70,16 @@ public class SingleCuboidMeshBounds implements ExpandableMeshBounds {
         this.recalculateCorners();
     }
 
+    // theres probably a better way to do this but whatever
     private void recalculateCorners() {
-        int x1 = Math.min(min.getX(), max.getX());
-        int x2 = Math.max(min.getX(), max.getX());
-        int z1 = Math.min(min.getZ(), max.getZ());
-        int z2 = Math.max(min.getZ(), max.getZ());
+        int minX = Math.min(min.getX(), max.getX());
+        int maxX = Math.max(min.getX(), max.getX());
+        int minY = Math.min(min.getY(), max.getY());
+        int maxY = Math.max(min.getY(), max.getY());
+        int minZ = Math.min(min.getZ(), max.getZ());
+        int maxZ = Math.max(min.getZ(), max.getZ());
 
-        this.min = new BlockPos(x1, min.getY(), z1);
-        this.max = new BlockPos(x2, max.getY(), z2);
+        this.min = new BlockPos(minX, minY, minZ);
+        this.max = new BlockPos(maxX, maxY, maxZ);
     }
 }
