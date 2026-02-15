@@ -33,6 +33,7 @@ import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Rotations;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -258,6 +259,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 livingEntityRenderState.bodyRot = (properties.entityRotation.get() + 180); // 180 makes it face the camera by default in the isometric preset (i think)
                 livingEntityRenderState.xRot = properties.pitch.get();
                 livingEntityRenderState.yRot = properties.yaw.get();
+            }
+            if (state instanceof ArmorStandRenderState armorStandRenderState) {
+                armorStandRenderState.headPose = new Rotations(properties.pitch.get(), properties.yaw.get(), 0);
             }
         }
 

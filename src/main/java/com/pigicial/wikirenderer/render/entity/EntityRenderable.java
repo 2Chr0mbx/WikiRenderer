@@ -31,6 +31,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.core.Rotations;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -263,6 +264,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             livingState.yRot = properties.yaw.get();
             livingState.xRot = properties.pitch.get();
             livingState.bodyRot = properties.entityRotation.get();
+        }
+
+        if (state instanceof ArmorStandRenderState armorStandRenderState) {
+            armorStandRenderState.headPose = new Rotations(properties.pitch.get(), properties.yaw.get(), 0);
         }
 
         // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
