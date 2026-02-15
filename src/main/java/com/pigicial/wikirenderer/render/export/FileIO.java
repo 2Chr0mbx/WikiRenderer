@@ -1,8 +1,8 @@
 package com.pigicial.wikirenderer.render.export;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
-import com.mojang.blaze3d.platform.NativeImage;
 import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.network.chat.Component;
 

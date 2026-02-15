@@ -11,12 +11,14 @@
     "FramerateLimitTrackerMixin",
     "GuiGraphicsMixin",
     "GuiRendererMixin",
+    "ItemStackMixin",
     "MinecraftMixin",
     "TextureTransformMixin",
     "access.AbstractContainerScreenAccessor",
     "access.AbstractSliderButtonInvoker",
     "access.BlockEntityAccessor",
     "access.BlockInputAccessor",
+    "access.ElytraAnimationStateAccessor",
     "access.CameraInvoker",
     "access.ClientMannequinAccessor",
     "access.CreativeModeInventoryScreenAccessor",
@@ -54,9 +56,5 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "ItemStackMixin",
-    "access.ElytraAnimationStateAccessor"
-  ]
+  }
 }

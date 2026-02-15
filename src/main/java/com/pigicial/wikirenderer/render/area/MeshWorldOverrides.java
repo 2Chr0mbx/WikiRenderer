@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.area;
 
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
+import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -19,6 +20,7 @@ public class MeshWorldOverrides implements BlockAndTintGetter {
 
     private final BlockAndTintGetter delegate;
     private final MeshBounds bounds;
+    private WalkabilityFilter filter = null;
 
     public MeshWorldOverrides(BlockAndTintGetter delegate, MeshBounds bounds) {
         this.delegate = delegate;
@@ -93,6 +95,10 @@ public class MeshWorldOverrides implements BlockAndTintGetter {
     }
 
     public boolean contains(BlockPos pos) {
-        return bounds.isInBounds(pos);
+        return bounds.isInBounds(pos) && (filter == null || filter.shouldRenderBlock(pos));
+    }
+
+    public void setWalkabilityFilter(WalkabilityFilter filter) {
+        this.filter = filter;
     }
 }

@@ -29,7 +29,6 @@ public final class InstantDiskSaveAnimationHandler extends AnimationHandler {
     public void renderAndSaveFrame(float effectiveTickDelta) {
         if (this.closed || this.remainingAnimationFrames <= 0) return;
         if (!screen.memoryGuard.canFitInRam(screen.memoryGuard.estimateMemoryMBUsage(renderable, FileIO.taskCount()))) {
-            System.out.println("Delaying");
             return;
         }
         // delay until ram is available

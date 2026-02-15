@@ -12,10 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ChunkSectionLayer.class)
 public class MixinChunkSectionLayer {
 
-
     @Inject(method = "pipeline", at = @At("HEAD"), cancellable = true)
     private void onGetPipeline(CallbackInfoReturnable<RenderPipeline> cir) {
-        // 'this' refers to the ChunkSectionLayer enum instance
         ChunkSectionLayer layer = (ChunkSectionLayer) (Object) this;
 
         if (layer == ChunkSectionLayer.CUTOUT && WorldBlockMesh.overrideCutoutRenderPipeline) {

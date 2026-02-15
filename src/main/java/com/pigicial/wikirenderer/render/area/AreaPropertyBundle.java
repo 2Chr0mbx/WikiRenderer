@@ -59,6 +59,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final IntProperty dontSearchForHigherFloorsThreshold = IntProperty.of(255, 0, 255);
     public final IntProperty walkableBlocksThreshold = IntProperty.of(2, 1, 20);
     public final Property<Boolean> requireCeilingForCaveMode = Property.of(false);
+    public final Property<Boolean> includeWallsForCaveMode = Property.of(false);
     public final Property<Boolean> showMeshExpansionControls = Property.of(false);
 
     public final Property<Boolean> hideMesh = Property.of(false);
@@ -210,6 +211,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                 WikiRendererUI.intControl(container, this.dontSearchForHigherFloorsThreshold, "dont_search_for_higher_floors_threshold", 1);
                 WikiRendererUI.intControl(container, renderable.minFloorYLevelForOverhead, "min_floor_y_level", 1);
                 WikiRendererUI.intControl(container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level", 1);
+                WikiRendererUI.booleanControl(container, this.includeWallsForCaveMode, "show_walls");
                 WikiRendererUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");
             }
 
@@ -364,7 +366,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
                 double bufferSize = highest * pixelsPerBlock;
 
-                if ((pixelsPerBlock < 4 || pixelsPerBlock > 256 || bufferSize > 16384) && !UNSAFE.get()) {
+                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize > 16384) && !UNSAFE.get()) {
                     screen.exportButton.active = false;
                 } else {
                     if ((this.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && this.getPixelsPerBlockResolution() == 4)) {

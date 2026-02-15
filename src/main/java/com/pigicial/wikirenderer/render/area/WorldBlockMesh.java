@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityWithBoundingBoxRenderState;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
@@ -37,6 +38,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -54,7 +56,7 @@ public class WorldBlockMesh {
     public static boolean overrideCutoutRenderPipeline = false;
     public static GpuSampler terrainSampler = null;
 
-    public final BlockAndTintGetter world;
+    public final MeshWorldOverrides world;
     public final MeshBounds bounds;
     private AreaRenderable renderable;
 
@@ -183,6 +185,14 @@ public class WorldBlockMesh {
 
             BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
             if (state != null) {
+                if (state.blockState.is(Blocks.LIGHT)) {
+                    System.out.println("Hi = " + state);
+                }
+                if (state instanceof BlockEntityWithBoundingBoxRenderState renderState) {
+                    if (state.blockState.is(Blocks.LIGHT)) {
+                        System.out.println("Hi = " + renderState);
+                    }
+                }
                 blockEntityDispatcher.submit(state, standardStack, nodeStorage, cameraRenderState);
             }
 
@@ -280,6 +290,7 @@ public class WorldBlockMesh {
                 walkabilityFilter.cacheData();
             }
         }
+        this.world.setWalkabilityFilter(walkabilityFilter);
 
         AtomicInteger subMeshesUploaded = new AtomicInteger();
         AtomicInteger subMeshesToBeUploaded = new AtomicInteger();
@@ -309,10 +320,7 @@ public class WorldBlockMesh {
 
                     BlockState state = world.getBlockState(pos);
                     if (state.isAir()) continue;
-
-                    if (walkabilityFilter != null && !walkabilityFilter.shouldRenderBlock(pos)) {
-                        continue;
-                    }
+                    if (state.is(Blocks.LIGHT)) continue; // axiom fix
 
                     BlockPos renderPos = pos.subtract(bounds.getMinCorner());
                     if (world.getBlockEntity(pos) != null) {
@@ -390,6 +398,7 @@ public class WorldBlockMesh {
 
         }
 
+        this.world.setWalkabilityFilter(null);
         this.blockEntities.putAll(blockEntities);
     }
 
