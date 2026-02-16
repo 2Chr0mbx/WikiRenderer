@@ -16,9 +16,6 @@ public class ResetPropertyButton extends ButtonComponent {
     @Override
     public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
         this.active = !property.isDefault();
-        if (active) {
-            System.out.println("property = " + property.value + ", default = " + property.defaultValue + ", same = " + (property.value == property.defaultValue));
-        }
         super.draw(graphics, mouseX, mouseY, partialTicks, delta);
     }
 }

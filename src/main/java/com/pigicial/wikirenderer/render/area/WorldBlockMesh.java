@@ -185,14 +185,6 @@ public class WorldBlockMesh {
 
             BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
             if (state != null) {
-                if (state.blockState.is(Blocks.LIGHT)) {
-                    System.out.println("Hi = " + state);
-                }
-                if (state instanceof BlockEntityWithBoundingBoxRenderState renderState) {
-                    if (state.blockState.is(Blocks.LIGHT)) {
-                        System.out.println("Hi = " + renderState);
-                    }
-                }
                 blockEntityDispatcher.submit(state, standardStack, nodeStorage, cameraRenderState);
             }
 

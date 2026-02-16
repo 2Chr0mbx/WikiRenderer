@@ -223,19 +223,19 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                         try (WikiRendererUI.RowBuilder rowBuilder = WikiRendererUI.row(container)) {
                             rowBuilder.row.child(UIComponents.button(Translate.gui("minus_five"), button -> {
                                 expandableMeshBounds.move(expansionSide, sideViewRotation, -5);
-                                renderable.mesh.scheduleRebuild(false);
+                                renderable.mesh.scheduleRebuild(true);
                             }));
                             rowBuilder.row.child(UIComponents.button(Translate.gui("minus_one"), button -> {
                                 expandableMeshBounds.move(expansionSide, sideViewRotation, -1);
-                                renderable.mesh.scheduleRebuild(false);
+                                renderable.mesh.scheduleRebuild(true);
                             }));
                             rowBuilder.row.child(UIComponents.button(Translate.gui("plus_one"), button -> {
                                 expandableMeshBounds.move(expansionSide, sideViewRotation, 1);
-                                renderable.mesh.scheduleRebuild(false);
+                                renderable.mesh.scheduleRebuild(true);
                             }));
                             rowBuilder.row.child(UIComponents.button(Translate.gui("plus_five"), button -> {
                                 expandableMeshBounds.move(expansionSide, sideViewRotation, 5);
-                                renderable.mesh.scheduleRebuild(false);
+                                renderable.mesh.scheduleRebuild(true);
                             }));
 
 
