@@ -353,7 +353,7 @@ public class WorldBlockMesh {
             }
 
             subMeshesToBeUploaded.incrementAndGet();
-            Minecraft.getInstance().executeBlocking((() -> {
+            Minecraft.getInstance().execute((() -> {
                 subMeshesToBeUploaded.decrementAndGet();
 
                 if (cancelled.get() || buildCancelRequested) {

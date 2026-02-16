@@ -76,6 +76,14 @@ public class RenderableDispatcher {
         boolean sideRendering = renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get();
         boolean exportMinimapData = calibrationDataCallback != null && sideRendering;
 
+        if (!crop && exportMinimapData) {
+            image = image.thenApply(i -> {
+                MinimapCalibratorData calibrationData = MinimapCalibratorData.getCalibrationData((AreaRenderable) renderable, null, i);
+                calibrationDataCallback.accept(calibrationData);
+                return i;
+            });
+        }
+
         if (crop) {
             // resize image to target height by regenerating it with an increased size
             image = image.thenApply(i -> {
