@@ -7,6 +7,7 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -107,6 +108,10 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     }
 
     protected void drawParticles(Matrix4f transform, float tickDelta) {
+        if (!GlobalProperties.TICK_PARTICLES.get()) {
+            return;
+        }
+
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
         modelView.mul(transform);

@@ -10,7 +10,10 @@ import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.pigicial.wikirenderer.components.NonResettingScrollContainer;
 import com.pigicial.wikirenderer.components.NotificationComponent;
 import com.pigicial.wikirenderer.mixin.access.ParticleEngineAccessor;
-import com.pigicial.wikirenderer.property.*;
+import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
+import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
+import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.TickingPropertyBundle;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -20,7 +23,10 @@ import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
-import com.pigicial.wikirenderer.render.export.ffmpeg.*;
+import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
+import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandlingMode;
+import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
+import com.pigicial.wikirenderer.render.export.ffmpeg.MemoryGuard;
 import com.pigicial.wikirenderer.render.export.ffmpeg.live.LiveRenderFFmpegAnimationHandler;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.Translate;
@@ -48,7 +54,6 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
-import net.minecraft.world.item.DyeColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2f;
@@ -300,6 +305,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }
         }
 
+        WikiRendererUI.booleanControl(rightColumn, SYNC_ENCHANTMENT_GLINTS_TO_EXPORT, "sync_enchantment_glints");
         WikiRendererUI.booleanControl(rightColumn, SPEED_UP_ENCHANTMENT_GLINTS, "speed_up_enchantment_glints");
         SPEED_UP_ENCHANTMENT_GLINTS.futureListen((p, v) -> guiRebuildScheduled = true);
 
@@ -312,7 +318,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }).margins(Insets.vertical(5)));
         }
 
-        WikiRendererUI.booleanControl(rightColumn, SYNC_ENCHANTMENT_GLINTS_TO_EXPORT, "sync_and_speed_up_glint_rendering");
         WikiRendererUI.booleanControl(rightColumn, SET_ANIMATION_FPS_CAP, "render_with_game_timings");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(rightColumn)) {
@@ -362,7 +367,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 .text(Translate.gui("animation_mode_description_live_ffmpeg_2"))
                 .closeWhenNotHovered(false)
                 .padding(Insets.of(5))
-                .surface(Surface.blur(10, 10))
+                .surface(Surface.blur(10, 20))
         );
     }
 

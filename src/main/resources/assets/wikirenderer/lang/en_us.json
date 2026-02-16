@@ -77,7 +77,7 @@
   "gui.wikirenderer.animation_options": "Animation Options",
   "gui.wikirenderer.sync_rotation_to_animation": "Sync Rotation to Animation",
   "gui.wikirenderer.speed_up_enchantment_glints": "Speed up Enchant Glints (15s loop)",
-  "gui.wikirenderer.sync_and_speed_up_glint_rendering": "Sync Glints to Animation",
+  "gui.wikirenderer.sync_enchantment_glints": "Sync Glints to Animation",
   "gui.wikirenderer.render_with_game_timings": "Render with Game Timings (slower)",
   "gui.wikirenderer.enchantment_glint_preset": "Use Enchanted Items Timings",
   "gui.wikirenderer.animation_frames": "Animation Frames",

@@ -51,7 +51,7 @@ public interface CroppablePropertyBundle extends PropertyBundle {
                     })
                     .closeWhenNotHovered(false)
                     .padding(Insets.of(5))
-                    .surface(Surface.blur(10, 50))
+                    .surface(Surface.blur(10, 20))
             );
         }
 
