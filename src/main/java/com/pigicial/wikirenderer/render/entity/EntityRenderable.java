@@ -2,7 +2,6 @@ package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
-import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.WikiRenderer;
@@ -23,6 +22,9 @@ import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -55,6 +57,7 @@ import org.joml.Vector3f;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider {
@@ -65,6 +68,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     @Nullable
     protected final Entity liveNonTickableEntity;
     protected final Entity clonedTickableEntity;
+
+    private final Map<String, TextureData> textureData = new LinkedHashMap<>();
+    protected boolean requireTextureReCache = true;
+    protected AtomicBoolean textureCancelMarker = null;
 
     public EntityRenderable(@Nullable Entity liveNonTickableEntity, Entity clonedTickableEntity) {
         this.liveNonTickableEntity = liveNonTickableEntity;
@@ -394,37 +401,88 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public @NotNull Map<String, TextureData> getTextureData() {
-        Map<String, TextureData> textureData = new LinkedHashMap<>();
+    public void cacheTextureData(Runnable rebuildCallback) {
+        if (!this.requireTextureReCache) return;
+        this.requireTextureReCache = false;
+        this.textureData.clear();
 
+        if (this.textureCancelMarker != null) {
+            this.textureCancelMarker.set(true);
+        }
+
+        AtomicBoolean cancelMarker = new AtomicBoolean(false);
+        this.textureCancelMarker = cancelMarker;
+
+        // i hate how there are like 5 billion ways skins are handled but whatever, there's probably a better way to do this but that's a later project
         applyToEntityAndPassengers(getUsedEntity(), usedEntity -> {
-            if (usedEntity instanceof Player player) {
-                TextureData playerTexture = PlayerTextureUtils.getGameProfileTextureData(player.getGameProfile());
-                if (playerTexture != null) {
-                    textureData.put("player", playerTexture);
+            System.out.println("used entity = " + usedEntity.getClass());
+            switch (usedEntity) {
+                case RenderablePlayerEntity player -> player.getSkinGrabber().whenComplete((data, throwable) -> {
+                    System.out.println("hi there (" + throwable + ")");
+                    if (throwable != null || cancelMarker.get()) return;
+                    textureData.put("player", data);
+                    rebuildCallback.run();
+                });
+                case AbstractClientPlayer player -> {
+                    ClientPacketListener connection = Minecraft.getInstance().getConnection();
+                    if (connection == null) return;
+
+                    PlayerInfo playerInfo = connection.getPlayerInfo(player.getUUID());
+                    if (playerInfo == null) return;
+
+                    GameProfile profile = playerInfo.getProfile();
+                    TextureData playerTexture = PlayerTextureUtils.getTextureDataFromGameProfile(profile);
+                    if (playerTexture != null) {
+                        textureData.put("player", playerTexture);
+                    }
                 }
-            } else if (usedEntity instanceof Mannequin mannequin) {
-                ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
-                PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
-                TextureData playerTexture = PlayerTextureUtils.getGameProfileTextureData(renderInfo.gameProfile());
-                if (playerTexture != null) {
-                    textureData.put("player", playerTexture);
+                case Player player -> {
+                    TextureData playerTexture = PlayerTextureUtils.getTextureDataFromGameProfile(player.getGameProfile());
+                    if (playerTexture != null) {
+                        textureData.put("player", playerTexture);
+                    }
+                }
+                case ClientMannequin mannequin ->
+                        ((ClientMannequinAccessor) mannequin).getSkinLookup().whenComplete((skin, throwable) -> {
+                            if (throwable != null || skin.isEmpty() || cancelMarker.get()) return;
+
+                            ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
+                            PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
+                            TextureData playerTexture = PlayerTextureUtils.getTextureDataFromGameProfile(renderInfo.gameProfile());
+                            if (playerTexture != null) {
+                                textureData.put("player", playerTexture);
+                                rebuildCallback.run();
+                            }
+                        });
+                case Mannequin mannequin -> {
+                    ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
+                    PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
+                    TextureData playerTexture = PlayerTextureUtils.getTextureDataFromGameProfile(renderInfo.gameProfile());
+                    if (playerTexture != null) {
+                        textureData.put("player", playerTexture);
+                    }
+                }
+                default -> {
                 }
             }
 
             if (usedEntity instanceof LivingEntity livingEntity) {
                 for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
                     ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
-                    TextureData itemTextureData = PlayerTextureUtils.getPlayerHeadTextureData(item);
+                    TextureData itemTextureData = PlayerTextureUtils.getTextureDataFromPlayerHead(item);
                     if (itemTextureData != null) {
                         textureData.put(equipmentSlot.getName(), itemTextureData);
                     }
                 }
             }
         });
+    }
 
-
-
-        return textureData;
+    @Override
+    public @NotNull Map<String, TextureData> getTextureData(Runnable rebuildCallback) {
+        if (this.requireTextureReCache) {
+            this.cacheTextureData(rebuildCallback);
+        }
+        return this.textureData;
     }
 }

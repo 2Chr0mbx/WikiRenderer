@@ -1,6 +1,8 @@
 package com.pigicial.wikirenderer.render.entity.player;
 
 import com.mojang.authlib.GameProfile;
+import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
+import com.pigicial.wikirenderer.textures.TextureData;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -25,9 +27,11 @@ import org.jspecify.annotations.NonNull;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class RenderablePlayerEntity extends LocalPlayer {
 
+    private final CompletableFuture<TextureData> skinGrabber;
     protected PlayerSkin skinTextures;
 
     public RenderablePlayerEntity(GameProfile profile, ProfileFetchMode fetchMode) {
@@ -47,17 +51,26 @@ public class RenderablePlayerEntity extends LocalPlayer {
         );
 
         this.skinTextures = DefaultPlayerSkin.get(profile);
-        Util.backgroundExecutor().execute(() -> {
+        this.skinGrabber = CompletableFuture.supplyAsync(() -> {
             ProfileResolver profileResolver = Minecraft.getInstance().services().profileResolver();
-            GameProfile completeProfile = switch (fetchMode) {
+            return switch (fetchMode) {
                 case NAME -> profileResolver.fetchByName(profile.name()).orElse(profile);
                 case UUID -> profileResolver.fetchById(profile.id()).orElse(profile);
                 case TEXTURE -> profile;
             };
-
+        }, Util.backgroundExecutor()).thenCompose(completeProfile -> {
             this.skinTextures = DefaultPlayerSkin.get(completeProfile);
-            this.minecraft.getSkinManager().get(completeProfile).thenAccept(textures -> textures.ifPresent(skin -> this.skinTextures = skin));
+
+            // Step C: Return the skin manager's future (this is why we use thenCompose)
+            return this.minecraft.getSkinManager().get(completeProfile).thenApply(optionalSkin -> {
+                this.skinTextures = optionalSkin.orElse(DefaultPlayerSkin.get(completeProfile));
+                return PlayerTextureUtils.getTextureDataFromGameProfile(completeProfile);
+            });
         });
+    }
+
+    public CompletableFuture<TextureData> getSkinGrabber() {
+        return skinGrabber;
     }
 
     @Override

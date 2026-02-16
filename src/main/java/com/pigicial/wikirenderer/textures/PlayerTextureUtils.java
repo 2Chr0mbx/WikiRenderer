@@ -9,9 +9,7 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.util.UUIDTypeAdapter;
-import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ResolvableProfile;
@@ -27,15 +25,15 @@ public class PlayerTextureUtils {
     public static final Gson GSON = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).setPrettyPrinting().create();
 
     @Nullable
-    public static TextureData getPlayerHeadTextureData(ItemStack itemStack) {
+    public static TextureData getTextureDataFromPlayerHead(ItemStack itemStack) {
         ResolvableProfile profile = itemStack.get(DataComponents.PROFILE);
         if (profile == null) return null;
 
-        return getGameProfileTextureData(profile.partialProfile());
+        return getTextureDataFromGameProfile(profile.partialProfile());
     }
 
     @Nullable
-    public static TextureData getGameProfileTextureData(GameProfile gameProfile) {
+    public static TextureData getTextureDataFromGameProfile(GameProfile gameProfile) {
         Collection<Property> textures = gameProfile.properties().get("textures");
         if (textures.isEmpty()) {
             return null;

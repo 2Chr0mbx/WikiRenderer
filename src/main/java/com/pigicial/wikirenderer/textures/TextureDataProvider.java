@@ -11,6 +11,7 @@ import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
@@ -23,10 +24,12 @@ import java.util.Map;
 public interface TextureDataProvider {
 
     @NotNull
-    Map<String, TextureData> getTextureData();
+    Map<String, TextureData> getTextureData(Runnable rebuildCallback);
+
+    void cacheTextureData(Runnable rebuildCallback);
 
     default void buildTextureGrabSection(RenderScreen screen, FlowLayout layout) {
-        Map<String, TextureData> foundTextures = this.getTextureData();
+        Map<String, TextureData> foundTextures = this.getTextureData(() -> Minecraft.getInstance().executeBlocking(() -> screen.guiRebuildScheduled = true));
         if (foundTextures.isEmpty()) return;
 
         WikiRendererUI.sectionHeader(layout, "player_textures", true);

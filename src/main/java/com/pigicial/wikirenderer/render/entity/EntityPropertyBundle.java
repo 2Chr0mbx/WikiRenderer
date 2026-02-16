@@ -9,8 +9,6 @@ import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -180,6 +178,10 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
             this.useLiveEntity.futureListen(((booleanProperty, value) -> {
+                renderable.requireTextureReCache = true;
+                if (renderable.textureCancelMarker != null) {
+                    renderable.textureCancelMarker.set(true);
+                }
                 screen.guiRebuildScheduled = true;
                 if (value) {
                     tick.set(true);

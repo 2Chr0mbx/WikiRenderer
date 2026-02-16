@@ -1,6 +1,5 @@
 package com.pigicial.wikirenderer.render.item;
 
-import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
@@ -37,6 +36,7 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
     }
 
     public final ItemStack stack;
+    private Map<String, TextureData> textureData = null;
 
     public ItemRenderable(ItemStack stack) {
         this.stack = stack;
@@ -102,8 +102,16 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
     }
 
     @Override
-    public @NotNull Map<String, TextureData> getTextureData() {
-        TextureData playerSkin = PlayerTextureUtils.getPlayerHeadTextureData(this.stack);
+    public void cacheTextureData(Runnable rebuildCallback) {
+        TextureData playerSkin = PlayerTextureUtils.getTextureDataFromPlayerHead(this.stack);
+        this.textureData = playerSkin == null ? new HashMap<>() : Map.of("item", playerSkin);
+    }
+
+    public @NotNull Map<String, TextureData> getTextureData(Runnable rebuildCallback) {
+        if (this.textureData == null) {
+            this.cacheTextureData(rebuildCallback);
+        }
+        TextureData playerSkin = PlayerTextureUtils.getTextureDataFromPlayerHead(this.stack);
         return playerSkin == null ? new HashMap<>() : Map.of("item", playerSkin);
     }
 }

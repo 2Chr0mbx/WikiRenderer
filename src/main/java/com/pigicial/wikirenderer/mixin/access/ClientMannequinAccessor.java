@@ -18,7 +18,7 @@ public interface ClientMannequinAccessor {
     @Accessor("skinLookup")
     void setSkinLookup(CompletableFuture<Optional<PlayerSkin>> skinLookup);
 
-    @Invoker("setSkin")
+    @Accessor("skin")
     void setSkin(PlayerSkin skin);
 
 }

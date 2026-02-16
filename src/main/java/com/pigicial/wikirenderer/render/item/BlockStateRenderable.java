@@ -1,6 +1,5 @@
 package com.pigicial.wikirenderer.render.item;
 
-import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
@@ -49,6 +48,7 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
 
     private final BlockState state;
     private final @Nullable BlockEntity blockEntity;
+    private LinkedHashMap<String, TextureData> textureData = null;
 
     public BlockStateRenderable(BlockState state, @Nullable BlockEntity blockEntity) {
         this.state = state;
@@ -181,12 +181,26 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     }
 
     @Override
-    public @NotNull Map<String, TextureData> getTextureData() {
+    public void cacheTextureData(Runnable rebuildCallback) {
+        if (this.textureData == null && this.blockEntity instanceof SkullBlockEntity skullBlockEntity) {
+            this.textureData = new LinkedHashMap<>();
+            ResolvableProfile profile = skullBlockEntity.getOwnerProfile();
+            if (profile != null) {
+                TextureData texture = PlayerTextureUtils.getTextureDataFromGameProfile(profile.partialProfile());
+                if (texture != null) {
+                    textureData.put("block", texture);
+                }
+            }
+        }
+    }
+
+    @Override
+    public @NotNull Map<String, TextureData> getTextureData(Runnable rebuildCallback) {
         Map<String, TextureData> textureData = new LinkedHashMap<>();
         if (this.blockEntity instanceof SkullBlockEntity skullBlockEntity) {
             ResolvableProfile profile = skullBlockEntity.getOwnerProfile();
             if (profile != null) {
-                TextureData texture = PlayerTextureUtils.getGameProfileTextureData(profile.partialProfile());
+                TextureData texture = PlayerTextureUtils.getTextureDataFromGameProfile(profile.partialProfile());
                 if (texture != null) {
                     textureData.put("block", texture);
                 }
