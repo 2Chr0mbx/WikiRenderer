@@ -17,6 +17,12 @@ public class DoubleProperty extends NumberProperty<Double> {
     }
 
     @Override
+    public boolean isDefault() {
+        // i hate this
+        return (double) this.value == defaultValue;
+    }
+
+    @Override
     protected Double getSpan(Double min, Double max) {
         return max - min;
     }

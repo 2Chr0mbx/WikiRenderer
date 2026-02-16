@@ -10,6 +10,7 @@ import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
+import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -180,12 +181,12 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     }
 
     @Override
-    public @NotNull Map<String, MinecraftTexturesPayload> getTextureData() {
-        Map<String, MinecraftTexturesPayload> textureData = new LinkedHashMap<>();
+    public @NotNull Map<String, TextureData> getTextureData() {
+        Map<String, TextureData> textureData = new LinkedHashMap<>();
         if (this.blockEntity instanceof SkullBlockEntity skullBlockEntity) {
             ResolvableProfile profile = skullBlockEntity.getOwnerProfile();
             if (profile != null) {
-                MinecraftTexturesPayload texture = PlayerTextureUtils.getGameProfileTextureData(profile.partialProfile());
+                TextureData texture = PlayerTextureUtils.getGameProfileTextureData(profile.partialProfile());
                 if (texture != null) {
                     textureData.put("block", texture);
                 }

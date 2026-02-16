@@ -12,7 +12,6 @@ import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
@@ -81,16 +80,17 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
         WikiRendererUI.sectionHeader(container, "batch.controls", true);
         WikiRendererUI.booleanControl(container, EXPORT_AS_ANIMATIONS, "batch.export_as_animations");
 
-        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
+        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
             ButtonComponent startButton = UIComponents.button(Translate.gui("batch.start"), button -> {
                 batchRenderable.start();
                 button.active = false;
             });
-            builder.row.child(startButton.horizontalSizing(Sizing.fixed(60)).margins(Insets.right(5)));
+            builder.row.child(startButton.horizontalSizing(Sizing.content(20)));
             builder.row.child(UIComponents.button(Translate.gui("batch.reset"), button -> {
                 batchRenderable.reset(screen);
                 startButton.active = true;
             }));
+            builder.row.child(UIComponents.button(Translate.gui("batch.previous"), button -> batchRenderable.decreaseIndex()));
             builder.row.child(UIComponents.button(Translate.gui("batch.next"), button -> batchRenderable.increaseIndex()));
         }
 

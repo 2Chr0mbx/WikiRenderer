@@ -27,6 +27,11 @@ public class IntProperty extends NumberProperty<Integer> {
     }
 
     @Override
+    public boolean isDefault() {
+        return (int) value == defaultValue;
+    }
+
+    @Override
     public void set(Integer value) {
         if (allowRollover && (value > this.max || value < this.min)) {
             if (value > this.max) {

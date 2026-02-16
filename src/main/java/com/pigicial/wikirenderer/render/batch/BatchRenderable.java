@@ -126,6 +126,16 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         }
     }
 
+    protected void decreaseIndex() {
+        if (this.currentIndex <= 0) {
+            this.currentIndex = this.delegates.size() - 1;
+        } else {
+            this.currentIndex--;
+        }
+        this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
+    }
+
+
     protected void increaseIndex() {
         if (this.currentIndex >= this.delegates.size()) {
             this.currentIndex = 0;

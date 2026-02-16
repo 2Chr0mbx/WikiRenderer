@@ -18,6 +18,7 @@ import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
+import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
@@ -222,11 +223,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
             this.updateRenderState(state, properties, usingLiveEntity);
 
-            List<Runnable> toggleCallbacks = new ArrayList<>();
+            List<Runnable> partVisibilityCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {
                 EntityRenderer<?, ?> renderer = renderDispatcher.getRenderer(state);
                 if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
-                    EntitySpriteModelVisibilityUtil.hideNonHeadParts(livingEntityRenderer, toggleCallbacks);
+                    EntitySpriteModelVisibilityUtil.hideNonHeadParts(livingEntityRenderer, partVisibilityCallbacks);
                 }
 
                 WikiRenderer.inSpriteEntityDraw = true;
@@ -238,7 +239,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             matrices.popPose();
             WikiRenderer.inSpriteEntityDraw = false;
-            toggleCallbacks.forEach(Runnable::run);
+            partVisibilityCallbacks.forEach(Runnable::run);
         });
 
         // if these aren't undone them the bottom of certain armor boots look weird (for some reason, and despite popPose(), idk)
@@ -393,19 +394,19 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public @NotNull Map<String, MinecraftTexturesPayload> getTextureData() {
-        Map<String, MinecraftTexturesPayload> textureData = new LinkedHashMap<>();
+    public @NotNull Map<String, TextureData> getTextureData() {
+        Map<String, TextureData> textureData = new LinkedHashMap<>();
 
         applyToEntityAndPassengers(getUsedEntity(), usedEntity -> {
             if (usedEntity instanceof Player player) {
-                MinecraftTexturesPayload playerTexture = PlayerTextureUtils.getGameProfileTextureData(player.getGameProfile());
+                TextureData playerTexture = PlayerTextureUtils.getGameProfileTextureData(player.getGameProfile());
                 if (playerTexture != null) {
                     textureData.put("player", playerTexture);
                 }
             } else if (usedEntity instanceof Mannequin mannequin) {
                 ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
                 PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
-                MinecraftTexturesPayload playerTexture = PlayerTextureUtils.getGameProfileTextureData(renderInfo.gameProfile());
+                TextureData playerTexture = PlayerTextureUtils.getGameProfileTextureData(renderInfo.gameProfile());
                 if (playerTexture != null) {
                     textureData.put("player", playerTexture);
                 }
@@ -414,7 +415,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             if (usedEntity instanceof LivingEntity livingEntity) {
                 for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
                     ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
-                    MinecraftTexturesPayload itemTextureData = PlayerTextureUtils.getPlayerHeadTextureData(item);
+                    TextureData itemTextureData = PlayerTextureUtils.getPlayerHeadTextureData(item);
                     if (itemTextureData != null) {
                         textureData.put(equipmentSlot.getName(), itemTextureData);
                     }

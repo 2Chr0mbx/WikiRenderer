@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -27,7 +28,7 @@ public class LivingEntityRendererMixin<T extends LivingEntity> {
 
     @Inject(method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z", at = @At("HEAD"), cancellable = true)
     private void disablePlayerLabels(T livingEntity, double d, CallbackInfoReturnable<Boolean> cir) {
-        if (WikiRenderer.inRenderableDraw && GlobalProperties.HIDE_NAMETAGS.get()) {
+        if (WikiRenderer.inRenderableDraw && WikiRenderer.inAreaRenderDraw && GlobalProperties.HIDE_NAMETAGS.get()) {
             cir.setReturnValue(false);
         }
     }
@@ -40,7 +41,7 @@ public class LivingEntityRendererMixin<T extends LivingEntity> {
             )
     )
     private Entity overrideCameraEntity(Minecraft instance, Operation<Entity> original) {
-        if (WikiRenderer.inRenderableDraw && !GlobalProperties.HIDE_NAMETAGS.get()) {
+        if (WikiRenderer.inRenderableDraw && WikiRenderer.inAreaRenderDraw && !GlobalProperties.HIDE_NAMETAGS.get()) {
             return null;
         }
         return original.call(instance);

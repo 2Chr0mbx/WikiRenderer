@@ -4,6 +4,7 @@ import com.pigicial.wikirenderer.components.*;
 import com.pigicial.wikirenderer.property.DoubleProperty;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.ResetPropertyButton;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.TextBoxComponent;
@@ -38,14 +39,14 @@ public class WikiRendererUI {
 
             builder.row.child(textBox);
             builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
-
         }
     }
 
     public static void intControl(FlowLayout container, IntProperty property, String name, int step) {
         try (RowBuilder builder = row(container)) {
             builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(19), property));
-            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.left(5)));
+            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
+            builder.row.child(new ResetPropertyButton(property));
         }
     }
 
@@ -82,7 +83,8 @@ public class WikiRendererUI {
     public static void doubleControl(FlowLayout container, DoubleProperty property, String name, int step) {
         try (RowBuilder builder = row(container)) {
             builder.row.child(new DoublePropertyTextFieldComponent(Sizing.fill(19), property));
-            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.left(5)));
+            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
+            builder.row.child(new ResetPropertyButton(property));
         }
     }
 
@@ -99,6 +101,12 @@ public class WikiRendererUI {
 
     public static RowBuilder row(FlowLayout container) {
         FlowLayout layout = UIContainers.horizontalFlow(Sizing.fill(100), Sizing.content());
+        layout.margins(Insets.of(5, 5, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
+        return new RowBuilder(layout, container);
+    }
+
+    public static RowBuilder autoNewLineRow(FlowLayout container) {
+        FlowLayout layout = UIContainers.ltrTextFlow(Sizing.fill(100), Sizing.content());
         layout.margins(Insets.of(5, 5, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
         return new RowBuilder(layout, container);
     }

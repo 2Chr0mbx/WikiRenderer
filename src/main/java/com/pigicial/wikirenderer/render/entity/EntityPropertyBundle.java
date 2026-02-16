@@ -1,10 +1,7 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
-import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
-import com.pigicial.wikirenderer.property.IntProperty;
-import com.pigicial.wikirenderer.property.Property;
-import com.pigicial.wikirenderer.property.TickingPropertyBundle;
+import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
@@ -129,12 +126,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.intControl(container, this.spriteSlant, "slant", 30);
         }
         if (!this.spriteRendering.get()) {
-            try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
+            try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
                 builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(30D);
-                }).horizontalSizing(Sizing.content(5)).margins(Insets.right(5)));
-
+                }));
                 builder.row.child(UIComponents.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
@@ -146,9 +142,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                     this.xOffset.setToDefault();
                     this.yOffset.setToDefault();
                     this.scale.setToDefault();
-                })
-                .horizontalSizing(Sizing.content(5))
-                .margins(Insets.top(5)));
+                }));
 
         WikiRendererUI.sectionHeader(container, "entity_data", true);
         container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {

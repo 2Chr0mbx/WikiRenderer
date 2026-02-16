@@ -163,7 +163,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         });
 
         if (!this.perPixel90DegreeRendering.get()) {
-            try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
+            try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
                 builder.row.child(UIComponents.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(30D);
@@ -184,19 +184,18 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                         this.xOffset.setToDefault();
                         this.yOffset.setToDefault();
                         this.scale.setToDefault();
-                    })
-                    .margins(Insets.top(5)));
+                    }).margins(Insets.top(5)));
         } else {
-            try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
+            try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
                 builder.row.child(UIComponents.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
                     this.sideViewRotation = this.sideViewRotation.nextRotation();
                     screen.guiRebuildScheduled = true;
-                }).margins(Insets.right(5)));
+                }));
 
                 builder.row.child(UIComponents.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
                     this.sideViewSlant = this.sideViewSlant.nextSlant();
                     screen.guiRebuildScheduled = true;
-                }).margins(Insets.right(5)));
+                }));
             }
             container.child(UIComponents.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
                 this.sideViewRotation = MeshSideRotation.NORTH;
@@ -249,11 +248,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
         WorldBlockMesh mesh = renderable.mesh;
 
-        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
-            ButtonComponent buildMeshButton = (ButtonComponent) UIComponents.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild(true)).margins(Insets.top(10));
+        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
+            ButtonComponent buildMeshButton = (ButtonComponent) UIComponents.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild(true)).margins(Insets.top(5));
             builder.row.child(buildMeshButton);
 
-            ButtonComponent stopBuildingButton = (ButtonComponent) UIComponents.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding()).margins(Insets.of(10, 0, 5, 0));
+            ButtonComponent stopBuildingButton = (ButtonComponent) UIComponents.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding()).margins(Insets.of(5, 0, 5, 0));
             stopBuildingButton.active = false;
             builder.row.child(stopBuildingButton);
 

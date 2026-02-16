@@ -9,8 +9,11 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.util.UUIDTypeAdapter;
+import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ResolvableProfile;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +27,7 @@ public class PlayerTextureUtils {
     public static final Gson GSON = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).setPrettyPrinting().create();
 
     @Nullable
-    public static MinecraftTexturesPayload getPlayerHeadTextureData(ItemStack itemStack) {
+    public static TextureData getPlayerHeadTextureData(ItemStack itemStack) {
         ResolvableProfile profile = itemStack.get(DataComponents.PROFILE);
         if (profile == null) return null;
 
@@ -32,7 +35,7 @@ public class PlayerTextureUtils {
     }
 
     @Nullable
-    public static MinecraftTexturesPayload getGameProfileTextureData(GameProfile gameProfile) {
+    public static TextureData getGameProfileTextureData(GameProfile gameProfile) {
         Collection<Property> textures = gameProfile.properties().get("textures");
         if (textures.isEmpty()) {
             return null;
@@ -47,7 +50,13 @@ public class PlayerTextureUtils {
         }
         String decodedSkin = new String(byteArray, StandardCharsets.UTF_8);
 
-        return GSON.fromJson(decodedSkin, MinecraftTexturesPayload.class);
+        return new TextureData(GSON.fromJson(decodedSkin, MinecraftTexturesPayload.class), gameProfile);
+    }
+
+    public static ItemStack createPlayerHead(GameProfile gameProfile) {
+        ItemStack stack = new ItemStack(Items.PLAYER_HEAD);
+        stack.set(DataComponents.PROFILE, ResolvableProfile.createResolved(gameProfile));
+        return stack;
     }
 
     public static GameProfile createTexturedGameProfileFromID(String texture) {

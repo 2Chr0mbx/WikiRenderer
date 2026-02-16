@@ -94,7 +94,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private final FlowLayout leftColumn = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
     private final FlowLayout rightColumn = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
 
-    public final Renderable<?> renderable;
+    public Renderable<?> renderable;
 
     private boolean drawOnlyBackground = false;
     public boolean captureScheduled = false;
@@ -146,7 +146,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
             this.rightAnchor.child(new NonResettingScrollContainer(ScrollContainer.ScrollDirection.VERTICAL, Sizing.fill(100), Sizing.fill(100), (FlowLayout) UIContainers.verticalFlow(Sizing.content(), Sizing.content(10))
                     .child(leftColumn)
-                    .child(UIComponents.box(Sizing.fill(85), Sizing.fixed(1)).color(Color.ofDye(DyeColor.GRAY)).fill(true).margins(Insets.top(15)))
                     .child(rightColumn)
                     .horizontalAlignment(HorizontalAlignment.CENTER))
 
@@ -316,7 +315,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         WikiRendererUI.booleanControl(rightColumn, SYNC_ENCHANTMENT_GLINTS_TO_EXPORT, "sync_and_speed_up_glint_rendering");
         WikiRendererUI.booleanControl(rightColumn, SET_ANIMATION_FPS_CAP, "render_with_game_timings");
 
-        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(rightColumn)) {
+        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(rightColumn)) {
             this.exportAnimationButton = UIComponents.button(Translate.gui("export_animation"), button -> this.queueAnimationExport());
             builder.row.child(this.exportAnimationButton.margins(Insets.right(5)));
 

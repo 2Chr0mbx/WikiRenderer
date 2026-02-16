@@ -80,7 +80,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
         WikiRendererUI.doubleControl(container, slant, "slant", 30);
         WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
 
-        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
+        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
             builder.row.child(UIComponents.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(30D);

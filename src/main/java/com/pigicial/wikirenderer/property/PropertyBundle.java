@@ -41,34 +41,34 @@ public interface PropertyBundle {
         WikiRendererUI.booleanControl(container, SAVE_INTO_ROOT, "dump_into_root");
         WikiRendererUI.booleanControl(container, OVERWRITE_LATEST, "overwrite_latest");
 
-        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.row(container)) {
+        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
             screen.exportButton = UIComponents.button(Translate.gui("export"), button -> screen.captureScheduled = true);
             builder.row.child(screen.exportButton);
 
             builder.row.child(UIComponents.button(Translate.gui("open_folder"), button ->
                     Util.getPlatform().openFile(renderable.getExportPath().resolveOffset().toFile())
-            ).margins(Insets.left(5)));
-        }
+            ));
 
-        if (!GraphicsEnvironment.isHeadless()) {
-            container.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
-                screen.notify(Translate.gui("copied_to_clipboard"));
+            if (!GraphicsEnvironment.isHeadless()) {
+                builder.row.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
+                    screen.notify(Translate.gui("copied_to_clipboard"));
 
-                RenderableDispatcher.drawIntoImage(screen, renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
-                        .whenComplete((image, t) -> {
-                            try (image) {
-                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                WritableByteChannel channel = Channels.newChannel(stream);
+                    RenderableDispatcher.drawIntoImage(screen, renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
+                            .whenComplete((image, t) -> {
+                                try (image) {
+                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                    WritableByteChannel channel = Channels.newChannel(stream);
 
-                                ((NativeImageInvoker) (Object) image).wikirenderer$write(channel);
+                                    ((NativeImageInvoker) (Object) image).wikirenderer$write(channel);
 
-                                ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
-                                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
-                            } catch (IOException e) {
-                                WikiRenderer.LOGGER.error("mfw", e);
-                            }
-                        });
-            }).horizontalSizing(Sizing.fixed(75)));
+                                    ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
+                                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+                                } catch (IOException e) {
+                                    WikiRenderer.LOGGER.error("mfw", e);
+                                }
+                            });
+                }));
+            }
         }
     }
 

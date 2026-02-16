@@ -35,6 +35,10 @@ public class Property<T> implements BiConsumer<Property<T>, T> {
         this.invokeListeners();
     }
 
+    public boolean isDefault() {
+        return this.value == this.defaultValue;
+    }
+
     public void instantListen(BiConsumer<Property<T>, T> listener) {
         this.changeListeners.add(listener);
         listener.accept(this, this.value);

@@ -8,6 +8,7 @@ import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
+import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.ItemNameUtil;
 import net.minecraft.client.Minecraft;
@@ -101,8 +102,8 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
     }
 
     @Override
-    public @NotNull Map<String, MinecraftTexturesPayload> getTextureData() {
-        MinecraftTexturesPayload playerSkin = PlayerTextureUtils.getPlayerHeadTextureData(this.stack);
+    public @NotNull Map<String, TextureData> getTextureData() {
+        TextureData playerSkin = PlayerTextureUtils.getPlayerHeadTextureData(this.stack);
         return playerSkin == null ? new HashMap<>() : Map.of("item", playerSkin);
     }
 }
