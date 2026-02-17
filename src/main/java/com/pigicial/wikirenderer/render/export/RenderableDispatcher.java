@@ -11,7 +11,6 @@ import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.mixin.access.LightTextureAccessor;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -19,7 +18,6 @@ import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,10 +57,6 @@ public class RenderableDispatcher {
         WikiRenderer.endRenderableDraw();
         modelViewStack.popMatrix();
         renderable.cleanUp();
-
-        LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
-        ((LightTextureAccessor) lightTexture).wikirenderer$setUpdateLightTexture(true);
-        lightTexture.updateLightTexture(1.0F);
     }
 
     public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {

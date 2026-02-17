@@ -91,6 +91,13 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     }
 
     @Override
+    public void cleanUp() {
+        if (this.usesWorldLightMap()) {
+            this.updateWorldLightmap();
+        }
+    }
+
+    @Override
     public void drawSubmittedRenderFeatures() {
         // Draw all buffers
         Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
