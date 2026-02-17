@@ -259,6 +259,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         state.outlineColor = 0; // remove glow
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightTexture.FULL_BRIGHT;
+        state.nameTag = null;
+        state.nameTagAttachment = null;
 
         if (properties.tick.get()) {
             if (!usingLiveEntity) {
@@ -402,6 +404,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
     @Override
     public void cacheTextureData(Runnable rebuildCallback) {
+        System.out.println("hi");
         if (!this.requireTextureReCache) return;
         this.requireTextureReCache = false;
         this.textureData.clear();
@@ -414,7 +417,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         this.textureCancelMarker = cancelMarker;
 
         // i hate how there are like 5 billion ways skins are handled but whatever, there's probably a better way to do this but that's a later project
+        System.out.println("hi");
         applyToEntityAndPassengers(getUsedEntity(), usedEntity -> {
+            System.out.println("usedEntity type = " + usedEntity.getClass());
             switch (usedEntity) {
                 case RenderablePlayerEntity player -> player.getSkinGrabber().whenComplete((data, throwable) -> {
                     if (throwable != null || cancelMarker.get()) return;
@@ -426,9 +431,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                     if (connection == null) return;
 
                     PlayerInfo playerInfo = connection.getPlayerInfo(player.getUUID());
-                    if (playerInfo == null) return;
+                    GameProfile profile = playerInfo != null ? playerInfo.getProfile() : player.getGameProfile();
 
-                    GameProfile profile = playerInfo.getProfile();
                     TextureData playerTexture = PlayerTextureUtils.getTextureDataFromGameProfile(profile);
                     if (playerTexture != null) {
                         textureData.put("player", playerTexture);
