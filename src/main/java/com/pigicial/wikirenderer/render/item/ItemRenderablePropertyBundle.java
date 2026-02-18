@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.item;
 
+import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.Property;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -43,17 +44,35 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
     }
 
     @Override
+    protected int getDefaultRotation() {
+        return 0;
+    }
+
+    @Override
+    protected double getDefaultSlant() {
+        return 0;
+    }
+
+    @Override
     public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
         float scale = (this.scale.get() / 100f) * 2f;
         modelViewStack.scale(scale, scale, scale);
+
+        modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
+
+        modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
+        modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get() + this.updateAndGetSpinningRotationOffset()));
     }
 
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.sectionHeader(container, "transform_options", false);
         WikiRendererUI.intControl(container, scale, "scale", 10);
+        WikiRendererUI.intControl(container, rotation, "rotation", 45);
+        WikiRendererUI.doubleControl(container, slant, "slant", 30);
+        WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+        WikiRendererUI.booleanControl(container, forceEnchantmentGlints, "force_enchanted");
         WikiRendererUI.sectionHeader(container, "item_scale_warning_1", 10);
         WikiRendererUI.sectionHeader(container, "item_scale_warning_2", false);
-        WikiRendererUI.booleanControl(container, forceEnchantmentGlints, "force_enchanted");
     }
 }

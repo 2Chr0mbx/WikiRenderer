@@ -10,11 +10,16 @@ import org.joml.Vector3f;
 
 public abstract class ItemBasedRenderable<T extends DefaultPropertyBundle> extends DefaultRenderable<T> {
 
+    private static final Vector3f DIFFUSE_LIGHT_0 = new Vector3f(0.2F, 1.0F, -0.7F).normalize();
+    private static final Vector3f DIFFUSE_LIGHT_1 = new Vector3f(-0.2F, 1.0F, 0.7F).normalize();
+
     protected void setupLighting(ItemStackRenderState itemRenderState) {
         setupLighting(itemRenderState.usesBlockLight());
     }
 
     protected void setupLighting(boolean usesBlockLight) {
+        float rotation = (float) Math.toRadians(getProperties().getUsedRotation());
+        float slant = (float) Math.toRadians(getProperties().getUsedSlant());
         if (usesBlockLight) {
 
             // pulled from Lighting's first setup for ITEMS_3D, but with the scaling value of y changed from -1.0f to 1.0f
@@ -26,12 +31,15 @@ public abstract class ItemBasedRenderable<T extends DefaultPropertyBundle> exten
                     .rotateYXZ((float) Math.toRadians(62), (float) Math.toRadians(185.5), 0.0F)
                     .rotateYXZ((float) Math.toRadians(-22.5), (float) (Math.toRadians(135)), 0.0F);
 
-            Vector3f light0 = matrix4f2.transformDirection(new Vector3f(0.2F, 1.0F, -0.7F).normalize(), new Vector3f());
-            Vector3f light1 = matrix4f2.transformDirection(new Vector3f(-0.2F, 1.0F, 0.7F).normalize(), new Vector3f());
+            Vector3f light0 = matrix4f2.transformDirection(DIFFUSE_LIGHT_0, new Vector3f()).rotateY(-rotation).normalize();
+            Vector3f light1 = matrix4f2.transformDirection(DIFFUSE_LIGHT_1, new Vector3f()).rotateY(-rotation).normalize();
 
             this.setupLighting(light0, light1);
         } else {
-            Minecraft.getInstance().gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_FLAT);
+            Matrix4f matrix4f = new Matrix4f().rotationY((float) (-Math.PI / 8)).rotateX((float) (Math.PI * 3.0 / 4.0));
+            Vector3f light0 = matrix4f.transformDirection(DIFFUSE_LIGHT_0, new Vector3f()).rotateX(-slant).rotateY(-rotation).normalize();
+            Vector3f light1 = matrix4f.transformDirection(DIFFUSE_LIGHT_0, new Vector3f()).rotateX(-slant).rotateY(-rotation).normalize();
+            this.setupLighting(light0, light1);
         }
     }
 }
