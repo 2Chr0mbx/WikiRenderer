@@ -23,6 +23,7 @@
     "access.ItemStackRenderStateAccessor",
     "access.LightTextureAccessor",
     "access.MannequinAccessor",
+    "access.ModelFeatureRendererStorageAccessor",
     "access.ModelPartAccessor",
     "access.NativeImageAccessor",
     "access.NativeImageInvoker",

@@ -14,12 +14,14 @@ import com.pigicial.wikirenderer.render.area.bounds.SingleCuboidMeshBounds;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.ChunkScanResult;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.HorizontalMiniChunk;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.MiniChunkScanner;
+import com.pigicial.wikirenderer.render.entity.EntityRenderBoundsUtil;
 import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import com.pigicial.wikirenderer.util.Translate;
+import com.pigicial.wikirenderer.util.VertexPositionTracker;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -195,16 +197,13 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             BlockPos end = mesh.bounds.getMaxCorner().offset(1, 1, 1);
             AABB areaBoundingBox = new AABB(start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
 
-            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), e -> {
-                AABB entityBounds = e.getBoundingBox();
+            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), entity -> {
+                Vec3 entityPosition = entity.position();
 
-                if (e instanceof ArmorStand stand && stand.isMarker()) {
-                    // visible player head item - basically just offset the entity bounding box by the height, otherwise it's the base and not head
-                    entityBounds = EntityType.ARMOR_STAND.getDimensions().makeBoundingBox(stand.position());
-                }
-
-                // more accurate check i'd say
-                return  entityBounds.intersects(areaBoundingBox);
+                EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
+                this.updateEntityState(entity, state);
+                AABB bounds = EntityRenderBoundsUtil.getBounds(state, this, entityPosition.x, entityPosition.y, entityPosition.z);
+                return bounds != null && bounds.intersects(areaBoundingBox);
             });
         }
 
