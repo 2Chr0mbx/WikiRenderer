@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.item;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -17,12 +18,14 @@ import org.joml.Matrix4fStack;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBundle> {
+public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBundle> implements AnimationTimingsProvider {
 
     private final Minecraft client = Minecraft.getInstance();
     private final List<ItemStack> items;
     private final List<ItemStackRenderState> renderStates; // there's probably a better fix for this than using multiple render states, but it works for now
     private final String atlasSource;
+
+    private List<List<Integer>> animationTimingsCache = null;
 
     public ItemAtlasRenderable(String atlasSource, List<ItemStack> items) {
         this.atlasSource = atlasSource;
@@ -41,9 +44,9 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
         matrices.scale(.1f, .1f, .1f);
         matrices.translate((-columns / 2f) * spacing - spacing / 2, (rows / 2f) * spacing + spacing / 2, 0);
 
-		SubmitNodeStorage nodeStorage = this.client.gameRenderer.getSubmitNodeStorage();
-	    ItemModelResolver itemModelManager = this.client.getItemModelResolver();
-	    for (int row = 0; row < rows; row++) {
+        SubmitNodeStorage nodeStorage = this.client.gameRenderer.getSubmitNodeStorage();
+        ItemModelResolver itemModelManager = this.client.getItemModelResolver();
+        for (int row = 0; row < rows; row++) {
             matrices.translate(0, -spacing, 0);
             matrices.pushPose();
             for (int column = 0; column < columns; column++) {
@@ -59,18 +62,18 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
                 itemModelManager.updateForTopItem(
                         renderState,
                         itemStack,
-			            ItemDisplayContext.GUI,
-			            this.client.level,
-			            null,
-			            0
-	            );
+                        ItemDisplayContext.GUI,
+                        this.client.level,
+                        null,
+                        0
+                );
                 renderState.submit(
-						matrices,
-			            nodeStorage,
-			            LightTexture.FULL_BRIGHT,
-			            OverlayTexture.NO_OVERLAY,
-			            0
-	            );
+                        matrices,
+                        nodeStorage,
+                        LightTexture.FULL_BRIGHT,
+                        OverlayTexture.NO_OVERLAY,
+                        0
+                );
                 // draw each loop so lighting works (maybe there's a better solution to this, can't be asked to look right now)
                 this.drawSubmittedRenderFeatures();
             }
@@ -93,4 +96,16 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
         return ExportPathSpec.of("atlases", this.atlasSource);
     }
 
+    @Override
+    public List<List<Integer>> getTicksToFullyAnimate() {
+        if (animationTimingsCache == null) {
+            List<Integer> timings = new ArrayList<>();
+            for (ItemStack item : this.items) {
+                AnimationTimingUtil.scanTicksToFullyAnimateItem(item, timings);
+            }
+            animationTimingsCache = List.of(timings);
+        }
+
+        return animationTimingsCache;
+    }
 }

@@ -5,6 +5,7 @@ import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
+import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
@@ -12,10 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class BatchRenderable<R extends Renderable<?>> implements Renderable<BatchPropertyBundle>, TextureDataProvider {
+public class BatchRenderable<R extends Renderable<?>> implements Renderable<BatchPropertyBundle>, TextureDataProvider, AnimationTimingsProvider {
 
     private final BatchPropertyBundle properties;
     protected final List<R> delegates;
@@ -194,6 +196,15 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     public void cacheTextureData(Runnable rebuildCallback) {
         if (this.currentDelegate instanceof TextureDataProvider provider) {
             provider.cacheTextureData(rebuildCallback);
+        }
+    }
+
+    @Override
+    public List<List<Integer>> getTicksToFullyAnimate() {
+        if (this.currentDelegate instanceof AnimationTimingsProvider provider) {
+            return provider.getTicksToFullyAnimate();
+        } else {
+            return List.of();
         }
     }
 }
