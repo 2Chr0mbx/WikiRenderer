@@ -185,12 +185,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.doubleControl(container, slant, "slant", 30);
             WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
             WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
-
-            container.child(UIComponents.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
-                        this.xOffset.setToDefault();
-                        this.yOffset.setToDefault();
-                        this.scale.setToDefault();
-                    }).margins(Insets.top(5)));
+            container.child(this.buildResetButton());
         } else {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
                 builder.row.child(UIComponents.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
