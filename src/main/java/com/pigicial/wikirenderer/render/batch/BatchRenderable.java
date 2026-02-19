@@ -6,12 +6,16 @@ import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.textures.TextureData;
+import com.pigicial.wikirenderer.textures.TextureDataProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
 import java.util.List;
+import java.util.Map;
 
-public class BatchRenderable<R extends Renderable<?>> implements Renderable<BatchPropertyBundle> {
+public class BatchRenderable<R extends Renderable<?>> implements Renderable<BatchPropertyBundle>, TextureDataProvider {
 
     private final BatchPropertyBundle properties;
     protected final List<R> delegates;
@@ -68,6 +72,10 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
                         this.currentIndex++;
                         this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
                         this.lastRenderTime = System.currentTimeMillis();
+
+                        if (this.currentDelegate instanceof TextureDataProvider) {
+                            renderScreen.guiRebuildScheduled = true;
+                        }
                     }
                     renderScreen.queueAnimationExport();
                 }
@@ -77,6 +85,10 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
                 this.currentIndex++;
                 this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
                 this.lastRenderTime = System.currentTimeMillis();
+
+                if (this.currentDelegate instanceof TextureDataProvider) {
+                    renderScreen.guiRebuildScheduled = true;
+                }
             }
         }
     }
@@ -169,4 +181,19 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         BatchPropertyBundle.fileNameFormatter = fileName;
     }
 
+    @Override
+    public @NotNull Map<String, TextureData> getTextureData(Runnable rebuildCallback) {
+        if (this.currentDelegate instanceof TextureDataProvider provider) {
+            return provider.getTextureData(rebuildCallback);
+        } else {
+            return Map.of();
+        }
+    }
+
+    @Override
+    public void cacheTextureData(Runnable rebuildCallback) {
+        if (this.currentDelegate instanceof TextureDataProvider provider) {
+            provider.cacheTextureData(rebuildCallback);
+        }
+    }
 }

@@ -24,6 +24,8 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public final IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
 
     public final IntProperty rotationSpeed = IntProperty.of(0, 0, 720);
+    public final Property<Boolean> allowRotatingWithMouse = Property.of(this.allowRotatingWithMouseByDefault());
+
     public float rotationOffset = 0;
     public boolean rotationOffsetUpdated = false;
 
@@ -46,6 +48,10 @@ public class DefaultPropertyBundle implements PropertyBundle {
         return 1000;
     }
 
+    protected boolean allowRotatingWithMouseByDefault() {
+        return false;
+    }
+
     @Override
     public int getExportResolution(Renderable<?> renderable) {
         return exportResolution;
@@ -65,11 +71,15 @@ public class DefaultPropertyBundle implements PropertyBundle {
     }
 
     public void modifyRotation(int amount) {
-        this.rotation.modify(amount);
+        if (this.allowRotatingWithMouse.get()) {
+            this.rotation.modify(amount);
+        }
     }
 
     public void modifySlant(double amount) {
-        this.slant.modify(amount);
+        if (this.allowRotatingWithMouse.get()) {
+            this.slant.modify(amount);
+        }
     }
 
     public boolean supportsAutomaticRotations() {
@@ -83,6 +93,8 @@ public class DefaultPropertyBundle implements PropertyBundle {
         WikiRendererUI.intControl(container, rotation, "rotation", 45);
         WikiRendererUI.doubleControl(container, slant, "slant", 30);
         WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+        WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
+        container.child(this.buildResetButton());
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
             builder.row.child(UIComponents.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
@@ -95,6 +107,17 @@ public class DefaultPropertyBundle implements PropertyBundle {
                 this.slant.set(35.264);
             }));
         }
+    }
+
+    protected ButtonComponent buildResetButton() {
+        return (ButtonComponent) UIComponents.button(Translate.gui("reset_transformations"), (ButtonComponent button) -> {
+            this.xOffset.setToDefault();
+            this.yOffset.setToDefault();
+            this.scale.setToDefault();
+            this.rotation.setToDefault();
+            this.slant.setToDefault();
+            this.rotationSpeed.setToDefault();
+        }).margins(Insets.of(5, 0, 0, 0));
     }
 
     @Override

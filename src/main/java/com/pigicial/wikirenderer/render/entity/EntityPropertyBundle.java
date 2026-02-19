@@ -123,6 +123,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.intControl(container, this.spriteRotation, "rotation", 45);
             WikiRendererUI.intControl(container, this.spriteSlant, "slant", 30);
         }
+        WikiRendererUI.booleanControl(container, this.allowRotatingWithMouse, "allow_rotating_with_mouse");
         if (!this.spriteRendering.get()) {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
                 builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
@@ -136,11 +137,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             }
         }
 
-        container.child(UIComponents.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
-                    this.xOffset.setToDefault();
-                    this.yOffset.setToDefault();
-                    this.scale.setToDefault();
-                }));
+        container.child(this.buildResetButton());
 
         WikiRendererUI.sectionHeader(container, "entity_data", true);
         container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {

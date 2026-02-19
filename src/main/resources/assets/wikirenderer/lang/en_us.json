@@ -33,6 +33,7 @@
   "gui.wikirenderer.rotation": "Rotation",
   "gui.wikirenderer.slant": "Slant",
   "gui.wikirenderer.rotation_speed": "Rotation Degrees Per Second",
+  "gui.wikirenderer.allow_rotating_with_mouse": "Allow Rotating With Mouse",
   "gui.wikirenderer.dimetric": "Dimetric",
   "gui.wikirenderer.isometric": "Isometric",
   "gui.wikirenderer.dimetric_recommended": "Dimetric (Recommended)",
@@ -137,6 +138,7 @@
   "gui.wikirenderer.copied_coordinates_command_to_clipboard": "Copied render command to clipboard",
 
   "gui.wikirenderer.transform_options": "Transform Options",
+  "gui.wikirenderer.item_options": "Item Options",
   "gui.wikirenderer.tooltip_options": "Tooltip Options",
   "gui.wikirenderer.presets": "Presets",
   "gui.wikirenderer.lighting_profile": "Lighting Profile",
@@ -203,6 +205,7 @@
   "gui.wikirenderer.rebuild_mesh": "Rebuild Mesh",
   "gui.wikirenderer.stop_building": "Stop",
   "gui.wikirenderer.reset_offset_and_scale": "Reset Offset & Scale",
+  "gui.wikirenderer.reset_transformations": "Reset Transformations",
 
   "gui.wikirenderer.exporter.idle": "Exporter Idle",
   "gui.wikirenderer.exporter.jobs": "Export Jobs: %s",

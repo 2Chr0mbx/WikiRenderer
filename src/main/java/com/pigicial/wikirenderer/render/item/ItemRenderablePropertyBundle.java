@@ -6,6 +6,9 @@ import com.pigicial.wikirenderer.property.Property;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.util.Translate;
+import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.world.item.Items;
 import org.joml.Matrix4fStack;
@@ -68,11 +71,15 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.sectionHeader(container, "transform_options", false);
         WikiRendererUI.intControl(container, scale, "scale", 10);
+        WikiRendererUI.sectionHeader(container, "item_scale_warning_1", 10);
+        WikiRendererUI.sectionHeader(container, "item_scale_warning_2", false);
         WikiRendererUI.intControl(container, rotation, "rotation", 45);
         WikiRendererUI.doubleControl(container, slant, "slant", 30);
         WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+        WikiRendererUI.booleanControl(container, this.allowRotatingWithMouse, "allow_rotating_with_mouse");
+        container.child(this.buildResetButton());
+
+        WikiRendererUI.sectionHeader(container, "item_options", true);
         WikiRendererUI.booleanControl(container, forceEnchantmentGlints, "force_enchanted");
-        WikiRendererUI.sectionHeader(container, "item_scale_warning_1", 10);
-        WikiRendererUI.sectionHeader(container, "item_scale_warning_2", false);
     }
 }

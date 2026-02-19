@@ -96,6 +96,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     @Override
+    protected boolean allowRotatingWithMouseByDefault() {
+        return true;
+    }
+
+    @Override
     public void setExportResolution(Renderable<?> renderable, int exportResolution) {
         if (perPixel90DegreeRendering.get()) {
             this.faceRenderingActualResolution = exportResolution;
@@ -179,6 +184,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.intControl(container, rotation, "rotation", 45);
             WikiRendererUI.doubleControl(container, slant, "slant", 30);
             WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+            WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
 
             container.child(UIComponents.button(Translate.gui("reset_offset_and_scale"), (ButtonComponent button) -> {
                         this.xOffset.setToDefault();

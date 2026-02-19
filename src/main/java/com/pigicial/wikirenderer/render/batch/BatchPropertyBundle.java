@@ -8,6 +8,7 @@ import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
+import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
@@ -90,8 +91,18 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
                 batchRenderable.reset(screen);
                 startButton.active = true;
             }));
-            builder.row.child(UIComponents.button(Translate.gui("batch.previous"), button -> batchRenderable.decreaseIndex()));
-            builder.row.child(UIComponents.button(Translate.gui("batch.next"), button -> batchRenderable.increaseIndex()));
+            builder.row.child(UIComponents.button(Translate.gui("batch.previous"), button -> {
+                batchRenderable.decreaseIndex();
+                if (batchRenderable.currentDelegate instanceof TextureDataProvider) {
+                    screen.guiRebuildScheduled = true;
+                }
+            }));
+            builder.row.child(UIComponents.button(Translate.gui("batch.next"), button -> {
+                batchRenderable.increaseIndex();
+                if (batchRenderable.currentDelegate instanceof TextureDataProvider) {
+                    screen.guiRebuildScheduled = true;
+                }
+            }));
         }
 
         WikiRendererUI.dynamicLabel(container, () -> Translate.gui(
