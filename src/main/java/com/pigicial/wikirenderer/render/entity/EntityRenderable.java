@@ -127,6 +127,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             living.hurtTime = 0;
             living.deathTime = 0;
         }
+        clonedEntity.tick();
 
         return clonedEntity;
     }
@@ -176,13 +177,14 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             playerClone.load(TagValueInput.create(loggingRead, playerClone.registryAccess(), nbt));
         }
 
-        List<SynchedEntityData.DataValue<?>> nonDefaultValues = playerClone.getEntityData().getNonDefaultValues();
+        List<SynchedEntityData.DataValue<?>> nonDefaultValues = originalPlayer.getEntityData().getNonDefaultValues();
         if (nonDefaultValues != null) {
             playerClone.getEntityData().assignValues(nonDefaultValues);
         }
 
         playerClone.hurtTime = 0;
         playerClone.deathTime = 0;
+        playerClone.tick();
 
         ElytraAnimationStateAccessor elytraData = (ElytraAnimationStateAccessor) playerClone.elytraAnimationState;
         elytraData.isometric$setRotX((float) (Math.PI / 12));
