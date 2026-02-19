@@ -27,6 +27,10 @@ public class MemoryBasedAnimationHandler extends AnimationHandler {
     public void renderAndSaveFrame(float effectiveTickDelta) {
         if (this.closed || this.remainingAnimationFrames <= 0) return;
 
+        if (GlobalProperties.SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION.get()) {
+            Minecraft.getInstance().getTextureManager().tick();
+        }
+
         GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.screen, this.renderable, effectiveTickDelta, renderable.getExportResolution());
 
         WikiRenderer.skipWorldRender = true;

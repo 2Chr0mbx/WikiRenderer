@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.item;
 
+import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.property.DoubleProperty;
 import com.pigicial.wikirenderer.property.IntProperty;
@@ -9,7 +10,7 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import io.wispforest.owo.ui.container.FlowLayout;
 import org.joml.Matrix4fStack;
 
-public class ItemAtlasPropertyBundle extends DefaultPropertyBundle {
+public class ItemAtlasPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public static final ItemAtlasPropertyBundle INSTANCE = new ItemAtlasPropertyBundle();
 

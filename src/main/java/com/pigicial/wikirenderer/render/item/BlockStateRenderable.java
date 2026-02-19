@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.item;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -138,9 +140,9 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
     }
 
     @Override
-    public void tick(boolean tick) {
+    public void tick() {
         if (client.level == null || client.player == null) return;
-        if (tick) {
+        if (GlobalProperties.TICK_TEXTURE_ANIMATIONS.get()) { // maybe not the best property to assign this to, but it works i suppose
             if (this.blockEntity != null && this.state.getTicker(client.level, this.blockEntity.getType()) != null) {
                 BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.blockEntity.getType());
                 if (ticker == null) return;

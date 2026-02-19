@@ -7,7 +7,7 @@
   "key.wikirenderer.batch_render_inventory": "Render Inventory Items",
 
   "gui.wikirenderer.animations": "Tick Animations",
-  "gui.wikirenderer.block_animations": "Tick Block Animations",
+  "gui.wikirenderer.texture_animations": "Tick Texture Animations",
   "gui.wikirenderer.entity_animations": "Tick Entity Animations (some)",
   "gui.wikirenderer.particles": "Show Particles",
   "gui.wikirenderer.use_external_renderer": "Use External Renderer",
@@ -78,8 +78,9 @@
 
   "gui.wikirenderer.animation_options": "Animation Options",
   "gui.wikirenderer.sync_rotation_to_animation": "Sync Rotation to Animation",
-  "gui.wikirenderer.speed_up_enchantment_glints": "Speed up Enchant Glints (15s loop)",
+  "gui.wikirenderer.sync_texture_animations": "Sync Textures to Animation",
   "gui.wikirenderer.sync_enchantment_glints": "Sync Glints to Animation",
+  "gui.wikirenderer.speed_up_enchantment_glints": "Speed up Enchant Glints (15s loop)",
   "gui.wikirenderer.render_with_game_timings": "Render with Game Timings (slower)",
   "gui.wikirenderer.enchantment_glint_preset": "Use Enchanted Items Timings",
   "gui.wikirenderer.animation_frames": "Animation Frames",

@@ -51,7 +51,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implements TickingRenderable<AreaPropertyBundle> {
+public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
 
     private final Minecraft client = Minecraft.getInstance();
 
@@ -361,10 +361,5 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         super.dispose();
         mesh.builtSubMeshes.forEach(MeshSection::close);
         mesh.builtSubMeshes.clear();
-    }
-
-    @Override
-    public void tick(boolean tick) {
-        // nothing here needed, but implementing this means the option is available, and that controls a mixin
     }
 }

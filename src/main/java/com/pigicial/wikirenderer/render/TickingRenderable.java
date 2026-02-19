@@ -1,10 +1,10 @@
 package com.pigicial.wikirenderer.render;
 
-import com.pigicial.wikirenderer.property.TickingPropertyBundle;
+import com.pigicial.wikirenderer.property.PropertyBundle;
 
-public interface TickingRenderable<P extends TickingPropertyBundle> extends Renderable<P> {
+public interface TickingRenderable<P extends PropertyBundle> extends Renderable<P> {
 
-    void tick(boolean tick);
+    void tick();
 
     @Override
     P getProperties();

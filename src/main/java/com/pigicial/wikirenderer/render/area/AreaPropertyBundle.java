@@ -1,15 +1,18 @@
 package com.pigicial.wikirenderer.render.area;
 
-import com.pigicial.wikirenderer.property.*;
+import com.mojang.math.Axis;
+import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
+import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.property.IntProperty;
+import com.pigicial.wikirenderer.property.Property;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.area.bounds.ExpandableMeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.ExpansionSide;
 import com.pigicial.wikirenderer.render.area.side_view.MeshSideRotation;
 import com.pigicial.wikirenderer.render.area.side_view.MeshSideSlant;
-import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
-import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -27,11 +30,10 @@ import java.awt.datatransfer.StringSelection;
 
 import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
 
-public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
+public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public static final AreaPropertyBundle INSTANCE = new AreaPropertyBundle();
 
-    private final Property<Boolean> tick = Property.of(true);
     public final Property<Boolean> emulateDaylight = Property.of(true);
     public final Property<Boolean> useFullBrightGamma = Property.of(false);
     public final Property<Boolean> useNightVision = Property.of(false);
@@ -78,16 +80,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
     public boolean areMinimapSettingsExportable() {
         return sideViewRotation == MeshSideRotation.NORTH && sideViewSlant == MeshSideSlant.ABOVE;
-    }
-
-    @Override
-    public Property<Boolean> getTickProperty() {
-        return this.tick;
-    }
-
-    @Override
-    public String getTickTranslationKey() {
-        return "block_animations";
     }
 
     @Override
@@ -336,7 +328,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
     @Override
     public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        TickingPropertyBundle.super.buildRenderOptionGUIControls(renderable, screen, container);
         WikiRendererUI.booleanControl(container, this.emulateDaylight, "render_as_daytime");
         WikiRendererUI.booleanControl(container, this.useFullBrightGamma, "full_bright");
         WikiRendererUI.booleanControl(container, this.useNightVision, "night_vision");

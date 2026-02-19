@@ -1,5 +1,6 @@
-package com.pigicial.wikirenderer.mixin.world;
+package com.pigicial.wikirenderer.mixin.texture;
 
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.property.TickingPropertyBundle;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import net.minecraft.client.Minecraft;
@@ -15,13 +16,8 @@ public class TextureManagerMixin {
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     public void stopTick(CallbackInfo ci) {
         Minecraft client = Minecraft.getInstance();
-        if (client.screen instanceof RenderScreen screen) {
-            // there needs to be a cleaner way to do this
-            if (screen.renderable.getProperties() instanceof TickingPropertyBundle ticking) {
-                if (!ticking.getTickProperty().get()) {
-                    ci.cancel();
-                }
-            }
+        if (client.screen instanceof RenderScreen && !GlobalProperties.TICK_TEXTURE_ANIMATIONS.get()) {
+            ci.cancel();
         }
     }
 

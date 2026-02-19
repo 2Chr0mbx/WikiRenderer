@@ -237,7 +237,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         WikiRendererUI.sectionHeader(rightColumn, "render_options", false);
-        this.buildBackgroundColorGUIControls();
+        this.buildDefaultRenderOptionsGUIControls();
         this.renderable.getProperties().buildRenderOptionGUIControls(this.renderable, this, this.rightColumn);
 
         WikiRendererUI.sectionHeader(rightColumn, "export_options", true);
@@ -249,7 +249,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.buildFFmpegSection();
     }
 
-    private void buildBackgroundColorGUIControls() {
+    private void buildDefaultRenderOptionsGUIControls() {
         EditBox colorField = WikiRendererUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
         colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
         colorField.setValue(String.format("#%06X", backgroundColor & 0xFFFFFF));
@@ -264,6 +264,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         });
 
         WikiRendererUI.booleanControl(rightColumn, SHOW_BACKGROUND_COLOR_IN_EXPORTS, "show_background_color_in_exports");
+        WikiRendererUI.booleanControl(rightColumn, TICK_TEXTURE_ANIMATIONS, "texture_animations");
     }
 
     private void buildFFmpegSection() {
@@ -305,6 +306,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }
         }
 
+        WikiRendererUI.booleanControl(rightColumn, SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION, "sync_texture_animations");
         WikiRendererUI.booleanControl(rightColumn, SYNC_ENCHANTMENT_GLINTS_TO_EXPORT, "sync_enchantment_glints");
         WikiRendererUI.booleanControl(rightColumn, SPEED_UP_ENCHANTMENT_GLINTS, "speed_up_enchantment_glints");
         SPEED_UP_ENCHANTMENT_GLINTS.futureListen((p, v) -> guiRebuildScheduled = true);
@@ -533,10 +535,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.renderable instanceof TickingRenderable<?> ticking) {
-            boolean tick = ticking.getProperties().getTickProperty().get();
-            if (tick) WikiRenderer.inRenderableTick = true;
-            ticking.tick(tick);
-            if (tick) WikiRenderer.inRenderableTick = false;
+            WikiRenderer.inRenderableTick = true;
+            ticking.tick();
+            WikiRenderer.inRenderableTick = false;
         }
     }
 

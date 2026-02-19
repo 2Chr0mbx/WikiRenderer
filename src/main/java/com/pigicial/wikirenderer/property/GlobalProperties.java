@@ -5,8 +5,9 @@ import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
 
 public class GlobalProperties {
 
-    public static final Property<Boolean> SHOW_BACKGROUND_COLOR_IN_EXPORTS = Property.of(false);
     public static int backgroundColor = 0x000000;
+    public static final Property<Boolean> SHOW_BACKGROUND_COLOR_IN_EXPORTS = Property.of(false);
+    public static final Property<Boolean> TICK_TEXTURE_ANIMATIONS = Property.of(true);
 
     public static final Property<Boolean> UNSAFE = Property.of(false);
     public static final Property<Boolean> SAVE_INTO_ROOT = Property.of(false);
@@ -17,6 +18,7 @@ public class GlobalProperties {
     public static final Property<Boolean> SPEED_UP_ENCHANTMENT_GLINTS = Property.of(false);
     public static final Property<Boolean> SYNC_ENCHANTMENT_GLINTS_TO_EXPORT = Property.of(false);
     public static final Property<Boolean> SYNC_ROTATION_TO_ANIMATION = Property.of(false);
+    public static final Property<Boolean> SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION = Property.of(false);
     public static final Property<Boolean> SET_ANIMATION_FPS_CAP = Property.of(true);
 
     public static final IntProperty EXPORT_FRAMERATE = IntProperty.of(25, 1, 300);

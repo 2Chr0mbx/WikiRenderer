@@ -33,6 +33,10 @@ public final class InstantDiskSaveAnimationHandler extends AnimationHandler {
         }
         // delay until ram is available
 
+        if (GlobalProperties.SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION.get()) {
+            Minecraft.getInstance().getTextureManager().tick();
+        }
+
         GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.screen, this.renderable, effectiveTickDelta, renderable.getExportResolution());
 
         WikiRenderer.skipWorldRender = true;

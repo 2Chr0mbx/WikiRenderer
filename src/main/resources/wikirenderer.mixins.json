@@ -9,11 +9,8 @@
   "plugin": "com.pigicial.wikirenderer.mixin.MixinPlugin",
   "client": [
     "FramerateLimitTrackerMixin",
-    "GuiGraphicsMixin",
     "GuiRendererMixin",
-    "ItemStackMixin",
     "MinecraftMixin",
-    "TextureTransformMixin",
     "access.AbstractContainerScreenAccessor",
     "access.AbstractSliderButtonInvoker",
     "access.BlockEntityAccessor",
@@ -41,6 +38,11 @@
     "entity.sprite.SimpleEquipmentLayerMixin",
     "entity.sprite.VillagerProfessionLayerMixin",
     "entity.sprite.WolfArmorLayerMixin",
+    "texture.AnimationStateMixin",
+    "texture.GuiGraphicsMixin",
+    "texture.ItemStackMixin",
+    "texture.TextureManagerMixin",
+    "texture.TextureTransformMixin",
     "world.BeaconRendererMixin",
     "world.BlockEntityRenderDispatcherMixin",
     "world.ChunkSectionsToRenderMixin",
@@ -51,8 +53,7 @@
     "world.ParticleEngineMixin",
     "world.ParticleFeatureRendererMixin",
     "world.ProjectionTypeMixin",
-    "world.QuadParticleGroupMixin",
-    "world.TextureManagerMixin"
+    "world.QuadParticleGroupMixin"
   ],
   "injectors": {
     "defaultRequire": 1
