@@ -13,20 +13,25 @@ import java.util.List;
 public interface AnimationTimingsProvider {
     List<Integer> getTicksToFullyAnimate();
 
+    default String getAnimationTimingsHeaderTranslationKey() {
+        return "texture_timings";
+    }
+
     default void buildTimingsSection(FlowLayout layout) {
-        List<Integer> textureTimings = this.getTicksToFullyAnimate();
-        if (textureTimings == null || textureTimings.isEmpty()) return;
+        try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(layout)) {
+            WikiRendererUI.dynamicLabel(builder.row, () -> {
+                List<Integer> textureTimings = this.getTicksToFullyAnimate();
+                if (textureTimings == null || textureTimings.isEmpty()) return Component.empty();
 
-        DecimalFormat df = new DecimalFormat("###.##");
-        String timingsKey = textureTimings.size() == 1 ? "texture_timings_data_single" : "texture_timings_data_multiple";
+                DecimalFormat df = new DecimalFormat("###.##");
+                String timingsKey = textureTimings.size() == 1 ? "texture_timings_data_single" : "texture_timings_data_multiple";
 
-        long seamlessLoopTicks = AnimationTimingUtil.getSeamlessLoopDuration(textureTimings);
-        Component seamlessLoopTicksText = Component.literal(df.format(seamlessLoopTicks)).withStyle(ChatFormatting.GREEN);
-        Component seamlessLoopSecondsText = Component.literal(df.format(seamlessLoopTicks / 20D) + "s").withStyle(ChatFormatting.AQUA);
-
-        WikiRendererUI.text(layout, "texture_timings", true);
-        WikiRendererUI.text(layout, timingsKey + "_1", false);
-        WikiRendererUI.text(layout, Translate.gui(timingsKey + "_2", seamlessLoopSecondsText, seamlessLoopTicksText), 0);
-        WikiRendererUI.text(layout, timingsKey + "_3", false);
+                long seamlessLoopTicks = AnimationTimingUtil.getSeamlessLoopDuration(textureTimings);
+                Component seamlessLoopTicksText = Component.literal(df.format(seamlessLoopTicks)).withStyle(ChatFormatting.GREEN);
+                Component seamlessLoopSecondsText = Component.literal(df.format(seamlessLoopTicks / 20D) + "s").withStyle(ChatFormatting.AQUA);
+                System.out.println("timings = " + textureTimings);
+                return Translate.gui(timingsKey, seamlessLoopSecondsText, seamlessLoopTicksText);
+            });
+        }
     }
 }

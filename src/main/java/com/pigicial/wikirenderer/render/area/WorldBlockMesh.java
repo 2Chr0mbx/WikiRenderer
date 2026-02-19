@@ -14,6 +14,7 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.OrthographicSort;
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
+import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.impl.client.indigo.renderer.IndigoRenderer;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.WorldMesherRenderContext;
@@ -42,6 +43,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
@@ -59,6 +61,8 @@ public class WorldBlockMesh {
     public final MeshWorldOverrides world;
     public final MeshBounds bounds;
     private AreaRenderable renderable;
+
+    private final List<Integer> animationCompletionTimings = new LinkedList<>();
 
     public final List<MeshSection> builtSubMeshes = new ArrayList<>();
     private MeshState state = MeshState.NEW;
@@ -288,6 +292,11 @@ public class WorldBlockMesh {
         AtomicInteger subMeshesToBeUploaded = new AtomicInteger();
         AtomicBoolean cancelled = new AtomicBoolean(false);
 
+        this.animationCompletionTimings.clear();
+        AABB boundingBox = bounds.buildBoundingBox();
+        int blockCount = (int) (boundingBox.getXsize() * boundingBox.getYsize() * boundingBox.getZsize());
+        boolean checkAnimations = blockCount < 250_000;
+
         Object lock = new Object();
         for (SubMesh data : subMeshes) {
 
@@ -326,9 +335,7 @@ public class WorldBlockMesh {
                         poseStack.pushPose();
                         poseStack.translate(-(pos.getX() & 15), -(pos.getY() & 15), -(pos.getZ() & 15));
                         poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
-
                         blockRenderDispatcher.renderLiquid(pos, world, new FluidVertexConsumer(this.getOrCreateBuilder(bufferBuilderPack, builderStorage, fluidLayer), poseStack.last().pose(), poseStack.last().normal()), state, fluidState);
-
                         poseStack.popPose();
                     }
 
@@ -336,6 +343,10 @@ public class WorldBlockMesh {
                     poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
 
                     BlockStateModel model = blockRenderDispatcher.getBlockModel(state);
+                    if (checkAnimations) {
+                        AnimationTimingUtil.getTicksToFullyAnimateBlock(model, animationCompletionTimings);
+                    }
+
                     if (renderContext != null) {
                         renderContext.tessellateBlock(state, pos, model, poseStack);
                     } else {
@@ -384,6 +395,7 @@ public class WorldBlockMesh {
                     if (subMeshesUploaded.get() == subMeshes.size()) {
                         this.buildFuture = null;
                         this.state = MeshState.READY;
+
                     }
                 }
             }));
@@ -397,6 +409,10 @@ public class WorldBlockMesh {
     private VertexConsumer getOrCreateBuilder(SectionBufferBuilderPack bufferBuilderPack, Map<ChunkSectionLayer, BufferBuilder> builderStorage, ChunkSectionLayer layer) {
         return builderStorage.computeIfAbsent(layer, renderLayer ->
                 new BufferBuilder(bufferBuilderPack.buffer(layer), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK));
+    }
+
+    public Optional<List<Integer>> getAnimationCompletionTimings() {
+        return animationCompletionTimings.isEmpty() ? Optional.empty() : Optional.of(animationCompletionTimings);
     }
 
     public enum MeshState {

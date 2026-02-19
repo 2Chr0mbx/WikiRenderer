@@ -236,9 +236,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (renderable instanceof TextureDataProvider textureProvider) {
             textureProvider.buildTextureGrabSection(this, leftColumn);
         }
-        if (renderable instanceof AnimationTimingsProvider timingsProvider) {
-            timingsProvider.buildTimingsSection(leftColumn);
-        }
 
         WikiRendererUI.text(rightColumn, "render_options", false);
         this.buildDefaultRenderOptionsGUIControls();
@@ -354,6 +351,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 }
             }
         });
+
+        if (renderable instanceof AnimationTimingsProvider timingsProvider) {
+            timingsProvider.buildTimingsSection(rightColumn);
+        }
 
         WikiRendererUI.dynamicLabel(rightColumn, () -> switch (animationHandlingMode) {
             case DISK_INSTANT_SAVE -> Translate.gui("animation_mode_selected_instant_file_save");

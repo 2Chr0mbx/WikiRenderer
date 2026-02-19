@@ -15,10 +15,12 @@ import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.entity.player.ProfileFetchMode;
 import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
+import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.model.HumanoidModel;
@@ -60,7 +62,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider {
+public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider, AnimationTimingsProvider {
 
     private final Minecraft client = Minecraft.getInstance();
     private final long creationTimeMs = System.currentTimeMillis();
@@ -483,5 +485,17 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             this.cacheTextureData(rebuildCallback);
         }
         return this.textureData;
+    }
+
+    @Override
+    public String getAnimationTimingsHeaderTranslationKey() {
+        return "texture_timings_equipped_items";
+    }
+
+    @Override
+    public List<Integer> getTicksToFullyAnimate() {
+        List<Integer> animationTimings = new LinkedList<>();
+        applyToEntityAndPassengers(getUsedEntity(), entity -> AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, animationTimings));
+        return animationTimings;
     }
 }

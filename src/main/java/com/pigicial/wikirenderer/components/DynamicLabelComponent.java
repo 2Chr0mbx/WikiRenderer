@@ -29,13 +29,8 @@ public class DynamicLabelComponent extends LabelComponent {
     }
 
     @Override
-    protected int determineHorizontalContentSize(Sizing sizing) {
-        return 100;
-    }
-
-    @Override
     protected int determineVerticalContentSize(Sizing sizing) {
-        return this.textRenderer.lineHeight;
+        return Math.max(super.determineVerticalContentSize(sizing), this.textRenderer.lineHeight);
     }
 
     @Override
@@ -45,6 +40,7 @@ public class DynamicLabelComponent extends LabelComponent {
             return;
         }
         this.text(newText);
+        this.applySizing();
         super.draw(graphics, mouseX, mouseY, partialTicks, delta);
     }
 }

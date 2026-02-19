@@ -8,7 +8,6 @@ import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.ParticleRestriction;
-import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.bounds.ChunkScannedMeshBounds;
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.bounds.SingleCuboidMeshBounds;
@@ -17,7 +16,9 @@ import com.pigicial.wikirenderer.render.area.bounds.chunk.HorizontalMiniChunk;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.MiniChunkScanner;
 import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import com.pigicial.wikirenderer.util.Translate;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Camera;
@@ -51,7 +52,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
+public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implements AnimationTimingsProvider {
 
     private final Minecraft client = Minecraft.getInstance();
 
@@ -361,5 +362,29 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> {
         super.dispose();
         mesh.builtSubMeshes.forEach(MeshSection::close);
         mesh.builtSubMeshes.clear();
+    }
+
+    @Override
+    public String getAnimationTimingsHeaderTranslationKey() {
+        return "texture_timings_blocks_entities";
+    }
+
+    @Override
+    public List<Integer> getTicksToFullyAnimate() {
+        List<Integer> animationTimings = new LinkedList<>();
+        if (mesh.getAnimationCompletionTimings().isPresent()) {
+            animationTimings.addAll(mesh.getAnimationCompletionTimings().get());
+        }
+
+        AreaPropertyBundle properties = getProperties();
+        if (!properties.hideEntities.get()) {
+            for (Entity entity : entities) {
+                if (entity instanceof Player && properties.hidePlayers.get()) continue;
+                if (entity instanceof ArmorStand && properties.hideArmorStands.get()) continue;
+                if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) continue;
+                AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, animationTimings);
+            }
+        }
+        return animationTimings;
     }
 }

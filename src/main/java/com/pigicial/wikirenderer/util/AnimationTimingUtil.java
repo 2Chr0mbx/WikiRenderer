@@ -13,6 +13,9 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -23,10 +26,19 @@ import java.util.List;
 
 public class AnimationTimingUtil {
 
-    public static List<Integer> getTicksToFullyAnimateItem(ItemStack itemStack) {
+    public static void scanTicksToFullyAnimateEntityItems(Entity entity, List<Integer> animationTimings) {
+        if (entity instanceof LivingEntity livingEntity) {
+            for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
+                ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
+                AnimationTimingUtil.scanTicksToFullyAnimateItem(item, animationTimings);
+            }
+        }
+    }
+
+    public static void scanTicksToFullyAnimateItem(ItemStack itemStack, List<Integer> animationTimings) {
         Identifier modelIdentifier = itemStack.get(DataComponents.ITEM_MODEL);
         if (modelIdentifier == null) {
-            return List.of();
+            return;
         }
 
         ItemStackRenderState renderState = new ItemStackRenderState();
@@ -39,21 +51,21 @@ public class AnimationTimingUtil {
                 0
         );
 
-        List<Integer> animationCompletionTimes = new ArrayList<>();
         for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) renderState).wikirenderer$getLayers()) {
-            fillTimings(layer.prepareQuadList(), animationCompletionTimes);
+            fillTimings(layer.prepareQuadList(), animationTimings);
         }
 
         renderState.clear();
-        return animationCompletionTimes;
     }
 
     public static List<Integer> getTicksToFullyAnimateBlock(BlockState state) {
-        BlockStateModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
+        return getTicksToFullyAnimateBlock(Minecraft.getInstance().getBlockRenderer().getBlockModel(state), new ArrayList<>());
+    }
+
+    public static List<Integer> getTicksToFullyAnimateBlock(BlockStateModel model, List<Integer> animationCompletionTimes) {
         List<BlockModelPart> parts = new ArrayList<>();
         model.collectParts(RandomSource.create(), parts); // todo: dont use random
 
-        List<Integer> animationCompletionTimes = new ArrayList<>();
         for (BlockModelPart part : parts) {
             List<BakedQuad> quads = part instanceof SimpleModelWrapper wrapper ? wrapper.quads().getAll() : part.getQuads(null);
             fillTimings(quads, animationCompletionTimes);

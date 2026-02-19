@@ -21,10 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4fStack;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
@@ -113,13 +110,14 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
             this.cacheTextureData(rebuildCallback);
         }
 
-        System.out.println("completion times = " + AnimationTimingUtil.getTicksToFullyAnimateItem(stack));
         TextureData playerSkin = PlayerTextureUtils.getTextureDataFromPlayerHead(this.stack);
         return playerSkin == null ? new HashMap<>() : Map.of("item", playerSkin);
     }
 
     @Override
     public List<Integer> getTicksToFullyAnimate() {
-        return AnimationTimingUtil.getTicksToFullyAnimateItem(stack);
+        List<Integer> animationTimings = new LinkedList<>();
+        AnimationTimingUtil.scanTicksToFullyAnimateItem(stack, animationTimings);
+        return animationTimings;
     }
 }
