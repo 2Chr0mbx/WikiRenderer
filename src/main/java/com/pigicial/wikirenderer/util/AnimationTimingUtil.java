@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,11 +27,27 @@ import java.util.List;
 
 public class AnimationTimingUtil {
 
+    private static final RandomSource RANDOM = RandomSource.create();
+
     public static void scanTicksToFullyAnimateEntityItems(Entity entity, List<Integer> animationTimings) {
         if (entity instanceof LivingEntity livingEntity) {
             for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
                 ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
                 AnimationTimingUtil.scanTicksToFullyAnimateItem(item, animationTimings);
+            }
+        }
+
+        if (entity instanceof Display.ItemDisplay itemDisplay) {
+            Display.ItemDisplay.ItemRenderState itemRenderState = itemDisplay.itemRenderState();
+            if (itemRenderState != null) {
+                AnimationTimingUtil.scanTicksToFullyAnimateItem(itemRenderState.itemStack(), animationTimings);
+            }
+        }
+
+        if (entity instanceof Display.BlockDisplay blockDisplay) {
+            Display.BlockDisplay.BlockRenderState blockRenderState = blockDisplay.blockRenderState();
+            if (blockRenderState != null) {
+                AnimationTimingUtil.scanTicksToFullyAnimateBlock(blockRenderState.blockState(), animationTimings, null);
             }
         }
     }
@@ -58,20 +75,21 @@ public class AnimationTimingUtil {
         renderState.clear();
     }
 
-    public static List<Integer> getTicksToFullyAnimateBlock(BlockState state) {
-        return getTicksToFullyAnimateBlock(Minecraft.getInstance().getBlockRenderer().getBlockModel(state), new ArrayList<>());
+    public static void scanTicksToFullyAnimateBlock(BlockState state, List<Integer> animationCompletionTimes, Long randomSeed) {
+        scanTicksToFullyAnimateBlock(Minecraft.getInstance().getBlockRenderer().getBlockModel(state), animationCompletionTimes, randomSeed);
     }
 
-    public static List<Integer> getTicksToFullyAnimateBlock(BlockStateModel model, List<Integer> animationCompletionTimes) {
+    public static void scanTicksToFullyAnimateBlock(BlockStateModel model, List<Integer> animationCompletionTimes, Long randomSeed) {
         List<BlockModelPart> parts = new ArrayList<>();
-        model.collectParts(RandomSource.create(), parts); // todo: dont use random
+        if (randomSeed != null) {
+            RANDOM.setSeed(randomSeed);
+        }
+        model.collectParts(RANDOM, parts);
 
         for (BlockModelPart part : parts) {
             List<BakedQuad> quads = part instanceof SimpleModelWrapper wrapper ? wrapper.quads().getAll() : part.getQuads(null);
             fillTimings(quads, animationCompletionTimes);
         }
-
-        return animationCompletionTimes;
     }
 
     private static void fillTimings(Collection<BakedQuad> quads, List<Integer> animationCompletionTimes) {
@@ -89,14 +107,16 @@ public class AnimationTimingUtil {
         }
     }
 
-    public static long getSeamlessLoopDuration(List<Integer> timings) {
-        if (timings.isEmpty()) {
+    public static long getSeamlessLoopDuration(List<List<Integer>> timings) {
+        if (timings.isEmpty() || timings.getFirst().isEmpty()) {
             return 0;
         }
 
-        long result = timings.getFirst();
-        for (int time : timings) {
-            result = getLowestCommonDenominator(result, time);
+        long result = timings.getFirst().getFirst();
+        for (List<Integer> timingSet : timings) {
+            for (int time : timingSet) {
+                result = getLowestCommonDenominator(result, time);
+            }
         }
 
         return result;

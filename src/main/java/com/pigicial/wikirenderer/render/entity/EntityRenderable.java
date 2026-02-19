@@ -488,14 +488,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public String getAnimationTimingsHeaderTranslationKey() {
-        return "texture_timings_equipped_items";
-    }
-
-    @Override
-    public List<Integer> getTicksToFullyAnimate() {
+    public List<List<Integer>> getTicksToFullyAnimate() {
         List<Integer> animationTimings = new LinkedList<>();
         applyToEntityAndPassengers(getUsedEntity(), entity -> AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, animationTimings));
-        return animationTimings;
+        return List.of(animationTimings);
     }
 }

@@ -211,7 +211,9 @@ public class BlockStateRenderable
     }
 
     @Override
-    public List<Integer> getTicksToFullyAnimate() {
-        return AnimationTimingUtil.getTicksToFullyAnimateBlock(this.state);
+    public List<List<Integer>> getTicksToFullyAnimate() {
+        List<Integer> animationTimings = new LinkedList<>();
+        AnimationTimingUtil.scanTicksToFullyAnimateBlock(this.state, animationTimings, null);
+        return List.of(animationTimings);
     }
 }

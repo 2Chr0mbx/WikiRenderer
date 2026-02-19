@@ -115,9 +115,9 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
     }
 
     @Override
-    public List<Integer> getTicksToFullyAnimate() {
+    public List<List<Integer>> getTicksToFullyAnimate() {
         List<Integer> animationTimings = new LinkedList<>();
         AnimationTimingUtil.scanTicksToFullyAnimateItem(stack, animationTimings);
-        return animationTimings;
+        return List.of(animationTimings);
     }
 }

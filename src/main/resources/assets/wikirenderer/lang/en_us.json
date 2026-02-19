@@ -105,9 +105,6 @@
   "gui.wikirenderer.ram_ignore": "Control-click to ignore",
   "gui.wikirenderer.no_vram_info_warning": "Available VRAM could not be determined",
 
-  "gui.wikirenderer.texture_timings": "Texture Timings",
-  "gui.wikirenderer.texture_timings_equipped_items": "Texture Timings (Equipped Items)",
-  "gui.wikirenderer.texture_timings_blocks_entities": "Texture Timings (Blocks & Entity Items)",
   "gui.wikirenderer.texture_timings_data_single": "This animated texture takes\n %s (%s ticks) to fully loop",
   "gui.wikirenderer.texture_timings_data_multiple": "These animated textures take \n%s (%s ticks) to seamlessly loop",
   "gui.wikirenderer.player_textures": "Player Textures",

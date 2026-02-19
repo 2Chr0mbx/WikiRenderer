@@ -29,7 +29,6 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
-import net.minecraft.client.renderer.blockentity.state.BlockEntityWithBoundingBoxRenderState;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
@@ -43,7 +42,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
@@ -247,14 +245,15 @@ public class WorldBlockMesh {
         HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
 
         // large islands like the crimson isle hit a verticies limit, therefore we split into smaller (but still fairly large) meshes
-        record SubMesh(List<Iterable<BlockPos>> positions) {
-        }
+        record SubMesh(double distance, List<Iterable<BlockPos>> positions) { }
 
-        List<SubMesh> subMeshes = new ArrayList<>();
+        List<SubMesh> unsortedSubMeshes = new ArrayList<>();
         int scanningAreas = 0;
         int regionSize = this.bounds.getSizeForSubMesh();
         BlockPos minCorner = this.bounds.getMinCorner();
         BlockPos maxCorner = this.bounds.getMaxCorner();
+        int middleX = maxCorner.getX() - (maxCorner.getX() - minCorner.getX()) / 2;
+        int middleZ = maxCorner.getZ() - (maxCorner.getZ() - minCorner.getZ()) / 2;
 
         int currentScanIndex = 0;
         for (int x = minCorner.getX(); x <= maxCorner.getX(); x += regionSize) {
@@ -266,11 +265,17 @@ public class WorldBlockMesh {
                         Math.min(z + regionSize - 1, maxCorner.getZ())
                 );
 
+                int subMiddleX = subTo.getX() - (subTo.getX() - subFrom.getX()) / 2;
+                int subMiddleZ = subTo.getZ() - (subTo.getZ() - subFrom.getZ()) / 2;
+                double distance = Math.pow(middleX - subMiddleX, 2) + Math.pow(middleZ - subMiddleZ, 2);
+
                 List<Iterable<BlockPos>> positions = bounds.buildBlockPositionsForSubMesh(subFrom, subTo);
                 scanningAreas += positions.size();
-                subMeshes.add(new SubMesh(positions));
+                unsortedSubMeshes.add(new SubMesh(distance, positions));
             }
         }
+
+        List<SubMesh> subMeshes = unsortedSubMeshes.stream().sorted(Comparator.comparing(mesh -> mesh.distance)).toList();
 
         if (buildCancelRequested) {
             this.buildFuture = null;
@@ -293,9 +298,6 @@ public class WorldBlockMesh {
         AtomicBoolean cancelled = new AtomicBoolean(false);
 
         this.animationCompletionTimings.clear();
-        AABB boundingBox = bounds.buildBoundingBox();
-        int blockCount = (int) (boundingBox.getXsize() * boundingBox.getYsize() * boundingBox.getZsize());
-        boolean checkAnimations = blockCount < 250_000;
 
         Object lock = new Object();
         for (SubMesh data : subMeshes) {
@@ -343,15 +345,14 @@ public class WorldBlockMesh {
                     poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
 
                     BlockStateModel model = blockRenderDispatcher.getBlockModel(state);
-                    if (checkAnimations) {
-                        AnimationTimingUtil.getTicksToFullyAnimateBlock(model, animationCompletionTimings);
-                    }
+                    long randomSeed = state.getSeed(pos);
+                    AnimationTimingUtil.scanTicksToFullyAnimateBlock(model, animationCompletionTimings, randomSeed);
 
                     if (renderContext != null) {
                         renderContext.tessellateBlock(state, pos, model, poseStack);
                     } else {
                         boolean cull = true; // for later searching
-                        blockRenderDispatcher.getModelRenderer().render(this.world, model, state, pos, poseStack, blockLayer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, blockLayer), cull, state.getSeed(pos), OverlayTexture.NO_OVERLAY);
+                        blockRenderDispatcher.getModelRenderer().render(this.world, model, state, pos, poseStack, blockLayer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, blockLayer), cull, randomSeed, OverlayTexture.NO_OVERLAY);
                     }
 
                     poseStack.popPose();

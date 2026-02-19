@@ -365,24 +365,23 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     @Override
-    public String getAnimationTimingsHeaderTranslationKey() {
-        return "texture_timings_blocks_entities";
-    }
-
-    @Override
-    public List<Integer> getTicksToFullyAnimate() {
-        List<Integer> animationTimings = new LinkedList<>();
-        if (mesh.getAnimationCompletionTimings().isPresent()) {
-            animationTimings.addAll(mesh.getAnimationCompletionTimings().get());
+    public List<List<Integer>> getTicksToFullyAnimate() {
+        List<List<Integer>> animationTimings = new ArrayList<>();
+        if (!mesh.getMeshState().isBuildStage && mesh.getAnimationCompletionTimings().isPresent()) {
+            animationTimings.add(mesh.getAnimationCompletionTimings().get());
         }
 
         AreaPropertyBundle properties = getProperties();
         if (!properties.hideEntities.get()) {
+            List<Integer> entityAnimationTimings = new LinkedList<>();
             for (Entity entity : entities) {
                 if (entity instanceof Player && properties.hidePlayers.get()) continue;
                 if (entity instanceof ArmorStand && properties.hideArmorStands.get()) continue;
                 if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) continue;
-                AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, animationTimings);
+                AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, entityAnimationTimings);
+            }
+            if (!entityAnimationTimings.isEmpty()) {
+                animationTimings.add(entityAnimationTimings);
             }
         }
         return animationTimings;
