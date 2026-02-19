@@ -65,12 +65,8 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
     }
 
     private String formatNumber(double value) {
-        String number = String.format("%.1f", value);
-        if ((float) value == 35.264f) {
-            number = "35.264"; // jank but whatever
-        }
-
-        return number.endsWith(".0") ? number.substring(0, number.length() - 2) : number;
+        String number = String.format("%.3f", value);
+        return number.endsWith(".000") ? number.substring(0, number.length() - 4) : number;
     }
 
     private Predicate<String> makeMatcher() {

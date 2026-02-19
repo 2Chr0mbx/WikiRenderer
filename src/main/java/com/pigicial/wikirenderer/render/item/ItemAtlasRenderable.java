@@ -36,7 +36,7 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
         int columns = this.getProperties().columns.get();
         int rows = Mth.positiveCeilDiv(this.items.size(), columns);
 
-        float spacing = 1.25f;
+        float spacing = this.getProperties().spacing.get().floatValue();
 
         matrices.scale(.1f, .1f, .1f);
         matrices.translate((-columns / 2f) * spacing - spacing / 2, (rows / 2f) * spacing + spacing / 2, 0);

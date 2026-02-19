@@ -66,6 +66,7 @@
 
   "gui.wikirenderer.atlas_options": "Atlas Options",
   "gui.wikirenderer.columns": "Columns",
+  "gui.wikirenderer.spacing": "Spacing",
 
   "gui.wikirenderer.select_item_batch": "Item Batch",
   "gui.wikirenderer.select_block_batch": "Block Batch",

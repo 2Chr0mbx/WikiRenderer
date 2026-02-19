@@ -80,7 +80,7 @@ public class WikiRendererUI {
         container.child(new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5)));
     }
 
-    public static void doubleControl(FlowLayout container, DoubleProperty property, String name, int step) {
+    public static void doubleControl(FlowLayout container, DoubleProperty property, String name, double step) {
         try (RowBuilder builder = row(container)) {
             builder.row.child(new DoublePropertyTextFieldComponent(Sizing.fill(19), property));
             builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));

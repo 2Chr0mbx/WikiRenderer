@@ -11,9 +11,9 @@ import org.lwjgl.glfw.GLFW;
 public class PropertySliderComponent extends SliderComponent {
 
     private final NumberProperty<? extends Number> setting;
-    private final int scrollIncrement;
+    private final double scrollIncrement;
 
-    public PropertySliderComponent(Sizing horizontalSizing, Component text, int scrollIncrement, NumberProperty<? extends Number> setting) {
+    public PropertySliderComponent(Sizing horizontalSizing, Component text, double scrollIncrement, NumberProperty<? extends Number> setting) {
         super(horizontalSizing);
         this.setting = setting;
         this.scrollIncrement = scrollIncrement;
@@ -36,7 +36,7 @@ public class PropertySliderComponent extends SliderComponent {
 
     @Override
     public boolean onMouseScroll(double mouseX, double mouseY, double amount) {
-        this.setting.modify((int) Math.round(amount * this.scrollIncrement));
+        this.setting.modify((int) amount * this.scrollIncrement);
         return true;
     }
 }
