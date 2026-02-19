@@ -9,6 +9,7 @@ import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Insets;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -137,7 +138,16 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             }
         }
 
-        container.child(this.buildResetButton());
+        container.child(UIComponents.button(Translate.gui("reset_transformations"), (ButtonComponent button) -> {
+            this.xOffset.setToDefault();
+            this.yOffset.setToDefault();
+            this.scale.setToDefault();
+            this.rotation.setToDefault();
+            this.slant.setToDefault();
+            this.rotationSpeed.setToDefault();
+            this.spriteRotation.setToDefault();
+            this.spriteSlant.setToDefault();
+        }).margins(Insets.of(5, 0, 0, 0)));
 
         WikiRendererUI.sectionHeader(container, "entity_data", true);
         container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
