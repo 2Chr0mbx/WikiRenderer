@@ -94,15 +94,13 @@ public class AnimationTimingUtil {
 
     private static void fillTimings(Collection<BakedQuad> quads, List<Integer> animationCompletionTimes) {
         for (BakedQuad quad : quads) {
-            try (TextureAtlasSprite sprite = quad.sprite()) {
-                SpriteContents.AnimatedTexture animatedTexture = ((SpriteContentsAccessor) sprite.contents()).wikirender$getAnimatedTexture();
-                if (animatedTexture != null) {
-                    int time = 0;
-                    for (SpriteContents.FrameInfo frame : animatedTexture.frames) {
-                        time += frame.time();
-                    }
-                    animationCompletionTimes.add(time);
+            SpriteContents.AnimatedTexture animatedTexture = ((SpriteContentsAccessor) quad.sprite().contents()).wikirender$getAnimatedTexture();
+            if (animatedTexture != null) {
+                int time = 0;
+                for (SpriteContents.FrameInfo frame : animatedTexture.frames) {
+                    time += frame.time();
                 }
+                animationCompletionTimes.add(time);
             }
         }
     }
