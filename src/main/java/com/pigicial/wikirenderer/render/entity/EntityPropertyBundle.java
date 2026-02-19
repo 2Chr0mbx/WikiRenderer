@@ -104,7 +104,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     public void buildMainGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         EntityRenderable renderable = (EntityRenderable) r;
 
-        WikiRendererUI.sectionHeader(container, "transform_options", false);
+        WikiRendererUI.text(container, "transform_options", false);
         WikiRendererUI.booleanControl(container, this.spriteRendering, "sprite_rendering");
 
         this.spriteRendering.futureListen(((booleanProperty, value) -> {
@@ -149,7 +149,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             this.spriteSlant.setToDefault();
         }).margins(Insets.of(5, 0, 0, 0)));
 
-        WikiRendererUI.sectionHeader(container, "entity_data", true);
+        WikiRendererUI.text(container, "entity_data", true);
         container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
             Vec3 coords = renderable.getUsedEntity().position();
 

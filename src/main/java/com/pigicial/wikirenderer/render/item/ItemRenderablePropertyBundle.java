@@ -66,17 +66,17 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
 
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        WikiRendererUI.sectionHeader(container, "transform_options", false);
+        WikiRendererUI.text(container, "transform_options", false);
         WikiRendererUI.intControl(container, scale, "scale", 10);
-        WikiRendererUI.sectionHeader(container, "item_scale_warning_1", 10);
-        WikiRendererUI.sectionHeader(container, "item_scale_warning_2", false);
+        WikiRendererUI.text(container, "item_scale_warning_1", 10);
+        WikiRendererUI.text(container, "item_scale_warning_2", false);
         WikiRendererUI.intControl(container, rotation, "rotation", 45);
         WikiRendererUI.doubleControl(container, slant, "slant", 30);
         WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
         WikiRendererUI.booleanControl(container, this.allowRotatingWithMouse, "allow_rotating_with_mouse");
         container.child(this.buildResetButton());
 
-        WikiRendererUI.sectionHeader(container, "item_options", true);
+        WikiRendererUI.text(container, "item_options", true);
         WikiRendererUI.booleanControl(container, forceEnchantmentGlints, "force_enchanted");
     }
 }

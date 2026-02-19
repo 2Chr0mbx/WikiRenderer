@@ -70,7 +70,9 @@ public class AnimationStateMixin {
                 this.frame = 0;
                 this.subFrame = -1;
                 int currentFrameIndex = frames.get(this.frame).index();
-                System.out.println("prev = " + previousFrameIndex + ", cur = " + currentFrameIndex);
+                if (previousFrameIndex != currentFrameIndex) {
+                    this.isDirty = true;
+                }
             }
         }
     }

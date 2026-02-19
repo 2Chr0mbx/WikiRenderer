@@ -12,12 +12,12 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
+import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.renderer.texture.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -37,12 +37,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class BlockStateRenderable extends ItemBasedRenderable<BlockStatePropertyBundle> implements TickingRenderable<BlockStatePropertyBundle>, DynamicBatchLabelProvider, TextureDataProvider {
+public class BlockStateRenderable
+        extends ItemBasedRenderable<BlockStatePropertyBundle>
+        implements TickingRenderable<BlockStatePropertyBundle>, DynamicBatchLabelProvider, TextureDataProvider, AnimationTimingsProvider {
 
     public static final BlockStatePropertyBundle PROPERTIES = new BlockStatePropertyBundle();
 
@@ -209,5 +208,10 @@ public class BlockStateRenderable extends ItemBasedRenderable<BlockStateProperty
             }
         }
         return textureData;
+    }
+
+    @Override
+    public List<Integer> getTicksToFullyAnimate() {
+        return AnimationTimingUtil.getTicksToFullyAnimateBlock(this.state);
     }
 }

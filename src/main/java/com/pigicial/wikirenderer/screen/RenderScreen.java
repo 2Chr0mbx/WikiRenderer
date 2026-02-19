@@ -28,6 +28,7 @@ import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandlingMode;
 import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
 import com.pigicial.wikirenderer.render.export.ffmpeg.MemoryGuard;
 import com.pigicial.wikirenderer.render.export.ffmpeg.live.LiveRenderFFmpegAnimationHandler;
+import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
@@ -235,17 +236,20 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (renderable instanceof TextureDataProvider textureProvider) {
             textureProvider.buildTextureGrabSection(this, leftColumn);
         }
+        if (renderable instanceof AnimationTimingsProvider timingsProvider) {
+            timingsProvider.buildTimingsSection(leftColumn);
+        }
 
-        WikiRendererUI.sectionHeader(rightColumn, "render_options", false);
+        WikiRendererUI.text(rightColumn, "render_options", false);
         this.buildDefaultRenderOptionsGUIControls();
         this.renderable.getProperties().buildRenderOptionGUIControls(this.renderable, this, this.rightColumn);
 
-        WikiRendererUI.sectionHeader(rightColumn, "export_options", true);
+        WikiRendererUI.text(rightColumn, "export_options", true);
         this.renderable.getProperties().buildExportOptionGUIControls(this.renderable, this, this.rightColumn);
         this.renderable.getProperties().buildExportResolutionGUIControls(this.renderable, this, this.rightColumn);
         this.renderable.getProperties().buildFileNameGUIControls(this.renderable, this, this.rightColumn);
 
-        WikiRendererUI.sectionHeader(rightColumn, "animation_options", true);
+        WikiRendererUI.text(rightColumn, "animation_options", true);
         this.buildFFmpegSection();
     }
 
@@ -269,15 +273,15 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private void buildFFmpegSection() {
         if (!FFmpegDispatcher.wasFFmpegDetected()) {
-            WikiRendererUI.sectionHeader(rightColumn, "detecting_ffmpeg", false);
+            WikiRendererUI.text(rightColumn, "detecting_ffmpeg", false);
             FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> this.guiRebuildScheduled = true);
             return;
         }
 
         if (!FFmpegDispatcher.ffmpegAvailable()) {
-            WikiRendererUI.sectionHeader(rightColumn, "no_ffmpeg_1", true);
-            WikiRendererUI.sectionHeader(rightColumn, "no_ffmpeg_2", false);
-            WikiRendererUI.sectionHeader(rightColumn, "no_ffmpeg_3", false)
+            WikiRendererUI.text(rightColumn, "no_ffmpeg_1", true);
+            WikiRendererUI.text(rightColumn, "no_ffmpeg_2", false);
+            WikiRendererUI.text(rightColumn, "no_ffmpeg_3", false)
                     .cursorStyle(CursorStyle.HAND)
                     .mouseDown().subscribe((click, doubled) -> {
                         this.minecraft.setScreen(new ConfirmLinkScreen(confirmed -> {

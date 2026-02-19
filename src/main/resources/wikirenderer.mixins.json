@@ -27,6 +27,7 @@
     "access.NativeImageAccessor",
     "access.NativeImageInvoker",
     "access.ParticleEngineAccessor",
+    "access.SpriteContentsAccessor",
     "entity.DefaultPlayerSkinMixin",
     "entity.EquipmentLayerRendererMixin",
     "entity.HumanoidArmorLayerMixin",

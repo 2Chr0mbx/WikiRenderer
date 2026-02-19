@@ -29,7 +29,7 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
 
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        WikiRendererUI.sectionHeader(container, "tooltip_options", false);
+        WikiRendererUI.text(container, "tooltip_options", false);
         WikiRendererUI.booleanControl(container, hideBackground, "hide_tooltip_background");
     }
 

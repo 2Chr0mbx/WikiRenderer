@@ -1,7 +1,6 @@
 package com.pigicial.wikirenderer.render.item;
 
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
-import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.property.DoubleProperty;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -19,7 +18,7 @@ public class ItemAtlasPropertyBundle extends DefaultCroppablePropertyBundle {
 
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        WikiRendererUI.sectionHeader(container, "transform_options", false);
+        WikiRendererUI.text(container, "transform_options", false);
 
         WikiRendererUI.intControl(container, this.scale, "scale", 10);
         WikiRendererUI.intControl(container, this.columns, "columns", 1);

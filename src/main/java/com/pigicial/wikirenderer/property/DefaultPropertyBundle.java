@@ -88,7 +88,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
 
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        WikiRendererUI.sectionHeader(container, "transform_options", false);
+        WikiRendererUI.text(container, "transform_options", false);
         WikiRendererUI.intControl(container, scale, "scale", 10);
         WikiRendererUI.intControl(container, rotation, "rotation", 45);
         WikiRendererUI.doubleControl(container, slant, "slant", 30);

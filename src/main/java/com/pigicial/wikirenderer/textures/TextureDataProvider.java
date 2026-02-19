@@ -32,7 +32,7 @@ public interface TextureDataProvider {
         Map<String, TextureData> foundTextures = this.getTextureData(() -> Minecraft.getInstance().executeBlocking(() -> screen.guiRebuildScheduled = true));
         if (foundTextures.isEmpty()) return;
 
-        WikiRendererUI.sectionHeader(layout, "player_textures", true);
+        WikiRendererUI.text(layout, "player_textures", true);
 
         for (Map.Entry<String, TextureData> entry : foundTextures.entrySet()) {
             String textureContext = entry.getKey(); // player or equipment

@@ -50,17 +50,28 @@ public class WikiRendererUI {
         }
     }
 
-    public static LabelComponent sectionHeader(FlowLayout container, String key, boolean separate) {
+    public static LabelComponent text(FlowLayout container, String key, boolean extraVerticalMargins) {
         LabelComponent label = UIComponents.label(Translate.gui(key)).shadow(true);
-        if (separate) label.margins(Insets.top(20));
+        if (extraVerticalMargins) {
+            label.margins(Insets.top(20));
+        }
         label.margins(label.margins().get().withBottom(5));
 
         container.child(label);
         return label;
     }
 
-    public static LabelComponent sectionHeader(FlowLayout container, String key, int topMargins) {
+    public static LabelComponent text(FlowLayout container, String key, int topMargins) {
         LabelComponent label = UIComponents.label(Translate.gui(key)).shadow(true);
+        label.margins(Insets.top(topMargins));
+        label.margins(label.margins().get().withBottom(5));
+
+        container.child(label);
+        return label;
+    }
+
+    public static LabelComponent text(FlowLayout container, Component component, int topMargins) {
+        LabelComponent label = UIComponents.label(component).shadow(true);
         label.margins(Insets.top(topMargins));
         label.margins(label.margins().get().withBottom(5));
 

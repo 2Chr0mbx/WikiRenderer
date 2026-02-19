@@ -78,7 +78,7 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
 
         this.actualProperties.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
 
-        WikiRendererUI.sectionHeader(container, "batch.controls", true);
+        WikiRendererUI.text(container, "batch.controls", true);
         WikiRendererUI.booleanControl(container, EXPORT_AS_ANIMATIONS, "batch.export_as_animations");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
@@ -147,12 +147,12 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
 
         BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
         if (!batchRenderable.delegates.isEmpty() && this.batchRenderable.currentDelegate instanceof DynamicBatchLabelProvider labelProvider) {
-            WikiRendererUI.sectionHeader(container, "batch.label_presets", 10);
+            WikiRendererUI.text(container, "batch.label_presets", 10);
             for (String exampleKey : labelProvider.buildPresetExamples()) {
-                WikiRendererUI.sectionHeader(container, exampleKey, false);
+                WikiRendererUI.text(container, exampleKey, false);
             }
 
-            WikiRendererUI.sectionHeader(container, "batch.name_previews", 10);
+            WikiRendererUI.text(container, "batch.name_previews", 10);
             int delegatesAmount = batchRenderable.delegates.size();
             for (int i = 0; i < Math.min(delegatesAmount, 3); i++) {
                 int index = i;

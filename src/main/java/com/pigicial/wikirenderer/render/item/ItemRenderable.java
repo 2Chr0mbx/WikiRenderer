@@ -10,6 +10,7 @@ import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.ItemNameUtil;
+import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -25,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider {
+public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
     public static final ItemRenderablePropertyBundle PROPERTIES = new ItemRenderablePropertyBundle();
     private static final ItemStackRenderState RENDER_STATE = new ItemStackRenderState();
@@ -111,7 +112,14 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
         if (this.textureData == null) {
             this.cacheTextureData(rebuildCallback);
         }
+
+        System.out.println("completion times = " + AnimationTimingUtil.getTicksToFullyAnimateItem(stack));
         TextureData playerSkin = PlayerTextureUtils.getTextureDataFromPlayerHead(this.stack);
         return playerSkin == null ? new HashMap<>() : Map.of("item", playerSkin);
+    }
+
+    @Override
+    public List<Integer> getTicksToFullyAnimate() {
+        return AnimationTimingUtil.getTicksToFullyAnimateItem(stack);
     }
 }

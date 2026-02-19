@@ -404,7 +404,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
     @Override
     public void cacheTextureData(Runnable rebuildCallback) {
-        System.out.println("hi");
         if (!this.requireTextureReCache) return;
         this.requireTextureReCache = false;
         this.textureData.clear();
@@ -417,9 +416,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         this.textureCancelMarker = cancelMarker;
 
         // i hate how there are like 5 billion ways skins are handled but whatever, there's probably a better way to do this but that's a later project
-        System.out.println("hi");
         applyToEntityAndPassengers(getUsedEntity(), usedEntity -> {
-            System.out.println("usedEntity type = " + usedEntity.getClass());
             switch (usedEntity) {
                 case RenderablePlayerEntity player -> player.getSkinGrabber().whenComplete((data, throwable) -> {
                     if (throwable != null || cancelMarker.get()) return;

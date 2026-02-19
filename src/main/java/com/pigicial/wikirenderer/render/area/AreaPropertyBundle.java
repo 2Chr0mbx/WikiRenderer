@@ -148,7 +148,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     @Override
     public void buildMainGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         AreaRenderable renderable = (AreaRenderable) r;
-        WikiRendererUI.sectionHeader(container, "transform_options", false);
+        WikiRendererUI.text(container, "transform_options", false);
 
         WikiRendererUI.booleanControl(container, this.perPixel90DegreeRendering, "per_pixel_90_degree_rendering");
         this.perPixel90DegreeRendering.futureListen((booleanProperty, value) -> {
@@ -282,7 +282,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {});
         }));
 
-        WikiRendererUI.sectionHeader(container, "area_overrides", true);
+        WikiRendererUI.text(container, "area_overrides", true);
         WikiRendererUI.booleanControl(container, this.hideMesh, "hide_blocks");
         this.hideMesh.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
         if (!this.hideMesh.get()) {
@@ -313,7 +313,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
         WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
-        WikiRendererUI.sectionHeader(container, "entity_overrides", 10);
+        WikiRendererUI.text(container, "entity_overrides", 10);
         WikiRendererUI.booleanControl(container, this.overrideRotations, "mesh_entity_data.override_rotations");
         WikiRendererUI.intControl(container, yaw, "entity_data.yaw", 15);
         WikiRendererUI.intControl(container, pitch, "entity_data.pitch", 5);
@@ -372,15 +372,15 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             if (allowMinimapExporting) {
                 WikiRendererUI.booleanControl(container, this.exportSideViewMinimapData, "export_minimap_data");
             } else {
-                WikiRendererUI.sectionHeader(container, "minimap_disabled_notice_1", false);
-                WikiRendererUI.sectionHeader(container, "minimap_disabled_notice_2", false);
+                WikiRendererUI.text(container, "minimap_disabled_notice_1", false);
+                WikiRendererUI.text(container, "minimap_disabled_notice_2", false);
             }
 
             if (this.getPixelsPerBlockResolution() == 4) {
                 WikiRendererUI.booleanControl(container, this.halfPixelOffsetFor4x4, "half_pixel_offset_for_4x4");
-                WikiRendererUI.sectionHeader(container, "half_pixel_offset_for_4x4_note_1", true);
-                WikiRendererUI.sectionHeader(container, "half_pixel_offset_for_4x4_note_2", false);
-                WikiRendererUI.sectionHeader(container, "half_pixel_offset_for_4x4_note_3", false);
+                WikiRendererUI.text(container, "half_pixel_offset_for_4x4_note_1", true);
+                WikiRendererUI.text(container, "half_pixel_offset_for_4x4_note_2", false);
+                WikiRendererUI.text(container, "half_pixel_offset_for_4x4_note_3", false);
             }
         }
     }
