@@ -23,6 +23,31 @@ public class ItemAtlasPropertyBundle extends DefaultPropertyBundle {
     }
 
     @Override
+    protected double getDefaultSlant() {
+        return 0;
+    }
+
+    @Override
+    protected int getDefaultRotation() {
+        return 0;
+    }
+
+    @Override
+    public double getUsedSlant() {
+        return 0;
+    }
+
+    @Override
+    public float getUsedRotation() {
+        return 0;
+    }
+
+    @Override
+    public boolean supportsAutomaticRotations() {
+        return false;
+    }
+
+    @Override
     public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
         float scale = this.scale.get() / 100f;
         modelViewStack.scale(scale, scale, scale);

@@ -2,8 +2,6 @@ package com.pigicial.wikirenderer.render.item;
 
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
-import com.mojang.blaze3d.platform.Lighting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
