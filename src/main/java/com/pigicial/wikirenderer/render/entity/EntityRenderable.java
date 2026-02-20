@@ -44,6 +44,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.decoration.Mannequin;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
@@ -479,18 +480,24 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                         textureData.put("player", playerTexture);
                     }
                 }
-                default -> {
+                case Display.ItemDisplay itemDisplay -> {
+                    Display.ItemDisplay.ItemRenderState itemRenderState = itemDisplay.itemRenderState();
+                    if (itemRenderState != null) {
+                        ItemStack item = itemRenderState.itemStack();
+                        TextureData itemTextureData = PlayerTextureUtils.getTextureDataFromPlayerHead(item);
+                        if (itemTextureData != null) {
+                            textureData.put("item", itemTextureData);
+                        }
+                    }
                 }
-            }
-
-            if (usedEntity instanceof Display.ItemDisplay itemDisplay) {
-                Display.ItemDisplay.ItemRenderState itemRenderState = itemDisplay.itemRenderState();
-                if (itemRenderState != null) {
-                    ItemStack item = itemRenderState.itemStack();
+                case ItemEntity itemEntity -> {
+                    ItemStack item = itemEntity.getItem();
                     TextureData itemTextureData = PlayerTextureUtils.getTextureDataFromPlayerHead(item);
                     if (itemTextureData != null) {
                         textureData.put("item", itemTextureData);
                     }
+                }
+                default -> {
                 }
             }
 
