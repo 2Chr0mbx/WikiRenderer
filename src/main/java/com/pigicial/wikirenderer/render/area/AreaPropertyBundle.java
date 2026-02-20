@@ -39,6 +39,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     public final Property<Boolean> useNightVision = Property.of(false);
     public final Property<Boolean> hideBeaconBeams = Property.of(false);
 
+    public final IntProperty entityBoundsIntersectionRequirement = IntProperty.of(50, 0, 100);
     public final Property<Boolean> hideEntities = Property.of(false);
     public final Property<Boolean> hidePlayers = Property.of(false);
     public final Property<Boolean> hideArmorStands = Property.of(false);
@@ -282,36 +283,37 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {});
         }));
 
-        WikiRendererUI.text(container, "area_overrides", true);
+        WikiRendererUI.text(container, "block_visibility", true);
         WikiRendererUI.booleanControl(container, this.hideMesh, "hide_blocks");
         this.hideMesh.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
         if (!this.hideMesh.get()) {
             WikiRendererUI.booleanControl(container, this.hideFluids, "hide_fluids");
         }
+        WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
+        WikiRendererUI.text(container, "entity_visibility_overrides", 10);
         WikiRendererUI.booleanControl(container, this.hideEntities, "hide_entities");
         this.hideEntities.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
         if (!this.hideEntities.get()) {
             WikiRendererUI.booleanControl(container, this.hidePlayers, "hide_players");
             WikiRendererUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
             WikiRendererUI.booleanControl(container, this.hideLivingEntities, "hide_living_entities");
+            WikiRendererUI.intPercentageControl(container, this.entityBoundsIntersectionRequirement, "entity_collision_threshold_requirement", 1);
+
+            WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");
+            this.freezeEntities.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
+            if (!this.freezeEntities.get()) {
+                WikiRendererUI.booleanControl(container, this.freezePlayerArms, "freeze_player_arms");
+            }
+
+            WikiRendererUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
+
+            WikiRendererUI.booleanControl(container, this.hideText, "hide_text");
+            this.hideText.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
+            if (!this.hideText.get()) {
+                WikiRendererUI.booleanControl(container, GlobalProperties.HIDE_NAMETAGS, "hide_player_nametags");
+            }
         }
-
-        WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-        this.freezeEntities.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
-        if (!this.freezeEntities.get()) {
-            WikiRendererUI.booleanControl(container, this.freezePlayerArms, "freeze_player_arms");
-        }
-
-        WikiRendererUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
-
-        WikiRendererUI.booleanControl(container, this.hideText, "hide_text");
-        this.hideText.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
-        if (!this.hideText.get()) {
-            WikiRendererUI.booleanControl(container, GlobalProperties.HIDE_NAMETAGS, "hide_player_nametags");
-        }
-
-        WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
         WikiRendererUI.text(container, "entity_overrides", 10);
         WikiRendererUI.booleanControl(container, this.overrideRotations, "mesh_entity_data.override_rotations");

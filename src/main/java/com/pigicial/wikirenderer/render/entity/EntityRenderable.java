@@ -49,7 +49,6 @@ import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.AABB;
@@ -273,7 +272,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         state.nameTag = null;
         state.nameTagAttachment = null;
 
-        if (properties.tick.get()) {
+        if (properties.tickEntityAnimations.get()) {
             if (!usingLiveEntity) {
                 state.ageInTicks = (System.currentTimeMillis() - creationTimeMs) / 50f;
             } // otherwise just use the live entity state for more accuracy of what's being seen in the actual game
@@ -477,14 +476,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             }
 
             if (usedEntity instanceof Display.ItemDisplay itemDisplay) {
-                System.out.println("1 = " + itemDisplay);
                 Display.ItemDisplay.ItemRenderState itemRenderState = itemDisplay.itemRenderState();
                 if (itemRenderState != null) {
-                    System.out.println("2");
                     ItemStack item = itemRenderState.itemStack();
-                    System.out.println("item = " + item);
                     TextureData itemTextureData = PlayerTextureUtils.getTextureDataFromPlayerHead(item);
-                    System.out.println("err " + itemTextureData);
                     if (itemTextureData != null) {
                         textureData.put("item", itemTextureData);
                     }

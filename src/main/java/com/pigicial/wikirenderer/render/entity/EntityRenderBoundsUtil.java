@@ -31,13 +31,6 @@ public class EntityRenderBoundsUtil {
     }
 
     @Nullable
-    public static AABB getBounds(Entity entity) {
-        EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
-        CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
-        return getBounds(entityRenderState, cameraRenderState, 0, 0, 0);
-    }
-
-    @Nullable
     public static AABB getBounds(EntityRenderState renderState, Renderable<? extends DefaultPropertyBundle> renderable, double xOffset, double yOffset, double zOffset) {
         return getBounds(renderState, CameraOrientationUtil.createRenderState(renderable), xOffset, yOffset, zOffset);
     }

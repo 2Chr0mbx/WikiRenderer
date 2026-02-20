@@ -35,7 +35,7 @@ public class WikiRendererUI {
 
     public static void labelledTextField(FlowLayout container, IntProperty property, String key, Sizing sizing) {
         try (RowBuilder builder = row(container)) {
-            TextBoxComponent textBox = new IntegerPropertyTextFieldComponent(sizing, property);
+            TextBoxComponent textBox = new IntegerPropertyTextFieldComponent(sizing, property, true);
 
             builder.row.child(textBox);
             builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
@@ -44,7 +44,15 @@ public class WikiRendererUI {
 
     public static void intControl(FlowLayout container, IntProperty property, String name, int step) {
         try (RowBuilder builder = row(container)) {
-            builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(19), property));
+            builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(19), property, false));
+            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
+            builder.row.child(new ResetPropertyButton(property));
+        }
+    }
+
+    public static void intPercentageControl(FlowLayout container, IntProperty property, String name, int step) {
+        try (RowBuilder builder = row(container)) {
+            builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(19), property, true));
             builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
             builder.row.child(new ResetPropertyButton(property));
         }

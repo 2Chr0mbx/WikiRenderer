@@ -11,17 +11,18 @@ import java.util.function.Predicate;
 public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
 
     private final IntProperty setting;
+    private final boolean formatAsPercentage;
     private String content = "";
     private boolean ignoringChange = false;
 
     private boolean previouslyFocused = false;
 
-    public IntegerPropertyTextFieldComponent(Sizing horizontalSizing, IntProperty setting) {
+    public IntegerPropertyTextFieldComponent(Sizing horizontalSizing, IntProperty setting, boolean formatAsPercentage) {
         super(horizontalSizing);
         this.setting = setting;
+        this.formatAsPercentage = formatAsPercentage;
 
-        String value = String.valueOf(setting.get());
-        this.text(value);
+        this.text(setting.get() + (formatAsPercentage ? "%" : ""));
         this.setFilter(makeMatcher());
 
         this.onChanged().subscribe(s -> {
@@ -41,7 +42,7 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
         this.setting.futureListen((integerSetting, integer) -> {
             if (!this.ignoringChange) {
                 this.ignoringChange = true;
-                this.text(String.valueOf(integer));
+                this.text(integer + (formatAsPercentage ? "%" : ""));
                 this.ignoringChange = false;
             }
         });
@@ -74,11 +75,14 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
 
         builder.append(maxNumberLength);
         builder.append("}");
+        if (formatAsPercentage) {
+            builder.append("%?");
+        }
 
         String regex = builder.toString();
         return s -> {
             boolean matches = s.matches(regex);
-            if (matches && !this.setting.hasRollover() && !s.isEmpty() && !s.equals("-")) {
+            if (matches && !this.setting.hasRollover() && !s.isEmpty() && !s.equals("-") && !s.endsWith("%")) {
                 int number = Integer.parseInt(s);
                 return number >= this.setting.min() && number <= this.setting.max();
             }

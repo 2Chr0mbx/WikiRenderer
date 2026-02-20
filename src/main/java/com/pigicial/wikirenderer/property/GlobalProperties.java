@@ -9,6 +9,7 @@ public class GlobalProperties {
     public static final Property<Boolean> SHOW_BACKGROUND_COLOR_IN_EXPORTS = Property.of(false);
     public static final Property<Boolean> TICK_TEXTURE_ANIMATIONS = Property.of(true);
 
+    public static final Property<Boolean> DEBUG_SHOW_COLLIDING_ENTITY_BOUNDS_FOR_AREAS = Property.of(false);
     public static final Property<Boolean> UNSAFE = Property.of(false);
     public static final Property<Boolean> SAVE_INTO_ROOT = Property.of(false);
     public static final Property<Boolean> OVERWRITE_LATEST = Property.of(false);

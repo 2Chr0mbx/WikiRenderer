@@ -148,7 +148,8 @@
   "gui.wikirenderer.presets": "Presets",
   "gui.wikirenderer.lighting_profile": "Lighting Profile",
 
-  "gui.wikirenderer.area_overrides": "Overrides",
+  "gui.wikirenderer.block_visibility": "Block Visibility",
+  "gui.wikirenderer.entity_visibility_overrides": "Entity Visibility",
   "gui.wikirenderer.entity_overrides": "Entity Overrides",
   "gui.wikirenderer.mesh_entity_data.override_rotations": "Override Rotations",
   "gui.wikirenderer.sprite_rendering": "Sprite Rendering",
@@ -202,6 +203,7 @@
   "gui.wikirenderer.hide_players": "Hide Players",
   "gui.wikirenderer.hide_armor_stands": "Hide Armor Stands",
   "gui.wikirenderer.hide_living_entities": "Hide Living Entities",
+  "gui.wikirenderer.entity_collision_threshold_requirement": "Req. Entity Bounds Overlap",
   "gui.wikirenderer.freeze_entities": "Freeze Entities",
   "gui.wikirenderer.freeze_player_arms": "Freeze Player Arms",
   "gui.wikirenderer.auto_refresh_visible_entities": "Auto-Refresh Visible Entities",
@@ -270,6 +272,8 @@
   "message.wikirenderer.lighting_profile_updated": "§aLighting profile updated",
   "message.wikirenderer.unsafe_enabled": "Unsafe mode §cenabled§7. Tread lightly",
   "message.wikirenderer.unsafe_disabled": "Unsafe mode §adisabled§7",
+  "message.wikirenderer.debug_bounds_enabled": "Debug entity bounds for area selections §aenabled§7.",
+  "message.wikirenderer.debug_bounds_disabled": "Debug entity bounds for area selections §cdisabled§7",
   "message.wikirenderer.no_saved_menu": "No saved render found",
 
   "message.wikirenderer.version": "Running WikiRenderer v%s",

@@ -1,5 +1,7 @@
 package com.pigicial.wikirenderer.render.area;
 
+import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.render.entity.EntityRenderBoundsUtil;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.util.Translate;
@@ -9,6 +11,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gizmos.GizmoStyle;
 import net.minecraft.gizmos.Gizmos;
 import net.minecraft.util.ARGB;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -51,7 +55,22 @@ public class AreaSelectionHelper {
         pos1 = new BlockPos(minX, minY, minZ);
         pos2 = new BlockPos(maxX + 1, maxY + 1, maxZ + 1);
 
-        Gizmos.cuboid(new AABB(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ()), GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 1f), 5), true);
+        AABB areaBounds = new AABB(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ());
+        Gizmos.cuboid(areaBounds, GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 1f), 5), true);
+
+        if (GlobalProperties.DEBUG_SHOW_COLLIDING_ENTITY_BOUNDS_FOR_AREAS.get()) {
+            Level level = client.level;
+            if (level == null) return;
+
+            AABB areaEntityBounds = new AABB(pos1.getX() - 8, pos1.getY() - 8, pos1.getZ() - 8, pos2.getX() + 9, pos2.getY() + 9, pos2.getZ() + 9);
+            for (Entity entity : level.getEntities((Entity) null, areaEntityBounds, e -> true)) {
+                AABB entityBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity);
+                if (entityBounds != null && entityBounds.intersects(areaBounds)) {
+                    Gizmos.cuboid(entityBounds, GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 0.8f), 5), true);
+                }
+            }
+        }
+
     }
 
     public static void select() {

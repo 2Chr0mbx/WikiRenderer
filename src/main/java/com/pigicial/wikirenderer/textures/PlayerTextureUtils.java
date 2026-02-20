@@ -29,7 +29,6 @@ public class PlayerTextureUtils {
     @Nullable
     public static TextureData getTextureDataFromPlayerHead(ItemStack itemStack) {
         ResolvableProfile profile = itemStack.get(DataComponents.PROFILE);
-        System.out.println("profile = " + profile);
         if (profile == null) return null;
 
         TextureData data = getTextureDataFromGameProfile(profile.partialProfile());

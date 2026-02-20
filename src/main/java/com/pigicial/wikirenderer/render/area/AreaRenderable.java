@@ -192,16 +192,25 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             ClientLevel level = Minecraft.getInstance().level;
             assert level != null;
             BlockPos start = mesh.bounds.getMinCorner();
-            BlockPos end = mesh.bounds.getMaxCorner().offset(1, 1, 1);
-            AABB areaBoundingBox = new AABB(start.getX() + 0.1, start.getY() + 0.1, start.getZ() + 0.1, end.getX() - 0.1, end.getY() - 0.1, end.getZ() - 0.1);
+            BlockPos end = mesh.bounds.getMaxCorner();
+            AABB areaBoundingBox = AABB.encapsulatingFullBlocks(start, end);
 
-            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), entity -> {
+            this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-8, -8, -8), end.offset(8, 8, 8)), entity -> {
                 Vec3 entityPosition = entity.position();
 
                 EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
                 this.updateEntityState(entity, state);
-                AABB bounds = EntityRenderBoundsUtil.getBounds(state, this, entityPosition.x, entityPosition.y, entityPosition.z);
-                return bounds != null && bounds.intersects(areaBoundingBox);
+                AABB entityBounds = EntityRenderBoundsUtil.getBounds(state, this, entityPosition.x, entityPosition.y, entityPosition.z);
+
+                if (entityBounds != null && entityBounds.intersects(areaBoundingBox)) {
+                    AABB intersection = entityBounds.intersect(areaBoundingBox);
+                    double entityVolume = entityBounds.getXsize() * entityBounds.getYsize() * entityBounds.getZsize();
+                    double intersectionVolume = intersection.getXsize() * intersection.getYsize() * intersection.getZsize();
+                    double intersectionPercentage = (intersectionVolume / entityVolume) * 100D;
+                    return intersectionPercentage >= getProperties().entityBoundsIntersectionRequirement.get();
+                }
+
+                return false;
             });
         }
 
@@ -220,7 +229,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) return;
 
             BlockPos meshStartPos = mesh.bounds.getMinCorner();
-            Vec3 offsetFromMesh = entity.getPosition(tickDelta).subtract(meshStartPos.getX(), meshStartPos.getY(), meshStartPos.getZ());
+            Vec3 entityPosition = entity.getPosition(tickDelta);
+            Vec3 offsetFromMesh = entityPosition.subtract(meshStartPos.getX(), meshStartPos.getY(), meshStartPos.getZ());
 
             EntityRenderState state = entityDispatcher.extractEntity(entity, tickDelta);
             this.updateEntityState(entity, state);

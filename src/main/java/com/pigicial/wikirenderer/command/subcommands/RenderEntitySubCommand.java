@@ -130,7 +130,7 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
     private static Collection<EntityHitResult> getHitEntitiesAlong(Player source, Vec3 from, Vec3 to, float entityMargin) {
         Level level = source.level();
         AABB searchArea = AABB.ofSize(from, entityMargin, entityMargin, entityMargin).expandTowards(to.subtract(from)).inflate(1.0);
-        return getManyEntityHitResult(level, source, from, to, searchArea, 0, ClipContext.Block.VISUAL, true);
+        return getManyEntityHitResult(level, source, from, to, searchArea, 0, ClipContext.Block.VISUAL, false);
     }
 
     public static Collection<EntityHitResult> getManyEntityHitResult(
@@ -158,18 +158,20 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
                 Optional<Vec3> exactHit = entityBB.clip(from, to);
                 if (exactHit.isPresent()) {
                     collector.add(new EntityHitResult(entity, exactHit.get()));
-                } else if (!(entityMargin <= 0.0)) {
-                    Optional<Vec3> outsideHit = entityBB.inflate(entityMargin).clip(from, to);
-                    if (outsideHit.isPresent()) {
-                        Vec3 outsideHitPosition = outsideHit.get();
-                        Vec3 towardsTarget = entityBB.getCenter();
-                        BlockHitResult hitResult = level.clipIncludingBorder(new ClipContext(outsideHitPosition, towardsTarget, clipType, ClipContext.Fluid.NONE, source));
-                        if (hitResult.getType() != HitResult.Type.MISS) {
-                            towardsTarget = hitResult.getLocation();
-                        }
+                } else {
+                    if (!(entityMargin <= 0.0)) {
+                        Optional<Vec3> outsideHit = entityBB.inflate(entityMargin).clip(from, to);
+                        if (outsideHit.isPresent()) {
+                            Vec3 outsideHitPosition = outsideHit.get();
+                            Vec3 towardsTarget = entityBB.getCenter();
+                            BlockHitResult hitResult = level.clipIncludingBorder(new ClipContext(outsideHitPosition, towardsTarget, clipType, ClipContext.Fluid.NONE, source));
+                            if (hitResult.getType() != HitResult.Type.MISS) {
+                                towardsTarget = hitResult.getLocation();
+                            }
 
-                        Optional<Vec3> surfaceHit = entity.getBoundingBox().clip(outsideHitPosition, towardsTarget);
-                        surfaceHit.ifPresent(vec3 -> collector.add(new EntityHitResult(entity, vec3)));
+                            Optional<Vec3> surfaceHit = entity.getBoundingBox().clip(outsideHitPosition, towardsTarget);
+                            surfaceHit.ifPresent(vec3 -> collector.add(new EntityHitResult(entity, vec3)));
+                        }
                     }
                 }
             }

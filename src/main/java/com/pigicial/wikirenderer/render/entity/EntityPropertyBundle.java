@@ -1,7 +1,10 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
-import com.pigicial.wikirenderer.property.*;
+import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
+import com.pigicial.wikirenderer.property.IntProperty;
+import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.TickingPropertyBundle;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
@@ -24,7 +27,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
     public static final EntityPropertyBundle INSTANCE = new EntityPropertyBundle();
 
-    public final Property<Boolean> tick = Property.of(true);
+    public final Property<Boolean> tickEntityAnimations = Property.of(false);
     public final Property<Boolean> spriteRendering = Property.of(false);
     private final Property<Boolean> spriteCropping = Property.of(true);
     private int spriteExportResolution = 64;
@@ -192,7 +195,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 }
                 screen.guiRebuildScheduled = true;
                 if (value) {
-                    tick.set(true);
+                    tickEntityAnimations.set(true);
                 }
                 renderable.cachedVerticalOffset = null;
             }));
@@ -219,7 +222,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
     @Override
     public Property<Boolean> getTickProperty() {
-        return this.tick;
+        return this.tickEntityAnimations;
     }
 
     @Override
