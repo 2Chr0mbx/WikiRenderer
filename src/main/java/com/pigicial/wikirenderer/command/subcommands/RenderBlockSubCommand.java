@@ -18,6 +18,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.component.AttackRange;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -54,7 +55,7 @@ public class RenderBlockSubCommand extends WikiRendererSubCommand {
 
         if (hitResult instanceof BlockHitResult blockHitResult) {
             BlockState blockState = client.level.getBlockState(blockHitResult.getBlockPos());
-            if (blockState.is(Blocks.AIR)) {
+            if (blockState.getRenderShape() == RenderShape.INVISIBLE) {
                 Translate.commandError(context, "no_block");
                 return;
             }

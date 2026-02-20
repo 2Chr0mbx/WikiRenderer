@@ -39,7 +39,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     public final Property<Boolean> useNightVision = Property.of(false);
     public final Property<Boolean> hideBeaconBeams = Property.of(false);
 
-    public final IntProperty entityBoundsIntersectionRequirement = IntProperty.of(50, 0, 100);
+    public final IntProperty entityBoundsIntersectionRequirement = IntProperty.of(20, 0, 100);
     public final Property<Boolean> hideEntities = Property.of(false);
     public final Property<Boolean> hidePlayers = Property.of(false);
     public final Property<Boolean> hideArmorStands = Property.of(false);

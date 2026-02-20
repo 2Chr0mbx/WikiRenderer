@@ -75,7 +75,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     private final Map<String, TextureData> textureData = new LinkedHashMap<>();
     protected boolean requireTextureReCache = true;
     protected AtomicBoolean textureCancelMarker = null;
-    protected Double cachedVerticalOffset = null;
+    protected Vec3 cachedCenterOffset = null;
 
     public EntityRenderable(@Nullable Entity liveNonTickableEntity, Entity clonedTickableEntity) {
         this.liveNonTickableEntity = liveNonTickableEntity;
@@ -221,8 +221,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         applyToEntityAndPassengers(usedEntity, entity -> {
             Vec3 offset = Vec3.ZERO;
+            Vec3 entityPosition = entity.position();
             if (entity.isPassenger()) {
-                offset = entity.position().subtract(usedEntity.position());
+                offset = entityPosition.subtract(usedEntity.position());
             }
 
             if (entity instanceof ClientMannequin mannequin) {
@@ -242,15 +243,22 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 WikiRenderer.inSpriteEntityDraw = true;
             }
 
-            if (cachedVerticalOffset == null) {
-                AABB bounds = EntityRenderBoundsUtil.getBounds(state, this, 0, 0, 0);
-                cachedVerticalOffset = bounds == null ? 0 : -bounds.minY - (bounds.getYsize() / 2);
-                // centers to the screen (without any offset, the entity renders starting at the center, instead of actually being centered)
+            if (cachedCenterOffset == null) {
+                AABB regularBounds = entity.getBoundingBox();
+                AABB renderedBounds = EntityRenderBoundsUtil.getBounds(state, this, 0, 0, 0);
+                if (renderedBounds == null) {
+                    cachedCenterOffset = new Vec3(0, 0, 0);
+                } else {
+                    double xDifference = renderedBounds.getCenter().x - (regularBounds.getCenter().x - entityPosition.x);
+                    double zDifference = renderedBounds.getCenter().z - (regularBounds.getCenter().z - entityPosition.z);
+                    cachedCenterOffset = new Vec3(xDifference, -renderedBounds.minY - renderedBounds.getYsize() / 2, zDifference);
+                    // centers to the screen
+                }
             }
 
             matrices.pushPose();
-            matrices.translate(0, cachedVerticalOffset, 0); // this fits it into the default frame
-            matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
+            matrices.translate(cachedCenterOffset); // this fits it into the default frame
+            if (!(entity instanceof Display.TextDisplay)) matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
 
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();

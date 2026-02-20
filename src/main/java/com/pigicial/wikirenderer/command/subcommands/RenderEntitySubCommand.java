@@ -16,6 +16,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.CompoundTagArgument;
 import net.minecraft.commands.arguments.ResourceArgument;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -28,6 +29,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.component.AttackRange;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 
 import java.util.ArrayList;
@@ -129,21 +132,28 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
 
     private static Collection<EntityHitResult> getHitEntitiesAlong(Player playerSource, Vec3 origin, Vec3 from, Vec3 to, float entityMargin) {
         Level level = playerSource.level();
-        BlockHitResult blockHitResult = level.clipIncludingBorder(new ClipContext(origin, to, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, playerSource));
+        BlockHitResult blockHitResult = level.clip(new ClipContext(origin, to, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, playerSource));
         if (blockHitResult.getType() != HitResult.Type.MISS) {
-            to = blockHitResult.getLocation();
-            if (origin.distanceToSqr(to) < origin.distanceToSqr(from)) {
-                return null; // block hit
+            Vec3 hitPosition = blockHitResult.getLocation();
+
+            // the traverse loop ends right before it hits a block, so if you're looking at the ground for instance, it'll hit the air at y=#.0 right above it
+            Vec3 avoidedPosition = hitPosition.add(to.subtract(from).normalize().multiply(0.1, 0.1, 0.1));
+            BlockPos avoidedBlockPosition = new BlockPos((int) avoidedPosition.x, (int) avoidedPosition.y, (int) avoidedPosition.z);
+            BlockState blockState = playerSource.level().getBlockState(avoidedBlockPosition);
+
+            if (blockState.getRenderShape() != RenderShape.INVISIBLE) {
+                to = hitPosition; // prevent entities past the location from being targeted
+                if (origin.distanceToSqr(hitPosition) < origin.distanceToSqr(from)) {
+                    return null; // block hit
+                }
             }
         }
 
         AABB searchArea = AABB.ofSize(from, entityMargin, entityMargin, entityMargin).expandTowards(to.subtract(from)).inflate(1.0);
-        return getManyEntityHitResult(level, playerSource, from, to, searchArea, 0, ClipContext.Block.VISUAL, false);
+        return getManyEntityHitResult(level, playerSource, from, to, searchArea);
     }
 
-    public static Collection<EntityHitResult> getManyEntityHitResult(
-            Level level, Player source, Vec3 from, Vec3 to, AABB targetSearchArea, float entityMargin, ClipContext.Block clipType, boolean includeFromEntity
-    ) {
+    public static Collection<EntityHitResult> getManyEntityHitResult(Level level, Player source, Vec3 from, Vec3 to, AABB targetSearchArea) {
         List<EntityHitResult> collector = new ArrayList<>();
 
         AABB expandedTargetSearchArea = new AABB(
@@ -160,28 +170,9 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
             AABB entityBB = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity);
             if (entityBB == null) continue;
 
-            if (includeFromEntity && entityBB.contains(from)) {
-                collector.add(new EntityHitResult(entity, from));
-            } else {
-                Optional<Vec3> exactHit = entityBB.clip(from, to);
-                if (exactHit.isPresent()) {
-                    collector.add(new EntityHitResult(entity, exactHit.get()));
-                } else {
-                    if (!(entityMargin <= 0.0)) {
-                        Optional<Vec3> outsideHit = entityBB.inflate(entityMargin).clip(from, to);
-                        if (outsideHit.isPresent()) {
-                            Vec3 outsideHitPosition = outsideHit.get();
-                            Vec3 towardsTarget = entityBB.getCenter();
-                            BlockHitResult hitResult = level.clipIncludingBorder(new ClipContext(outsideHitPosition, towardsTarget, clipType, ClipContext.Fluid.NONE, source));
-                            if (hitResult.getType() != HitResult.Type.MISS) {
-                                towardsTarget = hitResult.getLocation();
-                            }
-
-                            Optional<Vec3> surfaceHit = entity.getBoundingBox().clip(outsideHitPosition, towardsTarget);
-                            surfaceHit.ifPresent(vec3 -> collector.add(new EntityHitResult(entity, vec3)));
-                        }
-                    }
-                }
+            Optional<Vec3> exactHit = entityBB.clip(from, to);
+            if (exactHit.isPresent()) {
+                collector.add(new EntityHitResult(entity, entityBB.getCenter()));
             }
         }
 
