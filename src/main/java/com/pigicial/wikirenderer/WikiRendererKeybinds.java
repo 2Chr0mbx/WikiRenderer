@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer;
 
+import com.pigicial.wikirenderer.command.subcommands.RenderBlockSubCommand;
 import com.pigicial.wikirenderer.command.subcommands.RenderEntitySubCommand;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
 import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
@@ -37,6 +38,7 @@ public class WikiRendererKeybinds {
     public static final KeyMapping KEYBIND_SELECT_AREA_EXPAND = new KeyMapping("key.wikirenderer.area_select_expand", GLFW.GLFW_KEY_V, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY = new KeyMapping("key.wikirenderer.render_hovered_item_or_viewed_entity", GLFW.GLFW_KEY_H, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP = new KeyMapping("key.wikirenderer.render_hovered_item_tooltip", GLFW.GLFW_KEY_J, CATEGORY);
+    public static final KeyMapping KEYBIND_RENDER_TARGETED_BLOCK = new KeyMapping("key.wikirenderer.render_targeted_block", GLFW.GLFW_KEY_L, CATEGORY);
     public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_K, CATEGORY);
 
     public static void registerKeyBinds() {
@@ -44,6 +46,7 @@ public class WikiRendererKeybinds {
         KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA_EXPAND);
         KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY);
         KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP);
+        KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_TARGETED_BLOCK);
         KeyBindingHelper.registerKeyBinding(KEYBIND_BATCH_RENDER_INVENTORY);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -68,6 +71,10 @@ public class WikiRendererKeybinds {
 
             if (KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY.consumeClick()) {
                 RenderEntitySubCommand.renderTargetedEntity(null);
+            }
+
+            if (KEYBIND_RENDER_TARGETED_BLOCK.consumeClick()) {
+                RenderBlockSubCommand.renderTargetedBlock(null);
             }
         });
 

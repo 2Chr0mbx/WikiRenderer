@@ -5,6 +5,7 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
+import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
@@ -74,6 +75,11 @@ public class BlockStateRenderable
         }
 
         return new BlockStateRenderable(state, blockEntity);
+    }
+
+    @Override
+    public ParticleRestriction<?> getParticleRestriction() {
+        return ParticleRestriction.duringTick();
     }
 
     @Nullable

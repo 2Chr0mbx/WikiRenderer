@@ -9,6 +9,8 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.util.UUIDTypeAdapter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -27,9 +29,14 @@ public class PlayerTextureUtils {
     @Nullable
     public static TextureData getTextureDataFromPlayerHead(ItemStack itemStack) {
         ResolvableProfile profile = itemStack.get(DataComponents.PROFILE);
+        System.out.println("profile = " + profile);
         if (profile == null) return null;
 
-        return getTextureDataFromGameProfile(profile.partialProfile());
+        TextureData data = getTextureDataFromGameProfile(profile.partialProfile());
+        if (data != null) return data;
+
+        PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);
+        return PlayerTextureUtils.getTextureDataFromGameProfile(renderInfo.gameProfile());
     }
 
     @Nullable

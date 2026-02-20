@@ -13,4 +13,9 @@ public class BlockStatePropertyBundle extends DefaultCroppablePropertyBundle {
     public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.booleanControl(container, GlobalProperties.TICK_PARTICLES, "particles");
     }
+
+    @Override
+    protected boolean allowRotatingWithMouseByDefault() {
+        return true;
+    }
 }

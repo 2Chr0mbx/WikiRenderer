@@ -2,8 +2,9 @@
   "key.category.wikirenderer.keybinds": "WikiRenderer",
   "key.wikirenderer.area_select": "Select Area",
   "key.wikirenderer.area_select_expand": "Select Area (Expand Mode)",
-  "key.wikirenderer.render_hovered_item_or_viewed_entity": "Render Hovered Item / Viewed Entity",
+  "key.wikirenderer.render_hovered_item_or_viewed_entity": "Render Hovered Item / Targeted Entity",
   "key.wikirenderer.render_hovered_item_tooltip": "Render Hovered Item Tooltip",
+  "key.wikirenderer.render_targeted_block": "Render Targeted Block",
   "key.wikirenderer.batch_render_inventory": "Render Inventory Items",
 
   "gui.wikirenderer.animations": "Tick Animations",

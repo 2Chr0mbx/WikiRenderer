@@ -49,6 +49,7 @@ import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.AABB;
@@ -472,6 +473,21 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                     }
                 }
                 default -> {
+                }
+            }
+
+            if (usedEntity instanceof Display.ItemDisplay itemDisplay) {
+                System.out.println("1 = " + itemDisplay);
+                Display.ItemDisplay.ItemRenderState itemRenderState = itemDisplay.itemRenderState();
+                if (itemRenderState != null) {
+                    System.out.println("2");
+                    ItemStack item = itemRenderState.itemStack();
+                    System.out.println("item = " + item);
+                    TextureData itemTextureData = PlayerTextureUtils.getTextureDataFromPlayerHead(item);
+                    System.out.println("err " + itemTextureData);
+                    if (itemTextureData != null) {
+                        textureData.put("item", itemTextureData);
+                    }
                 }
             }
 
