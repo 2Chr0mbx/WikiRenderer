@@ -42,6 +42,7 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
             this.slant.copyFrom(clonedFrom.slant);
             this.xOffset.copyFrom(clonedFrom.xOffset);
             this.yOffset.copyFrom(clonedFrom.yOffset);
+            this.allowRotatingWithMouse.copyFrom(clonedFrom.allowRotatingWithMouse);
 
             this.scale.instantListen(clonedFrom.scale);
             this.rotation.instantListen(clonedFrom.rotation);
@@ -49,6 +50,23 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
             this.slant.instantListen(clonedFrom.slant);
             this.xOffset.instantListen(clonedFrom.xOffset);
             this.yOffset.instantListen(clonedFrom.yOffset);
+            this.allowRotatingWithMouse.instantListen(clonedFrom.allowRotatingWithMouse);
+        }
+    }
+
+    @Override
+    public void modifyRotation(int amount) {
+        super.modifyRotation(amount);
+        if (this.actualProperties instanceof DefaultPropertyBundle clonedFrom) {
+            clonedFrom.modifyRotation(amount);
+        }
+    }
+
+    @Override
+    public void modifySlant(double amount) {
+        super.modifySlant(amount);
+        if (this.actualProperties instanceof DefaultPropertyBundle clonedFrom) {
+            clonedFrom.modifySlant(amount);
         }
     }
 
