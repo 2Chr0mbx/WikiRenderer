@@ -137,8 +137,9 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
             Vec3 hitPosition = blockHitResult.getLocation();
 
             // the traverse loop ends right before it hits a block, so if you're looking at the ground for instance, it'll hit the air at y=#.0 right above it
-            Vec3 avoidedPosition = hitPosition.add(to.subtract(from).normalize().multiply(0.1, 0.1, 0.1));
-            BlockPos avoidedBlockPosition = new BlockPos((int) avoidedPosition.x, (int) avoidedPosition.y, (int) avoidedPosition.z);
+            Vec3 direction = to.subtract(from).normalize().multiply(0.1, 0.1, 0.1);
+            Vec3 avoidedPosition = hitPosition.add(direction);
+            BlockPos avoidedBlockPosition = BlockPos.containing(avoidedPosition.x, avoidedPosition.y, avoidedPosition.z);
             BlockState blockState = playerSource.level().getBlockState(avoidedBlockPosition);
 
             if (blockState.getRenderShape() != RenderShape.INVISIBLE) {
