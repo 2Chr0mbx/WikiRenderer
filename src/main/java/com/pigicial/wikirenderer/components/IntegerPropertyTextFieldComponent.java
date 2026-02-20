@@ -26,7 +26,8 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
         this.setFilter(makeMatcher());
 
         this.onChanged().subscribe(s -> {
-            if (Objects.equals(s, content) || s.isEmpty() || s.equals("-")) {
+            s = s.replace("%", "");
+            if (Objects.equals(s, content) || s.isEmpty() || s.equals("-") || s.replace("%", "").isEmpty()) {
                 return;
             }
 
@@ -56,9 +57,9 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
             return;
         }
 
-        if (this.setting.hasRollover() && !this.isFocused() && previouslyFocused) {
+        if ((this.setting.hasRollover() || formatAsPercentage) && !this.isFocused() && previouslyFocused) {
             this.ignoringChange = true;
-            this.text(String.valueOf(setting.get()));
+            this.text(setting.get() + (formatAsPercentage ? "%" : ""));
             this.ignoringChange = false;
         }
     }
@@ -81,8 +82,9 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
 
         String regex = builder.toString();
         return s -> {
+            s = s.replace("%", "");
             boolean matches = s.matches(regex);
-            if (matches && !this.setting.hasRollover() && !s.isEmpty() && !s.equals("-") && !s.endsWith("%")) {
+            if (matches && !this.setting.hasRollover() && !s.isEmpty() && !s.equals("-")) {
                 int number = Integer.parseInt(s);
                 return number >= this.setting.min() && number <= this.setting.max();
             }
