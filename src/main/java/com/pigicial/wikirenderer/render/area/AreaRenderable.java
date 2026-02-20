@@ -193,7 +193,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             assert level != null;
             BlockPos start = mesh.bounds.getMinCorner();
             BlockPos end = mesh.bounds.getMaxCorner().offset(1, 1, 1);
-            AABB areaBoundingBox = new AABB(start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ());
+            AABB areaBoundingBox = new AABB(start.getX() + 0.1, start.getY() + 0.1, start.getZ() + 0.1, end.getX() - 0.1, end.getY() - 0.1, end.getZ() - 0.1);
 
             this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-5, -5, -5), end.offset(5, 5, 5)), entity -> {
                 Vec3 entityPosition = entity.position();

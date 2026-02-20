@@ -51,6 +51,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     private final Map<String, TextureData> textureData = new LinkedHashMap<>();
     protected boolean requireTextureReCache = true;
     protected AtomicBoolean textureCancelMarker = null;
+    protected Double cachedVerticalOffset = null;
 
     public EntityRenderable(@Nullable Entity liveNonTickableEntity, Entity clonedTickableEntity) {
         this.liveNonTickableEntity = liveNonTickableEntity;
@@ -210,17 +212,13 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
         matrices.pushPose();
 
+        EntityPropertyBundle properties = this.getProperties();
         boolean usingLiveEntity = isUsingLiveEntity();
         Entity usedEntity = this.getUsedEntity();
-
-        double verticalOffset = -usedEntity.getBbHeight() * (this.getProperties().spriteRendering.get() ? 1 : 0.5);
-        matrices.translate(0, verticalOffset, 0); // this fits it into the default frame
-        matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
 
         EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
         SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
-        EntityPropertyBundle properties = this.getProperties();
         applyToEntityAndPassengers(usedEntity, entity -> {
             Vec3 offset = Vec3.ZERO;
             if (entity.isPassenger()) {
@@ -244,7 +242,16 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 WikiRenderer.inSpriteEntityDraw = true;
             }
 
+            if (cachedVerticalOffset == null) {
+                AABB bounds = EntityRenderBoundsUtil.getBounds(state, this, 0, 0, 0);
+                cachedVerticalOffset = bounds == null ? 0 : -bounds.minY - (bounds.getYsize() / 2);
+                // centers to the screen (without any offset, the entity renders starting at the center, instead of actually being centered)
+            }
+
             matrices.pushPose();
+            matrices.translate(0, cachedVerticalOffset, 0); // this fits it into the default frame
+            matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
+
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
 
@@ -254,8 +261,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         });
 
         // if these aren't undone them the bottom of certain armor boots look weird (for some reason, and despite popPose(), idk)
-        matrices.mulPose(Axis.YP.rotationDegrees(-180));
-        matrices.translate(0, -verticalOffset, 0);
+
         matrices.popPose();
     }
 

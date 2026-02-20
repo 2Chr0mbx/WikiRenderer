@@ -23,11 +23,18 @@ public class EntityRenderBoundsUtil {
     private static final VertexPositionTracker.OutlineBufferSource OUTLINE_BUFFER_SOURCE = new VertexPositionTracker.OutlineBufferSource();
 
     @Nullable
-    public static AABB getPositionBasedBounds(Entity entity) {
+    public static AABB getPositionOffsetBasedBounds(Entity entity) {
         EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
         CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
         Vec3 position = entity.position();
         return getBounds(entityRenderState, cameraRenderState, position.x, position.y, position.z);
+    }
+
+    @Nullable
+    public static AABB getBounds(Entity entity) {
+        EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
+        CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
+        return getBounds(entityRenderState, cameraRenderState, 0, 0, 0);
     }
 
     @Nullable

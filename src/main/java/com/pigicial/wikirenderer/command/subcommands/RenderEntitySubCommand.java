@@ -149,7 +149,7 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
             // accurate enough check to remove most entities without instead checking for the more expensive rendered bounding box data
             if (!expandedTargetSearchArea.contains(entity.position())) continue;
 
-            AABB entityBB = EntityRenderBoundsUtil.getPositionBasedBounds(entity);
+            AABB entityBB = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity);
             if (entityBB == null) continue;
 
             if (includeFromEntity && entityBB.contains(from)) {

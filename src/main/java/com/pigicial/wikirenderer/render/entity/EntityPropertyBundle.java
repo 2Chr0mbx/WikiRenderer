@@ -109,6 +109,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
         this.spriteRendering.futureListen(((booleanProperty, value) -> {
             screen.guiRebuildScheduled = true;
+            renderable.cachedVerticalOffset = null;
             this.yaw.set(0);
             this.pitch.set(0);
             this.spriteRotation.set(180);
@@ -193,6 +194,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 if (value) {
                     tick.set(true);
                 }
+                renderable.cachedVerticalOffset = null;
             }));
         }
 
