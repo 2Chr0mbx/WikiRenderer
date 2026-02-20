@@ -107,7 +107,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
     @Override
     public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack modelViewStack, PoseStack standardStack, float tickDelta) {
-        if (!mesh.canRender()) {
+        if (!mesh.getMeshState().canRender) {
             if (mesh.getMeshState() == WorldBlockMesh.MeshState.CORRUPT) return;
 
             mesh.scheduleRebuild(true);

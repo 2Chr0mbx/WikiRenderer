@@ -1,7 +1,6 @@
 package com.pigicial.wikirenderer.mixin.texture;
 
 import com.pigicial.wikirenderer.property.GlobalProperties;
-import com.pigicial.wikirenderer.property.TickingPropertyBundle;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureManager;

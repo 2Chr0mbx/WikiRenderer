@@ -90,7 +90,7 @@ public class WorldBlockMesh {
     }
 
     public void drawBlocks(PoseStack matrices) {
-        if (!this.canRender()) {
+        if (!this.getMeshState().canRender) {
             throw new IllegalStateException("World mesh not prepared!");
         }
 
@@ -193,10 +193,6 @@ public class WorldBlockMesh {
             standardStack.popPose();
         });
         renderable.drawSubmittedRenderFeatures();
-    }
-
-    public boolean canRender() {
-        return this.state.canRender;
     }
 
     public MeshState getMeshState() {

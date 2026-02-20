@@ -20,8 +20,6 @@ import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ResolvableProfile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Base64;
@@ -97,8 +95,7 @@ public class RenderItemSubCommand extends WikiRendererSubCommand {
                 .exceptionally(throwable -> Optional.empty())
                 .thenApply(s -> {
                     if (s.isPresent()) {
-                        ItemStack stack = new ItemStack(Items.PLAYER_HEAD);
-                        stack.set(DataComponents.PROFILE, ResolvableProfile.createResolved(gameProfile));
+                        ItemStack stack = PlayerTextureUtils.createPlayerHead(gameProfile);
                         stack.set(DataComponents.CUSTOM_NAME, Component.literal("Player Head"));
                         return new ItemRenderable(stack);
                     } else {

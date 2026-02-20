@@ -50,7 +50,7 @@ public class EntityRenderBoundsUtil {
             new ItemFeatureRenderer().render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
             new BlockFeatureRenderer().render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
             new CustomFeatureRenderer().render(collection, BUFFER_SOURCE);
-        };
+        }
 
         return VertexPositionTracker.BOUNDS;
     }
