@@ -124,13 +124,21 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
         Vec3 from = eyePosition.add(headLookAngle.scale(attackRange.effectiveMinRange(playerSource)));
         double movementComponent = playerSource.getKnownMovement().dot(headLookAngle);
         Vec3 to = eyePosition.add(headLookAngle.scale(attackRange.effectiveMaxRange(playerSource) + Math.max(0.0, movementComponent)));
-        return getHitEntitiesAlong(playerSource, from, to, attackRange.hitboxMargin());
+        return getHitEntitiesAlong(playerSource, eyePosition, from, to, attackRange.hitboxMargin());
     }
 
-    private static Collection<EntityHitResult> getHitEntitiesAlong(Player source, Vec3 from, Vec3 to, float entityMargin) {
-        Level level = source.level();
+    private static Collection<EntityHitResult> getHitEntitiesAlong(Player playerSource, Vec3 origin, Vec3 from, Vec3 to, float entityMargin) {
+        Level level = playerSource.level();
+        BlockHitResult blockHitResult = level.clipIncludingBorder(new ClipContext(origin, to, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, playerSource));
+        if (blockHitResult.getType() != HitResult.Type.MISS) {
+            to = blockHitResult.getLocation();
+            if (origin.distanceToSqr(to) < origin.distanceToSqr(from)) {
+                return null; // block hit
+            }
+        }
+
         AABB searchArea = AABB.ofSize(from, entityMargin, entityMargin, entityMargin).expandTowards(to.subtract(from)).inflate(1.0);
-        return getManyEntityHitResult(level, source, from, to, searchArea, 0, ClipContext.Block.VISUAL, false);
+        return getManyEntityHitResult(level, playerSource, from, to, searchArea, 0, ClipContext.Block.VISUAL, false);
     }
 
     public static Collection<EntityHitResult> getManyEntityHitResult(
