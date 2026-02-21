@@ -137,23 +137,28 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         standardStack.setIdentity();
         standardStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
+        // this could be better but whatever
+        Runnable preTranslucencyTask = () -> {
+            this.mesh.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
+            if (!properties.hideEntities.get()) {
+                this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
+            }
+
+            if (client.player != null) {
+                Vec3 diff = Vec3.atLowerCornerOf(mesh.bounds.getMinCorner()).subtract(client.player.trackingPosition());
+                standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
+                this.drawParticles(standardStack.last().pose(), tickDelta);
+            }
+        };
+
         if (!properties.hideMesh.get()) {
             PoseStack meshStack = new PoseStack();
             meshStack.mulPose(modelViewStack);
             meshStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
-            this.mesh.drawBlocks(meshStack);
-            this.mesh.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
-        }
-
-        if (!properties.hideEntities.get()) {
-            this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
-        }
-
-        if (client.player != null) {
-            Vec3 diff = Vec3.atLowerCornerOf(mesh.bounds.getMinCorner()).subtract(client.player.trackingPosition());
-            standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
-            this.drawParticles(standardStack.last().pose(), tickDelta);
+            this.mesh.drawBlocks(meshStack, preTranslucencyTask);
+        } else {
+            preTranslucencyTask.run(); // run otherwise above
         }
 
         WikiRenderer.inAreaRenderDraw = false;

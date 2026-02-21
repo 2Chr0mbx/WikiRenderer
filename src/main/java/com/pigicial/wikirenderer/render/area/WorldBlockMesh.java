@@ -89,7 +89,7 @@ public class WorldBlockMesh {
         this.renderable = renderable;
     }
 
-    public void drawBlocks(PoseStack matrices) {
+    public void drawBlocks(PoseStack matrices, Runnable preTranslucencyTask) {
         if (!this.getMeshState().canRender) {
             throw new IllegalStateException("World mesh not prepared!");
         }
@@ -125,6 +125,9 @@ public class WorldBlockMesh {
         }
 
         for (ChunkSectionLayerGroup sectionLayer : new ChunkSectionLayerGroup[]{ChunkSectionLayerGroup.OPAQUE, ChunkSectionLayerGroup.TRANSLUCENT, ChunkSectionLayerGroup.TRIPWIRE}) {
+            if (sectionLayer == ChunkSectionLayerGroup.TRANSLUCENT) {
+                preTranslucencyTask.run();
+            }
             overrideCutoutRenderPipeline = sectionLayer == ChunkSectionLayerGroup.OPAQUE;
             for (ChunkSectionsToRender sections : preparedSections) {
                 sections.renderGroup(sectionLayer, terrainSampler);
