@@ -261,6 +261,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
                 WikiRenderer.inSpriteEntityDraw = true;
             }
+            WikiRenderer.inEntityDraw = true;
 
             if (cachedCenterOffset == null) {
                 AABB regularBounds = entity.getBoundingBox();
@@ -290,6 +291,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             matrices.popPose();
             WikiRenderer.inSpriteEntityDraw = false;
+            WikiRenderer.inEntityDraw = false;
             partVisibilityCallbacks.forEach(Runnable::run);
         });
 

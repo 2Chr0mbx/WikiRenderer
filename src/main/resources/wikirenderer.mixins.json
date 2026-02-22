@@ -33,6 +33,7 @@
     "entity.EquipmentLayerRendererMixin",
     "entity.HumanoidArmorLayerMixin",
     "entity.LivingEntityRendererMixin",
+    "entity.RenderSetupMixin",
     "entity.sprite.EnergySwirlLayerMixin",
     "entity.sprite.HumanoidModelMixin",
     "entity.sprite.LivingEntityEmissiveLayerMixin",
