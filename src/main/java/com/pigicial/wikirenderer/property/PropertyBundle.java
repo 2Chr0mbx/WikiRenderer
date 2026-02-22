@@ -11,6 +11,7 @@ import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.util.Util;
 import org.joml.Matrix4fStack;
@@ -52,7 +53,8 @@ public interface PropertyBundle {
                 builder.row.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
                     screen.notify(Translate.gui("copied_to_clipboard"));
 
-                    RenderableDispatcher.drawIntoImage(screen, renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), null)
+                    float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+                    RenderableDispatcher.drawIntoImage(screen, renderable, tickDelta, screen.getTimeSinceCreationMs(), renderable.getExportResolution(), renderable.shouldCrop(), null)
                             .whenComplete((image, t) -> {
                                 try (image) {
                                     ByteArrayOutputStream stream = new ByteArrayOutputStream();

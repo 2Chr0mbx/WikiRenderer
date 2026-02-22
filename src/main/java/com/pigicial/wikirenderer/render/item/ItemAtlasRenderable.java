@@ -35,7 +35,7 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
     }
 
     @Override
-    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta, long timeSinceCreationMs) {
         int columns = this.getProperties().columns.get();
         int rows = Mth.positiveCeilDiv(this.items.size(), columns);
 

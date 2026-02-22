@@ -35,7 +35,7 @@ public class RenderableDispatcher {
     private static final Matrix4f ORTHOGRAPHIC_MATRIX = new Matrix4f();
     private static RenderTarget previewTarget = null;
 
-    public static void drawIntoActiveFramebuffer(RenderScreen renderScreen, Renderable<?> renderable, float aspectRatio, float tickDelta, @Nullable Consumer<Matrix4fStack> transformer) {
+    public static void drawIntoActiveFramebuffer(RenderScreen renderScreen, Renderable<?> renderable, float aspectRatio, float tickDelta, long timeSinceCreationMs, @Nullable Consumer<Matrix4fStack> transformer) {
         renderable.prepare();
 
         // view matrix = position/rotation/scale of camera
@@ -51,7 +51,7 @@ public class RenderableDispatcher {
         WikiRenderer.setSortingMethod(projectionMatrix, modelViewStack);
 
         renderable.setupLighting();
-        renderable.emitVerticesThenDraw(renderScreen, modelViewStack, new PoseStack(), tickDelta);
+        renderable.emitVerticesThenDraw(renderScreen, modelViewStack, new PoseStack(), tickDelta, timeSinceCreationMs);
         renderable.drawSubmittedRenderFeatures();
 
         WikiRenderer.endRenderableDraw();
@@ -59,12 +59,12 @@ public class RenderableDispatcher {
         renderable.cleanUp();
     }
 
-    public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
-        return drawIntoImage(renderScreen, renderable, tickDelta, size, size, 0, crop, calibrationDataCallback);
+    public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
+        return drawIntoImage(renderScreen, renderable, tickDelta, timeSinceCreationMs, size, size, 0, crop, calibrationDataCallback);
     }
 
-    public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size, int targetSize, int iterationIndex, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
-        GpuTexture texture = drawIntoTexture(renderScreen, renderable, tickDelta, size);
+    public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, int size, int targetSize, int iterationIndex, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
+        GpuTexture texture = drawIntoTexture(renderScreen, renderable, tickDelta, timeSinceCreationMs, size);
         CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).handle((i, t) -> {
             texture.close();
             if (t != null) {
@@ -135,7 +135,7 @@ public class RenderableDispatcher {
                     return CompletableFuture.completedFuture(croppedImage);
                 } else {
                     croppedImage.close();
-                    return drawIntoImage(renderScreen, renderable, tickDelta, newSize, targetSize, iterationIndex + 1, true, null)
+                    return drawIntoImage(renderScreen, renderable, tickDelta, timeSinceCreationMs, newSize, targetSize, iterationIndex + 1, true, null)
                             .thenApply(ImageCropper::cropTransparentAndCloseSource);
                 }
             });
@@ -144,7 +144,7 @@ public class RenderableDispatcher {
         return image;
     }
 
-    public static GpuTexture drawIntoTexture(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size) {
+    public static GpuTexture drawIntoTexture(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, int size) {
         TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
         int backgroundColor = GlobalProperties.SHOW_BACKGROUND_COLOR_IN_EXPORTS.get() ? GlobalProperties.backgroundColor : 0;
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
@@ -158,7 +158,7 @@ public class RenderableDispatcher {
         RenderSystem.outputColorTextureOverride = target.getColorTextureView();
         RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
 
-        RenderableDispatcher.drawIntoActiveFramebuffer(renderScreen, renderable, 1, tickDelta, null);
+        RenderableDispatcher.drawIntoActiveFramebuffer(renderScreen, renderable, 1, tickDelta, timeSinceCreationMs, null);
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
@@ -171,7 +171,7 @@ public class RenderableDispatcher {
         return texture;
     }
 
-    public static RenderTarget drawIntoDuplicateFramebuffer(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, @Nullable Consumer<Matrix4fStack> transformer) {
+    public static RenderTarget drawIntoDuplicateFramebuffer(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, @Nullable Consumer<Matrix4fStack> transformer) {
         Window window = Minecraft.getInstance().getWindow();
         int width = window.getWidth();
         int height = window.getHeight();
@@ -197,7 +197,7 @@ public class RenderableDispatcher {
         RenderSystem.outputDepthTextureOverride = previewTarget.getDepthTextureView();
 
         float aspectRatio = width / (float) height;
-        RenderableDispatcher.drawIntoActiveFramebuffer(renderScreen, renderable, aspectRatio, tickDelta, transformer);
+        RenderableDispatcher.drawIntoActiveFramebuffer(renderScreen, renderable, aspectRatio, tickDelta, timeSinceCreationMs, transformer);
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;

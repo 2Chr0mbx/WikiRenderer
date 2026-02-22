@@ -69,7 +69,6 @@ import java.util.function.Consumer;
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
     private final Minecraft client = Minecraft.getInstance();
-    private final long creationTimeMs = System.currentTimeMillis();
 
     @Nullable
     protected final Entity liveNonTickableEntity;
@@ -228,7 +227,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta, long timeSinceCreationMs) {
         matrices.pushPose();
 
         EntityPropertyBundle properties = this.getProperties();
@@ -250,7 +249,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             }
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
-            this.updateRenderState(state, properties, usingLiveEntity);
+            this.updateRenderState(state, properties, timeSinceCreationMs, usingLiveEntity);
 
             List<Runnable> partVisibilityCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {
@@ -300,7 +299,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         matrices.popPose();
     }
 
-    private void updateRenderState(EntityRenderState state, EntityPropertyBundle properties, boolean usingLiveEntity) {
+    private void updateRenderState(EntityRenderState state, EntityPropertyBundle properties, long timeSinceCreationMs, boolean usingLiveEntity) {
         //state.outlineColor = 0; // remove glow
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightTexture.FULL_BRIGHT;
@@ -309,7 +308,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         if (properties.tickEntityAnimations.get()) {
             if (!usingLiveEntity) {
-                state.ageInTicks = (System.currentTimeMillis() - creationTimeMs) / 50f;
+                state.ageInTicks = (int) timeSinceCreationMs / 50f;
             } // otherwise just use the live entity state for more accuracy of what's being seen in the actual game
         } else {
             state.ageInTicks = 1;

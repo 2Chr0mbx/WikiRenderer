@@ -27,7 +27,7 @@ public class EmptyRenderable implements Renderable<PropertyBundle> {
     };
 
     @Override
-    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {}
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta, long timeSinceCreationMs) {}
 
     @Override
     public void setupLighting() {}

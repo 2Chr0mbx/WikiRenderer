@@ -13,7 +13,6 @@ import com.pigicial.wikirenderer.mixin.access.ParticleEngineAccessor;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.property.Property;
-import com.pigicial.wikirenderer.property.TickingPropertyBundle;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -39,7 +38,6 @@ import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.FocusHandler;
-import io.wispforest.owo.ui.util.UIErrorToast;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.ChatFormatting;
@@ -94,6 +92,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     public final MemoryGuard memoryGuard = new MemoryGuard(0.75f);
+    public final long creationTimeMs = System.currentTimeMillis();
 
     private final FlowLayout notificationArea = UIContainers.verticalFlow(Sizing.content(), Sizing.content());
     private final IOStateComponent ioStateComponent = new IOStateComponent();
@@ -105,6 +104,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private final FlowLayout rightColumn = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
 
     private final Set<Property<?>> propertyListeners = new HashSet<>();
+
     public Renderable<?> renderable;
 
     private boolean drawOnlyBackground = false;
@@ -406,7 +406,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float tickDelta) {
         if (this.guiRebuildScheduled) {
             this.saveScrollOffsetDataIfPossible();
             this.uiAdapter = null;
@@ -417,15 +417,15 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.guiRebuildScheduled = false;
         }
 
-        Window window = minecraft.getWindow();
-        boolean tick = renderable.getProperties() instanceof TickingPropertyBundle ticking && ticking.getTickProperty().get();
-        float effectiveTickDelta = tick ? minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false) : 0;
+        // smoother, idk why but the provided tickDelta is bad
+        tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
         // basically just for batch rendering
-        this.renderable.onScreenHandle(this);
+        this.renderable.onScreenHandle(this, tickDelta);
 
+        Window window = minecraft.getWindow();
         Consumer<Matrix4fStack> positionTransformer = this.hasBothColumns ? null : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0);
-        RenderTarget renderedOutput = RenderableDispatcher.drawIntoDuplicateFramebuffer(this, this.renderable, effectiveTickDelta, positionTransformer);
+        RenderTarget renderedOutput = RenderableDispatcher.drawIntoDuplicateFramebuffer(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), positionTransformer);
 
         if (this.drawOnlyBackground) {
             context.fill(0, 0, this.width, this.height, backgroundColor | 255 << 24);
@@ -463,7 +463,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 this.exportAnimationButton.tooltip(tooltip);
             }
 
-            super.render(context, mouseX, mouseY, delta);
+            super.render(context, mouseX, mouseY, tickDelta);
 
             if (FileIO.taskCount() > 0) {
                 if (!this.ioStateComponent.hasParent()) {
@@ -475,14 +475,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         if (this.captureScheduled) {
-            this.exportImage(true);
+            this.exportImage(true, tickDelta);
             this.captureScheduled = false;
         }
 
-        this.renderOrExportAnimationIfNecessary(effectiveTickDelta);
+        this.renderOrExportAnimationIfNecessary(tickDelta);
     }
 
-    public void exportImage(boolean popupText) {
+    public void exportImage(boolean popupText, float tickDelta) {
         capturing = true;
         ExportPathSpec defaultExportPath = this.renderable.getExportPath();
         String customFileName = renderable.getCustomFileName();
@@ -497,7 +497,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             dataConsumer = data::set;
         }
 
-        RenderableDispatcher.drawIntoImage(this, this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
+        RenderableDispatcher.drawIntoImage(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
                 .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((f, t) -> img.close()))
                 .whenComplete((imageFile, throwable) -> {
                     capturing = false;
@@ -541,7 +541,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 });
     }
 
-    private void renderOrExportAnimationIfNecessary(float effectiveTickDelta) {
+    private void renderOrExportAnimationIfNecessary(float tickDelta) {
         if (this.currentAnimationExportData != null) {
             if (!SET_ANIMATION_FPS_CAP.get()) {
                 // overrides tabbing out lowering the fps cap
@@ -549,7 +549,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 framerateLimitTracker.setFramerateLimit(Minecraft.getInstance().options.framerateLimit().get());
                 framerateLimitTracker.onInputReceived();
             }
-            this.currentAnimationExportData.renderAndSaveFrame(effectiveTickDelta);
+            this.currentAnimationExportData.renderAndSaveFrame(tickDelta);
         }
     }
 
@@ -723,5 +723,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     public void registerPropertyListener(Property<?> property) {
         this.propertyListeners.add(property);
+    }
+
+    public long getTimeSinceCreationMs() {
+        return System.currentTimeMillis() - creationTimeMs;
     }
 }

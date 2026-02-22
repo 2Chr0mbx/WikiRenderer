@@ -111,7 +111,7 @@ public class BlockStateRenderable
     }
 
     @Override
-    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta, long timeSinceCreationMs) {
         matrices.pushPose();
         matrices.translate(-0.5, -0.5, -0.5);
 

@@ -14,7 +14,7 @@ public interface Renderable<P extends PropertyBundle> {
 
     void setupLighting();
 
-    void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack modelViewStack, PoseStack poseStack, float tickDelta);
+    void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack modelViewStack, PoseStack poseStack, float tickDelta, long timeSinceCreationMs);
 
     void drawSubmittedRenderFeatures();
 
@@ -29,7 +29,7 @@ public interface Renderable<P extends PropertyBundle> {
 
     default void prepare() {}
 
-    default void onScreenHandle(RenderScreen screen) {}
+    default void onScreenHandle(RenderScreen screen, float tickDelta) {}
 
     default ParticleRestriction<?> getParticleRestriction() {
         return ParticleRestriction.never();

@@ -41,7 +41,7 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
     }
 
     @Override
-    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta, long timeSinceCreationMs) {
         Minecraft client = Minecraft.getInstance();
 
 	    GuiRenderState state = new GuiRenderState();

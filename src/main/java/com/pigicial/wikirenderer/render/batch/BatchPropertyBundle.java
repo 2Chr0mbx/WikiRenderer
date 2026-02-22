@@ -114,7 +114,6 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
             }
         }
 
-        // tropical fish rendering is weird, rendering w/ animations causes inconsistencies? look into this (might be deltaTick changing the size of each one, therefore maybe caching deltaTick is the play
         return this.actualProperties.getExportResolution(this.batchRenderable.currentDelegate); // this.batchRenderable is not needed here really
     }
 

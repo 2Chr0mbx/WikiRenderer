@@ -47,7 +47,7 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
             Minecraft.getInstance().getTextureManager().tick();
         }
 
-        GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.screen, this.renderable, effectiveTickDelta, renderable.getExportResolution());
+        GpuTexture texture = RenderableDispatcher.drawIntoTexture(this.screen, this.renderable, effectiveTickDelta, screen.getTimeSinceCreationMs(), renderable.getExportResolution());
         WikiRenderer.skipWorldRender = true;
 
         // makes new file each frame

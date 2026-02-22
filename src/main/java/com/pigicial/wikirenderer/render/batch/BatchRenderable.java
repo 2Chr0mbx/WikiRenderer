@@ -63,13 +63,12 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     @Override
-    public void onScreenHandle(RenderScreen renderScreen) {
+    public void onScreenHandle(RenderScreen renderScreen, float tickDelta) {
         WikiRenderer.inBatchRender = this.batchActive;
         if (!batchActive || currentIndex >= this.delegates.size() || System.currentTimeMillis() - lastRenderTime < renderDelay || FileIO.taskCount() > 5) {
             return;
 
         }
-        // capturing doesnt seem to help
 
         if (BatchPropertyBundle.EXPORT_AS_ANIMATIONS.get()) {
             if (renderScreen.currentAnimationExportData == null) {
@@ -87,7 +86,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
                 } else {
                     this.next(renderScreen);
                 }
-                renderScreen.exportImage(false);
+                renderScreen.exportImage(false, tickDelta);
             }
         }
     }
@@ -108,8 +107,8 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     @Override
-    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta) {
-        this.currentDelegate.emitVerticesThenDraw(renderScreen, matrix4fStack, matrices, tickDelta);
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta, long timeSinceCreationMs) {
+        this.currentDelegate.emitVerticesThenDraw(renderScreen, matrix4fStack, matrices, tickDelta, timeSinceCreationMs);
     }
 
     @Override
