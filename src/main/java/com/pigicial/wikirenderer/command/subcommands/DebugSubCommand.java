@@ -3,7 +3,6 @@ package com.pigicial.wikirenderer.command.subcommands;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.pigicial.wikirenderer.property.GlobalProperties;
-import com.pigicial.wikirenderer.render.skyblock.TropicalFishBatchRender;
 import com.pigicial.wikirenderer.util.Translate;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.commands.CommandBuildContext;
@@ -29,11 +28,7 @@ public class DebugSubCommand extends WikiRendererSubCommand {
                                 .executes(context -> {
                                     this.disableDebugBounds(context);
                                     return 0;
-                                })))
-                .then(literal("fish").executes(context -> {
-                    TropicalFishBatchRender.renderFish();
-                    return 0;
-                }));
+                                })));
     }
 
     private void enableDebugBounds(CommandContext<FabricClientCommandSource> context) {

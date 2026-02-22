@@ -13,6 +13,7 @@ import net.minecraft.world.item.DyeColor;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class TropicalFishBatchRender {
 
     public static void renderFish() {
