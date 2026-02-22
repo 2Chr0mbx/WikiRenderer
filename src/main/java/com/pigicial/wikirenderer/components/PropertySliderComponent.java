@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.mixin.access.AbstractSliderButtonInvoker;
 import com.pigicial.wikirenderer.property.NumberProperty;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import io.wispforest.owo.ui.component.SliderComponent;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -13,7 +14,7 @@ public class PropertySliderComponent extends SliderComponent {
     private final NumberProperty<? extends Number> setting;
     private final double scrollIncrement;
 
-    public PropertySliderComponent(Sizing horizontalSizing, Component text, double scrollIncrement, NumberProperty<? extends Number> setting) {
+    public PropertySliderComponent(RenderScreen screen, Sizing horizontalSizing, Component text, double scrollIncrement, NumberProperty<? extends Number> setting) {
         super(horizontalSizing);
         this.setting = setting;
         this.scrollIncrement = scrollIncrement;
@@ -21,7 +22,7 @@ public class PropertySliderComponent extends SliderComponent {
         this.message(s -> text);
 
         this.onChanged().subscribe(this.setting::setFromProgress);
-        setting.instantListen((intSetting, integer) -> ((AbstractSliderButtonInvoker) this).wikirenderer$setValue(setting.progress()));
+        setting.instantListen(screen, (intSetting, integer) -> ((AbstractSliderButtonInvoker) this).wikirenderer$setValue(setting.progress()));
     }
 
     @Override

@@ -1,19 +1,23 @@
 package com.pigicial.wikirenderer.property;
 
+import com.pigicial.wikirenderer.screen.RenderScreen;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 public class Property<T> implements BiConsumer<Property<T>, T> {
 
     protected T defaultValue;
     protected T value;
-    protected final List<BiConsumer<Property<T>, T>> changeListeners;
+    protected final Map<RenderScreen, List<BiConsumer<Property<T>, T>>> changeListeners;
 
     public Property(T defaultValue) {
         this.defaultValue = defaultValue;
         this.value = defaultValue;
-        this.changeListeners = new ArrayList<>();
+        this.changeListeners = new HashMap<>();
     }
 
     public static <T> Property<T> of(T defaultValue) {
@@ -39,13 +43,22 @@ public class Property<T> implements BiConsumer<Property<T>, T> {
         return this.value == this.defaultValue;
     }
 
-    public void instantListen(BiConsumer<Property<T>, T> listener) {
-        this.changeListeners.add(listener);
+    public void instantListen(RenderScreen screen, BiConsumer<Property<T>, T> listener) {
+        this.changeListeners.computeIfAbsent(screen, o -> new ArrayList<>()).add(listener);
+        screen.registerPropertyListener(this);
         listener.accept(this, this.value);
     }
 
-    public void futureListen(BiConsumer<Property<T>, T> listener) {
-        this.changeListeners.add(listener);
+    public void futureListen(RenderScreen screen, BiConsumer<Property<T>, T> listener) {
+        this.changeListeners.computeIfAbsent(screen, o -> new ArrayList<>()).add(listener);
+        screen.registerPropertyListener(this);
+    }
+
+    public void removeListeners(RenderScreen renderScreen) {
+        List<BiConsumer<Property<T>, T>> list = changeListeners.remove(renderScreen);
+        if (list != null) {
+            list.clear();
+        }
     }
 
     public T get() {
@@ -59,7 +72,7 @@ public class Property<T> implements BiConsumer<Property<T>, T> {
     }
 
     protected void invokeListeners() {
-        this.changeListeners.forEach(tConsumer -> tConsumer.accept(this, this.value));
+        this.changeListeners.values().forEach(list -> list.forEach(tConsumer -> tConsumer.accept(this, this.value)));
     }
 
     @Override

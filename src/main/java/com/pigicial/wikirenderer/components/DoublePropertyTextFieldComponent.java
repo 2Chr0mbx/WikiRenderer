@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.property.DoubleProperty;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.core.OwoUIGraphics;
 import io.wispforest.owo.ui.core.Sizing;
@@ -16,7 +17,7 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
 
     private boolean previouslyFocused = false;
 
-    public DoublePropertyTextFieldComponent(Sizing horizontalSizing, DoubleProperty setting) {
+    public DoublePropertyTextFieldComponent(RenderScreen renderScreen, Sizing horizontalSizing, DoubleProperty setting) {
         super(horizontalSizing);
         this.setting = setting;
 
@@ -40,7 +41,7 @@ public class DoublePropertyTextFieldComponent extends TextBoxComponent {
             }
         });
 
-        this.setting.instantListen((doubleSetting, value) -> {
+        this.setting.instantListen(renderScreen, (doubleSetting, value) -> {
             if (!this.ignoringChange) {
                 this.ignoringChange = true;
                 this.text(this.formatNumber(value));

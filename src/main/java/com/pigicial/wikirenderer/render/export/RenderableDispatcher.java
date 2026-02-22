@@ -17,6 +17,7 @@ import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import org.jetbrains.annotations.NotNull;
@@ -80,16 +81,17 @@ public class RenderableDispatcher {
 
         if (crop) {
             // resize image to target height by regenerating it with an increased size
-            image = image.thenApply(i -> {
-                ImageCropper.CropData cropData = ImageCropper.getCropData(i);
-                NativeImage nativeImage = ImageCropper.cropTransparent(i, cropData);
+            image = image.thenApply(uncropped -> {
+                ImageCropper.CropData cropData = ImageCropper.getCropData(uncropped);
+                NativeImage cropped = ImageCropper.cropTransparentAndCloseSource(uncropped, cropData);
+                // uncropped no longer valid by this point
 
                 if (exportMinimapData) {
-                    MinimapCalibratorData calibrationData = MinimapCalibratorData.getCalibrationData((AreaRenderable) renderable, cropData, nativeImage);
+                    MinimapCalibratorData calibrationData = MinimapCalibratorData.getCalibrationData((AreaRenderable) renderable, cropData, cropped);
                     calibrationDataCallback.accept(calibrationData);
                 }
 
-                return nativeImage;
+                return cropped;
             }).thenCompose(croppedImage -> {
                 CroppablePropertyBundle croppablePropertyBundle = (CroppablePropertyBundle) renderable.getProperties();
                 ImageRescaleMode rescaleMode = croppablePropertyBundle.getRescaleMode().get();
@@ -104,7 +106,7 @@ public class RenderableDispatcher {
                 };
 
                 // todo: make this less arbitrary
-                boolean smallEnoughToRescaleAgain = targetSize <= 1200 && iterations < 5; // kinda arbitary number
+                boolean smallEnoughToRescaleAgain = targetSize <= 1200 && iterations < 4 && !WikiRenderer.inBatchRender; // kinda arbitary number
 
                 if (rescaleMode == ImageRescaleMode.DISABLED
                     || axisSize == targetSize
@@ -117,9 +119,18 @@ public class RenderableDispatcher {
 
                     int maxTextureSize = RenderSystem.getDevice().getMaxTextureSize();
                     if (newSize > maxTextureSize) {
+                        System.out.println("yeah " + newSize + " " + maxTextureSize);
                         newSize = maxTextureSize;
+                        smallEnoughToRescaleAgain = false;
                     }
-                    return drawIntoImage(renderScreen, renderable, tickDelta, newSize, targetSize, iterations + 1, smallEnoughToRescaleAgain, null).thenApply(ImageCropper::cropTransparent);
+
+                    if (newSize > 10000) {
+                        smallEnoughToRescaleAgain = false;
+                    }
+
+                    croppedImage.close();
+                    return drawIntoImage(renderScreen, renderable, tickDelta, newSize, targetSize, iterations + 1, smallEnoughToRescaleAgain, null)
+                            .thenApply(ImageCropper::cropTransparentAndCloseSource);
                 }
             });
         }
@@ -214,24 +225,28 @@ public class RenderableDispatcher {
         GpuBuffer gpuBuffer = RenderSystem.getDevice().createBuffer(() -> "WikiRenderer RenderableDispatcher.copyTextureIntoImage buffer", GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST, 4L * width * height);
         CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
         RenderSystem.getDevice().createCommandEncoder().copyTextureToBuffer(gpuTexture, gpuBuffer, 0, () -> {
-            try (GpuBuffer.MappedView mappedView = commandEncoder.mapBuffer(gpuBuffer, true, false)) {
-                NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
+            try {
+                try (GpuBuffer.MappedView mappedView = commandEncoder.mapBuffer(gpuBuffer, true, false)) {
+                    NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
 
-                // Skip redundant safety checks, do the memory copies directly.
-                long stride = 4L * width;
-                long srcBuf = MemoryUtil.memAddress(mappedView.data());
-                long dstBuf = nativeImage.getPointer();
+                    // Skip redundant safety checks, do the memory copies directly.
+                    long stride = 4L * width;
+                    long srcBuf = MemoryUtil.memAddress(mappedView.data());
+                    long dstBuf = nativeImage.getPointer();
 
-                long src = srcBuf;
-                long dst = dstBuf + stride * (height - 1);
+                    long src = srcBuf;
+                    long dst = dstBuf + stride * (height - 1);
 
-                for (int y = 0; y < height; y++) {
-                    MemoryUtil.memCopy(src, dst, stride);
-                    src += stride;
-                    dst -= stride;
+                    for (int y = 0; y < height; y++) {
+                        MemoryUtil.memCopy(src, dst, stride);
+                        src += stride;
+                        dst -= stride;
+                    }
+
+                    future.complete(nativeImage);
                 }
-
-                future.complete(nativeImage);
+            } catch (Throwable throwable) {
+                future.completeExceptionally(throwable);
             }
 
             gpuBuffer.close();

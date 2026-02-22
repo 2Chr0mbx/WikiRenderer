@@ -4,9 +4,9 @@ import com.pigicial.wikirenderer.render.export.ImageRescaleMode;
 
 public class DefaultCroppablePropertyBundle extends DefaultPropertyBundle implements CroppablePropertyBundle {
 
-    private final Property<Boolean> crop = Property.of(this.shouldCropByDefault());
-    private final Property<Boolean> ffmpegCrop = Property.of(this.shouldCropByDefault());
-    private final Property<ImageRescaleMode> rescaleMode = Property.of(ImageRescaleMode.VERTICAL);
+    protected Property<Boolean> crop = Property.of(this.shouldCropByDefault());
+    protected Property<Boolean> ffmpegCrop = Property.of(this.shouldCropByDefault());
+    protected Property<ImageRescaleMode> rescaleMode = Property.of(ImageRescaleMode.VERTICAL);
 
     public DefaultCroppablePropertyBundle() {
         super();

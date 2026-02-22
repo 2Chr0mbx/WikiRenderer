@@ -110,7 +110,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.text(container, "transform_options", false);
         WikiRendererUI.booleanControl(container, this.spriteRendering, "sprite_rendering");
 
-        this.spriteRendering.futureListen(((booleanProperty, value) -> {
+        this.spriteRendering.futureListen(screen, ((booleanProperty, value) -> {
             screen.guiRebuildScheduled = true;
             renderable.cachedCenterOffset = null;
             this.yaw.set(0);
@@ -119,14 +119,14 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             this.spriteSlant.set(0);
         }));
 
-        WikiRendererUI.intControl(container, this.scale, "scale", 10);
+        WikiRendererUI.intControl(screen, container, this.scale, "scale", 10);
         if (!this.spriteRendering.get()) {
-            WikiRendererUI.intControl(container, this.rotation, "rotation", 45);
-            WikiRendererUI.doubleControl(container, this.slant, "slant", 30);
-            WikiRendererUI.intControl(container, this.rotationSpeed, "rotation_speed", 5);
+            WikiRendererUI.intControl(screen, container, this.rotation, "rotation", 45);
+            WikiRendererUI.doubleControl(screen, container, this.slant, "slant", 30);
+            WikiRendererUI.intControl(screen, container, this.rotationSpeed, "rotation_speed", 5);
         } else {
-            WikiRendererUI.intControl(container, this.spriteRotation, "rotation", 45);
-            WikiRendererUI.intControl(container, this.spriteSlant, "slant", 30);
+            WikiRendererUI.intControl(screen, container, this.spriteRotation, "rotation", 45);
+            WikiRendererUI.intControl(screen, container, this.spriteSlant, "slant", 30);
         }
         WikiRendererUI.booleanControl(container, this.allowRotatingWithMouse, "allow_rotating_with_mouse");
         if (!this.spriteRendering.get()) {
@@ -164,9 +164,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
         }));
 
-        WikiRendererUI.intControl(container, this.yaw, "entity_data.yaw", 15);
-        WikiRendererUI.intControl(container, this.pitch, "entity_data.pitch", 5);
-        WikiRendererUI.intControl(container, this.entityRotation, "entity_data.rotation", 5);
+        WikiRendererUI.intControl(screen, container, this.yaw, "entity_data.yaw", 15);
+        WikiRendererUI.intControl(screen, container, this.pitch, "entity_data.pitch", 5);
+        WikiRendererUI.intControl(screen, container, this.entityRotation, "entity_data.rotation", 5);
         if (renderable instanceof EntityRenderable entityRenderable) {
             Entity usedEntity = entityRenderable.getUsedEntity();
             if (usedEntity instanceof Player) {
@@ -188,7 +188,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
         if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
-            this.useLiveEntity.futureListen(((booleanProperty, value) -> {
+            this.useLiveEntity.futureListen(screen, (booleanProperty, value) -> {
                 renderable.requireTextureReCache = true;
                 if (renderable.textureCancelMarker != null) {
                     renderable.textureCancelMarker.set(true);
@@ -198,7 +198,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                     tickEntityAnimations.set(true);
                 }
                 renderable.cachedCenterOffset = null;
-            }));
+            });
         }
 
         TickingPropertyBundle.super.buildRenderOptionGUIControls(r, screen, container);

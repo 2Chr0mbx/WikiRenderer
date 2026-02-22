@@ -19,7 +19,7 @@ import net.minecraft.resources.Identifier;
 
 import java.util.concurrent.CompletableFuture;
 
-public class TagArgumentType implements ArgumentType<TagArgumentType.TagArgument> {
+public class ItemTagArgumentType implements ArgumentType<ItemTagArgumentType.TagArgument> {
 
     private static final DynamicCommandExceptionType UNKNOWN_TAG_EXCEPTION = new DynamicCommandExceptionType(
             tag -> Component.translatable("arguments.item.tag.unknown", tag)
@@ -27,7 +27,7 @@ public class TagArgumentType implements ArgumentType<TagArgumentType.TagArgument
 
     private final HolderLookup<Item> registryWrapper;
 
-    public TagArgumentType(CommandBuildContext registryAccess) {
+    public ItemTagArgumentType(CommandBuildContext registryAccess) {
         this.registryWrapper = registryAccess.lookupOrThrow(Registries.ITEM);
     }
 

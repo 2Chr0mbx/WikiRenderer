@@ -21,12 +21,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public class NamespaceArgumentType implements ArgumentType<NamespaceArgumentType.Namespace> {
+public class ItemNamespaceArgumentType implements ArgumentType<ItemNamespaceArgumentType.Namespace> {
 
     private static final SimpleCommandExceptionType NO_SUCH_NAMESPACE = new SimpleCommandExceptionType(Translate.msg("no_such_namespace"));
 
-    public static NamespaceArgumentType namespace() {
-        return new NamespaceArgumentType();
+    public static ItemNamespaceArgumentType namespace() {
+        return new ItemNamespaceArgumentType();
     }
 
     public static <S> Namespace getNamespace(String name, CommandContext<S> context) {

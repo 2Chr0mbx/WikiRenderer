@@ -1,6 +1,8 @@
 package com.pigicial.wikirenderer.render.batch;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
@@ -29,7 +31,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     private long lastRenderTime;
 
     private boolean batchActive;
-    private boolean firstAnimationStarted;
+    private boolean firstRenderStarted;
 
     private BatchRenderable(String source, List<R> delegates) {
         this.delegates = delegates;
@@ -62,35 +64,46 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
 
     @Override
     public void onScreenHandle(RenderScreen renderScreen) {
-        if (this.batchActive && this.currentIndex < this.delegates.size() && System.currentTimeMillis() - this.lastRenderTime > this.renderDelay && FileIO.taskCount() <= 5) {
+        WikiRenderer.inBatchRender = this.batchActive;
+        if (!batchActive || currentIndex >= this.delegates.size() || System.currentTimeMillis() - lastRenderTime < renderDelay || FileIO.taskCount() > 5) {
+            return;
 
-            if (BatchPropertyBundle.EXPORT_AS_ANIMATIONS.get()) {
-                if (renderScreen.currentAnimationExportData == null) {
-                    if (!firstAnimationStarted) {
-                        firstAnimationStarted = true;
-                    } else {
-                        this.currentDelegate.dispose();
-                        this.currentIndex++;
-                        this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
-                        this.lastRenderTime = System.currentTimeMillis();
+        }
+        // capturing doesnt seem to help
 
-                        if (this.currentDelegate instanceof TextureDataProvider) {
-                            renderScreen.guiRebuildScheduled = true;
-                        }
-                    }
-                    renderScreen.queueAnimationExport();
+        if (BatchPropertyBundle.EXPORT_AS_ANIMATIONS.get()) {
+            if (renderScreen.currentAnimationExportData == null) {
+                if (!firstRenderStarted) {
+                    firstRenderStarted = true;
+                } else {
+                    this.next(renderScreen);
                 }
-            } else {
-                renderScreen.exportImage(false);
-                this.currentDelegate.dispose();
-                this.currentIndex++;
-                this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
-                this.lastRenderTime = System.currentTimeMillis();
-
-                if (this.currentDelegate instanceof TextureDataProvider) {
-                    renderScreen.guiRebuildScheduled = true;
-                }
+                renderScreen.queueAnimationExport();
             }
+        } else {
+            if (!renderScreen.capturing) {
+                if (!firstRenderStarted) {
+                    firstRenderStarted = true;
+                } else {
+                    this.next(renderScreen);
+                }
+                renderScreen.exportImage(false);
+            }
+        }
+    }
+
+    private void next(RenderScreen screen) {
+        this.currentDelegate.dispose();
+        this.currentIndex++;
+        this.currentDelegate = this.currentIndex < this.delegates.size() ? this.delegates.get(this.currentIndex) : this.currentDelegate;
+        this.lastRenderTime = System.currentTimeMillis();
+        if (currentIndex == this.delegates.size() - 1) {
+            WikiRenderer.inBatchRender = false;
+            batchActive = false;
+        }
+
+        if (this.currentDelegate instanceof TextureDataProvider) {
+            screen.guiRebuildScheduled = true;
         }
     }
 
@@ -120,6 +133,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     protected void start() {
+        WikiRenderer.inBatchRender = true;
         this.batchActive = true;
         this.currentIndex = 0;
         this.lastRenderTime = System.currentTimeMillis();
@@ -127,11 +141,12 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     protected void reset(@Nullable RenderScreen screen) {
+        WikiRenderer.inBatchRender = false;
         this.batchActive = false;
         this.lastRenderTime = -1;
         this.currentIndex = -1;
         this.currentDelegate = this.delegates.getFirst();
-        this.firstAnimationStarted = false;
+        this.firstRenderStarted = false;
 
         if (screen != null && screen.currentAnimationExportData != null) {
             screen.currentAnimationExportData.close();
@@ -173,13 +188,17 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         if (this.currentDelegate instanceof DynamicBatchLabelProvider provider && BatchPropertyBundle.fileNameFormatter != null) {
             return provider.buildFileName(BatchPropertyBundle.fileNameFormatter);
         } else {
-            return null;
+            return this.currentDelegate.getCustomFileName();
         }
     }
 
     @Override
     public void setCustomFileName(@Nullable String fileName) {
-        BatchPropertyBundle.fileNameFormatter = fileName;
+        if (this.currentDelegate instanceof DynamicBatchLabelProvider) {
+            BatchPropertyBundle.fileNameFormatter = fileName;
+        } else {
+            this.currentDelegate.setCustomFileName(fileName);
+        }
     }
 
     @Override
@@ -204,6 +223,24 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
             return provider.getTicksToFullyAnimate();
         } else {
             return List.of();
+        }
+    }
+
+    @Override
+    public boolean shouldCrop() {
+        if (this.currentDelegate.getProperties() instanceof CroppablePropertyBundle) {
+            return this.currentDelegate.shouldCrop();
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean shouldCropForFFmpeg() {
+        if (this.currentDelegate.getProperties() instanceof CroppablePropertyBundle) {
+            return this.currentDelegate.shouldCropForFFmpeg();
+        } else {
+            return false;
         }
     }
 }

@@ -14,8 +14,8 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public enum BatchRenderTask {
-    ATLAS((source, renderables) -> ScreenSchedulerAndSaver.schedule(new RenderScreen(
+public enum ItemBatchRenderTask {
+    ITEM_ATLAS((source, renderables) -> ScreenSchedulerAndSaver.schedule(new RenderScreen(
             new ItemAtlasRenderable(source, new ArrayList<>(renderables))
     ))),
     BATCH_ITEM((source, renderables) -> ScreenSchedulerAndSaver.schedule(new RenderScreen(
@@ -51,7 +51,7 @@ public enum BatchRenderTask {
 
     public final BiConsumer<String, Collection<ItemStack>> action;
 
-    BatchRenderTask(BiConsumer<String, Collection<ItemStack>> action) {
+    ItemBatchRenderTask(BiConsumer<String, Collection<ItemStack>> action) {
         this.action = action;
     }
 }

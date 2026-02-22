@@ -1,9 +1,6 @@
 package com.pigicial.wikirenderer.render.batch;
 
-import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
-import com.pigicial.wikirenderer.property.IntProperty;
-import com.pigicial.wikirenderer.property.Property;
-import com.pigicial.wikirenderer.property.PropertyBundle;
+import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
@@ -13,12 +10,13 @@ import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
 import org.joml.Matrix4fStack;
 
-public class BatchPropertyBundle extends DefaultPropertyBundle {
+public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
 
     private static final IntProperty ITEM_RESOLUTION_PROPERTY = IntProperty.of(160, 1, Short.MAX_VALUE / 2);
     private static final IntProperty PLAYER_HEAD_RESOLUTION_PROPERTY = IntProperty.of(300, 1, Short.MAX_VALUE / 2);
@@ -32,41 +30,21 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
         this.batchRenderable = batchRenderable;
         this.actualProperties = actualProperties;
 
-        // A bit ugly, but we copy all property values from the delegate and hook
-        // the delegate onto our properties - this makes sure we don't always reset
-        // the properties and that the mouse and keyboard controls actually affect the delegate
+        // sync up properties to make things way easier to work with
         if (this.actualProperties instanceof DefaultPropertyBundle clonedFrom) {
-            this.scale.copyFrom(clonedFrom.scale);
-            this.rotation.copyFrom(clonedFrom.rotation);
-            this.rotationSpeed.copyFrom(clonedFrom.rotationSpeed);
-            this.slant.copyFrom(clonedFrom.slant);
-            this.xOffset.copyFrom(clonedFrom.xOffset);
-            this.yOffset.copyFrom(clonedFrom.yOffset);
-            this.allowRotatingWithMouse.copyFrom(clonedFrom.allowRotatingWithMouse);
-
-            this.scale.instantListen(clonedFrom.scale);
-            this.rotation.instantListen(clonedFrom.rotation);
-            this.rotationSpeed.instantListen(clonedFrom.rotationSpeed);
-            this.slant.instantListen(clonedFrom.slant);
-            this.xOffset.instantListen(clonedFrom.xOffset);
-            this.yOffset.instantListen(clonedFrom.yOffset);
-            this.allowRotatingWithMouse.instantListen(clonedFrom.allowRotatingWithMouse);
+            this.scale = clonedFrom.scale;
+            this.rotation = clonedFrom.rotation;
+            this.slant = clonedFrom.slant;
+            this.xOffset = clonedFrom.xOffset;
+            this.yOffset = clonedFrom.yOffset;
+            this.rotationSpeed = clonedFrom.rotationSpeed;
+            this.allowRotatingWithMouse = clonedFrom.allowRotatingWithMouse;
         }
-    }
 
-    @Override
-    public void modifyRotation(int amount) {
-        super.modifyRotation(amount);
-        if (this.actualProperties instanceof DefaultPropertyBundle clonedFrom) {
-            clonedFrom.modifyRotation(amount);
-        }
-    }
-
-    @Override
-    public void modifySlant(double amount) {
-        super.modifySlant(amount);
-        if (this.actualProperties instanceof DefaultPropertyBundle clonedFrom) {
-            clonedFrom.modifySlant(amount);
+        if (this.actualProperties instanceof DefaultCroppablePropertyBundle clonedFrom) {
+            this.crop = clonedFrom.getCropProperty();
+            this.ffmpegCrop = clonedFrom.getFFmpegCropProperty();
+            this.rescaleMode = clonedFrom.getRescaleMode();
         }
     }
 
@@ -81,22 +59,10 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
     }
 
     @Override
-    public float updateAndGetSpinningRotationOffset() {
-        if (this.batchRenderable.currentDelegate instanceof DefaultPropertyBundle delegateProperties) {
-            this.rotationOffset = delegateProperties.updateAndGetSpinningRotationOffset();
-            return this.rotationOffset;
-        } else {
-            return 0;
-        }
-    }
-
-    @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
 
-        this.actualProperties.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
-
-        WikiRendererUI.text(container, "batch.controls", true);
+        WikiRendererUI.text(container, "batch.controls", false);
         WikiRendererUI.booleanControl(container, EXPORT_AS_ANIMATIONS, "batch.export_as_animations");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
@@ -127,12 +93,14 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
                 "batch.remaining",
                 Math.max(0, batchRenderable.delegates.size() - batchRenderable.currentIndex - 1),
                 batchRenderable.delegates.size()
-        ));
+        )).margins(Insets.bottom(20));
+
+        this.actualProperties.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
     }
 
     @Override
     public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        this.actualProperties.buildRenderOptionGUIControls(renderable, screen, container);
+        this.actualProperties.buildRenderOptionGUIControls(this.batchRenderable.currentDelegate, screen, container);
     }
 
     @Override
@@ -144,27 +112,28 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
                 return ITEM_RESOLUTION_PROPERTY.get();
             }
         }
-        return super.getExportResolution(this.batchRenderable); // this.batchRenderable is not needed here really
+
+        // tropical fish rendering is weird, rendering w/ animations causes inconsistencies? look into this (might be deltaTick changing the size of each one, therefore maybe caching deltaTick is the play
+        return this.actualProperties.getExportResolution(this.batchRenderable.currentDelegate); // this.batchRenderable is not needed here really
     }
 
     @Override
     public void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         if (this.batchRenderable.currentDelegate instanceof ItemRenderable) {
-            WikiRendererUI.labelledTextField(container, ITEM_RESOLUTION_PROPERTY, "item_resolution", Sizing.fixed(50));
-            WikiRendererUI.labelledTextField(container, PLAYER_HEAD_RESOLUTION_PROPERTY, "player_head_resolution", Sizing.fixed(50));
+            WikiRendererUI.labelledTextField(screen, container, ITEM_RESOLUTION_PROPERTY, "item_resolution", Sizing.fixed(50));
+            WikiRendererUI.labelledTextField(screen, container, PLAYER_HEAD_RESOLUTION_PROPERTY, "player_head_resolution", Sizing.fixed(50));
         } else {
-            super.buildExportResolutionGUIControls(this.batchRenderable.currentDelegate, screen, container);
+            this.actualProperties.buildExportResolutionGUIControls(this.batchRenderable.currentDelegate, screen, container);
         }
     }
 
     @Override
     public void buildFileNameGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        screen.fileNameField = WikiRendererUI.labelledTextField(container, fileNameFormatter, "batch.file_name_preset", Sizing.fixed(180));
-        screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
-        screen.fileNameField.setResponder(renderable::setCustomFileName);
-
         BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
         if (!batchRenderable.delegates.isEmpty() && this.batchRenderable.currentDelegate instanceof DynamicBatchLabelProvider labelProvider) {
+            screen.fileNameField = WikiRendererUI.labelledTextField(container, fileNameFormatter, "batch.file_name_preset", Sizing.fixed(120));
+            screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
+            screen.fileNameField.setResponder(renderable::setCustomFileName);
             WikiRendererUI.text(container, "batch.label_presets", 10);
             for (String exampleKey : labelProvider.buildPresetExamples()) {
                 WikiRendererUI.text(container, exampleKey, false);
@@ -179,6 +148,17 @@ public class BatchPropertyBundle extends DefaultPropertyBundle {
                     return Component.literal("- " + ((DynamicBatchLabelProvider) batchRenderable.delegates.get(newIndex)).buildFileName(fileNameFormatter));
                 });
             }
+        } else {
+            this.actualProperties.buildFileNameGUIControls(this.batchRenderable.currentDelegate, screen, container);
+        }
+    }
+
+    @Override
+    public void buildExportOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        if (this.actualProperties instanceof CroppablePropertyBundle croppablePropertyBundle) {
+            croppablePropertyBundle.buildExportOptionGUIControls(renderable, screen, container);
+        } else {
+            super.buildRegularExportOptions(renderable, screen, container);
         }
     }
 }

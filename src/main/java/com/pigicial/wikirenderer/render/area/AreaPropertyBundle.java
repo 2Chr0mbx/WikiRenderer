@@ -152,7 +152,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
         WikiRendererUI.text(container, "transform_options", false);
 
         WikiRendererUI.booleanControl(container, this.perPixel90DegreeRendering, "per_pixel_90_degree_rendering");
-        this.perPixel90DegreeRendering.futureListen((booleanProperty, value) -> {
+        this.perPixel90DegreeRendering.futureListen(screen, (booleanProperty, value) -> {
             if (value) {
                 this.sideViewRotation = MeshSideRotation.NORTH;
                 this.sideViewSlant = MeshSideSlant.ABOVE;
@@ -173,10 +173,10 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
                 }));
             }
-            WikiRendererUI.intControl(container, scale, "scale", 10);
-            WikiRendererUI.intControl(container, rotation, "rotation", 45);
-            WikiRendererUI.doubleControl(container, slant, "slant", 30);
-            WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+            WikiRendererUI.intControl(screen, container, scale, "scale", 10);
+            WikiRendererUI.intControl(screen, container, rotation, "rotation", 45);
+            WikiRendererUI.doubleControl(screen, container, slant, "slant", 30);
+            WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed", 5);
             WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
             container.child(this.buildResetButton());
         } else {
@@ -198,19 +198,19 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             }).margins(Insets.right(5)));
 
             WikiRendererUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");
-            this.useWalkabilityFilter.futureListen((booleanProperty, value) -> screen.guiRebuildScheduled = true);
+            this.useWalkabilityFilter.futureListen(screen, (booleanProperty, value) -> screen.guiRebuildScheduled = true);
             if (this.useWalkabilityFilter.get()) {
-                WikiRendererUI.intControl(container, this.walkableBlocksThreshold, "walkable_blocks_threshold", 1);
-                WikiRendererUI.intControl(container, this.dontSearchForHigherFloorsThreshold, "dont_search_for_higher_floors_threshold", 1);
-                WikiRendererUI.intControl(container, renderable.minFloorYLevelForOverhead, "min_floor_y_level", 1);
-                WikiRendererUI.intControl(container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level", 1);
+                WikiRendererUI.intControl(screen, container, this.walkableBlocksThreshold, "walkable_blocks_threshold", 1);
+                WikiRendererUI.intControl(screen, container, this.dontSearchForHigherFloorsThreshold, "dont_search_for_higher_floors_threshold", 1);
+                WikiRendererUI.intControl(screen, container, renderable.minFloorYLevelForOverhead, "min_floor_y_level", 1);
+                WikiRendererUI.intControl(screen, container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level", 1);
                 WikiRendererUI.booleanControl(container, this.includeWallsForCaveMode, "show_walls");
                 WikiRendererUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");
             }
 
             if (renderable.mesh.bounds instanceof ExpandableMeshBounds expandableMeshBounds && sideViewSlant == MeshSideSlant.ABOVE) {
                 WikiRendererUI.booleanControl(container, this.showMeshExpansionControls, "show_expansion_buttons");
-                this.showMeshExpansionControls.futureListen((booleanProperty, value) -> screen.guiRebuildScheduled = true);
+                this.showMeshExpansionControls.futureListen(screen, (booleanProperty, value) -> screen.guiRebuildScheduled = true);
 
                 if (showMeshExpansionControls.get()) {
                     for (ExpansionSide expansionSide : ExpansionSide.values()) {
@@ -285,7 +285,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
         WikiRendererUI.text(container, "block_visibility", true);
         WikiRendererUI.booleanControl(container, this.hideMesh, "hide_blocks");
-        this.hideMesh.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
+        this.hideMesh.futureListen(screen, (booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
         if (!this.hideMesh.get()) {
             WikiRendererUI.booleanControl(container, this.hideFluids, "hide_fluids");
         }
@@ -293,15 +293,15 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
         WikiRendererUI.text(container, "entity_visibility_overrides", 10);
         WikiRendererUI.booleanControl(container, this.hideEntities, "hide_entities");
-        this.hideEntities.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
+        this.hideEntities.futureListen(screen, (booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
         if (!this.hideEntities.get()) {
             WikiRendererUI.booleanControl(container, this.hidePlayers, "hide_players");
             WikiRendererUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
             WikiRendererUI.booleanControl(container, this.hideLivingEntities, "hide_living_entities");
-            WikiRendererUI.intPercentageControl(container, this.entityBoundsIntersectionRequirement, "entity_collision_threshold_requirement", 1);
+            WikiRendererUI.intPercentageControl(screen, container, this.entityBoundsIntersectionRequirement, "entity_collision_threshold_requirement", 1);
 
             WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-            this.freezeEntities.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
+            this.freezeEntities.futureListen(screen, (booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
             if (!this.freezeEntities.get()) {
                 WikiRendererUI.booleanControl(container, this.freezePlayerArms, "freeze_player_arms");
             }
@@ -309,7 +309,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             WikiRendererUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
 
             WikiRendererUI.booleanControl(container, this.hideText, "hide_text");
-            this.hideText.futureListen((booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
+            this.hideText.futureListen(screen, (booleanProperty, hidden) -> screen.guiRebuildScheduled = true);
             if (!this.hideText.get()) {
                 WikiRendererUI.booleanControl(container, GlobalProperties.HIDE_NAMETAGS, "hide_player_nametags");
             }
@@ -317,9 +317,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
         WikiRendererUI.text(container, "entity_overrides", 10);
         WikiRendererUI.booleanControl(container, this.overrideRotations, "mesh_entity_data.override_rotations");
-        WikiRendererUI.intControl(container, yaw, "entity_data.yaw", 15);
-        WikiRendererUI.intControl(container, pitch, "entity_data.pitch", 5);
-        WikiRendererUI.intControl(container, entityRotation, "entity_data.rotation", 5);
+        WikiRendererUI.intControl(screen, container, yaw, "entity_data.yaw", 15);
+        WikiRendererUI.intControl(screen, container, pitch, "entity_data.pitch", 5);
+        WikiRendererUI.intControl(screen, container, entityRotation, "entity_data.rotation", 5);
         WikiRendererUI.booleanControl(container, useSteveSkin, "entity_data.steve");
         WikiRendererUI.booleanControl(container, forceSmallArms, "entity_data.small_arms");
         WikiRendererUI.booleanControl(container, hideHeldItems, "entity_data.hide_held_items");

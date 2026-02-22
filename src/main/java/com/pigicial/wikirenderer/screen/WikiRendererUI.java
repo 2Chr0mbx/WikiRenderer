@@ -33,27 +33,27 @@ public class WikiRendererUI {
         }
     }
 
-    public static void labelledTextField(FlowLayout container, IntProperty property, String key, Sizing sizing) {
+    public static void labelledTextField(RenderScreen screen, FlowLayout container, IntProperty property, String key, Sizing sizing) {
         try (RowBuilder builder = row(container)) {
-            TextBoxComponent textBox = new IntegerPropertyTextFieldComponent(sizing, property, true);
+            TextBoxComponent textBox = new IntegerPropertyTextFieldComponent(screen, sizing, property, false);
 
             builder.row.child(textBox);
             builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
         }
     }
 
-    public static void intControl(FlowLayout container, IntProperty property, String name, int step) {
+    public static void intControl(RenderScreen screen, FlowLayout container, IntProperty property, String name, int step) {
         try (RowBuilder builder = row(container)) {
-            builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(19), property, false));
-            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
+            builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fill(19), property, false));
+            builder.row.child(new PropertySliderComponent(screen, Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
             builder.row.child(new ResetPropertyButton(property));
         }
     }
 
-    public static void intPercentageControl(FlowLayout container, IntProperty property, String name, int step) {
+    public static void intPercentageControl(RenderScreen screen, FlowLayout container, IntProperty property, String name, int step) {
         try (RowBuilder builder = row(container)) {
-            builder.row.child(new IntegerPropertyTextFieldComponent(Sizing.fill(19), property, true));
-            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
+            builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fill(19), property, true));
+            builder.row.child(new PropertySliderComponent(screen, Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
             builder.row.child(new ResetPropertyButton(property));
         }
     }
@@ -99,10 +99,10 @@ public class WikiRendererUI {
         container.child(new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5)));
     }
 
-    public static void doubleControl(FlowLayout container, DoubleProperty property, String name, double step) {
+    public static void doubleControl(RenderScreen screen, FlowLayout container, DoubleProperty property, String name, double step) {
         try (RowBuilder builder = row(container)) {
-            builder.row.child(new DoublePropertyTextFieldComponent(Sizing.fill(19), property));
-            builder.row.child(new PropertySliderComponent(Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
+            builder.row.child(new DoublePropertyTextFieldComponent(screen, Sizing.fill(19), property));
+            builder.row.child(new PropertySliderComponent(screen, Sizing.fill(70), Translate.gui(name), step, property).margins(Insets.horizontal(5)));
             builder.row.child(new ResetPropertyButton(property));
         }
     }

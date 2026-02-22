@@ -7,12 +7,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ImageCropper {
-    public static NativeImage cropTransparent(NativeImage source) {
+    public static NativeImage cropTransparentAndCloseSource(NativeImage source) {
         CropData cropData = getCropData(source);
-        return cropTransparent(source, cropData);
+        return cropTransparentAndCloseSource(source, cropData);
     }
 
-    public static NativeImage cropTransparent(NativeImage source, @Nullable CropData cropData) {
+    public static NativeImage cropTransparentAndCloseSource(NativeImage source, @Nullable CropData cropData) {
         if (cropData == null) {
             return source;
         }
@@ -21,6 +21,7 @@ public class ImageCropper {
         int croppedHeight = cropData.maxY - cropData.minY + 1;
         NativeImage cropped = new NativeImage(source.format(), croppedWidth, croppedHeight, false);
         source.copyRect(cropped, cropData.minX, cropData.minY, 0, 0, croppedWidth, croppedHeight, false, false);
+        source.close();
         return cropped;
     }
 

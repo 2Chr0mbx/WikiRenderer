@@ -33,7 +33,7 @@ public interface CroppablePropertyBundle extends PropertyBundle {
 
         boolean allowForRescaling = this.allowForRescaling();
         WikiRendererUI.booleanControl(container, cropProperty, allowForRescaling ? "crop_and_rescale_" + resizeModeProperty.get().name().toLowerCase() : "crop");
-        cropProperty.futureListen((p, b) -> screen.guiRebuildScheduled = true);
+        cropProperty.futureListen(screen, (p, b) -> screen.guiRebuildScheduled = true);
 
         if (cropProperty.get() && allowForRescaling) {
             container.child(UIComponents.dropdown(Sizing.content())
@@ -55,6 +55,10 @@ public interface CroppablePropertyBundle extends PropertyBundle {
             );
         }
 
+        PropertyBundle.super.buildExportOptionGUIControls(renderable, screen, container);
+    }
+
+    default void buildRegularExportOptions(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         PropertyBundle.super.buildExportOptionGUIControls(renderable, screen, container);
     }
 

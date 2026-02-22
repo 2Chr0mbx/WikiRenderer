@@ -1,6 +1,6 @@
 package com.pigicial.wikirenderer.screen;
 
-import com.pigicial.wikirenderer.render.batch.BatchRenderTask;
+import com.pigicial.wikirenderer.render.batch.ItemBatchRenderTask;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -45,19 +45,19 @@ public class SelectRenderTaskScreen extends BaseOwoScreen<FlowLayout> {
 
         contentPanel.child(UIContainers.verticalFlow(Sizing.content(), Sizing.content())
                 .child(UIComponents.button(Translate.gui("select_item_batch"), (ButtonComponent button) -> {
-                    BatchRenderTask.BATCH_ITEM.action.accept("inventory", this.items);
+                    ItemBatchRenderTask.BATCH_ITEM.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
                 .child(UIComponents.button(Translate.gui("select_block_batch"), (ButtonComponent button) -> {
-                    BatchRenderTask.BATCH_BLOCK.action.accept("inventory", this.items);
+                    ItemBatchRenderTask.BATCH_BLOCK.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
                 .child(UIComponents.button(Translate.gui("select_tooltip_batch"), (ButtonComponent button) -> {
-                    BatchRenderTask.BATCH_TOOLTIP.action.accept("inventory", this.items);
+                    ItemBatchRenderTask.BATCH_TOOLTIP.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
                 .child(UIComponents.button(Translate.gui("select_atlas"), (ButtonComponent button) -> {
-                    BatchRenderTask.ATLAS.action.accept("inventory", this.items);
+                    ItemBatchRenderTask.ITEM_ATLAS.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)))
                 .padding(Insets.of(5))

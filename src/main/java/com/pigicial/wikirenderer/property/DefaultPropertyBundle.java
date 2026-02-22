@@ -16,15 +16,15 @@ import org.joml.Matrix4fStack;
 
 public class DefaultPropertyBundle implements PropertyBundle {
 
-    public final IntProperty scale = IntProperty.of(100, 0, 1000);
-    public final IntProperty rotation = IntProperty.of(this.getDefaultRotation(), 0, 360).withRollover();
-    public final DoubleProperty slant = DoubleProperty.of(this.getDefaultSlant(), -90, 90);
+    public IntProperty scale = IntProperty.of(100, 0, 1000);
+    public IntProperty rotation = IntProperty.of(this.getDefaultRotation(), 0, 360).withRollover();
+    public DoubleProperty slant = DoubleProperty.of(this.getDefaultSlant(), -90, 90);
 
-    public final IntProperty xOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
-    public final IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
+    public IntProperty xOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
+    public IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
 
-    public final IntProperty rotationSpeed = IntProperty.of(0, 0, 720);
-    public final Property<Boolean> allowRotatingWithMouse = Property.of(this.allowRotatingWithMouseByDefault());
+    public IntProperty rotationSpeed = IntProperty.of(0, 0, 720);
+    public Property<Boolean> allowRotatingWithMouse = Property.of(this.allowRotatingWithMouseByDefault());
 
     public float rotationOffset = 0;
     public boolean rotationOffsetUpdated = false;
@@ -89,10 +89,10 @@ public class DefaultPropertyBundle implements PropertyBundle {
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.text(container, "transform_options", false);
-        WikiRendererUI.intControl(container, scale, "scale", 10);
-        WikiRendererUI.intControl(container, rotation, "rotation", 45);
-        WikiRendererUI.doubleControl(container, slant, "slant", 30);
-        WikiRendererUI.intControl(container, rotationSpeed, "rotation_speed", 5);
+        WikiRendererUI.intControl(screen, container, scale, "scale", 10);
+        WikiRendererUI.intControl(screen, container, rotation, "rotation", 45);
+        WikiRendererUI.doubleControl(screen, container, slant, "slant", 30);
+        WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed", 5);
         WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
         container.child(this.buildResetButton());
 

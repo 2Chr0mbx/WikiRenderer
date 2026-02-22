@@ -39,6 +39,7 @@ import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.FocusHandler;
+import io.wispforest.owo.ui.util.UIErrorToast;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.CameraType;
@@ -63,8 +64,10 @@ import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -100,10 +103,12 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private final FlowLayout leftColumn = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
     private final FlowLayout rightColumn = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content()).gap(-4);
 
+    private final Set<Property<?>> propertyListeners = new HashSet<>();
     public Renderable<?> renderable;
 
     private boolean drawOnlyBackground = false;
     public boolean captureScheduled = false;
+    public boolean capturing = false;
     public boolean guiRebuildScheduled = false;
 
     private int viewportBeginX;
@@ -138,6 +143,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (!guiRebuildScheduled) {
             this.saveScrollOffsetDataIfPossible();
         }
+
+        for (Property<?> propertyListener : propertyListeners) {
+            propertyListener.removeListeners(this);
+        }
+        propertyListeners.clear();
 
         this.leftAnchor.clearChildren();
         this.rightAnchor.clearChildren();
@@ -298,8 +308,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             WikiRendererUI.booleanControl(rightColumn, animatedCropProperty, "crop");
         }
 
-        WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMES, "animation_frames", Sizing.fixed(30));
-        WikiRendererUI.labelledTextField(rightColumn, EXPORT_FRAMERATE, "animation_framerate", Sizing.fixed(30));
+        WikiRendererUI.labelledTextField(this, rightColumn, EXPORT_FRAMES, "animation_frames", Sizing.fixed(30));
+        WikiRendererUI.labelledTextField(this, rightColumn, EXPORT_FRAMERATE, "animation_framerate", Sizing.fixed(30));
 
         if (renderable.getProperties() instanceof DefaultPropertyBundle defaultBundle) {
             if (defaultBundle.supportsAutomaticRotations()) {
@@ -310,7 +320,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         WikiRendererUI.booleanControl(rightColumn, SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION, "sync_texture_animations");
         WikiRendererUI.booleanControl(rightColumn, SYNC_ENCHANTMENT_GLINTS_TO_EXPORT, "sync_enchantment_glints");
         WikiRendererUI.booleanControl(rightColumn, SPEED_UP_ENCHANTMENT_GLINTS, "speed_up_enchantment_glints");
-        SPEED_UP_ENCHANTMENT_GLINTS.futureListen((p, v) -> guiRebuildScheduled = true);
+        SPEED_UP_ENCHANTMENT_GLINTS.futureListen(this, (p, v) -> guiRebuildScheduled = true);
 
         if (SPEED_UP_ENCHANTMENT_GLINTS.get()) {
             rightColumn.child(UIComponents.button(Translate.gui("enchantment_glint_preset"), button -> {
@@ -472,9 +482,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     public void exportImage(boolean popupText) {
+        capturing = true;
         ExportPathSpec defaultExportPath = this.renderable.getExportPath();
         String customFileName = renderable.getCustomFileName();
         ExportPathSpec exportPath = customFileName == null || customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(customFileName);
+        System.out.println("export path = "+ exportPath);
 
         AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
         Consumer<MinimapCalibratorData> dataConsumer = null;
@@ -488,10 +500,18 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         RenderableDispatcher.drawIntoImage(this, this.renderable, 0, renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
                 .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((f, t) -> img.close()))
                 .whenComplete((imageFile, throwable) -> {
+                    capturing = false;
+                    if (throwable != null) {
+                        WikiRenderer.LOGGER.error("Failed to render image", throwable);
+                        UIErrorToast.report(throwable);
+                        return;
+                    }
+
                     if (this.exportCallback != null) {
                         this.exportCallback.accept(imageFile);
                     }
 
+                    System.out.println("throwable = " +throwable);
                     if (popupText) {
                         this.minecraft.execute(() -> this.notify(
                                 () -> Util.getPlatform().openFile(imageFile),
@@ -675,6 +695,16 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.exportAnimationButton.active = true;
             this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
         }
+
+        this.uiAdapter = null;
+        this.rightColumn.clearChildren();
+        this.leftColumn.clearChildren();
+        this.guiRebuildScheduled = true;
+
+        for (Property<?> propertyListener : propertyListeners) {
+            propertyListener.removeListeners(this);
+        }
+        propertyListeners.clear();
     }
 
     private void drawFramingHint(GuiGraphics context) {
@@ -687,5 +717,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private void drawGuiBackground(GuiGraphics context) {
         context.fill(0, 0, viewportBeginX, height, 0x90000000);
         context.fill(viewportEndX, 0, width, height, 0x90000000);
+    }
+
+    public void registerPropertyListener(Property<?> property) {
+        this.propertyListeners.add(property);
     }
 }

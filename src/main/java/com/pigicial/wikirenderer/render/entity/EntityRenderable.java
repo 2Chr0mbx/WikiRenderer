@@ -197,11 +197,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         return playerClone;
     }
 
-    private boolean isUsingLiveEntity() {
+    public boolean isUsingLiveEntity() {
         return liveNonTickableEntity != null && this.getProperties().useLiveEntity.get();
     }
 
-    protected Entity getUsedEntity() {
+    public Entity getUsedEntity() {
         if (this.isUsingLiveEntity()) {
             return this.liveNonTickableEntity;
         } else {
@@ -259,7 +259,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             matrices.pushPose();
             matrices.translate(cachedCenterOffset); // this fits it into the default frame
-            if (!(entity instanceof Display.TextDisplay)) matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
+            if (!(entity instanceof Display.TextDisplay))
+                matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
 
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
@@ -395,11 +396,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         }
     }
 
-    @Override
-    public boolean usesWorldLightMap() {
-        return true;
-    }
-
     private static void applyToEntityAndPassengers(Entity entity, Consumer<Entity> action) {
         action.accept(entity);
         if (entity.getPassengers().isEmpty()) return;
@@ -460,8 +456,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                         textureData.put("player", playerTexture);
                     }
                 }
-                case ClientMannequin mannequin ->
-                        ((ClientMannequinAccessor) mannequin).getSkinLookup().whenComplete((skin, throwable) -> {
+                case ClientMannequin mannequin -> {
+                    CompletableFuture<Optional<PlayerSkin>> skinLookup = ((ClientMannequinAccessor) mannequin).getSkinLookup();
+                    if (skinLookup != null) {
+                        skinLookup.whenComplete((skin, throwable) -> {
                             if (throwable != null || skin.isEmpty() || cancelMarker.get()) return;
 
                             ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
@@ -472,6 +470,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                                 rebuildCallback.run();
                             }
                         });
+                    }
+                }
                 case Mannequin mannequin -> {
                     ResolvableProfile profile = ((MannequinAccessor) mannequin).wikirenderer$getProfile();
                     PlayerSkinRenderCache.RenderInfo renderInfo = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(profile);

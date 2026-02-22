@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.property.IntProperty;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.core.OwoUIGraphics;
 import io.wispforest.owo.ui.core.Sizing;
@@ -17,7 +18,7 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
 
     private boolean previouslyFocused = false;
 
-    public IntegerPropertyTextFieldComponent(Sizing horizontalSizing, IntProperty setting, boolean formatAsPercentage) {
+    public IntegerPropertyTextFieldComponent(RenderScreen screen, Sizing horizontalSizing, IntProperty setting, boolean formatAsPercentage) {
         super(horizontalSizing);
         this.setting = setting;
         this.formatAsPercentage = formatAsPercentage;
@@ -40,7 +41,7 @@ public class IntegerPropertyTextFieldComponent extends TextBoxComponent {
             }
         });
 
-        this.setting.futureListen((integerSetting, integer) -> {
+        this.setting.futureListen(screen, (integerSetting, integer) -> {
             if (!this.ignoringChange) {
                 this.ignoringChange = true;
                 this.text(integer + (formatAsPercentage ? "%" : ""));
