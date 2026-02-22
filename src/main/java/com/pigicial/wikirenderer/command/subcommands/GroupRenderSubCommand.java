@@ -8,6 +8,7 @@ import com.pigicial.wikirenderer.render.batch.ItemBatchRenderTask;
 import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
+import com.pigicial.wikirenderer.util.EntityNBTValidityFilter;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -17,7 +18,10 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,14 +41,14 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
         return source
                 .then(literal("item")
                         .then(literal("namespace")
-                                .then(argument("namespace", ItemNamespaceArgumentType.namespace())
+                                .then(argument("namespace", new ItemNamespaceArgumentType())
                                         .then(argument("task", new ItemBatchRenderTaskArgumentType())
                                                 .executes(context -> {
                                                     this.renderItemNamespace(context);
                                                     return 0;
                                                 }))))
                         .then(literal("creative_tab")
-                                .then(argument("itemgroup", ItemGroupArgumentType.itemGroup())
+                                .then(argument("itemgroup", new ItemGroupArgumentType())
                                         .then(argument("task", new ItemBatchRenderTaskArgumentType())
                                                 .executes(context -> {
                                                     this.renderCreativeTab(context, access);
@@ -59,27 +63,43 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
                                                 })))))
                 .then(literal("entity")
                         .then(literal("namespace")
-                                .then(argument("namespace", EntityNamespaceArgumentType.namespace())
+                                .then(argument("namespace", new EntityNamespaceArgumentType())
                                         .executes(context -> {
-                                            this.renderEntityNamespace(context, false);
+                                            this.renderEntityNamespace(context, false, false);
                                             return 0;
                                         })
-                                        .then(argument("nbt", CompoundTagArgument.compoundTag())
-                                                .executes(context -> {
-                                                    this.renderEntityNamespace(context, true);
-                                                    return 0;
-                                                }))))
+                                        .then(literal("nbt")
+                                                .then(argument("nbt", CompoundTagArgument.compoundTag())
+                                                        .executes(context -> {
+                                                            this.renderEntityNamespace(context, true, false);
+                                                            return 0;
+                                                        })))
+                                        .then(literal("nbt_filter")
+                                                .then(argument("nbt_filter", new EntityNBTFilterTypeArgumentType())
+                                                        .then(argument("nbt", CompoundTagArgument.compoundTag())
+                                                                .executes(context -> {
+                                                                    this.renderEntityNamespace(context, true, true);
+                                                                    return 0;
+                                                                }))))))
                         .then(literal("tag")
                                 .then(argument("tag", new EntityTagArgumentType(access))
                                         .executes(context -> {
-                                            this.renderEntityTagContents(context, false);
+                                            this.renderEntityTagContents(context, false, false);
                                             return 0;
                                         })
-                                        .then(argument("nbt", CompoundTagArgument.compoundTag())
-                                                .executes(context -> {
-                                                    this.renderEntityTagContents(context, true);
-                                                    return 0;
-                                                })))));
+                                        .then(literal("nbt")
+                                                .then(argument("nbt", CompoundTagArgument.compoundTag())
+                                                        .executes(context -> {
+                                                            this.renderEntityTagContents(context, true, false);
+                                                            return 0;
+                                                        })))
+                                        .then(literal("nbt_filter")
+                                                .then(argument("nbt_filter", new EntityNBTFilterTypeArgumentType())
+                                                        .then(argument("nbt", CompoundTagArgument.compoundTag())
+                                                                .executes(context -> {
+                                                                    this.renderEntityTagContents(context, true, true);
+                                                                    return 0;
+                                                                })))))));
     }
 
     private void renderCreativeTab(CommandContext<FabricClientCommandSource> context, CommandBuildContext access) {
@@ -115,7 +135,7 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
         );
     }
 
-    private void renderEntityTagContents(CommandContext<FabricClientCommandSource> context, boolean useNbt) {
+    private void renderEntityTagContents(CommandContext<FabricClientCommandSource> context, boolean useNbt, boolean useFilter) {
         EntityTagArgumentType.TagArgument tag = EntityTagArgumentType.getTag("tag", context);
         String source = "tag_" + tag.id().getNamespace() + "/" + tag.id().getPath();
 
@@ -123,9 +143,11 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
                 .stream()
                 .map(Holder::value)
                 .filter(EntityType::canSummon)
+                .filter(type -> !RenderEntitySubCommand.DEFAULT_INVISIBLE_ENTITY_TYPES.contains(type))
                 .map(type -> {
                     CompoundTag entityNbt = useNbt ? CompoundTagArgument.getCompoundTag(context, "nbt") : null;
-                    return EntityRenderable.of(type, entityNbt);
+                    EntityNBTValidityFilter filterType = useFilter ? EntityNBTFilterTypeArgumentType.getType(context, "nbt_filter") : null;
+                    return EntityRenderable.of(type, entityNbt, filterType);
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -133,7 +155,7 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
         ScreenSchedulerAndSaver.schedule(new RenderScreen(BatchRenderable.of(source, renderables)));
     }
 
-    private void renderEntityNamespace(CommandContext<FabricClientCommandSource> context, boolean useNbt) {
+    private void renderEntityNamespace(CommandContext<FabricClientCommandSource> context, boolean useNbt, boolean useFilter) {
         EntityNamespaceArgumentType.Namespace namespace = EntityNamespaceArgumentType.getNamespace("namespace", context);
         String source = "namespace_" + namespace.name();
 
@@ -141,7 +163,8 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
                 .stream()
                 .map(type -> {
                     CompoundTag entityNbt = useNbt ? CompoundTagArgument.getCompoundTag(context, "nbt") : null;
-                    return EntityRenderable.of(type, entityNbt);
+                    EntityNBTValidityFilter filterType = useFilter ? EntityNBTFilterTypeArgumentType.getType(context, "nbt_filter") : null;
+                    return EntityRenderable.of(type, entityNbt, filterType);
                 })
                 .filter(Objects::nonNull)
                 .toList();

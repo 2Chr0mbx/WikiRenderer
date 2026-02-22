@@ -1,6 +1,5 @@
 package com.pigicial.wikirenderer.command.arguments;
 
-import com.pigicial.wikirenderer.util.Translate;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -8,12 +7,13 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.Holder;
 
 import java.util.HashSet;
 import java.util.List;
@@ -24,10 +24,6 @@ import java.util.concurrent.CompletableFuture;
 public class ItemNamespaceArgumentType implements ArgumentType<ItemNamespaceArgumentType.Namespace> {
 
     private static final SimpleCommandExceptionType NO_SUCH_NAMESPACE = new SimpleCommandExceptionType(Translate.msg("no_such_namespace"));
-
-    public static ItemNamespaceArgumentType namespace() {
-        return new ItemNamespaceArgumentType();
-    }
 
     public static <S> Namespace getNamespace(String name, CommandContext<S> context) {
         return context.getArgument(name, Namespace.class);

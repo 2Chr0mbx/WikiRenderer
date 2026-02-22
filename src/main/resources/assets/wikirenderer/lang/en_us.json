@@ -246,6 +246,8 @@
   "gui.wikirenderer.label_example.item_name": "%name% - The item's display name",
   "gui.wikirenderer.label_example.block_id": "%id% - The block's Minecraft ID",
   "gui.wikirenderer.label_example.block_name": "%name% - The block's display name",
+  "gui.wikirenderer.label_example.entity_type": "%entity_type% - The entity's type ID",
+  "gui.wikirenderer.label_example.entity_name": "%name% - The entity's display name",
 
   "gui.wikirenderer.hud.area_selection": "Area Selection",
   "gui.wikirenderer.hud.area_selection.from": "From: %s",
@@ -287,5 +289,6 @@
   "message.wikirenderer.selection_finished": "§7[§aSelection finished§7]",
   "message.wikirenderer.selection_expanded": "§7[§aSelection expanded§7]",
   "arguments.entity.tag.unknown": "Unknown entity tag '%s'",
-  "arguments.batch_type.unknown": "Unknown batch type '%s'"
+  "arguments.batch_type.unknown": "Unknown batch type '%s'",
+  "arguments.entity_filter_type.unknown": "Unknown entity NBT filter type '%s'"
 }

@@ -42,6 +42,7 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.arg
 
 public class RenderEntitySubCommand extends WikiRendererSubCommand {
     private static final SuggestionProvider<FabricClientCommandSource> CLIENT_SUMMONABLE_ENTITIES;
+    public static final List<? extends EntityType<?>> DEFAULT_INVISIBLE_ENTITY_TYPES;
 
     static {
         CLIENT_SUMMONABLE_ENTITIES = (context, builder) -> SharedSuggestionProvider.suggestResource(
@@ -49,6 +50,19 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
                 builder,
                 EntityType::getKey,
                 entityType -> Component.translatable(Util.makeDescriptionId("entity", EntityType.getKey(entityType)))
+        );
+
+        DEFAULT_INVISIBLE_ENTITY_TYPES = List.of(
+                EntityType.TEXT_DISPLAY,
+                EntityType.OMINOUS_ITEM_SPAWNER,
+                EntityType.MARKER,
+                EntityType.INTERACTION,
+                EntityType.ITEM,
+                EntityType.ITEM_DISPLAY,
+                EntityType.EVOKER_FANGS,
+                EntityType.EXPERIENCE_ORB,
+                EntityType.BLOCK_DISPLAY,
+                EntityType.AREA_EFFECT_CLOUD
         );
     }
 

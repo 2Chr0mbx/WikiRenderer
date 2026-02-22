@@ -8,22 +8,16 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 
 import java.util.concurrent.CompletableFuture;
 
 public class ItemGroupArgumentType implements ArgumentType<CreativeModeTab> {
 
     private static final DynamicCommandExceptionType NO_ITEMGROUP = new DynamicCommandExceptionType(o -> () -> "No such item group: " + o);
-
-    private ItemGroupArgumentType() {}
-
-    public static ItemGroupArgumentType itemGroup() {
-        return new ItemGroupArgumentType();
-    }
 
     public static <S> CreativeModeTab getItemGroup(String name, CommandContext<S> context) {
         return context.getArgument(name, CreativeModeTab.class);

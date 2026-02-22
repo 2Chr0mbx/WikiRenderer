@@ -7,6 +7,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.pigicial.wikirenderer.command.subcommands.RenderEntitySubCommand;
 import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.Holder;
@@ -23,10 +24,6 @@ import java.util.concurrent.CompletableFuture;
 public class EntityNamespaceArgumentType implements ArgumentType<EntityNamespaceArgumentType.Namespace> {
 
     private static final SimpleCommandExceptionType NO_SUCH_NAMESPACE = new SimpleCommandExceptionType(Translate.msg("no_such_namespace"));
-
-    public static EntityNamespaceArgumentType namespace() {
-        return new EntityNamespaceArgumentType();
-    }
 
     public static <S> EntityNamespaceArgumentType.Namespace getNamespace(String name, CommandContext<S> context) {
         return context.getArgument(name, EntityNamespaceArgumentType.Namespace.class);
@@ -63,6 +60,7 @@ public class EntityNamespaceArgumentType implements ArgumentType<EntityNamespace
                     .filter(entry -> Objects.equals(entry.key().identifier().getNamespace(), this.name))
                     .map(Holder.Reference::value)
                     .filter(EntityType::canSummon)
+                    .filter(type -> !RenderEntitySubCommand.DEFAULT_INVISIBLE_ENTITY_TYPES.contains(type))
                     .toList();
         }
     }
