@@ -42,6 +42,7 @@ import io.wispforest.owo.ui.util.FocusHandler;
 import io.wispforest.owo.ui.util.UIErrorToast;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -486,7 +487,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         ExportPathSpec defaultExportPath = this.renderable.getExportPath();
         String customFileName = renderable.getCustomFileName();
         ExportPathSpec exportPath = customFileName == null || customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(customFileName);
-        System.out.println("export path = "+ exportPath);
 
         AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
         Consumer<MinimapCalibratorData> dataConsumer = null;
@@ -503,7 +503,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     capturing = false;
                     if (throwable != null) {
                         WikiRenderer.LOGGER.error("Failed to render image", throwable);
-                        UIErrorToast.report(throwable);
+                        this.minecraft.execute(() -> this.notify(
+                                Translate.gui("export_failed").withStyle(ChatFormatting.RED),
+                                Component.literal(String.valueOf(throwable.getMessage())).withStyle(ChatFormatting.GRAY)
+                        ));
                         return;
                     }
 
@@ -511,7 +514,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         this.exportCallback.accept(imageFile);
                     }
 
-                    System.out.println("throwable = " +throwable);
                     if (popupText) {
                         this.minecraft.execute(() -> this.notify(
                                 () -> Util.getPlatform().openFile(imageFile),

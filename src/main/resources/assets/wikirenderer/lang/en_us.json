@@ -231,7 +231,7 @@
   "gui.wikirenderer.animation_mode_description_live_ffmpeg_2": "- Ram Usage Controlled by FFmpeg",
 
   "gui.wikirenderer.using_derived_resolution": "Using Derived Resolution",
-  "gui.wikirenderer.batch.remaining": "Remaining: %d/%d",
+  "gui.wikirenderer.batch.amount": "Position: %d/%d (%d remaining)",
   "gui.wikirenderer.batch.start": "Start",
   "gui.wikirenderer.batch.reset": "Reset",
   "gui.wikirenderer.batch.previous": "Previous",
@@ -252,6 +252,9 @@
   "gui.wikirenderer.hud.area_selection.to": "To: %s",
   "gui.wikirenderer.hud.area_selection.clear_hint": "To clear, press %s or %s while sneaking",
   "gui.wikirenderer.click_to_open": "Click to open!",
+
+  "gui.wikirenderer.export_failed": "Failed to export image",
+
 
   "message.wikirenderer.loading_texture": "Loading player head texture...",
   "message.wikirenderer.loading_texture_fail": "Invalid texture ID or base64.",
@@ -283,5 +286,6 @@
   "message.wikirenderer.selection_started": "§7[§aSelection started§7]",
   "message.wikirenderer.selection_finished": "§7[§aSelection finished§7]",
   "message.wikirenderer.selection_expanded": "§7[§aSelection expanded§7]",
-  "arguments.entity.tag.unknown": "Unknown entity tag '%s'"
+  "arguments.entity.tag.unknown": "Unknown entity tag '%s'",
+  "arguments.batch_type.unknown": "Unknown batch type '%s'"
 }

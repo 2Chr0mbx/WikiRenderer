@@ -144,7 +144,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
         WikiRenderer.inBatchRender = false;
         this.batchActive = false;
         this.lastRenderTime = -1;
-        this.currentIndex = -1;
+        this.currentIndex = 0;
         this.currentDelegate = this.delegates.getFirst();
         this.firstRenderStarted = false;
 

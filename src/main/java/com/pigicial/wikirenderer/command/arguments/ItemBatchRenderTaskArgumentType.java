@@ -1,13 +1,13 @@
 package com.pigicial.wikirenderer.command.arguments;
 
-import com.pigicial.wikirenderer.render.batch.ItemBatchRenderTask;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.pigicial.wikirenderer.render.batch.ItemBatchRenderTask;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class ItemBatchRenderTaskArgumentType implements ArgumentType<ItemBatchRenderTask> {
 
-    private static final SimpleCommandExceptionType EXCEPTION = new SimpleCommandExceptionType(Component.nullToEmpty("mald about it, see if anybody notices"));
+    private static final DynamicCommandExceptionType EXCEPTION = new DynamicCommandExceptionType(tag -> Component.translatable("arguments.batch_type.unknown", tag));
 
     public static <S> ItemBatchRenderTask getTask(String name, CommandContext<S> context) {
         return context.getArgument(name, ItemBatchRenderTask.class);
@@ -41,9 +41,10 @@ public class ItemBatchRenderTaskArgumentType implements ArgumentType<ItemBatchRe
                     return ItemBatchRenderTask.BATCH_TOOLTIP;
                 }
             }
+            throw EXCEPTION.createWithContext(reader, second);
         }
 
-        throw EXCEPTION.create();
+        throw EXCEPTION.createWithContext(reader, first);
     }
 
     @Override

@@ -90,10 +90,11 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
         }
 
         WikiRendererUI.dynamicLabel(container, () -> Translate.gui(
-                "batch.remaining",
-                Math.max(0, batchRenderable.delegates.size() - batchRenderable.currentIndex - 1),
-                batchRenderable.delegates.size()
-        )).margins(Insets.bottom(20));
+                "batch.amount",
+                batchRenderable.currentIndex + 1,
+                batchRenderable.delegates.size(),
+                Math.max(0, batchRenderable.delegates.size() - batchRenderable.currentIndex - 1)
+                )).margins(Insets.bottom(20));
 
         this.actualProperties.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
     }

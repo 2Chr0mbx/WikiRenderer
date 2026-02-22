@@ -17,7 +17,6 @@ import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.screen.RenderScreen;
-import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import org.jetbrains.annotations.NotNull;
@@ -61,12 +60,21 @@ public class RenderableDispatcher {
     }
 
     public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
-        return drawIntoImage(renderScreen, renderable, tickDelta, size, size, 1, crop, calibrationDataCallback);
+        return drawIntoImage(renderScreen, renderable, tickDelta, size, size, 0, crop, calibrationDataCallback);
     }
 
-    public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size, int targetSize, int iterations, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
+    public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, int size, int targetSize, int iterationIndex, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
         GpuTexture texture = drawIntoTexture(renderScreen, renderable, tickDelta, size);
-        CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).whenComplete((i, t) -> texture.close());
+        CompletableFuture<NativeImage> image = copyTextureIntoImage(texture).handle((i, t) -> {
+            texture.close();
+            if (t != null) {
+                if (i != null) {
+                    i.close();
+                }
+                throw new RuntimeException(t);
+            }
+            return i;
+        });
 
         boolean sideRendering = renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get();
         boolean exportMinimapData = calibrationDataCallback != null && sideRendering;
@@ -105,31 +113,29 @@ public class RenderableDispatcher {
                     case DISABLED -> 0;
                 };
 
-                // todo: make this less arbitrary
-                boolean smallEnoughToRescaleAgain = targetSize <= 1200 && iterations < 4 && !WikiRenderer.inBatchRender; // kinda arbitary number
+                double multiplier = (double) size / (double) axisSize;
+                int newSize = (int) Math.ceil(targetSize * multiplier);
 
-                if (rescaleMode == ImageRescaleMode.DISABLED
-                    || axisSize == targetSize
-                    || (!smallEnoughToRescaleAgain && axisSize > targetSize)
-                    || (renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get())) {
+                boolean rescalingDisabled = rescaleMode == ImageRescaleMode.DISABLED;
+                boolean sameSize = axisSize == targetSize;
+                boolean likelyOscillating = iterationIndex > 2;
+                boolean batchSecondPass = WikiRenderer.inBatchRender && iterationIndex > 0;
+                boolean isAreaTopdown = renderable instanceof AreaRenderable areaRenderable && areaRenderable.getProperties().perPixel90DegreeRendering.get();
+
+                boolean dontRescale = rescalingDisabled || sameSize || likelyOscillating || batchSecondPass || isAreaTopdown;
+
+                int maxTextureSize = RenderSystem.getDevice().getMaxTextureSize();
+                boolean tooLarge = newSize > maxTextureSize;
+                if (tooLarge && !dontRescale) {
+                    croppedImage.close();
+                    return CompletableFuture.failedFuture(new RuntimeException("Failed to rescale image (too big, " + newSize + " > max " + maxTextureSize + ")"));
+                }
+
+                if (dontRescale) {
                     return CompletableFuture.completedFuture(croppedImage);
                 } else {
-                    double multiplier = (double) size / (double) axisSize;
-                    int newSize = (int) Math.ceil(targetSize * multiplier);
-
-                    int maxTextureSize = RenderSystem.getDevice().getMaxTextureSize();
-                    if (newSize > maxTextureSize) {
-                        System.out.println("yeah " + newSize + " " + maxTextureSize);
-                        newSize = maxTextureSize;
-                        smallEnoughToRescaleAgain = false;
-                    }
-
-                    if (newSize > 10000) {
-                        smallEnoughToRescaleAgain = false;
-                    }
-
                     croppedImage.close();
-                    return drawIntoImage(renderScreen, renderable, tickDelta, newSize, targetSize, iterations + 1, smallEnoughToRescaleAgain, null)
+                    return drawIntoImage(renderScreen, renderable, tickDelta, newSize, targetSize, iterationIndex + 1, true, null)
                             .thenApply(ImageCropper::cropTransparentAndCloseSource);
                 }
             });
@@ -222,35 +228,42 @@ public class RenderableDispatcher {
             throw new IllegalStateException("Tried to copy non-compatible texture into image");
         }
 
-        GpuBuffer gpuBuffer = RenderSystem.getDevice().createBuffer(() -> "WikiRenderer RenderableDispatcher.copyTextureIntoImage buffer", GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST, 4L * width * height);
-        CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
-        RenderSystem.getDevice().createCommandEncoder().copyTextureToBuffer(gpuTexture, gpuBuffer, 0, () -> {
+        try {
+            GpuBuffer gpuBuffer = RenderSystem.getDevice().createBuffer(() -> "WikiRenderer RenderableDispatcher.copyTextureIntoImage buffer", GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST, 4L * width * height);
             try {
-                try (GpuBuffer.MappedView mappedView = commandEncoder.mapBuffer(gpuBuffer, true, false)) {
-                    NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
+                CommandEncoder commandEncoder = RenderSystem.getDevice().createCommandEncoder();
+                commandEncoder.copyTextureToBuffer(gpuTexture, gpuBuffer, 0, () -> {
+                    try (GpuBuffer.MappedView mappedView = commandEncoder.mapBuffer(gpuBuffer, true, false)) {
+                        NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
 
-                    // Skip redundant safety checks, do the memory copies directly.
-                    long stride = 4L * width;
-                    long srcBuf = MemoryUtil.memAddress(mappedView.data());
-                    long dstBuf = nativeImage.getPointer();
+                        // Skip redundant safety checks, do the memory copies directly.
+                        long stride = 4L * width;
+                        long srcBuf = MemoryUtil.memAddress(mappedView.data());
+                        long dstBuf = nativeImage.getPointer();
 
-                    long src = srcBuf;
-                    long dst = dstBuf + stride * (height - 1);
+                        long src = srcBuf;
+                        long dst = dstBuf + stride * (height - 1);
 
-                    for (int y = 0; y < height; y++) {
-                        MemoryUtil.memCopy(src, dst, stride);
-                        src += stride;
-                        dst -= stride;
+                        for (int y = 0; y < height; y++) {
+                            MemoryUtil.memCopy(src, dst, stride);
+                            src += stride;
+                            dst -= stride;
+                        }
+
+                        future.complete(nativeImage);
+                    } catch (Throwable throwable) {
+                        future.completeExceptionally(throwable);
+                    } finally {
+                        gpuBuffer.close();
                     }
-
-                    future.complete(nativeImage);
-                }
+                }, 0);
             } catch (Throwable throwable) {
+                gpuBuffer.close();
                 future.completeExceptionally(throwable);
             }
-
-            gpuBuffer.close();
-        }, 0);
+        } catch (Throwable throwable) {
+            future.completeExceptionally(throwable);
+        }
 
         return future;
     }
