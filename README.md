@@ -133,16 +133,16 @@ To render every item in your inventory, press the associated hotkey (default `k`
 
 ### Creative Tabs
 To render a creative tab:
-1. Type `/wikirender group item creative_tab <tab> atlas` to render a certain tab as an atlas texture
+1. Type `/wikirender group item creative_tab <tab> itematlas` to render a certain tab as an atlas texture
 2. Type `/wikirender group item creative_tab <tab> batch (blocks|items|tooltips)` to batch render a certain tab's items, blocks, or tooltips
 
-Below is an example of every combat item rendered in an atlas using `/wikirender group item creative_tab minecraft:combat atlas`:
+Below is an example of every combat item rendered in an atlas using `/wikirender group item creative_tab minecraft:combat itematlas`:
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/creative_tab_atlas_render.png" width="600" alt="Creative Mode Atlas Render">
 
 ### Tagged Items
 To render items, blocks or tooltips given a select tag:
-1. Type `/wikirender group item tag <#namespace:tag> atlas` to render the tag's items as an atlas texture
+1. Type `/wikirender group item tag <#namespace:tag> itematlas` to render the tag's items as an atlas texture
 2. Type `/wikirender group item tag <#namespace:tag> batch (blocks|items|tooltips)` to batch render the tag's items, blocks, or tooltips
 
 Below is an example of a batch render of every flower using `/wikirender group item tag #minecraft:flowers batch items`. The left side of the screen shows 30 items remaining, and they can all be rendered by pressing the start button.
@@ -151,10 +151,10 @@ Below is an example of a batch render of every flower using `/wikirender group i
 
 ### Namespace Items
 To render items, blocks or tooltips from a select namespace:
-1. Type `/wikirender group item namespace <namespace> atlas` to render the namespace's items as an atlas texture
+1. Type `/wikirender group item namespace <namespace> itematlas` to render the namespace's items as an atlas texture
 2. Type `/wikirender group item namespace <namespace> batch (blocks|items|tooltips)` to batch render the namespace's items, blocks, or tooltips
 
-Below is an example of an atlas render of every vanilla item using `/wikirender group item namespace minecraft atlas`.
+Below is an example of an atlas render of every vanilla item using `/wikirender group item namespace minecraft itematlas`.
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/namespace_items_render.png" width="600" alt="Minecraft Items Batch Render">
 
