@@ -4,7 +4,6 @@ import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.Property;
-import com.pigicial.wikirenderer.property.TickingPropertyBundle;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
@@ -23,7 +22,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.text.DecimalFormat;
 
-public class EntityPropertyBundle extends DefaultCroppablePropertyBundle implements TickingPropertyBundle {
+public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public static final EntityPropertyBundle INSTANCE = new EntityPropertyBundle();
 
@@ -203,7 +202,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             });
         }
 
-        TickingPropertyBundle.super.buildRenderOptionGUIControls(r, screen, container);
+        WikiRendererUI.booleanControl(container, this.tickEntityAnimations, "entity_animations");
     }
 
     @Override
@@ -220,15 +219,5 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
             modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get() + this.updateAndGetSpinningRotationOffset()));
         }
-    }
-
-    @Override
-    public Property<Boolean> getTickProperty() {
-        return this.tickEntityAnimations;
-    }
-
-    @Override
-    public String getTickTranslationKey() {
-        return "entity_animations";
     }
 }

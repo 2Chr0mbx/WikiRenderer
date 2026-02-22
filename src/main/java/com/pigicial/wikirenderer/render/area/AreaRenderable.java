@@ -223,7 +223,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         this.entitiesFrozen = false;
     }
 
-    private void drawEntities(CameraRenderState cameraRenderState, float tickDelta, PoseStack standardStack, SubmitNodeStorage nodeStorage) {
+    private void drawEntities(CameraRenderState cameraRenderState, float delta, PoseStack standardStack, SubmitNodeStorage nodeStorage) {
+        float tickDelta = entitiesFrozen ? 0 : delta;
         AreaPropertyBundle properties = this.getProperties();
         EntityRenderDispatcher entityDispatcher = client.getEntityRenderDispatcher();
 

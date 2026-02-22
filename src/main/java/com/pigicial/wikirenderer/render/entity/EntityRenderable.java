@@ -227,16 +227,17 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float tickDelta, long timeSinceCreationMs) {
-        matrices.pushPose();
-
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float delta, long timeSinceCreationMs) {
         EntityPropertyBundle properties = this.getProperties();
+
         boolean usingLiveEntity = isUsingLiveEntity();
         Entity usedEntity = this.getUsedEntity();
+        float tickDelta = usingLiveEntity ? delta : 0;
 
         EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
         SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
+        matrices.pushPose();
         applyToEntityAndPassengers(usedEntity, entity -> {
             Vec3 offset = Vec3.ZERO;
             Vec3 entityPosition = entity.position();
@@ -248,7 +249,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 this.updateMannequinSkin(mannequin);
             }
 
-            EntityRenderState state = renderDispatcher.extractEntity(entity, tickDelta);
+            EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() ? tickDelta : 0);
             this.updateRenderState(state, properties, timeSinceCreationMs, usingLiveEntity);
 
             List<Runnable> partVisibilityCallbacks = new ArrayList<>();
@@ -308,7 +309,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         if (properties.tickEntityAnimations.get()) {
             if (!usingLiveEntity) {
-                state.ageInTicks = (int) timeSinceCreationMs / 50f;
+                state.ageInTicks = timeSinceCreationMs / 50f;
             } // otherwise just use the live entity state for more accuracy of what's being seen in the actual game
         } else {
             state.ageInTicks = 1;

@@ -123,7 +123,7 @@ Tooltips are rendered using per-pixel resolution scaling, defaulting at 4 image 
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/plasmaflux_tooltip_render.png" width="600" alt="Plasmaflux Power Orb Tooltip Menu">
 
-## Batch Rendering
+## Item-Based Batch Rendering
 There are several ways to multiple render items, blocks, or tooltips at once:
 
 ### Inventories
@@ -133,27 +133,63 @@ To render every item in your inventory, press the associated hotkey (default `k`
 
 ### Creative Tabs
 To render a creative tab:
-1. Type `/wikirender group creative_tab <tab> atlas` to render a certain tab as an atlas texture
-2. Type `/wikirender group creative_tab <tab> batch (blocks|items|tooltips)` to batch render a certain tab's items, blocks, or tooltips
+1. Type `/wikirender group item creative_tab <tab> atlas` to render a certain tab as an atlas texture
+2. Type `/wikirender group item creative_tab <tab> batch (blocks|items|tooltips)` to batch render a certain tab's items, blocks, or tooltips
 
-Below is an example of every combat item rendered in an atlas using `/wikirender group creative_tab minecraft:combat atlas`:
+Below is an example of every combat item rendered in an atlas using `/wikirender group item creative_tab minecraft:combat atlas`:
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/creative_tab_atlas_render.png" width="600" alt="Creative Mode Atlas Render">
 
 ### Tagged Items
 To render items, blocks or tooltips given a select tag:
-1. Type `/wikirender group tag <#tag:tag> atlas` to render the tag's items as an atlas texture
-2. Type `/wikirender group tag <#namespace:tag> batch (blocks|items|tooltips)` to batch render the tag's items, blocks, or tooltips
+1. Type `/wikirender group item tag <#namespace:tag> atlas` to render the tag's items as an atlas texture
+2. Type `/wikirender group item tag <#namespace:tag> batch (blocks|items|tooltips)` to batch render the tag's items, blocks, or tooltips
 
-Below is an example of a batch render of every flower using `/wikirender group tag #minecraft:flowers batch items`. The left side of the screen shows 30 items remaining, and they can all be rendered by pressing the start button.
+Below is an example of a batch render of every flower using `/wikirender group item tag #minecraft:flowers batch items`. The left side of the screen shows 30 items remaining, and they can all be rendered by pressing the start button.
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/flower_batch_render.png" width="600" alt="Flower Batch Render">
 
 ### Namespace Items
 To render items, blocks or tooltips from a select namespace:
-1. Type `/wikirender group namespace <namespace> atlas` to render the namespace's items as an atlas texture
-2. Type `/wikirender group namespace <namespace> batch (blocks|items|tooltips)` to batch render the namespace's items, blocks, or tooltips
+1. Type `/wikirender group item namespace <namespace> atlas` to render the namespace's items as an atlas texture
+2. Type `/wikirender group item namespace <namespace> batch (blocks|items|tooltips)` to batch render the namespace's items, blocks, or tooltips
 
-Below is an example of an atlas render of every vanilla item using `/wikirender group namespace minecraft atlas`.
+Below is an example of an atlas render of every vanilla item using `/wikirender group item namespace minecraft atlas`.
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/namespace_items_render.png" width="600" alt="Minecraft Items Batch Render">
+
+## Entity-Based Batch Rendering
+There are several ways to multiple entities at once:
+### Tagged Entities
+To render entities given a select tag:
+1. Type `/wikirender group entity tag <#namespace:tag>` to render the tag's entities
+2. Type `/wikirender group entity tag <#namespace:tag> nbt <nbt>` to render the tag's entities with NBT applied to each of them
+3. Type `/wikirender group entity tag <#namespace:tag> nbt_filter <filter> <nbt>` to render the tag's entities with NBT applied to each of them, but only rendering those with pass the filter check (see below)
+
+Below is an example of a batch render of every aquatic Minecraft mob using `/wikirender group entity tag #minecraft:aquatic`
+
+<img src="src/main/resources/assets/wikirenderer/readme_images/aquatic_entity_batch_menu.png" width="600" alt="Minecraft Entities Batch Render">
+
+
+### Namespace Entities
+To render entities given a select tag:
+1. Type `/wikirender group entity namespace <namespace>` to render the namespace's entities
+2. Type `/wikirender group entity tag <namespace> nbt <nbt>` to render the namespace's entities with NBT applied to each of them
+3. Type `/wikirender group entity tag <namespace> nbt_filter <filter> <nbt>` to render the namespace's entities with NBT applied to each of them, but only rendering those with pass the filter check (see below)
+
+Below is an example of a batch render of every Minecraft mob using `/wikirender group entity namespace minecraft`:
+
+<img src="src/main/resources/assets/wikirenderer/readme_images/entity_batch_menu.png" width="600" alt="Minecraft Entities Batch Render">
+
+
+### NBT Filtering:
+When rendering entities from a namespace or tag, you can filter which entities from those lists actually get used by filtering by the applied NBT. There are three filter modes to choose from:
+1. `require_all_valid`: Allows an entity to render if all the provided NBT tags are valid
+2. `require_one_valid`: Allows an entity to render if at least one of the provided NBT tags is valid
+3. `require_none_valid`: Allows an entity to render if none of the provided NBT tags are valid
+
+More specifically, a "valid" tag is a tag that is saved with the entity when it tries to save its NBT. Some tags are exported for all entities, regardless of if they change how they render (i.e. `Equipment` for all living entities), whereas others only get saved for specific types (i.e. "Pumpkin" for snow golems)
+
+For example, typing `/wikirender group entity namespace minecraft nbt_filter require_one_valid {Age:-1,IsBaby:1b}` will render all baby mobs, with some extra mobs included, as seen below:
+
+<img src="src/main/resources/assets/wikirenderer/readme_images/baby_entity_batch_menu.png" width="600" alt="Minecraft Entities Batch Render">
