@@ -188,7 +188,7 @@ When rendering entities from a namespace or tag, you can filter which entities f
 2. `require_one_valid`: Allows an entity to render if at least one of the provided NBT tags is valid
 3. `require_none_valid`: Allows an entity to render if none of the provided NBT tags are valid
 
-More specifically, a "valid" tag is a tag that is saved with the entity when it tries to save its NBT. Some tags are exported for all entities, regardless of if they change how they render (i.e. `Equipment` for all living entities), whereas others only get saved for specific types (i.e. "Pumpkin" for snow golems)
+More specifically, a "valid" tag is a tag that is saved with the entity when it tries to save its NBT. Some tags are exported for all entities, regardless of if they change how they render (i.e. `Equipment` for all living entities), whereas others only get saved for specific types (i.e. `Pumpkin` for snow golems)
 
 For example, typing `/wikirender group entity namespace minecraft nbt_filter require_one_valid {Age:-1,IsBaby:1b}` will render all baby mobs, with some extra mobs included, as seen below:
 
