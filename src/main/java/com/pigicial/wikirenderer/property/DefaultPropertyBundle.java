@@ -23,7 +23,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public IntProperty xOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
     public IntProperty yOffset = IntProperty.of(0, Integer.MIN_VALUE / 2, Integer.MAX_VALUE / 2);
 
-    public IntProperty rotationSpeed = IntProperty.of(0, 0, 720);
+    public IntProperty rotationSpeed = IntProperty.of(0, -720, 720);
     public Property<Boolean> allowRotatingWithMouse = Property.of(this.allowRotatingWithMouseByDefault());
 
     public float rotationOffset = 0;
@@ -89,10 +89,10 @@ public class DefaultPropertyBundle implements PropertyBundle {
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.text(container, "transform_options", false);
-        WikiRendererUI.intControl(screen, container, scale, "scale", 10);
-        WikiRendererUI.intControl(screen, container, rotation, "rotation", 45);
-        WikiRendererUI.doubleControl(screen, container, slant, "slant", 30);
-        WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed", 5);
+        WikiRendererUI.intControl(screen, container, scale, "scale");
+        WikiRendererUI.intControl(screen, container, rotation, "rotation");
+        WikiRendererUI.doubleControl(screen, container, slant, "slant");
+        WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed");
         WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
         container.child(this.buildResetButton());
 

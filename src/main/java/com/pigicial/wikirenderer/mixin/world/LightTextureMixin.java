@@ -57,7 +57,7 @@ public class LightTextureMixin {
             )
     )
     private boolean forceHasNightVision(boolean original) {
-        return (WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useNightVision.get()) || original;
+        return WikiRenderer.inRenderableDraw ? AreaPropertyBundle.INSTANCE.useNightVision.get() : original;
     }
 
     @WrapOperation(
@@ -68,6 +68,6 @@ public class LightTextureMixin {
             )
     )
     private float forceFullNightVisionScale(LivingEntity entity, float f, Operation<Float> original) {
-        return WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useNightVision.get() ? 1.0f : original.call(entity, f);
+        return WikiRenderer.inRenderableDraw ? (AreaPropertyBundle.INSTANCE.useNightVision.get() ? 1.0f : 0.0f) : original.call(entity, f);
     }
 }

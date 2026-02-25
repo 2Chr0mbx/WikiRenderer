@@ -78,7 +78,8 @@ public class AnimationTimingUtil {
         scanTicksToFullyAnimateBlock(Minecraft.getInstance().getBlockRenderer().getBlockModel(state), animationCompletionTimes, randomSeed);
     }
 
-    public static void scanTicksToFullyAnimateBlock(BlockStateModel model, List<Integer> animationCompletionTimes, Long randomSeed) {
+    // synchronized for the random instance
+    public static synchronized void scanTicksToFullyAnimateBlock(BlockStateModel model, List<Integer> animationCompletionTimes, Long randomSeed) {
         List<BlockModelPart> parts = new ArrayList<>();
         if (randomSeed != null) {
             RANDOM.setSeed(randomSeed);

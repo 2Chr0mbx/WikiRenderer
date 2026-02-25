@@ -1,5 +1,6 @@
-package com.pigicial.wikirenderer.property;
+package com.pigicial.wikirenderer.components;
 
+import com.pigicial.wikirenderer.property.Property;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.core.OwoUIGraphics;
 import net.minecraft.network.chat.Component;

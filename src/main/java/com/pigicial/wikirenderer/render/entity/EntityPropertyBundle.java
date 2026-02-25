@@ -122,14 +122,14 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             this.spriteSlant.set(0);
         }));
 
-        WikiRendererUI.intControl(screen, container, this.scale, "scale", 10);
+        WikiRendererUI.intControl(screen, container, this.scale, "scale");
         if (!this.spriteRendering.get()) {
-            WikiRendererUI.intControl(screen, container, this.rotation, "rotation", 45);
-            WikiRendererUI.doubleControl(screen, container, this.slant, "slant", 30);
-            WikiRendererUI.intControl(screen, container, this.rotationSpeed, "rotation_speed", 5);
+            WikiRendererUI.intControl(screen, container, this.rotation, "rotation");
+            WikiRendererUI.doubleControl(screen, container, this.slant, "slant");
+            WikiRendererUI.intControl(screen, container, this.rotationSpeed, "rotation_speed");
         } else {
-            WikiRendererUI.intControl(screen, container, this.spriteRotation, "rotation", 45);
-            WikiRendererUI.intControl(screen, container, this.spriteSlant, "slant", 30);
+            WikiRendererUI.intControl(screen, container, this.spriteRotation, "rotation");
+            WikiRendererUI.intControl(screen, container, this.spriteSlant, "slant");
         }
         WikiRendererUI.booleanControl(container, this.allowRotatingWithMouse, "allow_rotating_with_mouse");
         if (!this.spriteRendering.get()) {
@@ -170,10 +170,10 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
         if (renderable.hasEntityType(LivingEntity.class)) {
             WikiRendererUI.booleanControl(container, this.overrideHeadRotations, "override_head_rotations");
-            WikiRendererUI.intControl(screen, container, this.yaw, "entity_data.yaw", 15);
-            WikiRendererUI.intControl(screen, container, this.pitch, "entity_data.pitch", 5);
+            WikiRendererUI.intControl(screen, container, this.yaw, "entity_data.yaw");
+            WikiRendererUI.intControl(screen, container, this.pitch, "entity_data.pitch");
             WikiRendererUI.booleanControl(container, this.overrideBodyRotations, "override_body_rotations");
-            WikiRendererUI.intControl(screen, container, this.entityRotation, "entity_data.rotation", 5);
+            WikiRendererUI.intControl(screen, container, this.entityRotation, "entity_data.rotation");
         }
 
         if (renderable.hasEntityType(Player.class)) {

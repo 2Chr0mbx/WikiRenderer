@@ -12,12 +12,10 @@ import org.lwjgl.glfw.GLFW;
 public class PropertySliderComponent extends SliderComponent {
 
     private final NumberProperty<? extends Number> setting;
-    private final double scrollIncrement;
 
-    public PropertySliderComponent(RenderScreen screen, Sizing horizontalSizing, Component text, double scrollIncrement, NumberProperty<? extends Number> setting) {
+    public PropertySliderComponent(RenderScreen screen, Sizing horizontalSizing, Component text, NumberProperty<? extends Number> setting) {
         super(horizontalSizing);
         this.setting = setting;
-        this.scrollIncrement = scrollIncrement;
 
         this.message(s -> text);
 
@@ -37,7 +35,7 @@ public class PropertySliderComponent extends SliderComponent {
 
     @Override
     public boolean onMouseScroll(double mouseX, double mouseY, double amount) {
-        this.setting.modify((int) amount * this.scrollIncrement);
-        return true;
+        // its hard to safely scroll (safely meaning without adjusting settings) on big ui scales because of this
+        return false;
     }
 }

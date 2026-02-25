@@ -324,7 +324,7 @@ public class WorldBlockMesh {
                     if (state.isAir()) continue;
                     if (state.is(Blocks.LIGHT)) continue; // axiom fix
 
-                    BlockPos renderPos = pos.subtract(bounds.getMinCorner());
+                    BlockPos renderPos = pos.subtract(minCorner);
                     if (world.getBlockEntity(pos) != null) {
                         blockEntities.put(renderPos, world.getBlockEntity(pos));
                     }

@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.area;
 
 import com.mojang.math.Axis;
+import com.pigicial.wikirenderer.components.ConditionalButton;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.property.IntProperty;
@@ -168,10 +169,10 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
                     this.slant.set(35.264);
                 }));
             }
-            WikiRendererUI.intControl(screen, container, scale, "scale", 10);
-            WikiRendererUI.intControl(screen, container, rotation, "rotation", 45);
-            WikiRendererUI.doubleControl(screen, container, slant, "slant", 30);
-            WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed", 5);
+            WikiRendererUI.intControl(screen, container, scale, "scale");
+            WikiRendererUI.intControl(screen, container, rotation, "rotation");
+            WikiRendererUI.doubleControl(screen, container, slant, "slant");
+            WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed");
             WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
             container.child(this.buildResetButton());
         } else {
@@ -195,10 +196,10 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             WikiRendererUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");
             this.useWalkabilityFilter.addRebuildListener(screen);
             if (this.useWalkabilityFilter.get()) {
-                WikiRendererUI.intControl(screen, container, this.walkableBlocksThreshold, "walkable_blocks_threshold", 1);
-                WikiRendererUI.intControl(screen, container, this.dontSearchForHigherFloorsThreshold, "dont_search_for_higher_floors_threshold", 1);
-                WikiRendererUI.intControl(screen, container, renderable.minFloorYLevelForOverhead, "min_floor_y_level", 1);
-                WikiRendererUI.intControl(screen, container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level", 1);
+                WikiRendererUI.intControl(screen, container, this.walkableBlocksThreshold, "walkable_blocks_threshold");
+                WikiRendererUI.intControl(screen, container, this.dontSearchForHigherFloorsThreshold, "dont_search_for_higher_floors_threshold");
+                WikiRendererUI.intControl(screen, container, renderable.minFloorYLevelForOverhead, "min_floor_y_level");
+                WikiRendererUI.intControl(screen, container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level");
                 WikiRendererUI.booleanControl(container, this.includeWallsForCaveMode, "show_walls");
                 WikiRendererUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");
             }
@@ -210,22 +211,30 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
                 if (showMeshExpansionControls.get()) {
                     for (ExpansionSide expansionSide : ExpansionSide.values()) {
                         try (WikiRendererUI.RowBuilder rowBuilder = WikiRendererUI.row(container)) {
-                            rowBuilder.row.child(UIComponents.button(Translate.gui("minus_five"), button -> {
-                                expandableMeshBounds.move(expansionSide, sideViewRotation, -5);
-                                renderable.mesh.scheduleRebuild(true);
-                            }));
-                            rowBuilder.row.child(UIComponents.button(Translate.gui("minus_one"), button -> {
-                                expandableMeshBounds.move(expansionSide, sideViewRotation, -1);
-                                renderable.mesh.scheduleRebuild(true);
-                            }));
-                            rowBuilder.row.child(UIComponents.button(Translate.gui("plus_one"), button -> {
-                                expandableMeshBounds.move(expansionSide, sideViewRotation, 1);
-                                renderable.mesh.scheduleRebuild(true);
-                            }));
-                            rowBuilder.row.child(UIComponents.button(Translate.gui("plus_five"), button -> {
-                                expandableMeshBounds.move(expansionSide, sideViewRotation, 5);
-                                renderable.mesh.scheduleRebuild(true);
-                            }));
+                            rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_five"), button -> {
+                                if (renderable.mesh.canRebuild()) {
+                                    expandableMeshBounds.move(expansionSide, sideViewRotation, -5);
+                                    renderable.mesh.scheduleRebuild(true);
+                                }
+                            }, renderable.mesh::canRebuild));
+                            rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_one"), button -> {
+                                if (renderable.mesh.canRebuild()) {
+                                    expandableMeshBounds.move(expansionSide, sideViewRotation, -1);
+                                    renderable.mesh.scheduleRebuild(true);
+                                }
+                            }, renderable.mesh::canRebuild));
+                            rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_one"), button -> {
+                                if (renderable.mesh.canRebuild()) {
+                                    expandableMeshBounds.move(expansionSide, sideViewRotation, 1);
+                                    renderable.mesh.scheduleRebuild(true);
+                                }
+                            }, renderable.mesh::canRebuild));
+                            rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_five"), button -> {
+                                if (renderable.mesh.canRebuild()) {
+                                    expandableMeshBounds.move(expansionSide, sideViewRotation, 5);
+                                    renderable.mesh.scheduleRebuild(true);
+                                }
+                            }, renderable.mesh::canRebuild));
 
 
                             rowBuilder.row.child(UIComponents.label(Translate.gui(expansionSide.name().toLowerCase())).margins(Insets.of(0, 0, 10, 10)));
@@ -283,6 +292,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
         this.hideMesh.addRebuildListener(screen);
         if (!this.hideMesh.get()) {
             WikiRendererUI.booleanControl(container, this.hideFluids, "hide_fluids");
+            this.hideFluids.futureListen(screen, (p, b) -> mesh.scheduleRebuild(true));
         }
         WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
@@ -293,7 +303,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             WikiRendererUI.booleanControl(container, this.hidePlayers, "hide_players");
             WikiRendererUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
             WikiRendererUI.booleanControl(container, this.hideLivingEntities, "hide_living_entities");
-            WikiRendererUI.intPercentageControl(screen, container, this.entityBoundsIntersectionRequirement, "entity_collision_threshold_requirement", 1);
+            WikiRendererUI.intPercentageControl(screen, container, this.entityBoundsIntersectionRequirement, "entity_collision_threshold_requirement");
 
             WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");
             this.freezeEntities.addRebuildListener(screen);
@@ -312,9 +322,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
         WikiRendererUI.text(container, "entity_overrides", 10);
         WikiRendererUI.booleanControl(container, this.overrideRotations, "override_rotations");
-        WikiRendererUI.intControl(screen, container, yaw, "entity_data.yaw", 15);
-        WikiRendererUI.intControl(screen, container, pitch, "entity_data.pitch", 5);
-        WikiRendererUI.intControl(screen, container, entityRotation, "entity_data.rotation", 5);
+        WikiRendererUI.intControl(screen, container, yaw, "entity_data.yaw");
+        WikiRendererUI.intControl(screen, container, pitch, "entity_data.pitch");
+        WikiRendererUI.intControl(screen, container, entityRotation, "entity_data.rotation");
         WikiRendererUI.booleanControl(container, useSteveSkin, "entity_data.steve");
         WikiRendererUI.booleanControl(container, forceSmallArms, "entity_data.small_arms");
         WikiRendererUI.booleanControl(container, hideHeldItems, "entity_data.hide_held_items");
@@ -324,13 +334,15 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     }
 
     @Override
-    public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildRenderOptionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
+        AreaRenderable renderable = (AreaRenderable) r;
         WikiRendererUI.booleanControl(container, this.emulateDaylight, "render_as_daytime");
         WikiRendererUI.booleanControl(container, this.useFullBrightGamma, "full_bright");
         WikiRendererUI.booleanControl(container, this.useNightVision, "night_vision");
-        this.useNightVision.addRebuildListener(screen);
-        if (!this.useNightVision.get()) {
+        this.useFullBrightGamma.addRebuildListener(screen);
+        if (!this.useFullBrightGamma.get()) {
             WikiRendererUI.booleanControl(container, this.lightUpSurroundingBlocks, "light_up_surrounding_blocks");
+            this.lightUpSurroundingBlocks.futureListen(screen, (p, b) -> renderable.mesh.scheduleRebuild(true));
         }
         WikiRendererUI.booleanControl(container, GlobalProperties.TICK_PARTICLES, "particles");
     }

@@ -20,9 +20,9 @@ public class ItemAtlasPropertyBundle extends DefaultCroppablePropertyBundle {
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         WikiRendererUI.text(container, "transform_options", false);
 
-        WikiRendererUI.intControl(screen, container, this.scale, "scale", 10);
-        WikiRendererUI.intControl(screen, container, this.columns, "columns", 1);
-        WikiRendererUI.doubleControl(screen, container, this.spacing, "spacing", 0.1D);
+        WikiRendererUI.intControl(screen, container, this.scale, "scale");
+        WikiRendererUI.intControl(screen, container, this.columns, "columns");
+        WikiRendererUI.doubleControl(screen, container, this.spacing, "spacing");
     }
 
     @Override

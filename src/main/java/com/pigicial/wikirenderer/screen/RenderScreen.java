@@ -144,10 +144,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (!guiRebuildScheduled) {
             this.saveScrollOffsetDataIfPossible();
         }
-
-        for (Property<?> propertyListener : propertyListeners) {
-            propertyListener.removeListeners(this);
-        }
         propertyListeners.clear();
 
         this.leftAnchor.clearChildren();
@@ -225,13 +221,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Override
     protected void build(FlowLayout rootComponent) {
         this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
-
-        // todo maybe we dont need this line?
-        ((ParticleEngineAccessor) Minecraft.getInstance().particleEngine).wikirenderer$getParticles().clear();
         WikiRenderer.particleRestriction = this.renderable.getParticleRestriction();
 
         this.leftColumn.margins(Insets.top(20));
         this.rightColumn.margins(Insets.top(20));
+
+        for (Property<?> propertyListener : propertyListeners) {
+            propertyListener.removeListeners(this);
+        }
 
         rootComponent.child(this.leftAnchor.padding(Insets.left(10)).positioning(Positioning.absolute(0, 0)));
         rootComponent.child(this.rightAnchor.padding(Insets.left(10)));
