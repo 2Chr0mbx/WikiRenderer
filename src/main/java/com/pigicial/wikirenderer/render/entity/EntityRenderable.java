@@ -65,6 +65,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
@@ -149,6 +150,14 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         }
         clonedEntity.tick();
 
+
+        clonedEntity.setXRot(source.getXRot());
+        clonedEntity.setYRot(source.getYRot());
+        if (source instanceof LivingEntity livingSource) {
+            clonedEntity.setYBodyRot(livingSource.yBodyRot);
+            clonedEntity.setYHeadRot(livingSource.yHeadRot);
+        }
+
         return clonedEntity;
     }
 
@@ -205,6 +214,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         playerClone.hurtTime = 0;
         playerClone.deathTime = 0;
         playerClone.tick();
+
+        playerClone.setXRot(originalPlayer.getXRot());
+        playerClone.setYRot(originalPlayer.getYRot());
+        playerClone.setYBodyRot(originalPlayer.yBodyRot);
+        playerClone.setYHeadRot(originalPlayer.yHeadRot);
 
         ElytraAnimationStateAccessor elytraData = (ElytraAnimationStateAccessor) playerClone.elytraAnimationState;
         elytraData.isometric$setRotX((float) (Math.PI / 12));
@@ -263,7 +277,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             }
             WikiRenderer.inEntityDraw = true;
 
-            if (cachedCenterOffset == null) {
+            if (cachedCenterOffset == null || cachedScaleMultiplier == null) {
                 AABB regularBounds = entity.getBoundingBox();
                 AABB renderedBounds = EntityRenderBoundsUtil.getBounds(state, this, 0, 0, 0);
                 if (renderedBounds == null) {
@@ -272,7 +286,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 } else {
                     double xDifference = renderedBounds.getCenter().x - (regularBounds.getCenter().x - entityPosition.x);
                     double zDifference = renderedBounds.getCenter().z - (regularBounds.getCenter().z - entityPosition.z);
-                    cachedCenterOffset = new Vec3(xDifference, -renderedBounds.minY - renderedBounds.getYsize() / 2, zDifference);
+                    cachedCenterOffset = new Vec3(-xDifference, -renderedBounds.minY - renderedBounds.getYsize() / 2, -zDifference);
                     // centers to the screen
 
                     cachedScaleMultiplier = (float) (1f / Math.max(renderedBounds.getXsize(), Math.max(renderedBounds.getYsize(), renderedBounds.getZsize())));
@@ -282,9 +296,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             matrices.pushPose();
             matrices.scale(cachedScaleMultiplier, cachedScaleMultiplier, cachedScaleMultiplier);
             matrices.translate(cachedCenterOffset); // this fits it into the default frame
-            if (!(entity instanceof Display.TextDisplay)) {
-                matrices.mulPose(Axis.YP.rotationDegrees(180)); // face towards camera by default
-            }
 
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
@@ -316,14 +327,23 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         }
 
         if (state instanceof LivingEntityRenderState livingState) {
-            livingState.yRot = properties.yaw.get();
-            livingState.xRot = properties.pitch.get();
-            livingState.bodyRot = properties.entityRotation.get();
+            if (properties.overrideHeadRotations.get()) {
+                livingState.yRot = properties.yaw.get();
+                livingState.xRot = properties.pitch.get();
+
+                if (state instanceof ArmorStandRenderState armorStandRenderState) {
+                    armorStandRenderState.headPose = new Rotations(properties.pitch.get(), properties.yaw.get(), 0);
+                }
+            }
+
+            // +180 is to rotate the camera at 135 degrees
+            if (properties.overrideBodyRotations.get()) {
+                livingState.bodyRot = properties.entityRotation.get() + 180;
+            } else {
+                livingState.bodyRot += 180; // rotate camera at 135 degrees
+            }
         }
 
-        if (state instanceof ArmorStandRenderState armorStandRenderState) {
-            armorStandRenderState.headPose = new Rotations(properties.pitch.get(), properties.yaw.get(), 0);
-        }
 
         // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now
         if (state instanceof AvatarRenderState avatarRenderState) {
@@ -423,8 +443,37 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
     private static void applyToEntityAndPassengers(Entity entity, Consumer<Entity> action) {
         action.accept(entity);
-        if (entity.getPassengers().isEmpty()) return;
-        for (Entity e : entity.getPassengers()) applyToEntityAndPassengers(e, action);
+        if (entity.getPassengers().isEmpty()) {
+            return;
+        }
+
+        for (Entity e : entity.getPassengers()) {
+            applyToEntityAndPassengers(e, action);
+        }
+    }
+
+    protected boolean hasEntityType(Class<? extends Entity> entityTypeClass) {
+        AtomicBoolean found = new AtomicBoolean(false);
+
+        applyToEntityAndPassengers(getUsedEntity(), e -> {
+            if (entityTypeClass.isAssignableFrom(e.getClass())) {
+                found.set(true);
+            }
+        });
+
+        return found.get();
+    }
+
+    protected <T extends Entity> boolean hasEntityProperty(Class<T> entityTypeClass, Predicate<T> predicate) {
+        AtomicBoolean found = new AtomicBoolean(false);
+
+        applyToEntityAndPassengers(getUsedEntity(), e -> {
+            if (entityTypeClass.isAssignableFrom(e.getClass()) && predicate.test((T) e)) {
+                found.set(true);
+            }
+        });
+
+        return found.get();
     }
 
     // alternative to the tick method, which has a bunch of other stuff done i dont want

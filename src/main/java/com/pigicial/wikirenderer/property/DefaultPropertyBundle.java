@@ -97,7 +97,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
         container.child(this.buildResetButton());
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-            builder.row.child(UIComponents.button(Translate.gui("dimetric"), (ButtonComponent button) -> {
+            builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(30D);
             }).margins(Insets.right(5)));

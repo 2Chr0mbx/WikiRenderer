@@ -59,7 +59,8 @@ public class VertexPositionTracker implements VertexConsumer {
 
     public static class BufferSource extends MultiBufferSource.BufferSource {
 
-        private final Map<RenderType, VertexPositionTracker> renderTypeMap = new HashMap<>(); // have to use a map to prevent duplicate buffer source issues
+        private final Map<RenderType, VertexPositionTracker> renderTypeMap = new HashMap<>();
+        // have to use a map to prevent duplicate buffer source issues
 
         public BufferSource() {
             super(null, null);

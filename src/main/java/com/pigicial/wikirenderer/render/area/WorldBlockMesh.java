@@ -10,7 +10,6 @@ import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.*;
 import com.pigicial.wikirenderer.ShaderCheck;
-import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.OrthographicSort;
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
@@ -47,6 +46,7 @@ import org.joml.Matrix4fc;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -67,7 +67,7 @@ public class WorldBlockMesh {
     private CompletableFuture<Void> buildFuture = null;
     private float buildProgress = 0;
     private boolean buildCancelRequested = false;
-    private final HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
+    private final Map<BlockPos, BlockEntity> blockEntities = new ConcurrentHashMap<>();
 
     private OrthographicSort orthographicTransparencySorting = null;
     private float lastUsedRotation;
@@ -100,8 +100,8 @@ public class WorldBlockMesh {
             terrainSampler = RenderSystem.getDevice().createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST, maxAnisotropy, OptionalDouble.empty());
         }
 
-        if (WikiRenderer.orthographicSorting != null) {
-            this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
+        if (OrthographicSort.currentOrthographicSorting != null) {
+            this.orthographicTransparencySorting = OrthographicSort.currentOrthographicSorting;
         }
 
         float currentRotation = AreaPropertyBundle.INSTANCE.getUsedRotation();
@@ -218,7 +218,7 @@ public class WorldBlockMesh {
                 ? MeshState.REBUILDING
                 : MeshState.BUILDING;
 
-        this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
+        this.orthographicTransparencySorting = OrthographicSort.currentOrthographicSorting;
         if (ShaderCheck.isUsingShaders() || !async) {
             this.buildFuture = CompletableFuture.completedFuture(null);
             this.buildMesh();

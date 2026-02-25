@@ -27,6 +27,13 @@ repositories {
 
 loom {
     accessWidenerPath = file("src/main/resources/wikirenderer.accesswidener")
+    runs {
+        client {
+            property "mixin.debug.export", "true"
+            vmArg "-Dmixin.debug.verbose=true"
+            vmArg "-Dmixin.debug.export=true"
+        }
+    }
 }
 
 dependencies {

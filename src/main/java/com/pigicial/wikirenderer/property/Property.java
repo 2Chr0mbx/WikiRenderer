@@ -54,6 +54,10 @@ public class Property<T> implements BiConsumer<Property<T>, T> {
         screen.registerPropertyListener(this);
     }
 
+    public void addRebuildListener(RenderScreen screen) {
+        this.futureListen(screen, (p, t) -> screen.guiRebuildScheduled = true);
+    }
+
     public void removeListeners(RenderScreen renderScreen) {
         List<BiConsumer<Property<T>, T>> list = changeListeners.remove(renderScreen);
         if (list != null) {

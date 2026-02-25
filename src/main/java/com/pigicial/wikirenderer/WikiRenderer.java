@@ -56,7 +56,6 @@ public class WikiRenderer implements ClientModInitializer {
 	public static GpuBufferSlice prevProjectionMatrix = null;
 
 	public static GpuBufferSlice renderableDrawProjectionBuffer = null;
-    public static OrthographicSort orthographicSorting = null;
 
     @Override
     public void onInitializeClient() {
@@ -103,7 +102,7 @@ public class WikiRenderer implements ClientModInitializer {
     }
 
     public static void setSortingMethod(Matrix4f projectionMatrix, Matrix4fStack modelViewStack) {
-        orthographicSorting = new OrthographicSort(projectionMatrix, modelViewStack);
+        OrthographicSort.currentOrthographicSorting = new OrthographicSort(projectionMatrix, modelViewStack);
     }
 
 	public static void endRenderableDraw() {
@@ -112,6 +111,6 @@ public class WikiRenderer implements ClientModInitializer {
 		prevProjectionMatrix = null;
 		renderableDrawProjectionBuffer = null;
 		inRenderableDraw = false;
-        orthographicSorting = null;
+        OrthographicSort.currentOrthographicSorting = null;
     }
 }

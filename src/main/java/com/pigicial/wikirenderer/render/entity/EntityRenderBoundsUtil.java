@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.state.ArmorStandRenderState;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.TextDisplayEntityRenderState;
 import net.minecraft.client.renderer.feature.*;
@@ -24,6 +23,15 @@ public class EntityRenderBoundsUtil {
 
     private static final VertexPositionTracker.BufferSource BUFFER_SOURCE = new VertexPositionTracker.BufferSource();
     private static final VertexPositionTracker.OutlineBufferSource OUTLINE_BUFFER_SOURCE = new VertexPositionTracker.OutlineBufferSource();
+
+    private static final ModelFeatureRenderer MODEL_FEATURE_RENDERER = new ModelFeatureRenderer();
+    private static final ModelPartFeatureRenderer MODEL_PART_FEATURE_RENDERER = new ModelPartFeatureRenderer();
+    private static final FlameFeatureRenderer FLAME_FEATURE_RENDERER = new FlameFeatureRenderer();
+    private static final NameTagFeatureRenderer NAME_TAG_FEATURE_RENDERER = new NameTagFeatureRenderer();
+    private static final TextFeatureRenderer TEXT_FEATURE_RENDERER = new TextFeatureRenderer();
+    private static final ItemFeatureRenderer ITEM_FEATURE_RENDERER = new ItemFeatureRenderer();
+    private static final BlockFeatureRenderer BLOCK_FEATURE_RENDERER = new BlockFeatureRenderer();
+    private static final CustomFeatureRenderer CUSTOM_FEATURE_RENDERER = new CustomFeatureRenderer();
 
     @Nullable
     public static AABB getPositionOffsetBasedBounds(Entity entity) {
@@ -46,17 +54,17 @@ public class EntityRenderBoundsUtil {
 
         VertexPositionTracker.BOUNDS = null;
         for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-            new ModelFeatureRenderer().render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            new ModelPartFeatureRenderer().render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            new FlameFeatureRenderer().render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
+            MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+            MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+            FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
             if (renderState instanceof ArmorStandRenderState || renderState instanceof TextDisplayEntityRenderState) {
                 // regular entity nametags probably shouldn't impact the bounding box
-                new NameTagFeatureRenderer().render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+                NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
             }
-            new TextFeatureRenderer().render(collection, BUFFER_SOURCE);
-            new ItemFeatureRenderer().render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
-            new BlockFeatureRenderer().render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
-            new CustomFeatureRenderer().render(collection, BUFFER_SOURCE);
+            TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+            ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
+            BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
+            CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
         }
 
         return VertexPositionTracker.BOUNDS;

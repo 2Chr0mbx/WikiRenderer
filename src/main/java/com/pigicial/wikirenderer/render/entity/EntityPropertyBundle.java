@@ -12,7 +12,7 @@ import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -21,6 +21,7 @@ import org.joml.Matrix4fStack;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 
 public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
@@ -35,8 +36,10 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public final Property<Boolean> useLiveEntity = Property.of(false);
 
+    public final Property<Boolean> overrideHeadRotations = Property.of(true);
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
     public final IntProperty pitch = IntProperty.of(0, -90, 90);
+    public final Property<Boolean> overrideBodyRotations = Property.of(true);
     public final IntProperty entityRotation = IntProperty.of(0, -180, 180).withRollover();
     public final Property<Boolean> useSteveSkin = Property.of(false);
     public final Property<Boolean> hideHeldItems = Property.of(false);
@@ -160,25 +163,37 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             DecimalFormat df = new DecimalFormat("0.#######");
             String text = df.format(coords.x) + " " + df.format(coords.y) + " " + df.format(coords.z);
 
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (clipboard, contents) -> {});
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (clipboard, contents) -> {
+            });
             screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
         }));
 
-        WikiRendererUI.intControl(screen, container, this.yaw, "entity_data.yaw", 15);
-        WikiRendererUI.intControl(screen, container, this.pitch, "entity_data.pitch", 5);
-        WikiRendererUI.intControl(screen, container, this.entityRotation, "entity_data.rotation", 5);
-        if (renderable instanceof EntityRenderable entityRenderable) {
-            Entity usedEntity = entityRenderable.getUsedEntity();
-            if (usedEntity instanceof Player) {
-                WikiRendererUI.booleanControl(container, this.useSteveSkin, "entity_data.steve");
-                WikiRendererUI.booleanControl(container, this.forceSmallArms, "entity_data.small_arms");
-            }
-            if (usedEntity instanceof LivingEntity) {
+        if (renderable.hasEntityType(LivingEntity.class)) {
+            WikiRendererUI.booleanControl(container, this.overrideHeadRotations, "override_head_rotations");
+            WikiRendererUI.intControl(screen, container, this.yaw, "entity_data.yaw", 15);
+            WikiRendererUI.intControl(screen, container, this.pitch, "entity_data.pitch", 5);
+            WikiRendererUI.booleanControl(container, this.overrideBodyRotations, "override_body_rotations");
+            WikiRendererUI.intControl(screen, container, this.entityRotation, "entity_data.rotation", 5);
+        }
+
+        if (renderable.hasEntityType(Player.class)) {
+            WikiRendererUI.booleanControl(container, this.useSteveSkin, "entity_data.steve");
+            WikiRendererUI.booleanControl(container, this.forceSmallArms, "entity_data.small_arms");
+        }
+        if (renderable.hasEntityType(LivingEntity.class)) {
+            if (renderable.hasEntityProperty(LivingEntity.class, living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty())) {
                 WikiRendererUI.booleanControl(container, this.hideHeldItems, "entity_data.hide_held_items");
-                WikiRendererUI.booleanControl(container, this.hideArmor, "entity_data.hide_armor");
-                WikiRendererUI.booleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments");
-                WikiRendererUI.booleanControl(container, this.invisible, "entity_data.invisible");
             }
+
+            if (renderable.hasEntityProperty(LivingEntity.class, living -> living.getArmorCoverPercentage() > 0)) {
+                WikiRendererUI.booleanControl(container, this.hideArmor, "entity_data.hide_armor");
+            }
+
+            if (renderable.hasEntityProperty(LivingEntity.class, living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil()))) {
+                WikiRendererUI.booleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments");
+            }
+
+            WikiRendererUI.booleanControl(container, this.invisible, "entity_data.invisible");
         }
     }
 
