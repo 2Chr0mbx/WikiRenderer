@@ -25,10 +25,9 @@ public class WikiRendererUI {
     public static EditBox labelledTextField(FlowLayout container, String content, String key, Sizing sizing) {
         try (RowBuilder builder = row(container)) {
             TextBoxComponent textBox = UIComponents.textBox(sizing, content);
-
+            textBox.setMaxLength(100); // allow more characters
             builder.row.child(textBox);
             builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
-
             return textBox;
         }
     }

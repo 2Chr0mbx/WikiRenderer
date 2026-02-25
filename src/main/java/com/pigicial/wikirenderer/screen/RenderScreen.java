@@ -112,8 +112,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public boolean capturing = false;
     public boolean guiRebuildScheduled = false;
 
-    private int viewportBeginX;
-    private int viewportEndX;
+    public int viewportBeginX;
+    public int viewportEndX;
     private boolean hasBothColumns = false;
 
     public ButtonComponent exportButton = null;
@@ -566,11 +566,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     public void notify(@NotNull Runnable onClick, Component... messages) {
-        this.notificationArea.child(0, new NotificationComponent(onClick, messages));
+        this.notificationArea.child(0, new NotificationComponent(this, onClick, messages));
     }
 
     public void notify(Component... messages) {
-        this.notificationArea.child(0, new NotificationComponent(null, messages));
+        this.notificationArea.child(0, new NotificationComponent(this, null, messages));
     }
 
     private boolean isInViewport(double mouseX) {

@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.components;
 
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.UIComponents;
@@ -15,7 +16,7 @@ public class NotificationComponent extends FlowLayout {
 
     private float age = 0;
 
-    public NotificationComponent(@Nullable Runnable onClick, Component... messages) {
+    public NotificationComponent(RenderScreen screen, @Nullable Runnable onClick, Component... messages) {
         super(Sizing.content(), Sizing.content(), Algorithm.VERTICAL);
 
         this.margins(Insets.top(5));
@@ -34,8 +35,9 @@ public class NotificationComponent extends FlowLayout {
             });
         }
 
+        int maxWidth = screen.viewportEndX - screen.viewportBeginX - 40;
         for (Component message : messages) {
-            LabelComponent label = UIComponents.label(message);
+            LabelComponent label = UIComponents.label(message).maxWidth(maxWidth);
             if (onClick != null) {
                 label.tooltip(Translate.gui("click_to_open").withStyle(ChatFormatting.GRAY)).cursorStyle(this.cursorStyle);
             }
