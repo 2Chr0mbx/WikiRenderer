@@ -9,7 +9,10 @@ import com.pigicial.wikirenderer.util.VertexPositionTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.entity.state.ArmorStandRenderState;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.TextDisplayEntityRenderState;
 import net.minecraft.client.renderer.feature.*;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.world.entity.Entity;
@@ -46,6 +49,10 @@ public class EntityRenderBoundsUtil {
             new ModelFeatureRenderer().render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
             new ModelPartFeatureRenderer().render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
             new FlameFeatureRenderer().render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
+            if (renderState instanceof ArmorStandRenderState || renderState instanceof TextDisplayEntityRenderState) {
+                // regular entity nametags probably shouldn't impact the bounding box
+                new NameTagFeatureRenderer().render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+            }
             new TextFeatureRenderer().render(collection, BUFFER_SOURCE);
             new ItemFeatureRenderer().render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
             new BlockFeatureRenderer().render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
