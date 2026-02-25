@@ -44,25 +44,25 @@ public class WikiRendererUI {
 
     public static void intControl(RenderScreen screen, FlowLayout container, IntProperty property, String name) {
         try (RowBuilder builder = row(container)) {
-            builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fill(19), property, false));
-            builder.row.child(new PropertySliderComponent(screen, Sizing.fill(70), Translate.gui(name), property).margins(Insets.horizontal(5)));
-            builder.row.child(new ResetPropertyButton(property));
+            builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fixed(45), property, false));
+            builder.row.child(new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(name), property).margins(Insets.horizontal(5)));
+            builder.row.child(new ResetPropertyButton(property).margins(Insets.right(5)));
         }
     }
 
     public static void intPercentageControl(RenderScreen screen, FlowLayout container, IntProperty property, String name) {
         try (RowBuilder builder = row(container)) {
-            builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fill(19), property, true));
-            builder.row.child(new PropertySliderComponent(screen, Sizing.fill(70), Translate.gui(name), property).margins(Insets.horizontal(5)));
-            builder.row.child(new ResetPropertyButton(property));
+            builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fixed(45), property, true));
+            builder.row.child(new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(name), property).margins(Insets.horizontal(5)));
+            builder.row.child(new ResetPropertyButton(property).margins(Insets.right(5)));
         }
     }
 
     public static void doubleControl(RenderScreen screen, FlowLayout container, DoubleProperty property, String name) {
         try (RowBuilder builder = row(container)) {
-            builder.row.child(new DoublePropertyTextFieldComponent(screen, Sizing.fill(19), property));
-            builder.row.child(new PropertySliderComponent(screen, Sizing.fill(70), Translate.gui(name), property).margins(Insets.horizontal(5)));
-            builder.row.child(new ResetPropertyButton(property));
+            builder.row.child(new DoublePropertyTextFieldComponent(screen, Sizing.fixed(45), property));
+            builder.row.child(new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(name), property).margins(Insets.horizontal(5)));
+            builder.row.child(new ResetPropertyButton(property).margins(Insets.right(5)));
         }
     }
 

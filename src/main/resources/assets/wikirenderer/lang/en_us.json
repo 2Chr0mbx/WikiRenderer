@@ -21,7 +21,7 @@
   "gui.wikirenderer.dont_rescale": "Don't Rescale",
   "gui.wikirenderer.dump_into_root": "Dump into root",
   "gui.wikirenderer.overwrite_latest": "Overwrite latest file",
-  "gui.wikirenderer.export": "Export",
+  "gui.wikirenderer.export": "Export (F12)",
   "gui.wikirenderer.export_to_clipboard": "Clipboard",
   "gui.wikirenderer.open_folder": "Open Folder",
   "gui.wikirenderer.copied_to_clipboard": "Exported to Clipboard",
