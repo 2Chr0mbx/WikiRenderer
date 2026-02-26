@@ -45,6 +45,14 @@ public interface CroppablePropertyBundle extends PropertyBundle {
                         resizeModeProperty.set(ImageRescaleMode.HORIZONTAL);
                         screen.guiRebuildScheduled = true;
                     })
+                    .button(Translate.gui("rescale_shorter_side"), b -> {
+                        resizeModeProperty.set(ImageRescaleMode.SHORTER_SIDE);
+                        screen.guiRebuildScheduled = true;
+                    })
+                    .button(Translate.gui("rescale_longer_side"), b -> {
+                        resizeModeProperty.set(ImageRescaleMode.LONGER_SIDE);
+                        screen.guiRebuildScheduled = true;
+                    })
                     .button(Translate.gui("dont_rescale"), b -> {
                         resizeModeProperty.set(ImageRescaleMode.DISABLED);
                         screen.guiRebuildScheduled = true;

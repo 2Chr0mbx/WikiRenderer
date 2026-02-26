@@ -110,6 +110,8 @@ public class RenderableDispatcher {
                 int axisSize = switch (rescaleMode) {
                     case VERTICAL -> croppedImage.getHeight();
                     case HORIZONTAL -> croppedImage.getWidth();
+                    case SHORTER_SIDE -> Math.min(croppedImage.getWidth(), croppedImage.getHeight());
+                    case LONGER_SIDE -> Math.max(croppedImage.getWidth(), croppedImage.getHeight());
                     case DISABLED -> 0;
                 };
 
