@@ -153,9 +153,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         clonedEntity.setXRot(source.getXRot());
         clonedEntity.setYRot(source.getYRot());
-        if (source instanceof LivingEntity livingSource) {
-            clonedEntity.setYBodyRot(livingSource.yBodyRot);
-            clonedEntity.setYHeadRot(livingSource.yHeadRot);
+        if (clonedEntity instanceof LivingEntity livingClone && source instanceof LivingEntity livingSource) {
+            livingClone.yHeadRot = livingSource.yHeadRot;
+            livingClone.yHeadRotO = livingSource.yHeadRotO;
+            livingClone.yBodyRot = livingSource.yBodyRot;
+            livingClone.yBodyRotO = livingSource.yBodyRotO;
         }
 
         return clonedEntity;
@@ -217,8 +219,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         playerClone.setXRot(originalPlayer.getXRot());
         playerClone.setYRot(originalPlayer.getYRot());
-        playerClone.setYBodyRot(originalPlayer.yBodyRot);
-        playerClone.setYHeadRot(originalPlayer.yHeadRot);
+
+        playerClone.yHeadRot = originalPlayer.yHeadRot;
+        playerClone.yHeadRotO = originalPlayer.yHeadRotO;
+        playerClone.yBodyRot = originalPlayer.yBodyRot;
+        playerClone.yBodyRotO = originalPlayer.yBodyRotO;
 
         ElytraAnimationStateAccessor elytraData = (ElytraAnimationStateAccessor) playerClone.elytraAnimationState;
         elytraData.isometric$setRotX((float) (Math.PI / 12));
