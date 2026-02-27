@@ -3,6 +3,8 @@ package com.pigicial.wikirenderer.render.item;
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.SerializablePropertyBundle;
+import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
@@ -10,10 +12,17 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.world.item.Items;
 import org.joml.Matrix4fStack;
 
-public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle {
+public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
+
+    public static final ItemRenderablePropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new ItemRenderablePropertyBundle());
 
     public final Property<Boolean> forceEnchantmentGlints = Property.of(false);
     protected int playerHeadsExportResolution = 300;
+
+    @Override
+    public String getConfigFileName() {
+        return "item_render_settings";
+    }
 
     @Override
     protected int getDefaultExportResolution() {

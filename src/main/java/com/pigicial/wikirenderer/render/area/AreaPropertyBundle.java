@@ -2,10 +2,8 @@ package com.pigicial.wikirenderer.render.area;
 
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.components.ConditionalButton;
-import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
-import com.pigicial.wikirenderer.property.GlobalProperties;
-import com.pigicial.wikirenderer.property.IntProperty;
-import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.*;
+import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.area.bounds.ExpandableMeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.ExpansionSide;
@@ -31,26 +29,9 @@ import java.awt.datatransfer.StringSelection;
 
 import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
 
-public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
+public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
 
-    public static final AreaPropertyBundle INSTANCE = new AreaPropertyBundle();
-
-    public final Property<Boolean> emulateDaylight = Property.of(true);
-    public final Property<Boolean> useFullBrightGamma = Property.of(false);
-    public final Property<Boolean> useNightVision = Property.of(false);
-    public final Property<Boolean> lightUpSurroundingBlocks = Property.of(true);
-    public final Property<Boolean> hideBeaconBeams = Property.of(false);
-
-    public final IntProperty entityBoundsIntersectionRequirement = IntProperty.of(20, 0, 100);
-    public final Property<Boolean> hideEntities = Property.of(false);
-    public final Property<Boolean> hidePlayers = Property.of(false);
-    public final Property<Boolean> hideArmorStands = Property.of(false);
-    public final Property<Boolean> hideLivingEntities = Property.of(false);
-    public final Property<Boolean> hideText = Property.of(false);
-    public final Property<Boolean> hideNametags = Property.of(false);
-    public final Property<Boolean> freezeEntities = Property.of(false);
-    public final Property<Boolean> freezePlayerArms = Property.of(false);
-    public final Property<Boolean> autoRefreshVisibleEntities = Property.of(true);
+    public static final AreaPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new AreaPropertyBundle());
 
     public final Property<Boolean> perPixel90DegreeRendering = Property.of(false);
     public MeshSideRotation sideViewRotation = MeshSideRotation.NORTH;
@@ -59,7 +40,12 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     public final Property<Boolean> exportSideViewMinimapData = Property.of(true);
     public final Property<Boolean> halfPixelOffsetFor4x4 = Property.of(true); // helps fix certain things like fence lines not rendering
     private int pixelsPerBlockResolution = 16;
-    private int faceRenderingActualResolution = this.getDefaultExportResolution();
+    private transient int faceRenderingActualResolution = this.getDefaultExportResolution();
+
+    public final Property<Boolean> emulateDaylight = Property.of(true);
+    public final Property<Boolean> useFullBrightGamma = Property.of(false);
+    public final Property<Boolean> useNightVision = Property.of(false);
+    public final Property<Boolean> lightUpSurroundingBlocks = Property.of(true);
 
     public final Property<Boolean> useWalkabilityFilter = Property.of(false);
     public final IntProperty dontSearchForHigherFloorsThreshold = IntProperty.of(255, 0, 255);
@@ -71,17 +57,34 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public final Property<Boolean> hideMesh = Property.of(false);
     public final Property<Boolean> hideFluids = Property.of(false);
-    public final Property<Boolean> overrideRotations = Property.of(false);
-    public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
-    public final IntProperty pitch = IntProperty.of(0, -90, 90).withRollover();
-    public final IntProperty entityRotation = IntProperty.of(0, -90, 90).withRollover();
+    public final Property<Boolean> hideBeaconBeams = Property.of(false);
 
-    public final Property<Boolean> useSteveSkin = Property.of(false);
-    public final Property<Boolean> hideHeldItems = Property.of(false);
-    public final Property<Boolean> hideArmor = Property.of(false);
-    public final Property<Boolean> hideEnchantments = Property.of(false);
-    public final Property<Boolean> invisible = Property.of(false); // idk what this is for but its a requested option
-    public final Property<Boolean> forceSmallArms = Property.of(false);
+    public final Property<Boolean> hideEntities = Property.of(false);
+    public final Property<Boolean> hidePlayers = Property.of(false);
+    public final Property<Boolean> hideArmorStands = Property.of(false);
+    public final Property<Boolean> hideLivingEntities = Property.of(false);
+    public final IntProperty entityBoundsIntersectionRequirement = IntProperty.of(20, 0, 100);
+    public final Property<Boolean> freezeEntities = Property.of(false);
+    public final Property<Boolean> freezePlayerArms = Property.of(false);
+    public final Property<Boolean> autoRefreshVisibleEntities = Property.of(true);
+    public final Property<Boolean> hideText = Property.of(false);
+    public final Property<Boolean> hideNametags = Property.of(false);
+
+    public final Property<Boolean> overrideEntityRotations = Property.of(false);
+    public final IntProperty entityYawOverride = IntProperty.of(0, -180, 180).withRollover();
+    public final IntProperty entityPitchOverride = IntProperty.of(0, -90, 90).withRollover();
+    public final IntProperty entityRotationOverride = IntProperty.of(0, -90, 90).withRollover();
+    public final Property<Boolean> useSteveSkinForEntities = Property.of(false);
+    public final Property<Boolean> hideHeldItemsForEntities = Property.of(false);
+    public final Property<Boolean> hideArmorForEntities = Property.of(false);
+    public final Property<Boolean> hideEnchantmentsForEntities = Property.of(false);
+    public final Property<Boolean> toggleInvisibilityForEntities = Property.of(false); // idk what this is for but its a requested option
+    public final Property<Boolean> forceSmallArmsForEntities = Property.of(false);
+
+    @Override
+    public String getConfigFileName() {
+        return "area_render_settings";
+    }
 
     public boolean areMinimapSettingsExportable() {
         return sideViewRotation == MeshSideRotation.NORTH && sideViewSlant == MeshSideSlant.ABOVE;
@@ -327,16 +330,16 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
         }
 
         WikiRendererUI.text(container, "entity_overrides", 10);
-        WikiRendererUI.booleanControl(container, this.overrideRotations, "override_rotations");
-        WikiRendererUI.intControl(screen, container, yaw, "entity_data.yaw");
-        WikiRendererUI.intControl(screen, container, pitch, "entity_data.pitch");
-        WikiRendererUI.intControl(screen, container, entityRotation, "entity_data.rotation");
-        WikiRendererUI.booleanControl(container, useSteveSkin, "entity_data.steve");
-        WikiRendererUI.booleanControl(container, forceSmallArms, "entity_data.small_arms");
-        WikiRendererUI.booleanControl(container, hideHeldItems, "entity_data.hide_held_items");
-        WikiRendererUI.booleanControl(container, hideArmor, "entity_data.hide_armor");
-        WikiRendererUI.booleanControl(container, hideEnchantments, "entity_data.hide_enchantments");
-        WikiRendererUI.booleanControl(container, invisible, "entity_data.invisible");
+        WikiRendererUI.booleanControl(container, this.overrideEntityRotations, "override_rotations");
+        WikiRendererUI.intControl(screen, container, entityYawOverride, "entity_data.yaw");
+        WikiRendererUI.intControl(screen, container, entityPitchOverride, "entity_data.pitch");
+        WikiRendererUI.intControl(screen, container, entityRotationOverride, "entity_data.rotation");
+        WikiRendererUI.booleanControl(container, useSteveSkinForEntities, "entity_data.steve");
+        WikiRendererUI.booleanControl(container, forceSmallArmsForEntities, "entity_data.small_arms");
+        WikiRendererUI.booleanControl(container, hideHeldItemsForEntities, "entity_data.hide_held_items");
+        WikiRendererUI.booleanControl(container, hideArmorForEntities, "entity_data.hide_armor");
+        WikiRendererUI.booleanControl(container, hideEnchantmentsForEntities, "entity_data.hide_enchantments");
+        WikiRendererUI.booleanControl(container, toggleInvisibilityForEntities, "entity_data.invisible");
     }
 
     @Override

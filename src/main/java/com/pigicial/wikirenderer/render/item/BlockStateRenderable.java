@@ -44,8 +44,6 @@ public class BlockStateRenderable
         extends ItemBasedRenderable<BlockStatePropertyBundle>
         implements TickingRenderable<BlockStatePropertyBundle>, DynamicBatchLabelProvider, TextureDataProvider, AnimationTimingsProvider {
 
-    public static final BlockStatePropertyBundle PROPERTIES = new BlockStatePropertyBundle();
-
     private final Minecraft client = Minecraft.getInstance();
 
     private final BlockState state;
@@ -164,7 +162,7 @@ public class BlockStateRenderable
 
     @Override
     public BlockStatePropertyBundle getProperties() {
-        return PROPERTIES;
+        return BlockStatePropertyBundle.INSTANCE;
     }
 
     @Override

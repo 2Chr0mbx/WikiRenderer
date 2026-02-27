@@ -3,18 +3,25 @@ package com.pigicial.wikirenderer.render.item;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.DoubleProperty;
 import com.pigicial.wikirenderer.property.IntProperty;
+import com.pigicial.wikirenderer.property.SerializablePropertyBundle;
+import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import io.wispforest.owo.ui.container.FlowLayout;
 import org.joml.Matrix4fStack;
 
-public class ItemAtlasPropertyBundle extends DefaultCroppablePropertyBundle {
+public class ItemAtlasPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
 
-    public static final ItemAtlasPropertyBundle INSTANCE = new ItemAtlasPropertyBundle();
+    public static final ItemAtlasPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new ItemAtlasPropertyBundle());
 
     protected final IntProperty columns = IntProperty.of(20, 1, 500);
-    protected final DoubleProperty spacing = DoubleProperty.of(1.25,  0.0, 10.0);
+    protected final DoubleProperty spacing = DoubleProperty.of(1,  0.0, 10.0);
+
+    @Override
+    public String getConfigFileName() {
+        return "item_atlas_render_settings";
+    }
 
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
@@ -23,6 +30,10 @@ public class ItemAtlasPropertyBundle extends DefaultCroppablePropertyBundle {
         WikiRendererUI.intControl(screen, container, this.scale, "scale");
         WikiRendererUI.intControl(screen, container, this.columns, "columns");
         WikiRendererUI.doubleControl(screen, container, this.spacing, "spacing");
+        container.child(this.buildResetButton(() -> {
+            this.columns.setToDefault();
+            this.spacing.setToDefault();
+        }));
     }
 
     @Override

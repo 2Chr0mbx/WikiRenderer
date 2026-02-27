@@ -4,6 +4,8 @@ import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.SerializablePropertyBundle;
+import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
@@ -23,9 +25,9 @@ import java.awt.datatransfer.StringSelection;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 
-public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
+public class EntityPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
 
-    public static final EntityPropertyBundle INSTANCE = new EntityPropertyBundle();
+    public static final EntityPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new EntityPropertyBundle());
 
     public final Property<Boolean> tickEntityAnimations = Property.of(false);
     public final Property<Boolean> spriteRendering = Property.of(false);
@@ -48,6 +50,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
     public final Property<Boolean> hideEnchantments = Property.of(false);
     public final Property<Boolean> invisible = Property.of(false); // idk what this is for but its a requested option
     public final Property<Boolean> forceSmallArms = Property.of(false);
+
+    @Override
+    public String getConfigFileName() {
+        return "entity_render_settings";
+    }
 
     @Override
     protected int getDefaultExportResolution() {
@@ -146,16 +153,10 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             }
         }
 
-        container.child(UIComponents.button(Translate.gui("reset_transformations"), (ButtonComponent button) -> {
-            this.xOffset.setToDefault();
-            this.yOffset.setToDefault();
-            this.scale.setToDefault();
-            this.rotation.setToDefault();
-            this.slant.setToDefault();
-            this.rotationSpeed.setToDefault();
+        container.child(this.buildResetButton(() -> {
             this.spriteRotation.setToDefault();
             this.spriteSlant.setToDefault();
-        }).margins(Insets.of(5, 0, 0, 0)));
+        })).margins(Insets.of(5, 0, 0, 0));
 
         WikiRendererUI.text(container, "entity_data", true);
         container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {

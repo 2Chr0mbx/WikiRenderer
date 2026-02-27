@@ -48,6 +48,10 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
         }
     }
 
+    public PropertyBundle getActualProperties() {
+        return actualProperties;
+    }
+
     @Override
     public void onRenderStart() {
         this.actualProperties.onRenderStart();

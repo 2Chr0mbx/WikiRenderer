@@ -25,13 +25,7 @@ import java.util.*;
 
 public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
-    public static final ItemRenderablePropertyBundle PROPERTIES = new ItemRenderablePropertyBundle();
     private static final ItemStackRenderState RENDER_STATE = new ItemStackRenderState();
-
-    static {
-        PROPERTIES.slant.setDefaultValue(0D).setToDefault();
-        PROPERTIES.rotation.setDefaultValue(0).setToDefault();
-    }
 
     public final ItemStack stack;
     private Map<String, TextureData> textureData = null;
@@ -96,7 +90,7 @@ public class ItemRenderable extends ItemBasedRenderable<ItemRenderablePropertyBu
 
     @Override
     public ItemRenderablePropertyBundle getProperties() {
-        return PROPERTIES;
+        return ItemRenderablePropertyBundle.INSTANCE;
     }
 
     @Override

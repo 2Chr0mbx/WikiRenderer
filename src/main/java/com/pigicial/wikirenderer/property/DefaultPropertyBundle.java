@@ -26,8 +26,8 @@ public class DefaultPropertyBundle implements PropertyBundle {
     public IntProperty rotationSpeed = IntProperty.of(0, -720, 720);
     public Property<Boolean> allowRotatingWithMouse = Property.of(this.allowRotatingWithMouseByDefault());
 
-    public float rotationOffset = 0;
-    public boolean rotationOffsetUpdated = false;
+    public transient float rotationOffset = 0;
+    public transient boolean rotationOffsetUpdated = false;
 
     private int exportResolution = this.getDefaultExportResolution();
 
@@ -110,6 +110,10 @@ public class DefaultPropertyBundle implements PropertyBundle {
     }
 
     protected ButtonComponent buildResetButton() {
+        return this.buildResetButton(() -> {});
+    }
+
+    protected ButtonComponent buildResetButton(Runnable runnable) {
         return (ButtonComponent) UIComponents.button(Translate.gui("reset_transformations"), (ButtonComponent button) -> {
             this.xOffset.setToDefault();
             this.yOffset.setToDefault();
@@ -117,6 +121,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
             this.rotation.setToDefault();
             this.slant.setToDefault();
             this.rotationSpeed.setToDefault();
+            runnable.run();
         }).margins(Insets.of(5, 0, 0, 0));
     }
 

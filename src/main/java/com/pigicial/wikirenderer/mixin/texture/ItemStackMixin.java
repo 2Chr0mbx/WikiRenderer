@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.mixin.texture;
 
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.render.item.ItemRenderable;
+import com.pigicial.wikirenderer.render.item.ItemRenderablePropertyBundle;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ItemStackMixin {
     @Inject(method = "hasFoil", at = @At("HEAD"), cancellable = true)
     private void onHasFoil(CallbackInfoReturnable<Boolean> cir) {
-        if (WikiRenderer.overrideGlint && ItemRenderable.PROPERTIES.forceEnchantmentGlints.get()) {
+        if (WikiRenderer.overrideGlint && ItemRenderablePropertyBundle.INSTANCE.forceEnchantmentGlints.get()) {
             cir.setReturnValue(true);
         }
     }

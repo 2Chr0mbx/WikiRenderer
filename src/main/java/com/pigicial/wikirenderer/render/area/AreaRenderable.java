@@ -271,23 +271,23 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             state.nameTagAttachment = null;
         }
 
-        if (properties.overrideRotations.get()) {
+        if (properties.overrideEntityRotations.get()) {
             if (state instanceof LivingEntityRenderState livingEntityRenderState) {
-                livingEntityRenderState.bodyRot = (properties.entityRotation.get() + 180); // 180 makes it face the camera by default in the standard 135-degree rotation
-                livingEntityRenderState.xRot = properties.pitch.get();
-                livingEntityRenderState.yRot = properties.yaw.get();
+                livingEntityRenderState.bodyRot = (properties.entityRotationOverride.get() + 180); // 180 makes it face the camera by default in the standard 135-degree rotation
+                livingEntityRenderState.xRot = properties.entityPitchOverride.get();
+                livingEntityRenderState.yRot = properties.entityYawOverride.get();
             }
             if (state instanceof ArmorStandRenderState armorStandRenderState) {
-                armorStandRenderState.headPose = new Rotations(properties.pitch.get(), properties.yaw.get(), 0);
+                armorStandRenderState.headPose = new Rotations(properties.entityPitchOverride.get(), properties.entityYawOverride.get(), 0);
             }
         }
 
         // todo: de-dupe
         if (state instanceof AvatarRenderState avatarRenderState) {
-            if (properties.useSteveSkin.get()) {
+            if (properties.useSteveSkinForEntities.get()) {
                 avatarRenderState.skin = DefaultPlayerSkin.getDefaultSkin();
             }
-            if (properties.forceSmallArms.get()) {
+            if (properties.forceSmallArmsForEntities.get()) {
                 avatarRenderState.skin = avatarRenderState.skin.with(PlayerSkin.Patch.create(
                         Optional.empty(),
                         Optional.empty(),
@@ -302,14 +302,14 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         }
 
         if (state instanceof ArmedEntityRenderState armedEntityRenderState) {
-            if (properties.hideHeldItems.get()) {
+            if (properties.hideHeldItemsForEntities.get()) {
                 armedEntityRenderState.leftHandItemStack = ItemStack.EMPTY;
                 armedEntityRenderState.rightHandItemStack = ItemStack.EMPTY;
                 armedEntityRenderState.leftHandItemState.clear();
                 armedEntityRenderState.rightHandItemState.clear();
                 armedEntityRenderState.leftArmPose = HumanoidModel.ArmPose.EMPTY;
                 armedEntityRenderState.rightArmPose = HumanoidModel.ArmPose.EMPTY;
-            } else if (properties.hideEnchantments.get()) {
+            } else if (properties.hideEnchantmentsForEntities.get()) {
                 for (ItemStackRenderState.LayerRenderState layer : ((ItemStackRenderStateAccessor) armedEntityRenderState.leftHandItemState).wikirenderer$getLayers()) {
                     layer.setFoilType(ItemStackRenderState.FoilType.NONE);
                 }
@@ -320,14 +320,14 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         }
 
         if (state instanceof HumanoidRenderState humanoidRenderState) {
-            if (properties.hideArmor.get()) {
+            if (properties.hideArmorForEntities.get()) {
                 humanoidRenderState.headItem.clear();
                 humanoidRenderState.wornHeadType = null;
                 humanoidRenderState.headEquipment = ItemStack.EMPTY;
                 humanoidRenderState.chestEquipment = ItemStack.EMPTY;
                 humanoidRenderState.legsEquipment = ItemStack.EMPTY;
                 humanoidRenderState.feetEquipment = ItemStack.EMPTY;
-            } else if (properties.hideEnchantments.get()) {
+            } else if (properties.hideEnchantmentsForEntities.get()) {
                 humanoidRenderState.headEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
                 humanoidRenderState.chestEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
                 humanoidRenderState.legsEquipment.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
@@ -335,7 +335,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             }
         }
 
-        if (properties.invisible.get()) {
+        if (properties.toggleInvisibilityForEntities.get()) {
             state.isInvisible = true;
             if (state instanceof LivingEntityRenderState livingEntityRenderState) {
                 livingEntityRenderState.isInvisibleToPlayer = true;

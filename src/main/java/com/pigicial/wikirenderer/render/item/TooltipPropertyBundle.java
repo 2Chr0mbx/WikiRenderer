@@ -2,10 +2,8 @@ package com.pigicial.wikirenderer.render.item;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.math.Axis;
-import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
-import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
-import com.pigicial.wikirenderer.property.IntProperty;
-import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.*;
+import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
@@ -16,8 +14,8 @@ import org.joml.Matrix4fStack;
 
 import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
 
-public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implements CroppablePropertyBundle {
-    public static final TooltipPropertyBundle INSTANCE = new TooltipPropertyBundle();
+public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implements CroppablePropertyBundle, SerializablePropertyBundle {
+    public static final TooltipPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new TooltipPropertyBundle());
 
     private final IntProperty fontScaling = IntProperty.of(4, 1, 128);
     public final Property<Boolean> hideBackground = IntProperty.of(false);
@@ -25,6 +23,11 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
     @Override
     public boolean allowForRescaling() {
         return false;
+    }
+
+    @Override
+    public String getConfigFileName() {
+        return "tooltip_render_settings";
     }
 
     @Override

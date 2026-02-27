@@ -9,15 +9,15 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.pigicial.wikirenderer.components.NonResettingScrollContainer;
 import com.pigicial.wikirenderer.components.NotificationComponent;
-import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
-import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
-import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.*;
+import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
+import com.pigicial.wikirenderer.render.batch.BatchPropertyBundle;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
@@ -677,6 +677,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public void removed() {
         WikiRenderer.particleRestriction = ParticleRestriction.always();
         this.minecraft.getFramerateLimitTracker().setFramerateLimit(this.minecraft.options.framerateLimit().get());
+
+        PropertyBundle properties = renderable.getProperties();
+        if (renderable instanceof BatchPropertyBundle batchPropertyBundle) {
+            properties = batchPropertyBundle.getActualProperties();
+        }
+        if (properties instanceof SerializablePropertyBundle serializableProperties) {
+            WikiRendererConfigs.save(serializableProperties);
+        }
 
         if (ScreenSchedulerAndSaver.getScheduledScreen() == null) {
             ScreenSchedulerAndSaver.setSavedScreen(this);
