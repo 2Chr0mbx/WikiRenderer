@@ -9,7 +9,6 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.pigicial.wikirenderer.components.NonResettingScrollContainer;
 import com.pigicial.wikirenderer.components.NotificationComponent;
-import com.pigicial.wikirenderer.mixin.access.ParticleEngineAccessor;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.property.Property;
@@ -371,15 +370,16 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }).margins(Insets.of(10, 0, 5, 0));
 
         rightColumn.child(UIComponents.dropdown(Sizing.content())
+                .button(Translate.gui("animation_mode_name_live_ffmpeg"), b -> animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG)
+                .text(Translate.gui("animation_mode_description_live_ffmpeg_1"))
+                .text(Translate.gui("animation_mode_description_live_ffmpeg_2"))
                 .button(Translate.gui("animation_mode_name_instant_file_save"), b -> animationHandlingMode = AnimationHandlingMode.DISK_INSTANT_SAVE)
                 .text(Translate.gui("animation_mode_description_instant_file_save_1"))
                 .text(Translate.gui("animation_mode_description_instant_file_save_2"))
                 .button(Translate.gui("animation_mode_name_save_in_memory"), b -> animationHandlingMode = AnimationHandlingMode.MEMORY_CACHE)
                 .text(Translate.gui("animation_mode_description_save_in_memory_1"))
                 .text(Translate.gui("animation_mode_description_save_in_memory_2"))
-                .button(Translate.gui("animation_mode_name_live_ffmpeg"), b -> animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG)
-                .text(Translate.gui("animation_mode_description_live_ffmpeg_1"))
-                .text(Translate.gui("animation_mode_description_live_ffmpeg_2"))
+
                 .closeWhenNotHovered(false)
                 .padding(Insets.of(5))
                 .surface(Surface.blur(10, 20))

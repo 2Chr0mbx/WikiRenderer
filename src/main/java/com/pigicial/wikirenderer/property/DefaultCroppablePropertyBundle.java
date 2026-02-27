@@ -6,7 +6,7 @@ public class DefaultCroppablePropertyBundle extends DefaultPropertyBundle implem
 
     protected Property<Boolean> crop = Property.of(this.shouldCropByDefault());
     protected Property<Boolean> ffmpegCrop = Property.of(this.shouldCropByDefault());
-    protected Property<ImageRescaleMode> rescaleMode = Property.of(ImageRescaleMode.VERTICAL);
+    protected Property<ImageRescaleMode> rescaleMode = Property.of(ImageRescaleMode.LONGER_SIDE);
 
     public DefaultCroppablePropertyBundle() {
         super();
