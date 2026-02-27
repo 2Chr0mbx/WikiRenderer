@@ -196,7 +196,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         GameProfile originalProfile = originalPlayer.getGameProfile();
         GameProfile fakeProfile = new GameProfile(originalProfile.id(), originalProfile.name(), new PropertyMap(originalProfile.properties()));
 
-        RenderablePlayerEntity playerClone = new RenderablePlayerEntity(fakeProfile, ProfileFetchMode.UUID);
+        RenderablePlayerEntity playerClone = new RenderablePlayerEntity(fakeProfile, ProfileFetchMode.TEXTURE);
 
         ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(originalPlayer.problemPath(), WikiRenderer.LOGGER);
         TagValueOutput view = TagValueOutput.createWithContext(problemReporter, originalPlayer.registryAccess());
@@ -303,7 +303,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             matrices.translate(cachedCenterOffset); // this fits it into the default frame
 
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
-            client.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+            this.drawSubmittedRenderFeatures();
 
             matrices.popPose();
             WikiRenderer.inSpriteEntityDraw = false;

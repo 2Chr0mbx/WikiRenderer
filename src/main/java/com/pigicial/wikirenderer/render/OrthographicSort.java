@@ -9,8 +9,6 @@ import org.jspecify.annotations.NonNull;
 
 public class OrthographicSort implements VertexSorting {
 
-    public static OrthographicSort currentOrthographicSorting = null;
-
     private final float m02;
     private final float m12;
     private final float m22;

@@ -270,7 +270,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         if (properties.overrideRotations.get()) {
             if (state instanceof LivingEntityRenderState livingEntityRenderState) {
-                livingEntityRenderState.bodyRot = (properties.entityRotation.get() + 180); // 180 makes it face the camera by default in the isometric preset (i think)
+                livingEntityRenderState.bodyRot = (properties.entityRotation.get() + 180); // 180 makes it face the camera by default in the standard 135-degree rotation
                 livingEntityRenderState.xRot = properties.pitch.get();
                 livingEntityRenderState.yRot = properties.yaw.get();
             }
