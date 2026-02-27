@@ -23,8 +23,6 @@ import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
-import static com.pigicial.wikirenderer.property.GlobalProperties.*;
-
 public interface PropertyBundle {
 
     void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container);
@@ -38,7 +36,7 @@ public interface PropertyBundle {
     }
 
     default void buildExportOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        GlobalProperties globalProperties = get();
+        GlobalProperties globalProperties = GlobalProperties.get();
         WikiRendererUI.booleanControl(container, globalProperties.saveIntoRoot, "dump_into_root");
         WikiRendererUI.booleanControl(container, globalProperties.overwriteLatest, "overwrite_latest");
 
@@ -75,7 +73,7 @@ public interface PropertyBundle {
     }
 
     default void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        GlobalProperties globalProperties = get();
+        GlobalProperties globalProperties = GlobalProperties.get();
 
         EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(renderable.getExportResolution()), "renderer_resolution", Sizing.fixed(50));
         resolutionField.setFilter(s -> s.matches("\\d{0,5}"));

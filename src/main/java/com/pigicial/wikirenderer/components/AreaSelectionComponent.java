@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.WikiRendererKeybinds;
+import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -14,9 +15,6 @@ import net.minecraft.network.chat.Component;
 
 import java.util.function.Supplier;
 
-import static com.pigicial.wikirenderer.render.area.AreaSelectionHelper.pos1;
-import static com.pigicial.wikirenderer.render.area.AreaSelectionHelper.pos2;
-
 public class AreaSelectionComponent extends FlowLayout {
 
     public AreaSelectionComponent() {
@@ -28,8 +26,8 @@ public class AreaSelectionComponent extends FlowLayout {
         this.child(UIComponents.label(Translate.PREFIX).shadow(true).margins(Insets.bottom(10)));
 
         this.child(UIComponents.label(Translate.gui("hud.area_selection")).shadow(true));
-        this.child(new DynamicLabelComponent(positionText(() -> pos1, "from")).shadow(true).color(Color.ofFormatting(ChatFormatting.GRAY)));
-        this.child(new DynamicLabelComponent(positionText(() -> pos2, "to")).shadow(true).color(Color.ofFormatting(ChatFormatting.GRAY)).margins(Insets.bottom(10)));
+        this.child(new DynamicLabelComponent(positionText(() -> AreaSelectionHelper.pos1, "from")).shadow(true).color(Color.ofFormatting(ChatFormatting.GRAY)));
+        this.child(new DynamicLabelComponent(positionText(() -> AreaSelectionHelper.pos2, "to")).shadow(true).color(Color.ofFormatting(ChatFormatting.GRAY)).margins(Insets.bottom(10)));
 
         Component firstKeybind = Component.keybind(WikiRendererKeybinds.KEYBIND_SELECT_AREA.getName()).withStyle(ChatFormatting.YELLOW);
         Component secondKeybind = Component.keybind(WikiRendererKeybinds.KEYBIND_SELECT_AREA_EXPAND.getName()).withStyle(ChatFormatting.YELLOW);
