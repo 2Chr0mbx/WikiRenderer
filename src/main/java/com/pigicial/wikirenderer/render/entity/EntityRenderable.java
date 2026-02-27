@@ -3,7 +3,6 @@ package com.pigicial.wikirenderer.render.entity;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.ClientMannequinAccessor;
 import com.pigicial.wikirenderer.mixin.access.ElytraAnimationStateAccessor;
@@ -268,8 +267,12 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 this.updateMannequinSkin(mannequin);
             }
 
+            WikiRenderer.inEntityDraw = true;
+            WikiRenderer.inSpriteEntityDraw = properties.spriteRendering.get();
+
             EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() ? tickDelta : 0);
             this.updateRenderState(state, properties, timeSinceCreationMs, usingLiveEntity);
+            //System.out.println("state.nameTag = " + state.nameTag);
 
             List<Runnable> partVisibilityCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {
@@ -277,10 +280,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
                     EntitySpriteModelVisibilityUtil.hideNonHeadParts(livingEntityRenderer, partVisibilityCallbacks);
                 }
-
-                WikiRenderer.inSpriteEntityDraw = true;
             }
-            WikiRenderer.inEntityDraw = true;
 
             if (cachedCenterOffset == null || cachedScaleMultiplier == null) {
                 AABB regularBounds = entity.getBoundingBox();
@@ -320,8 +320,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         //state.outlineColor = 0; // remove glow
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightTexture.FULL_BRIGHT;
-        state.nameTag = null;
-        state.nameTagAttachment = null;
+
+        if (getProperties().hideNametags.get() || getProperties().spriteRendering.get()) {
+            state.nameTag = null;
+            state.nameTagAttachment = null;
+        }
 
         if (properties.tickEntityAnimations.get()) {
             if (!usingLiveEntity) {
@@ -513,7 +516,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         applyToEntityAndPassengers(getUsedEntity(), usedEntity -> {
             switch (usedEntity) {
                 case RenderablePlayerEntity player -> player.getSkinGrabber().whenComplete((data, throwable) -> {
-                    if (throwable != null || cancelMarker.get()) return;
+                    if (throwable != null || cancelMarker.get() || data == null) return;
                     textureData.put("player", data);
                     rebuildCallback.run();
                 });

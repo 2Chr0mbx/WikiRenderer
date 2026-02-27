@@ -47,6 +47,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     public final Property<Boolean> hideArmorStands = Property.of(false);
     public final Property<Boolean> hideLivingEntities = Property.of(false);
     public final Property<Boolean> hideText = Property.of(false);
+    public final Property<Boolean> hideNametags = Property.of(false);
     public final Property<Boolean> freezeEntities = Property.of(false);
     public final Property<Boolean> freezePlayerArms = Property.of(false);
     public final Property<Boolean> autoRefreshVisibleEntities = Property.of(true);
@@ -316,7 +317,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
             WikiRendererUI.booleanControl(container, this.hideText, "hide_text");
             this.hideText.addRebuildListener(screen);
             if (!this.hideText.get()) {
-                WikiRendererUI.booleanControl(container, GlobalProperties.HIDE_NAMETAGS, "hide_player_nametags");
+                WikiRendererUI.booleanControl(container, this.hideNametags, "hide_nametags");
             }
         }
 

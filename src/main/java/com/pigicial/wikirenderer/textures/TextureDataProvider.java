@@ -37,6 +37,7 @@ public interface TextureDataProvider {
         for (Map.Entry<String, TextureData> entry : foundTextures.entrySet()) {
             String textureContext = entry.getKey(); // player or equipment
             TextureData textureData = entry.getValue();
+            if (textureData == null) continue; // shouldn't be but just in case
 
             MinecraftTexturesPayload payload = textureData.payload();
             GameProfile profile = textureData.profile();

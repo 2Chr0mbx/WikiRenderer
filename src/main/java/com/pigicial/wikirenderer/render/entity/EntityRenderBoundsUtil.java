@@ -57,10 +57,7 @@ public class EntityRenderBoundsUtil {
             MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
             MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
             FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
-            if (renderState instanceof ArmorStandRenderState || renderState instanceof TextDisplayEntityRenderState) {
-                // regular entity nametags probably shouldn't impact the bounding box
-                NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
-            }
+            NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
             TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
             ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
             BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);

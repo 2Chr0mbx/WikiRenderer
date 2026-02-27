@@ -14,7 +14,6 @@ public class GlobalProperties {
     public static final Property<Boolean> SAVE_INTO_ROOT = Property.of(false);
     public static final Property<Boolean> OVERWRITE_LATEST = Property.of(false);
 
-    public static final Property<Boolean> HIDE_NAMETAGS = Property.of(false);
     public static final Property<Boolean> TICK_PARTICLES = Property.of(true);
     public static final Property<Boolean> SPEED_UP_ENCHANTMENT_GLINTS = Property.of(false);
     public static final Property<Boolean> SYNC_ENCHANTMENT_GLINTS_TO_EXPORT = Property.of(false);

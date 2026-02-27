@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.Property;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -36,6 +37,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
 
     public final Property<Boolean> useLiveEntity = Property.of(false);
 
+    public final Property<Boolean> hideNametags = Property.of(true);
     public final Property<Boolean> overrideHeadRotations = Property.of(true);
     public final IntProperty yaw = IntProperty.of(0, -180, 180).withRollover();
     public final IntProperty pitch = IntProperty.of(0, -90, 90);
@@ -167,6 +169,10 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             });
             screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
         }));
+
+        if (renderable.hasEntityProperty(LivingEntity.class, LivingEntity::shouldShowName) && !spriteRendering.get()) {
+            WikiRendererUI.booleanControl(container, this.hideNametags, "hide_nametags");
+        }
 
         if (renderable.hasEntityType(LivingEntity.class)) {
             WikiRendererUI.booleanControl(container, this.overrideHeadRotations, "override_head_rotations");

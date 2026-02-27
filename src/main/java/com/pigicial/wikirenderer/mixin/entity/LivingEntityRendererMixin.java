@@ -4,7 +4,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;
+import com.pigicial.wikirenderer.render.entity.EntityPropertyBundle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -27,8 +28,12 @@ public class LivingEntityRendererMixin<T extends LivingEntity> {
 
     @Inject(method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z", at = @At("HEAD"), cancellable = true)
     private void disablePlayerLabels(T livingEntity, double d, CallbackInfoReturnable<Boolean> cir) {
-        if (WikiRenderer.inRenderableDraw && WikiRenderer.inAreaRenderDraw && GlobalProperties.HIDE_NAMETAGS.get()) {
-            cir.setReturnValue(false);
+        if (WikiRenderer.inRenderableDraw) {
+            if (WikiRenderer.inAreaRenderDraw && AreaPropertyBundle.INSTANCE.hideNametags.get()) {
+                cir.setReturnValue(false);
+            } else if ((WikiRenderer.inEntityDraw && EntityPropertyBundle.INSTANCE.hideNametags.get()) || WikiRenderer.inSpriteEntityDraw) {
+                cir.setReturnValue(false);
+            }
         }
     }
 
@@ -40,8 +45,12 @@ public class LivingEntityRendererMixin<T extends LivingEntity> {
             )
     )
     private Entity overrideCameraEntity(Minecraft instance, Operation<Entity> original) {
-        if (WikiRenderer.inRenderableDraw && WikiRenderer.inAreaRenderDraw && !GlobalProperties.HIDE_NAMETAGS.get()) {
-            return null;
+        if (WikiRenderer.inRenderableDraw) {
+            if (WikiRenderer.inAreaRenderDraw && AreaPropertyBundle.INSTANCE.hideNametags.get()) {
+                return null;
+            } else if ((WikiRenderer.inEntityDraw && EntityPropertyBundle.INSTANCE.hideNametags.get()) || WikiRenderer.inSpriteEntityDraw) {
+                return null;
+            }
         }
         return original.call(instance);
     }
