@@ -26,28 +26,18 @@ public class WalkabilityFilter {
     private final int maxFloorYLevel;
     private final int dontSearchForHigherFloorsThreshold;
     private final boolean includeWalls;
+    private final boolean includeCornersWithWalls;
     private final boolean requireCeilingToShow;
 
     public WalkabilityFilter(WorldBlockMesh mesh, AreaRenderable renderable) {
-        this(
-                mesh,
-                renderable.getProperties().walkableBlocksThreshold.get(),
-                renderable.minFloorYLevelForOverhead.get(),
-                renderable.maxFloorYLevelForOverhead.get(),
-                renderable.getProperties().dontSearchForHigherFloorsThreshold.get(),
-                renderable.getProperties().includeWallsForCaveMode.get(),
-                renderable.getProperties().requireCeilingForCaveMode.get()
-        );
-    }
-
-    public WalkabilityFilter(WorldBlockMesh mesh, int walkableHeightRequirement, int minFloorYLevel, int maxFloorYLevel, int dontSearchForHigherFloorsThreshold, boolean includeWalls, boolean requireCeilingToShow) {
         this.mesh = mesh;
-        this.walkableHeightRequirement = walkableHeightRequirement;
-        this.minFloorYLevel = minFloorYLevel;
-        this.maxFloorYLevel = maxFloorYLevel;
-        this.dontSearchForHigherFloorsThreshold = dontSearchForHigherFloorsThreshold;
-        this.includeWalls = includeWalls;
-        this.requireCeilingToShow = requireCeilingToShow;
+        this.walkableHeightRequirement = renderable.getProperties().walkableBlocksThreshold.get();
+        this.minFloorYLevel = renderable.minFloorYLevelForOverhead.get();
+        this.maxFloorYLevel = renderable.maxFloorYLevelForOverhead.get();
+        this.dontSearchForHigherFloorsThreshold = renderable.getProperties().dontSearchForHigherFloorsThreshold.get();
+        this.includeWalls = renderable.getProperties().includeWallsForCaveMode.get();
+        this.includeCornersWithWalls = renderable.getProperties().includeCornersWhenIncludingWalls.get();
+        this.requireCeilingToShow =  renderable.getProperties().requireCeilingForCaveMode.get();
     }
 
     public void cacheData() {
@@ -130,6 +120,10 @@ public class WalkabilityFilter {
         Integer highest = null;
         for (int xOffset = -1; xOffset <= 1; xOffset++) {
             for (int zOffset = -1; zOffset <= 1; zOffset++) {
+                if (!includeCornersWithWalls && (Math.abs(xOffset) == 1 && Math.abs(zOffset) == 1)) {
+                    continue;
+                }
+
                 Integer offsetBlockMaxHeight = this.maxYLevelRenderMap.get(xzToBit(x + xOffset, z + zOffset));
                 if (offsetBlockMaxHeight != null) {
                     highest = (highest == null ? offsetBlockMaxHeight : Math.max(highest, offsetBlockMaxHeight));

@@ -50,6 +50,7 @@
   "gui.wikirenderer.min_floor_y_level": "Minimum Floor Y Level",
   "gui.wikirenderer.max_floor_y_level": "Maximum Floor Y Level",
   "gui.wikirenderer.show_walls": "Show Adjacent Walls",
+  "gui.wikirenderer.show_corner_walls": "Include Corners",
   "gui.wikirenderer.require_ceiling": "Require Ceilings for Walkable Areas",
   "gui.wikirenderer.cycle_rotation": "Cycle Rotation 90°",
   "gui.wikirenderer.cycle_slant": "Cycle Slant 90°",

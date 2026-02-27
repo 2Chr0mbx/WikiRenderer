@@ -66,6 +66,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
     public final IntProperty walkableBlocksThreshold = IntProperty.of(2, 1, 20);
     public final Property<Boolean> requireCeilingForCaveMode = Property.of(false);
     public final Property<Boolean> includeWallsForCaveMode = Property.of(false);
+    public final Property<Boolean> includeCornersWhenIncludingWalls = Property.of(false);
     public final Property<Boolean> showMeshExpansionControls = Property.of(false);
 
     public final Property<Boolean> hideMesh = Property.of(false);
@@ -202,6 +203,10 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle {
                 WikiRendererUI.intControl(screen, container, renderable.minFloorYLevelForOverhead, "min_floor_y_level");
                 WikiRendererUI.intControl(screen, container, renderable.maxFloorYLevelForOverhead, "max_floor_y_level");
                 WikiRendererUI.booleanControl(container, this.includeWallsForCaveMode, "show_walls");
+                this.includeWallsForCaveMode.addRebuildListener(screen);
+                if (this.includeWallsForCaveMode.get()) {
+                    WikiRendererUI.booleanControl(container, this.includeCornersWhenIncludingWalls, "show_corner_walls");
+                }
                 WikiRendererUI.booleanControl(container, this.requireCeilingForCaveMode, "require_ceiling");
             }
 
