@@ -124,7 +124,7 @@ public class FileIO {
             currentPath = path.resolve(join(name, extension, i));
         }
 
-        return GlobalProperties.OVERWRITE_LATEST.get() ? lastPath : currentPath;
+        return GlobalProperties.get().overwriteLatest.get() ? lastPath : currentPath;
     }
 
     private static String join(String filename, String extension, int index) {

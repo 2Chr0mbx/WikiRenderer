@@ -36,7 +36,7 @@ public class FFmpegSession implements AutoCloseable {
                 "-f", "rawvideo",
                 "-pixel_format", "rgba",
                 "-video_size", width + "x" + height,
-                "-framerate", String.valueOf(GlobalProperties.EXPORT_FRAMERATE.get()),
+                "-framerate", String.valueOf(GlobalProperties.get().exportFramerate.get()),
                 "-i", "-",
 
                 "-c:v", "prores_ks",

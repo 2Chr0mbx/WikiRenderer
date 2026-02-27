@@ -15,7 +15,7 @@ public class TextureManagerMixin {
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     public void stopTick(CallbackInfo ci) {
         Minecraft client = Minecraft.getInstance();
-        if (client.screen instanceof RenderScreen && !GlobalProperties.TICK_TEXTURE_ANIMATIONS.get()) {
+        if (client.screen instanceof RenderScreen && !GlobalProperties.get().tickTextureAnimations.get()) {
             ci.cancel();
         }
     }

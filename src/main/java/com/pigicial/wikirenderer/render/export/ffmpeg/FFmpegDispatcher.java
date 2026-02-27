@@ -68,7 +68,7 @@ public class FFmpegDispatcher {
                 "-threads",
                 String.valueOf(Math.max(1, Runtime.getRuntime().availableProcessors())),
                 "-f", "image2",
-                "-framerate", String.valueOf(GlobalProperties.EXPORT_FRAMERATE.get()),
+                "-framerate", String.valueOf(GlobalProperties.get().exportFramerate.get()),
                 "-i", "seq_%d.png"
         }));
 

@@ -1,5 +1,5 @@
 package com.pigicial.wikirenderer.property;
 
-public interface SerializablePropertyBundle extends PropertyBundle {
+public interface SerializablePropertyBundle {
     String getConfigFileName();
 }

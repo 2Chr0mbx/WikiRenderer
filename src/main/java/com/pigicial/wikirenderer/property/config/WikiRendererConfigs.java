@@ -20,7 +20,6 @@ public class WikiRendererConfigs {
             Path path = getConfigPath(bundle.getConfigFileName() + ".json");
             String json = GSON.toJson(bundle);
             Files.writeString(path, json);
-            WikiRenderer.LOGGER.info("Saved {}.json config file", bundle.getConfigFileName());
         } catch (Exception e) {
             WikiRenderer.LOGGER.error("Failed to save {}.json config file :(", bundle.getConfigFileName(), e);
         }

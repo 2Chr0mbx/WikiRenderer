@@ -59,7 +59,7 @@ public class AreaSelectionHelper {
         AABB areaBounds = new AABB(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ());
         Gizmos.cuboid(areaBounds, GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 1f), 5), true);
 
-        if (GlobalProperties.DEBUG_SHOW_COLLIDING_ENTITY_BOUNDS_FOR_AREAS.get()) {
+        if (GlobalProperties.get().debugShowCollidingEntityBoundsForAreas.get()) {
             Level level = client.level;
             if (level == null) return;
 

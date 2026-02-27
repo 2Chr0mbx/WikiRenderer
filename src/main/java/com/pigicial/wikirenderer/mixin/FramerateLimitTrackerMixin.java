@@ -15,7 +15,7 @@ public class FramerateLimitTrackerMixin {
             at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/FramerateLimitTracker;getThrottleReason()Lcom/mojang/blaze3d/platform/FramerateLimitTracker$FramerateThrottleReason;")
     )
     private static FramerateLimitTracker.FramerateThrottleReason dontThrottleOnAnimations(FramerateLimitTracker instance) {
-        if (WikiRenderer.currentAnimationHandler != null && !GlobalProperties.SET_ANIMATION_FPS_CAP.get()) {
+        if (WikiRenderer.currentAnimationHandler != null && !GlobalProperties.get().setAnimationFpsCap.get()) {
             return FramerateLimitTracker.FramerateThrottleReason.NONE;
         }
 

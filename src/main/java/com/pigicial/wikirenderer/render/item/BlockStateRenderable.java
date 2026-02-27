@@ -145,7 +145,7 @@ public class BlockStateRenderable
     @Override
     public void tick() {
         if (client.level == null || client.player == null) return;
-        if (GlobalProperties.TICK_TEXTURE_ANIMATIONS.get()) { // maybe not the best property to assign this to, but it works i suppose
+        if (GlobalProperties.get().tickTextureAnimations.get()) { // maybe not the best property to assign this to, but it works i suppose
             if (this.blockEntity != null && this.state.getTicker(client.level, this.blockEntity.getType()) != null) {
                 BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.blockEntity.getType());
                 if (ticker == null) return;

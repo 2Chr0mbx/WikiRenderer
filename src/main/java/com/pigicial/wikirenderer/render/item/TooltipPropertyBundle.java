@@ -12,8 +12,6 @@ import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.gui.components.EditBox;
 import org.joml.Matrix4fStack;
 
-import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
-
 public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implements CroppablePropertyBundle, SerializablePropertyBundle {
     public static final TooltipPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new TooltipPropertyBundle());
 
@@ -47,7 +45,7 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
             int tooltipSize = ((TooltipRenderable) renderable).getTooltipSize();
             int bufferSizeWithThisResolution = tooltipSize * resolution;
 
-            if ((resolution < 1 || bufferSizeWithThisResolution > RenderSystem.getDevice().getMaxTextureSize()) && !UNSAFE.get()) {
+            if ((resolution < 1 || bufferSizeWithThisResolution > RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 this.fontScaling.set(resolution);

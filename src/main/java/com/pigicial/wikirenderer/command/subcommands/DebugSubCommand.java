@@ -43,22 +43,22 @@ public class DebugSubCommand extends WikiRendererSubCommand {
     }
 
     private void enableDebugBounds(CommandContext<FabricClientCommandSource> context) {
-        GlobalProperties.DEBUG_SHOW_COLLIDING_ENTITY_BOUNDS_FOR_AREAS.set(true);
+        GlobalProperties.get().debugShowCollidingEntityBoundsForAreas.set(true);
         Translate.commandFeedback(context, "debug_bounds_enabled");
     }
 
     private void disableDebugBounds(CommandContext<FabricClientCommandSource> context) {
-        GlobalProperties.DEBUG_SHOW_COLLIDING_ENTITY_BOUNDS_FOR_AREAS.set(false);
+        GlobalProperties.get().debugShowCollidingEntityBoundsForAreas.set(false);
         Translate.commandFeedback(context, "debug_bounds_disabled");
     }
 
     private void enableUnsafe(CommandContext<FabricClientCommandSource> context) {
-        GlobalProperties.UNSAFE.set(true);
+        GlobalProperties.get().unsafe.set(true);
         Translate.commandFeedback(context, "unsafe_enabled");
     }
 
     private void disableUnsafe(CommandContext<FabricClientCommandSource> context) {
-        GlobalProperties.UNSAFE.set(false);
+        GlobalProperties.get().unsafe.set(false);
         Translate.commandFeedback(context, "unsafe_disabled");
     }
 }

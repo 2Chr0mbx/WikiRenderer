@@ -1,10 +1,9 @@
 package com.pigicial.wikirenderer.render.export.ffmpeg;
 
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.export.ffmpeg.live.LiveRenderFFmpegAnimationHandler;
 import com.pigicial.wikirenderer.screen.RenderScreen;
-
-import static com.pigicial.wikirenderer.property.GlobalProperties.EXPORT_FRAMES;
 
 public enum AnimationHandlingMode {
     DISK_INSTANT_SAVE,
@@ -16,10 +15,11 @@ public enum AnimationHandlingMode {
     }
 
     public AnimationHandler createAnimationHandler(RenderScreen screen, Renderable<?> renderable) {
+        int frameRate = GlobalProperties.get().exportFrames.get();
         return switch (this) {
-            case DISK_INSTANT_SAVE -> new InstantDiskSaveAnimationHandler(screen, renderable, EXPORT_FRAMES.get());
-            case MEMORY_CACHE -> new MemoryBasedAnimationHandler(screen, renderable, EXPORT_FRAMES.get());
-            case LIVE_FFMPEG -> new LiveRenderFFmpegAnimationHandler(screen, renderable, EXPORT_FRAMES.get());
+            case DISK_INSTANT_SAVE -> new InstantDiskSaveAnimationHandler(screen, renderable, frameRate);
+            case MEMORY_CACHE -> new MemoryBasedAnimationHandler(screen, renderable, frameRate);
+            case LIVE_FFMPEG -> new LiveRenderFFmpegAnimationHandler(screen, renderable, frameRate);
         };
     }
 }

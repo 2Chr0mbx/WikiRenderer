@@ -148,7 +148,10 @@ public class RenderableDispatcher {
 
     public static GpuTexture drawIntoTexture(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, int size) {
         TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
-        int backgroundColor = GlobalProperties.SHOW_BACKGROUND_COLOR_IN_EXPORTS.get() ? GlobalProperties.backgroundColor : 0;
+
+        GlobalProperties globalProperties = GlobalProperties.get();
+        int backgroundColor = globalProperties.showBackgroundColorInExports.get() ? globalProperties.backgroundColor : 0;
+
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
                 Objects.requireNonNull(target.getColorTexture()),
                 backgroundColor,
@@ -186,7 +189,9 @@ public class RenderableDispatcher {
             }
         }
 
-        int backgroundColor = GlobalProperties.SHOW_BACKGROUND_COLOR_IN_EXPORTS.get() ? GlobalProperties.backgroundColor : 0;
+        GlobalProperties globalProperties = GlobalProperties.get();
+        int backgroundColor = globalProperties.showBackgroundColorInExports.get() ? globalProperties.backgroundColor : 0;
+
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
                 Objects.requireNonNull(previewTarget.getColorTexture()),
                 backgroundColor,

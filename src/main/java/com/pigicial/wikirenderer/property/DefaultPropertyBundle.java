@@ -143,7 +143,8 @@ public class DefaultPropertyBundle implements PropertyBundle {
         }
 
         if (!this.rotationOffsetUpdated) {
-            if (!GlobalProperties.SYNC_ROTATION_TO_ANIMATION.get()) {
+            GlobalProperties globalProperties = GlobalProperties.get();
+            if (!globalProperties.syncRotationToAnimation.get()) {
                 this.rotationOffset += Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() * this.rotationSpeed.get() * .05f;
                 this.rotationOffsetUpdated = true;
             } else {
@@ -152,7 +153,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
                     int totalFrameCount = animationHandler.getAnimationFrames();
                     int framesRenderedSoFar = totalFrameCount - animationHandler.getRemainingFrames();
 
-                    int frameRate = GlobalProperties.EXPORT_FRAMERATE.get();
+                    int frameRate = globalProperties.exportFramerate.get();
                     double secondsIntoAnimation = (double) framesRenderedSoFar / (double) frameRate;
                     this.rotationOffset = (float) (secondsIntoAnimation * rotationSpeed.get());
                 } else {

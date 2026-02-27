@@ -28,12 +28,13 @@ public final class InstantDiskSaveAnimationHandler extends AnimationHandler {
 
     public void renderAndSaveFrame(float effectiveTickDelta) {
         if (this.closed || this.remainingAnimationFrames <= 0) return;
+        // delay until ram is available
         if (!screen.memoryGuard.canFitInRam(screen.memoryGuard.estimateMemoryMBUsage(renderable, FileIO.taskCount()))) {
             return;
         }
-        // delay until ram is available
 
-        if (GlobalProperties.SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION.get()) {
+        GlobalProperties globalProperties = GlobalProperties.get();
+        if (globalProperties.syncTextureAnimationsToAnimation.get()) {
             Minecraft.getInstance().getTextureManager().tick();
         }
 
@@ -41,8 +42,8 @@ public final class InstantDiskSaveAnimationHandler extends AnimationHandler {
 
         WikiRenderer.skipWorldRender = true;
 
-        Boolean overwriteValue = GlobalProperties.OVERWRITE_LATEST.get();
-        GlobalProperties.OVERWRITE_LATEST.set(false);
+        Boolean overwriteValue = globalProperties.overwriteLatest.get();
+        globalProperties.overwriteLatest.set(false);
 
         int frameIndex = this.currentFrameIndex;
         this.currentFrameIndex++;

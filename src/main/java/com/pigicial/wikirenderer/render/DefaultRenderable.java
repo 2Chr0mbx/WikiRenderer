@@ -115,7 +115,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     }
 
     protected void drawParticles(Matrix4f transform, float tickDelta) {
-        if (!GlobalProperties.TICK_PARTICLES.get()) {
+        if (!GlobalProperties.get().tickParticles.get()) {
             return;
         }
 

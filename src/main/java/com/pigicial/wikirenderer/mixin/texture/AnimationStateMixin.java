@@ -33,14 +33,16 @@ public class AnimationStateMixin {
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     public void tick(CallbackInfo ci) {
-        if (Minecraft.getInstance().screen instanceof RenderScreen && GlobalProperties.SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION.get()) {
+        GlobalProperties globalProperties = GlobalProperties.get();
+
+        if (Minecraft.getInstance().screen instanceof RenderScreen && globalProperties.syncTextureAnimationsToAnimation.get()) {
             AnimationHandler animationHandler = WikiRenderer.currentAnimationHandler;
             List<SpriteContents.FrameInfo> frames = this.animationInfo.frames;
             if (animationHandler != null && !animationHandler.isFinished()) {
                 int totalFrameCount = animationHandler.getAnimationFrames();
                 int framesRenderedSoFar = totalFrameCount - animationHandler.getRemainingFrames();
 
-                int frameRate = GlobalProperties.EXPORT_FRAMERATE.get();
+                int frameRate = globalProperties.exportFramerate.get();
                 double secondsIntoAnimation = (double) framesRenderedSoFar / (double) frameRate;
                 int tick = (int) Math.floor(secondsIntoAnimation * 20);
 

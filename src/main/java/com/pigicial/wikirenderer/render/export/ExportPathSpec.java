@@ -44,7 +44,7 @@ public record ExportPathSpec(String rootOffset, String filename, boolean ignoreS
     }
 
     private String effectiveOffset() {
-        return rootOffset.isEmpty() || (!this.ignoreSaveIntoRoot && GlobalProperties.SAVE_INTO_ROOT.get()) ? "./" : rootOffset + "/";
+        return rootOffset.isEmpty() || (!this.ignoreSaveIntoRoot && GlobalProperties.get().saveIntoRoot.get()) ? "./" : rootOffset + "/";
     }
 
     // -----

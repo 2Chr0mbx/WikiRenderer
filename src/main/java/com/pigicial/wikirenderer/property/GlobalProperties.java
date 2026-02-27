@@ -1,28 +1,40 @@
 package com.pigicial.wikirenderer.property;
 
+import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandlingMode;
 import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
 
-public class GlobalProperties {
+public class GlobalProperties implements SerializablePropertyBundle {
 
-    public static int backgroundColor = 0xFF000000;
-    public static final Property<Boolean> SHOW_BACKGROUND_COLOR_IN_EXPORTS = Property.of(false);
-    public static final Property<Boolean> TICK_TEXTURE_ANIMATIONS = Property.of(true);
+    private static final GlobalProperties INSTANCE = WikiRendererConfigs.loadOrDefault(new GlobalProperties());
 
-    public static final Property<Boolean> DEBUG_SHOW_COLLIDING_ENTITY_BOUNDS_FOR_AREAS = Property.of(false);
-    public static final Property<Boolean> UNSAFE = Property.of(false);
-    public static final Property<Boolean> SAVE_INTO_ROOT = Property.of(false);
-    public static final Property<Boolean> OVERWRITE_LATEST = Property.of(false);
+    public static GlobalProperties get() {
+        return INSTANCE;
+    }
 
-    public static final Property<Boolean> TICK_PARTICLES = Property.of(true);
-    public static final Property<Boolean> SPEED_UP_ENCHANTMENT_GLINTS = Property.of(false);
-    public static final Property<Boolean> SYNC_ENCHANTMENT_GLINTS_TO_EXPORT = Property.of(false);
-    public static final Property<Boolean> SYNC_ROTATION_TO_ANIMATION = Property.of(false);
-    public static final Property<Boolean> SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION = Property.of(false);
-    public static final Property<Boolean> SET_ANIMATION_FPS_CAP = Property.of(true);
+    public int backgroundColor = 0xFF000000;
+    public final Property<Boolean> showBackgroundColorInExports = Property.of(false);
+    public final Property<Boolean> tickTextureAnimations = Property.of(true);
 
-    public static final IntProperty EXPORT_FRAMERATE = IntProperty.of(25, 1, 300);
-    public static final IntProperty EXPORT_FRAMES = IntProperty.of(50, 1, 5000);
-    public static AnimationHandlingMode animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG;
-    public static FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
+    public final Property<Boolean> debugShowCollidingEntityBoundsForAreas = Property.of(false);
+    public final Property<Boolean> unsafe = Property.of(false);
+    public final Property<Boolean> saveIntoRoot = Property.of(false);
+    public final Property<Boolean> overwriteLatest = Property.of(false);
+
+    public final Property<Boolean> tickParticles = Property.of(true);
+    public final Property<Boolean> speedUpEnchantmentGlints = Property.of(false);
+    public final Property<Boolean> syncEnchantmentGlintsToExport = Property.of(false);
+    public final Property<Boolean> syncRotationToAnimation = Property.of(false);
+    public final Property<Boolean> syncTextureAnimationsToAnimation = Property.of(false);
+    public final Property<Boolean> setAnimationFpsCap = Property.of(true);
+
+    public final IntProperty exportFramerate = IntProperty.of(25, 1, 300);
+    public final IntProperty exportFrames = IntProperty.of(50, 1, 5000);
+    public AnimationHandlingMode animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG;
+    public FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
+
+    @Override
+    public String getConfigFileName() {
+        return "general_render_settings";
+    }
 }

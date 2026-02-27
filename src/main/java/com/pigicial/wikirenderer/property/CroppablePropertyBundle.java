@@ -12,8 +12,6 @@ import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.Surface;
 import net.minecraft.client.gui.components.EditBox;
 
-import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
-
 public interface CroppablePropertyBundle extends PropertyBundle {
 
     Property<Boolean> getCropProperty();
@@ -84,7 +82,7 @@ public interface CroppablePropertyBundle extends PropertyBundle {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
-            if ((resolution < 16 || resolution > 16384) && !UNSAFE.get()) {
+            if ((resolution < 16 || resolution > 16384) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 renderable.getProperties().setExportResolution(renderable, resolution);

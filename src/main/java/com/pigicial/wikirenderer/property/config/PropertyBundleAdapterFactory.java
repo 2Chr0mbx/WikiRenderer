@@ -7,10 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
-import com.pigicial.wikirenderer.property.DoubleProperty;
-import com.pigicial.wikirenderer.property.IntProperty;
-import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.*;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -20,7 +17,9 @@ import java.util.*;
 public class PropertyBundleAdapterFactory implements TypeAdapterFactory {
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-        if (!DefaultPropertyBundle.class.isAssignableFrom(type.getRawType())) return null;
+        if (!SerializablePropertyBundle.class.isAssignableFrom(type.getRawType())){
+            return null;
+        }
 
         return new PropertyBundleAdapter<>(gson, type);
     }

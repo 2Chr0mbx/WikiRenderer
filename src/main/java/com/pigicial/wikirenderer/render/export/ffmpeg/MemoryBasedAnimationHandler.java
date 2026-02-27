@@ -27,7 +27,7 @@ public class MemoryBasedAnimationHandler extends AnimationHandler {
     public void renderAndSaveFrame(float effectiveTickDelta) {
         if (this.closed || this.remainingAnimationFrames <= 0) return;
 
-        if (GlobalProperties.SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION.get()) {
+        if (GlobalProperties.get().syncTextureAnimationsToAnimation.get()) {
             Minecraft.getInstance().getTextureManager().tick();
         }
 
@@ -50,8 +50,9 @@ public class MemoryBasedAnimationHandler extends AnimationHandler {
                     .whenComplete((v, t) -> {
                         List<CompletableFuture<File>> fileFutures = new ArrayList<>();
 
-                        Boolean overwriteValue = GlobalProperties.OVERWRITE_LATEST.get();
-                        GlobalProperties.OVERWRITE_LATEST.set(false);
+                        GlobalProperties globalProperties = GlobalProperties.get();
+                        Boolean overwriteValue = globalProperties.overwriteLatest.get();
+                        globalProperties.overwriteLatest.set(false);
 
                         // make files all at the end
                         for (int i = 0, frameExportFuturesSize = frameExportFutures.size(); i < frameExportFuturesSize; i++) {

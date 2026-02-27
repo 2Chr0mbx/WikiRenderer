@@ -27,8 +27,6 @@ import org.joml.Matrix4fStack;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 
-import static com.pigicial.wikirenderer.property.GlobalProperties.UNSAFE;
-
 public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
 
     public static final AreaPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new AreaPropertyBundle());
@@ -345,6 +343,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     @Override
     public void buildRenderOptionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         AreaRenderable renderable = (AreaRenderable) r;
+
         WikiRendererUI.booleanControl(container, this.emulateDaylight, "render_as_daytime");
         WikiRendererUI.booleanControl(container, this.useFullBrightGamma, "full_bright");
         WikiRendererUI.booleanControl(container, this.useNightVision, "night_vision");
@@ -353,7 +352,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.booleanControl(container, this.lightUpSurroundingBlocks, "light_up_surrounding_blocks");
             this.lightUpSurroundingBlocks.futureListen(screen, (p, b) -> renderable.mesh.scheduleRebuild(true));
         }
-        WikiRendererUI.booleanControl(container, GlobalProperties.TICK_PARTICLES, "particles");
+        WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "particles");
     }
 
     @Override
@@ -379,7 +378,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
                 double bufferSize = highest * pixelsPerBlock;
 
-                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize > 16384) && !UNSAFE.get()) {
+                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize > 16384) && !GlobalProperties.get().unsafe.get()) {
                     screen.exportButton.active = false;
                 } else {
                     if ((this.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && this.getPixelsPerBlockResolution() == 4)) {

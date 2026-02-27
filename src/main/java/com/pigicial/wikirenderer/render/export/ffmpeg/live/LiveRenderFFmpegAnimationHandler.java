@@ -43,7 +43,8 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
     public void renderAndSaveFrame(float effectiveTickDelta) {
         if (this.closed || this.remainingAnimationFrames <= 0) return;
 
-        if (GlobalProperties.SYNC_TEXTURE_ANIMATIONS_TO_ANIMATION.get()) {
+        GlobalProperties globalProperties = GlobalProperties.get();
+        if (globalProperties.syncTextureAnimationsToAnimation.get()) {
             Minecraft.getInstance().getTextureManager().tick();
         }
 
@@ -72,7 +73,7 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
                             this.frameFileExportFutures.clear();
                             this.session.close();
                             Minecraft.getInstance().getFramerateLimitTracker().setFramerateLimit(Minecraft.getInstance().options.framerateLimit().get());
-                            this.exportFinalFromMaster(GlobalProperties.animationFormat, ImageCropper.getFFmpegCropSize(this.renderable, collectedCropData));
+                            this.exportFinalFromMaster(globalProperties.animationFormat, ImageCropper.getFFmpegCropSize(this.renderable, collectedCropData));
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }

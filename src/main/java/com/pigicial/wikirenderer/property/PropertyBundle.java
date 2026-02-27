@@ -38,8 +38,9 @@ public interface PropertyBundle {
     }
 
     default void buildExportOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        WikiRendererUI.booleanControl(container, SAVE_INTO_ROOT, "dump_into_root");
-        WikiRendererUI.booleanControl(container, OVERWRITE_LATEST, "overwrite_latest");
+        GlobalProperties globalProperties = get();
+        WikiRendererUI.booleanControl(container, globalProperties.saveIntoRoot, "dump_into_root");
+        WikiRendererUI.booleanControl(container, globalProperties.overwriteLatest, "overwrite_latest");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
             screen.exportButton = UIComponents.button(Translate.gui("export"), button -> screen.captureScheduled = true);
@@ -74,13 +75,15 @@ public interface PropertyBundle {
     }
 
     default void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        GlobalProperties globalProperties = get();
+
         EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(renderable.getExportResolution()), "renderer_resolution", Sizing.fixed(50));
         resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
         resolutionField.setResponder(s -> {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
-            if ((resolution < 16 || resolution > 16384) && !UNSAFE.get()) {
+            if ((resolution < 16 || resolution > 16384) && !globalProperties.unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 renderable.getProperties().setExportResolution(renderable, resolution);

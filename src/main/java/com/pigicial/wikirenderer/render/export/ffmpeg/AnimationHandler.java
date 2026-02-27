@@ -55,7 +55,9 @@ public abstract class AnimationHandler implements AutoCloseable {
 
         CompletableFuture.allOf(fileFutures.toArray(CompletableFuture[]::new))
                 .whenComplete((v_, throwable) -> {
-                    GlobalProperties.OVERWRITE_LATEST.set(overwriteValue);
+                    GlobalProperties globalProperties = GlobalProperties.get();
+
+                    globalProperties.overwriteLatest.set(overwriteValue);
                     if (throwable != null || closed) {
                         FileIO.deleteSequenceFilesFromPath(this.framesFolder);
                         return;
@@ -67,7 +69,7 @@ public abstract class AnimationHandler implements AutoCloseable {
                     FFmpegDispatcher.exportAnimation(
                             exportPath,
                             this.framesFolder,
-                            GlobalProperties.animationFormat,
+                            globalProperties.animationFormat,
                             this,
                             ImageCropper.getFFmpegCropSize(renderable, collectedCropData)
                     ).whenComplete((animationFile, animationThrowable) -> this.finishAndCleanup(animationFile));
