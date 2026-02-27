@@ -15,11 +15,11 @@ public enum AnimationHandlingMode {
     }
 
     public AnimationHandler createAnimationHandler(RenderScreen screen, Renderable<?> renderable) {
-        int frameRate = GlobalProperties.get().exportFrames.get();
+        int framesToRender = GlobalProperties.get().exportFrames.get();
         return switch (this) {
-            case DISK_INSTANT_SAVE -> new InstantDiskSaveAnimationHandler(screen, renderable, frameRate);
-            case MEMORY_CACHE -> new MemoryBasedAnimationHandler(screen, renderable, frameRate);
-            case LIVE_FFMPEG -> new LiveRenderFFmpegAnimationHandler(screen, renderable, frameRate);
+            case DISK_INSTANT_SAVE -> new InstantDiskSaveAnimationHandler(screen, renderable, framesToRender);
+            case MEMORY_CACHE -> new MemoryBasedAnimationHandler(screen, renderable, framesToRender);
+            case LIVE_FFMPEG -> new LiveRenderFFmpegAnimationHandler(screen, renderable, framesToRender);
         };
     }
 }
