@@ -16,6 +16,7 @@ import com.pigicial.wikirenderer.render.area.bounds.chunk.HorizontalMiniChunk;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.MiniChunkScanner;
 import com.pigicial.wikirenderer.render.entity.EntityRenderBoundsUtil;
 import com.pigicial.wikirenderer.render.entity.EntityRenderable;
+import com.pigicial.wikirenderer.render.entity.EntityVertexBounds;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
@@ -205,7 +206,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
                 EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
                 this.updateEntityState(entity, state);
-                AABB entityBounds = EntityRenderBoundsUtil.getBounds(state, this, entityPosition.x, entityPosition.y, entityPosition.z);
+
+                EntityVertexBounds entityVertexBounds = EntityRenderBoundsUtil.getBounds(state, CameraOrientationUtil.createRenderState(this), entityPosition.x, entityPosition.y, entityPosition.z);
+                AABB entityBounds =  entityVertexBounds == null ? null : entityVertexBounds.getBounds();
 
                 if (entityBounds != null && entityBounds.intersects(areaBoundingBox)) {
                     AABB intersection = entityBounds.intersect(areaBoundingBox);

@@ -1,23 +1,23 @@
-package com.pigicial.wikirenderer.util;
+package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class VertexPositionTracker implements VertexConsumer {
-    public static AABB BOUNDS = null;
+public class EntityVertexPositionTracker implements VertexConsumer {
+    public static EntityVertexBounds BOUNDS = null;
+    public static boolean renderingText = false;
 
     @Override
     public @NonNull VertexConsumer addVertex(float x, float y, float z) {
         if (BOUNDS == null) {
-            BOUNDS = new AABB(x, y, z, x, y, z);
+            BOUNDS = new EntityVertexBounds(x, y, z, renderingText);
         } else {
-            BOUNDS = new AABB(Math.min(BOUNDS.minX, x), Math.min(BOUNDS.minY, y), Math.min(BOUNDS.minZ, z), Math.max(BOUNDS.maxX, x), Math.max(BOUNDS.maxY, y), Math.max(BOUNDS.maxZ, z));
+            BOUNDS.addPoint(x, y, z, renderingText);
         }
         return this;
     }
@@ -59,7 +59,7 @@ public class VertexPositionTracker implements VertexConsumer {
 
     public static class BufferSource extends MultiBufferSource.BufferSource {
 
-        private final Map<RenderType, VertexPositionTracker> renderTypeMap = new HashMap<>();
+        private final Map<RenderType, EntityVertexPositionTracker> renderTypeMap = new HashMap<>();
         // have to use a map to prevent duplicate buffer source issues
 
         public BufferSource() {
@@ -68,7 +68,7 @@ public class VertexPositionTracker implements VertexConsumer {
 
         @Override
         public @NonNull VertexConsumer getBuffer(@NonNull RenderType renderType) {
-            return renderTypeMap.computeIfAbsent(renderType, o -> new VertexPositionTracker());
+            return renderTypeMap.computeIfAbsent(renderType, o -> new EntityVertexPositionTracker());
         }
 
         @Override
@@ -89,12 +89,12 @@ public class VertexPositionTracker implements VertexConsumer {
 
     public static class OutlineBufferSource extends net.minecraft.client.renderer.OutlineBufferSource {
 
-        private final Map<RenderType, VertexPositionTracker> renderTypeMap = new HashMap<>();
+        private final Map<RenderType, EntityVertexPositionTracker> renderTypeMap = new HashMap<>();
         // have to use a map to prevent duplicate buffer source issues
 
         @Override
         public @NonNull VertexConsumer getBuffer(@NonNull RenderType renderType) {
-            return renderTypeMap.computeIfAbsent(renderType, o -> new VertexPositionTracker());
+            return renderTypeMap.computeIfAbsent(renderType, o -> new EntityVertexPositionTracker());
         }
 
     }

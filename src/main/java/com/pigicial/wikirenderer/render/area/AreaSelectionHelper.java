@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.render.area;
 
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.entity.EntityRenderBoundsUtil;
+import com.pigicial.wikirenderer.render.entity.EntityVertexBounds;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.util.Translate;
@@ -64,9 +65,11 @@ public class AreaSelectionHelper {
 
             AABB areaEntityBounds = new AABB(pos1.getX() - 8, pos1.getY() - 8, pos1.getZ() - 8, pos2.getX() + 9, pos2.getY() + 9, pos2.getZ() + 9);
             for (Entity entity : level.getEntities((Entity) null, areaEntityBounds, e -> true)) {
-                AABB entityBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity);
-                if (entityBounds != null && entityBounds.intersects(areaBounds)) {
-                    Gizmos.cuboid(entityBounds, GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 0.8f), 5), true);
+                EntityVertexBounds entityBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity);
+                if (entityBounds != null && entityBounds.getBounds().intersects(areaBounds)) {
+                    for (AABB entitySubBound : entityBounds.getClipBounds()) {
+                        Gizmos.cuboid(entitySubBound, GizmoStyle.stroke(ARGB.colorFromFloat(1, 1, 1, 0.6f), 3), true);
+                    }
                 }
             }
         }

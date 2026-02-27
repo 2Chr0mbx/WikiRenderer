@@ -6,6 +6,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.pigicial.wikirenderer.mixin.access.LevelAccessor;
 import com.pigicial.wikirenderer.render.entity.EntityRenderBoundsUtil;
 import com.pigicial.wikirenderer.render.entity.EntityRenderable;
+import com.pigicial.wikirenderer.render.entity.EntityVertexBounds;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.util.Translate;
@@ -182,13 +183,17 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
             // accurate enough check to remove most entities without instead checking for the more expensive rendered bounding box data
             if (!expandedTargetSearchArea.contains(entity.position())) continue;
 
-            AABB entityBB = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity);
-            if (entityBB == null) continue;
+            EntityVertexBounds entitySubBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity);
+            if (entitySubBounds == null) continue;
 
-            Optional<Vec3> exactHit = entityBB.clip(from, to);
-            if (exactHit.isPresent()) {
-                collector.add(new EntityHitResult(entity, entityBB.getCenter()));
+            for (AABB bound : entitySubBounds.getClipBounds()) {
+                Optional<Vec3> exactHit = bound.clip(from, to);
+                if (exactHit.isPresent()) {
+                    collector.add(new EntityHitResult(entity, bound.getCenter()));
+                    break;
+                }
             }
+
         }
 
         return collector;

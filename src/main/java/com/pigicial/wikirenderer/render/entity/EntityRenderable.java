@@ -41,6 +41,7 @@ import net.minecraft.core.Rotations;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.*;
@@ -284,11 +285,12 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             if (cachedCenterOffset == null || cachedScaleMultiplier == null) {
                 AABB regularBounds = entity.getBoundingBox();
-                AABB renderedBounds = EntityRenderBoundsUtil.getBounds(state, this, 0, 0, 0);
-                if (renderedBounds == null) {
+                EntityVertexBounds vertexBounds = EntityRenderBoundsUtil.getBounds(state, CameraOrientationUtil.createRenderState(this), 0, 0, 0);
+                if (vertexBounds == null) {
                     cachedCenterOffset = new Vec3(0, 0, 0);
                     cachedScaleMultiplier = 1F;
                 } else {
+                    AABB renderedBounds = vertexBounds.getBounds();
                     double xDifference = renderedBounds.getCenter().x - (regularBounds.getCenter().x - entityPosition.x);
                     double zDifference = renderedBounds.getCenter().z - (regularBounds.getCenter().z - entityPosition.z);
                     cachedCenterOffset = new Vec3(-xDifference, -renderedBounds.minY - renderedBounds.getYsize() / 2, -zDifference);
@@ -613,7 +615,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     @Override
     public String buildFileName(String preset) {
         String type = BuiltInRegistries.ENTITY_TYPE.getKey(this.getUsedEntity().getType()).getPath();
-        String name = this.getUsedEntity().getDisplayName().getString();
+        Component displayName = this.getUsedEntity().getDisplayName();
+        String name = displayName == null ? "" : displayName.getString();
         return preset.replace("%entity_type%", type).replace("%name%", name);
     }
 
