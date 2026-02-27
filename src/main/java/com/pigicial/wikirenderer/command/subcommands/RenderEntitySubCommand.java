@@ -107,7 +107,7 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
 
-        AttackRange attackRange = new AttackRange(0, 20, 0, 20, 0.2f, 1);
+        AttackRange attackRange = new AttackRange(0, 30, 0, 30, 0.2f, 1);
         Entity targetEntity = getClosestHit(player, attackRange);
         if (targetEntity == null) {
             Translate.commandError(context, "no_entity");
