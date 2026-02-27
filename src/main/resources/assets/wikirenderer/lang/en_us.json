@@ -76,7 +76,6 @@
   "gui.wikirenderer.select_block_batch": "Block Batch",
   "gui.wikirenderer.select_tooltip_batch": "Tooltip Batch",
   "gui.wikirenderer.select_atlas": "Atlas",
-
   "gui.wikirenderer.select_batch_operation": "Select batch operation",
   "gui.wikirenderer.render_task_size": "Items to renders: %s",
 
@@ -104,10 +103,8 @@
   "gui.wikirenderer.no_ffmpeg_1": "FFmpeg was not detected",
   "gui.wikirenderer.no_ffmpeg_2": "Please download it from",
   "gui.wikirenderer.no_ffmpeg_3": "https://ffmpeg.org/download.html",
-  "gui.wikirenderer.vram": "Estimated VRAM usage: %s/%smb (%s)",
   "gui.wikirenderer.ram": "Estimated RAM usage: %s/%smb (%s)",
   "gui.wikirenderer.ram_ignore": "Control-click to ignore",
-  "gui.wikirenderer.no_vram_info_warning": "Available VRAM could not be determined",
 
   "gui.wikirenderer.texture_timings_data_single": "This animated texture takes\n %s (%s ticks) to fully loop",
   "gui.wikirenderer.texture_timings_data_multiple": "These animated textures take \n%s (%s ticks) to seamlessly loop",
@@ -149,7 +146,6 @@
   "gui.wikirenderer.item_options": "Item Options",
   "gui.wikirenderer.tooltip_options": "Tooltip Options",
   "gui.wikirenderer.presets": "Presets",
-  "gui.wikirenderer.lighting_profile": "Lighting Profile",
 
   "gui.wikirenderer.block_visibility": "Block Visibility",
   "gui.wikirenderer.entity_visibility_overrides": "Entity Visibility",
@@ -189,13 +185,6 @@
   "gui.wikirenderer.player_head_resolution": "Player Head Resolution",
   "gui.wikirenderer.hide_tooltip_background": "Hide Tooltip Background",
   "gui.wikirenderer.file_name": "File Name",
-  "gui.wikirenderer.hotkeys": "F10: Toggle UI  F12: Export",
-
-  "gui.wikirenderer.memory_warning1": "Warning: Unless you have at least 6GB ",
-  "gui.wikirenderer.memory_warning2": "of memory available for Minecraft,",
-  "gui.wikirenderer.memory_warning3": "resolutions over 8192x8192",
-  "gui.wikirenderer.memory_warning4": "are not recommended if you want",
-  "gui.wikirenderer.memory_warning5": "your computer to survive",
 
   "gui.wikirenderer.mesh_building": "Building - %d%%",
   "gui.wikirenderer.mesh_cancelled": "Cancelled - %d%%",
@@ -262,9 +251,7 @@
   "gui.wikirenderer.hud.area_selection.to": "To: %s",
   "gui.wikirenderer.hud.area_selection.clear_hint": "To clear, press %s or %s while sneaking",
   "gui.wikirenderer.click_to_open": "Click to open!",
-
   "gui.wikirenderer.export_failed": "Failed to export image",
-
 
   "message.wikirenderer.loading_texture": "Loading player head texture...",
   "message.wikirenderer.loading_texture_fail": "Invalid texture ID or base64.",
@@ -275,14 +262,7 @@
   "message.wikirenderer.no_valid_chunks": "Couldn't find any blocks in this chunk or any adjacent chunks. Make sure you're standing on a block!",
   "message.wikirenderer.no_such_namespace": "Unknown namespace",
   "message.wikirenderer.scanning_chunks": "Scanning outwards for blocks in %sx%s chunks up to %s blocks. Chunks that have no blocks will be skipped.",
-  "message.wikirenderer.chunks_found": "Successfully found %s connected %sx%s chunks within %s blocks.",
-  "message.wikirenderer.closed": "Render menu saved, type /isorender reopen to reopen it.",
 
-  "message.wikirenderer.no_such_player": "Couldn't find a player with this name",
-
-  "message.wikirenderer.custom_lighting": "§aCustom Lighting: §7[§c%1$s §a%1$s §b%1$s§7]",
-  "message.wikirenderer.current_profile": "Current Profile: %1$s",
-  "message.wikirenderer.lighting_profile_updated": "§aLighting profile updated",
   "message.wikirenderer.unsafe_enabled": "Unsafe mode §cenabled§7. Tread lightly",
   "message.wikirenderer.unsafe_disabled": "Unsafe mode §adisabled§7",
   "message.wikirenderer.debug_bounds_enabled": "Debug entity bounds for area selections §aenabled§7.",

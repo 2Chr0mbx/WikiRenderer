@@ -33,7 +33,6 @@ public class WikiRendererCommand {
         registerSubCommand(mainCommand, access, new RenderItemSubCommand());
         registerSubCommand(mainCommand, access, new RenderItemTooltipSubCommand());
         registerSubCommand(mainCommand, access, new GroupRenderSubCommand());
-        registerSubCommand(mainCommand, access, new UnsafeSubCommand());
         registerSubCommand(mainCommand, access, new DebugSubCommand());
 
         LiteralCommandNode<FabricClientCommandSource> registeredMainCommand = dispatcher.register(mainCommand);
