@@ -56,7 +56,15 @@ public class RenderablePlayerEntity extends LocalPlayer {
             return switch (fetchMode) {
                 case NAME -> profileResolver.fetchByName(profile.name()).orElse(profile);
                 case UUID -> profileResolver.fetchById(profile.id()).orElse(profile);
-                case TEXTURE -> profile;
+                case TEXTURE -> {
+                    ClientPacketListener connection = Minecraft.getInstance().getConnection();
+                    if (connection != null) {
+                        PlayerInfo playerInfo = connection.getPlayerInfo(profile.id());
+                        yield playerInfo != null ? playerInfo.getProfile() : profile;
+                    } else {
+                        yield profile;
+                    }
+                }
             };
         }, Util.backgroundExecutor()).thenCompose(completeProfile -> {
             this.skinTextures = DefaultPlayerSkin.get(completeProfile);

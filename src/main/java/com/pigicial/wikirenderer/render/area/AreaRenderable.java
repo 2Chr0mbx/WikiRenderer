@@ -253,7 +253,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         } else {
             state.lightCoords = client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0);
         }
-        state.outlineColor = 0; // remove glow
+        state.outlineColor = 0; // remove glow (doesn't render properly)
 
         if (this.entitiesFrozen && (state instanceof AvatarRenderState avatarRenderState)) {
             // fix weird cape behavior with frozen models - there might be a better way to do this but ehh this is fine for now

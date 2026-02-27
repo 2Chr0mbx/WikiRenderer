@@ -317,11 +317,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     private void updateRenderState(EntityRenderState state, EntityPropertyBundle properties, long timeSinceCreationMs, boolean usingLiveEntity) {
-        //state.outlineColor = 0; // remove glow
+        state.outlineColor = 0; // remove glow (doesn't render properly)
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightTexture.FULL_BRIGHT;
 
-        if ((getProperties().hideNametags.get() && !isNametagOnlyRenderedData) || getProperties().spriteRendering.get()) {
+        if ((getProperties().hideNametags.get() || getProperties().spriteRendering.get()) && !isNametagOnlyRenderedData) {
             state.nameTag = null;
             state.nameTagAttachment = null;
         }
