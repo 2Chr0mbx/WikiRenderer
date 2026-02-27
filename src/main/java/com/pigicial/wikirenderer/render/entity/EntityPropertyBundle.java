@@ -2,7 +2,6 @@ package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
-import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.Property;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -170,8 +169,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle {
             screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
         }));
 
-        if (renderable.hasEntityProperty(LivingEntity.class, LivingEntity::shouldShowName) && !spriteRendering.get()) {
+        renderable.isNametagOnlyRenderedData = EntityRenderBoundsUtil.isNametagOnlyRenderedData(renderable.getUsedEntity());
+        if (!renderable.isNametagOnlyRenderedData && !spriteRendering.get()) {
             WikiRendererUI.booleanControl(container, this.hideNametags, "hide_nametags");
+            this.hideNametags.futureListen(screen, (p, b) -> {
+                renderable.cachedCenterOffset = null;
+                renderable.cachedScaleMultiplier = null;
+            });
         }
 
         if (renderable.hasEntityType(LivingEntity.class)) {

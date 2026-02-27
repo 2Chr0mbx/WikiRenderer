@@ -79,6 +79,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected AtomicBoolean textureCancelMarker = null;
     protected Vec3 cachedCenterOffset = null;
     protected Float cachedScaleMultiplier = null;
+    protected boolean isNametagOnlyRenderedData = false;
 
     public EntityRenderable(@Nullable Entity liveNonTickableEntity, Entity clonedTickableEntity) {
         this.liveNonTickableEntity = liveNonTickableEntity;
@@ -272,7 +273,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() ? tickDelta : 0);
             this.updateRenderState(state, properties, timeSinceCreationMs, usingLiveEntity);
-            //System.out.println("state.nameTag = " + state.nameTag);
 
             List<Runnable> partVisibilityCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {
@@ -321,7 +321,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightTexture.FULL_BRIGHT;
 
-        if (getProperties().hideNametags.get() || getProperties().spriteRendering.get()) {
+        if ((getProperties().hideNametags.get() && !isNametagOnlyRenderedData) || getProperties().spriteRendering.get()) {
             state.nameTag = null;
             state.nameTagAttachment = null;
         }

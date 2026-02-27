@@ -9,9 +9,7 @@ import com.pigicial.wikirenderer.util.VertexPositionTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.entity.state.ArmorStandRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.entity.state.TextDisplayEntityRenderState;
 import net.minecraft.client.renderer.feature.*;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.world.entity.Entity;
@@ -65,5 +63,35 @@ public class EntityRenderBoundsUtil {
         }
 
         return VertexPositionTracker.BOUNDS;
+    }
+
+    public static boolean isNametagOnlyRenderedData(Entity entity) {
+        EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
+        CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
+
+        SubmitNodeStorage tempStorage = new SubmitNodeStorage();
+        Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, cameraRenderState, 0, 0, 0, new PoseStack(), tempStorage);
+
+        VertexPositionTracker.BOUNDS = null;
+        for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
+            MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+            MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+            FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
+
+            TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+            ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
+            BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
+            CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+        }
+
+        if (VertexPositionTracker.BOUNDS == null) {
+            for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
+                NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+            }
+
+            return VertexPositionTracker.BOUNDS != null;
+        }
+
+        return false;
     }
 }

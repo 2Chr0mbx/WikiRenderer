@@ -28,12 +28,8 @@ public class LivingEntityRendererMixin<T extends LivingEntity> {
 
     @Inject(method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z", at = @At("HEAD"), cancellable = true)
     private void disablePlayerLabels(T livingEntity, double d, CallbackInfoReturnable<Boolean> cir) {
-        if (WikiRenderer.inRenderableDraw) {
-            if (WikiRenderer.inAreaRenderDraw && AreaPropertyBundle.INSTANCE.hideNametags.get()) {
-                cir.setReturnValue(false);
-            } else if ((WikiRenderer.inEntityDraw && EntityPropertyBundle.INSTANCE.hideNametags.get()) || WikiRenderer.inSpriteEntityDraw) {
-                cir.setReturnValue(false);
-            }
+        if (WikiRenderer.inRenderableDraw && WikiRenderer.inAreaRenderDraw && AreaPropertyBundle.INSTANCE.hideNametags.get()) {
+            cir.setReturnValue(false);
         }
     }
 
@@ -46,9 +42,9 @@ public class LivingEntityRendererMixin<T extends LivingEntity> {
     )
     private Entity overrideCameraEntity(Minecraft instance, Operation<Entity> original) {
         if (WikiRenderer.inRenderableDraw) {
-            if (WikiRenderer.inAreaRenderDraw && AreaPropertyBundle.INSTANCE.hideNametags.get()) {
+            if (WikiRenderer.inAreaRenderDraw && !AreaPropertyBundle.INSTANCE.hideNametags.get()) {
                 return null;
-            } else if ((WikiRenderer.inEntityDraw && EntityPropertyBundle.INSTANCE.hideNametags.get()) || WikiRenderer.inSpriteEntityDraw) {
+            } else if ((WikiRenderer.inEntityDraw && !EntityPropertyBundle.INSTANCE.hideNametags.get())) {
                 return null;
             }
         }
