@@ -93,7 +93,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     @Override
     public void modifyRotation(int amount) {
         if (this.spriteRendering.get()) {
-            this.spriteRotation.modify(amount);
+            if (this.allowRotatingWithMouse.get()) {
+                this.spriteRotation.modify(amount);
+            }
         } else {
             super.modifyRotation(amount);
         }
@@ -102,7 +104,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     @Override
     public void modifySlant(double amount) {
         if (this.spriteRendering.get()) {
-            this.spriteSlant.modify(amount);
+            if (this.allowRotatingWithMouse.get()) {
+                this.spriteSlant.modify(amount);
+            }
         } else {
             super.modifySlant(amount);
         }
