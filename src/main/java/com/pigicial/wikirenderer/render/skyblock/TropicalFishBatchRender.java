@@ -23,7 +23,7 @@ public class TropicalFishBatchRender {
                 for (TropicalFish.Pattern variant : TropicalFish.Pattern.values()) {
                     CompoundTag tag = new CompoundTag();
                     tag.put("Variant", IntTag.valueOf(new TropicalFish.Variant(variant, baseColor, patternColor).getPackedId()));
-                    EntityRenderable fishy = EntityRenderable.of(EntityType.TROPICAL_FISH, tag);
+                    EntityRenderable fishy = EntityRenderable.fromEntityType(EntityType.TROPICAL_FISH, tag);
                     if (fishy != null) {
                         fishy.getUsedEntity().tick();
                         fishy.setCustomFileName("tropical_fish_" + variant.getSerializedName() + "_" + baseColor.getName() + "_" + patternColor.getName());

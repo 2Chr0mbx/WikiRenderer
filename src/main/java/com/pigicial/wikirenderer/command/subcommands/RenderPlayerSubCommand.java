@@ -76,7 +76,7 @@ public class RenderPlayerSubCommand extends WikiRendererSubCommand {
 
     private void renderSelf() {
         LocalPlayer clientPlayer = Minecraft.getInstance().player;
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(EntityRenderable.copyAsRenderable(clientPlayer)));
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(EntityRenderable.fromEntity(clientPlayer)));
     }
 
     private void renderPlayerByName(CommandContext<FabricClientCommandSource> context, boolean useNbt) {

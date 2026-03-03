@@ -147,7 +147,7 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
                 .map(type -> {
                     CompoundTag entityNbt = useNbt ? CompoundTagArgument.getCompoundTag(context, "nbt") : null;
                     EntityNBTValidityFilter filterType = useFilter ? EntityNBTFilterTypeArgumentType.getType(context, "nbt_filter") : null;
-                    return EntityRenderable.of(type, entityNbt, filterType);
+                    return EntityRenderable.fromEntityType(type, entityNbt, filterType);
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -164,7 +164,7 @@ public class GroupRenderSubCommand extends WikiRendererSubCommand {
                 .map(type -> {
                     CompoundTag entityNbt = useNbt ? CompoundTagArgument.getCompoundTag(context, "nbt") : null;
                     EntityNBTValidityFilter filterType = useFilter ? EntityNBTFilterTypeArgumentType.getType(context, "nbt_filter") : null;
-                    return EntityRenderable.of(type, entityNbt, filterType);
+                    return EntityRenderable.fromEntityType(type, entityNbt, filterType);
                 })
                 .filter(Objects::nonNull)
                 .toList();

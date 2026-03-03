@@ -1,18 +1,15 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.ClientMannequinAccessor;
-import com.pigicial.wikirenderer.mixin.access.ElytraAnimationStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.ParticleRestriction;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
-import com.pigicial.wikirenderer.render.entity.player.ProfileFetchMode;
 import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
@@ -25,6 +22,7 @@ import com.pigicial.wikirenderer.util.EntityNBTValidityFilter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -42,8 +40,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.decoration.Mannequin;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -52,8 +48,6 @@ import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +60,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
@@ -74,6 +69,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     @Nullable
     protected final Entity liveNonTickableEntity;
     protected final Entity clonedTickableEntity;
+
+    private List<Entity> nearbyEntitiesToShow = new ArrayList<>();
+    private boolean nearbyEntitiesFrozen = false;
 
     private final Map<String, TextureData> textureData = new LinkedHashMap<>();
     protected boolean requireTextureReCache = true;
@@ -88,12 +86,12 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Nullable
-    public static EntityRenderable of(EntityType<?> type, @Nullable CompoundTag nbt) {
-        return of(type, nbt, EntityNBTValidityFilter.NO_FILTER);
+    public static EntityRenderable fromEntityType(EntityType<?> type, @Nullable CompoundTag nbt) {
+        return fromEntityType(type, nbt, EntityNBTValidityFilter.NO_FILTER);
     }
 
     @Nullable
-    public static EntityRenderable of(EntityType<?> type, @Nullable CompoundTag nbt, @Nullable EntityNBTValidityFilter nbtFilterRequirement) {
+    public static EntityRenderable fromEntityType(EntityType<?> type, @Nullable CompoundTag nbt, @Nullable EntityNBTValidityFilter nbtFilterRequirement) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) return null;
 
@@ -105,7 +103,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         Entity entity = EntityType.loadEntityRecursive(nbt, minecraft.level, EntitySpawnReason.LOAD, EntityProcessor.NOP);
         if (entity == null) return null;
 
-        CompoundTag savedNbt = saveNBT(entity);
+        CompoundTag savedNbt = EntityCloner.saveNBT(entity);
         nbt.remove("id");
         if (!nbtFilterRequirement.passesFilter(nbt, savedNbt)) return null;
 
@@ -113,125 +111,19 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         return new EntityRenderable(null, entity);
     }
 
-    private static CompoundTag saveNBT(Entity entity) {
-        ProblemReporter.ScopedCollector logging = new ProblemReporter.ScopedCollector(entity.problemPath(), WikiRenderer.LOGGER);
-        TagValueOutput view = TagValueOutput.createWithContext(logging, entity.registryAccess());
-        entity.saveWithoutId(view);
-
-        CompoundTag savedNbt = view.buildResult();
-        logging.close();
-
-        return savedNbt;
+    public static EntityRenderable fromEntity(Entity source) {
+        return new EntityRenderable(source, EntityCloner.copyEntityAndPassengers(source));
     }
 
-    public static EntityRenderable copyAsRenderable(Entity source) {
-        return new EntityRenderable(source, copyEntityAndPassengers(source));
-    }
-
-    @Nullable
-    public static Entity copy(Entity source) {
-        if (source instanceof Player player) {
-            return copyPlayer(player);
+    public static void applyToEntityAndPassengers(Entity entity, Consumer<Entity> action) {
+        action.accept(entity);
+        if (entity.getPassengers().isEmpty()) {
+            return;
         }
 
-        CompoundTag nbt = saveNBT(source);
-        nbt.putString("id", EntityType.getKey(source.getType()).toString());
-
-        Entity clonedEntity = EntityType.loadEntityRecursive(nbt, source.level(), EntitySpawnReason.LOAD, EntityProcessor.NOP);
-        if (clonedEntity == null) return null;
-
-        List<SynchedEntityData.DataValue<?>> nonDefaultValues = source.getEntityData().getNonDefaultValues();
-        if (nonDefaultValues != null) {
-            clonedEntity.getEntityData().assignValues(nonDefaultValues);
+        for (Entity e : entity.getPassengers()) {
+            applyToEntityAndPassengers(e, action);
         }
-
-        if (clonedEntity instanceof LivingEntity living) {
-            living.hurtTime = 0;
-            living.deathTime = 0;
-        }
-        clonedEntity.tick();
-
-
-        clonedEntity.setXRot(source.getXRot());
-        clonedEntity.setYRot(source.getYRot());
-        if (clonedEntity instanceof LivingEntity livingClone && source instanceof LivingEntity livingSource) {
-            livingClone.yHeadRot = livingSource.yHeadRot;
-            livingClone.yHeadRotO = livingSource.yHeadRotO;
-            livingClone.yBodyRot = livingSource.yBodyRot;
-            livingClone.yBodyRotO = livingSource.yBodyRotO;
-        }
-
-        return clonedEntity;
-    }
-
-    public static Entity copyEntityAndPassengers(Entity source) {
-        source = source.getRootVehicle();
-
-        List<Entity> entityStack = new ArrayList<>();
-        applyToEntityAndPassengers(source, entity -> {
-            Entity entityClone = copy(entity);
-            if (entityClone != null) {
-                if (entityClone.getVehicle() != null) {
-                    entityClone.getVehicle().remove(Entity.RemovalReason.DISCARDED);
-                }
-                entityClone.getPassengers().forEach(passenger -> passenger.remove(Entity.RemovalReason.DISCARDED));
-
-                entityStack.add(entityClone);
-            }
-        });
-
-        Entity bottomEntity = entityStack.getFirst();
-
-        Entity recentTopEntity = bottomEntity;
-        for (int i = 1, entityStackSize = entityStack.size(); i < entityStackSize; i++) {
-            Entity passenger = entityStack.get(i);
-            passenger.startRiding(recentTopEntity);
-            recentTopEntity = passenger;
-        }
-
-        applyToEntityAndPassengers(bottomEntity, Entity::tick);
-        return bottomEntity;
-    }
-
-    public static RenderablePlayerEntity copyPlayer(Player originalPlayer) {
-        GameProfile originalProfile = originalPlayer.getGameProfile();
-        GameProfile fakeProfile = new GameProfile(originalProfile.id(), originalProfile.name(), new PropertyMap(originalProfile.properties()));
-
-        RenderablePlayerEntity playerClone = new RenderablePlayerEntity(fakeProfile, ProfileFetchMode.TEXTURE);
-
-        ProblemReporter.ScopedCollector problemReporter = new ProblemReporter.ScopedCollector(originalPlayer.problemPath(), WikiRenderer.LOGGER);
-        TagValueOutput view = TagValueOutput.createWithContext(problemReporter, originalPlayer.registryAccess());
-        originalPlayer.saveWithoutId(view);
-
-        CompoundTag nbt = view.buildResult();
-        problemReporter.close();
-        try (ProblemReporter.ScopedCollector loggingRead = new ProblemReporter.ScopedCollector(playerClone.problemPath(), WikiRenderer.LOGGER)) {
-            playerClone.load(TagValueInput.create(loggingRead, playerClone.registryAccess(), nbt));
-        }
-
-        List<SynchedEntityData.DataValue<?>> nonDefaultValues = originalPlayer.getEntityData().getNonDefaultValues();
-        if (nonDefaultValues != null) {
-            playerClone.getEntityData().assignValues(nonDefaultValues);
-        }
-
-        playerClone.hurtTime = 0;
-        playerClone.deathTime = 0;
-        playerClone.tick();
-
-        playerClone.setXRot(originalPlayer.getXRot());
-        playerClone.setYRot(originalPlayer.getYRot());
-
-        playerClone.yHeadRot = originalPlayer.yHeadRot;
-        playerClone.yHeadRotO = originalPlayer.yHeadRotO;
-        playerClone.yBodyRot = originalPlayer.yBodyRot;
-        playerClone.yBodyRotO = originalPlayer.yBodyRotO;
-
-        ElytraAnimationStateAccessor elytraData = (ElytraAnimationStateAccessor) playerClone.elytraAnimationState;
-        elytraData.isometric$setRotX((float) (Math.PI / 12));
-        elytraData.isometric$setRotZ((float) (-Math.PI / 12));
-        playerClone.elytraAnimationState.tick();
-
-        return playerClone;
     }
 
     public boolean isUsingLiveEntity() {
@@ -246,24 +138,86 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         }
     }
 
+    private void refreshSurroundingVisibleEntities(long timeSinceCreationMs) {
+        EntityPropertyBundle properties = getProperties();
+        if (!properties.showSurroundingEntities.get() || properties.surroundingEntitiesRadius.get() == 0) {
+            this.nearbyEntitiesToShow.clear();
+            return;
+        }
+
+        if (!isUsingLiveEntity()) {
+            if (!this.nearbyEntitiesFrozen) {
+                this.nearbyEntitiesFrozen = true;
+
+                this.nearbyEntitiesToShow = this.nearbyEntitiesToShow
+                        .stream()
+                        .map(originalEntity -> {
+                            Entity clonedEntity = EntityCloner.copy(originalEntity);
+                            if (clonedEntity == null) return null;
+                            clonedEntity.restoreFrom(originalEntity);
+                            clonedEntity.baseTick();
+                            return clonedEntity;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
+            return;
+        }
+
+        // not frozen selected by here
+        if (properties.autoRefreshVisibleSurroundingEntities.get() || this.nearbyEntitiesFrozen) {
+            ClientLevel level = Minecraft.getInstance().level;
+            assert level != null;
+
+
+            Entity usedEntity = getUsedEntity();
+            EntityRenderState mainEntityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(usedEntity, 0);
+            this.updateRenderState(mainEntityRenderState, properties, timeSinceCreationMs, isUsingLiveEntity());
+            EntityVertexBounds mainEntityVertexBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(usedEntity, mainEntityRenderState, CameraOrientationUtil.createRenderState(this));
+
+            AABB mainEntityBounds = mainEntityVertexBounds != null ? mainEntityVertexBounds.getBounds() : usedEntity.getBoundingBox();
+            double distance = properties.surroundingEntitiesRadius.get();
+
+            AABB area = new AABB(
+                    mainEntityBounds.minX - distance, mainEntityBounds.minY - distance, mainEntityBounds.minZ - distance,
+                    mainEntityBounds.maxX + distance, mainEntityBounds.maxY + distance, mainEntityBounds.maxZ + distance
+            );
+
+            this.nearbyEntitiesToShow = level.getEntities((Entity) null, area, entity -> {
+                EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
+                this.updateRenderState(state, properties, timeSinceCreationMs, true);
+
+                EntityVertexBounds entityVertexBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity, state, CameraOrientationUtil.createRenderState(this));
+                AABB entityBounds = entityVertexBounds == null ? null : entityVertexBounds.getBounds();
+
+                return entityBounds != null && entityBounds.intersects(area);
+            });
+        }
+
+        this.nearbyEntitiesToShow.removeIf(Entity::isRemoved);
+        this.nearbyEntitiesFrozen = false;
+    }
+
+    private void forBaseAndSurroundingEntities(Entity baseEntity, Consumer<Entity> predicate) {
+        applyToEntityAndPassengers(baseEntity, predicate);
+        for (Entity nearbyEntity : nearbyEntitiesToShow) {
+            predicate.accept(nearbyEntity);
+        }
+    }
+
     @Override
     public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack matrix4fStack, PoseStack matrices, float delta, long timeSinceCreationMs) {
-        EntityPropertyBundle properties = this.getProperties();
+        matrices.pushPose();
 
         boolean usingLiveEntity = isUsingLiveEntity();
         Entity usedEntity = this.getUsedEntity();
         float tickDelta = usingLiveEntity ? delta : 0;
 
-        EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
-        SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
-
-        matrices.pushPose();
-        applyToEntityAndPassengers(usedEntity, entity -> {
-            Vec3 offset = Vec3.ZERO;
+        this.refreshSurroundingVisibleEntities(timeSinceCreationMs);
+        this.forBaseAndSurroundingEntities(usedEntity, entity -> {
+            EntityPropertyBundle properties = this.getProperties();
             Vec3 entityPosition = entity.position();
-            if (entity.isPassenger()) {
-                offset = entityPosition.subtract(usedEntity.position());
-            }
+            Vec3 offset = entityPosition.subtract(usedEntity.position());
 
             if (entity instanceof ClientMannequin mannequin) {
                 this.updateMannequinSkin(mannequin);
@@ -271,6 +225,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             WikiRenderer.inEntityDraw = true;
             WikiRenderer.inSpriteEntityDraw = properties.spriteRendering.get();
+
+            EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
+            SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() ? tickDelta : 0);
             this.updateRenderState(state, properties, timeSinceCreationMs, usingLiveEntity);
@@ -312,8 +269,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             WikiRenderer.inEntityDraw = false;
             partVisibilityCallbacks.forEach(Runnable::run);
         });
-
-        // if these aren't undone them the bottom of certain armor boots look weird (for some reason, and despite popPose(), idk)
 
         matrices.popPose();
     }
@@ -451,16 +406,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         }
     }
 
-    private static void applyToEntityAndPassengers(Entity entity, Consumer<Entity> action) {
-        action.accept(entity);
-        if (entity.getPassengers().isEmpty()) {
-            return;
-        }
-
-        for (Entity e : entity.getPassengers()) {
-            applyToEntityAndPassengers(e, action);
-        }
-    }
 
     protected boolean hasEntityType(Class<? extends Entity> entityTypeClass) {
         AtomicBoolean found = new AtomicBoolean(false);
@@ -474,11 +419,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         return found.get();
     }
 
-    protected <T extends Entity> boolean hasEntityProperty(Class<T> entityTypeClass, Predicate<T> predicate) {
+    protected boolean hasLivingEntityProperty(Predicate<LivingEntity> predicate) {
         AtomicBoolean found = new AtomicBoolean(false);
 
         applyToEntityAndPassengers(getUsedEntity(), e -> {
-            if (entityTypeClass.isAssignableFrom(e.getClass()) && predicate.test((T) e)) {
+            if (e instanceof LivingEntity livingEntity && predicate.test(livingEntity)) {
                 found.set(true);
             }
         });

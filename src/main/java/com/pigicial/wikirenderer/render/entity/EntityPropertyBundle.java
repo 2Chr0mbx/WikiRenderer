@@ -1,10 +1,7 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
-import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
-import com.pigicial.wikirenderer.property.IntProperty;
-import com.pigicial.wikirenderer.property.Property;
-import com.pigicial.wikirenderer.property.SerializablePropertyBundle;
+import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
@@ -29,14 +26,20 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
     public static final EntityPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new EntityPropertyBundle());
 
-    public final Property<Boolean> tickEntityAnimations = Property.of(false);
     public final Property<Boolean> spriteRendering = Property.of(false);
-    private final Property<Boolean> spriteCropping = Property.of(true);
-    private int spriteExportResolution = 64;
-    private final IntProperty spriteRotation = IntProperty.of(180, 0, 360).withRollover();
-    private final IntProperty spriteSlant = IntProperty.of(0, -90, 90);
+    public final Property<Boolean> spriteCropping = Property.of(true);
+    public final IntProperty spriteRotation = IntProperty.of(180, 0, 360).withRollover();
+    public final IntProperty spriteSlant = IntProperty.of(0, -90, 90);
+    public int spriteExportResolution = 64;
+
+    public final Property<Boolean> showSurroundingEntities = Property.of(false);
+    public final DoubleProperty surroundingEntitiesRadius = DoubleProperty.of(0, 0, 30);
+    public final Property<Boolean> autoRefreshVisibleSurroundingEntities = Property.of(true);
+    public final Property<Boolean> showSurroundingParticles = Property.of(false);
+    public final DoubleProperty surroundingParticlesRadius = DoubleProperty.of(0, 0, 30);
 
     public final Property<Boolean> useLiveEntity = Property.of(false);
+    public final Property<Boolean> tickEntityAnimations = Property.of(false);
 
     public final Property<Boolean> hideNametags = Property.of(true);
     public final Property<Boolean> overrideHeadRotations = Property.of(true);
@@ -162,6 +165,17 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             this.spriteSlant.setToDefault();
         })).margins(Insets.of(5, 0, 0, 0));
 
+        if (renderable.liveNonTickableEntity != null) {
+            WikiRendererUI.text(container, "entity_surroundings", true);
+            WikiRendererUI.booleanControl(container, showSurroundingEntities, "show_surrounding_entities");
+            showSurroundingEntities.addRebuildListener(screen);
+
+            if (showSurroundingEntities.get()) {
+                WikiRendererUI.doubleControl(screen, container, surroundingEntitiesRadius, "surrounding_entity_radius");
+                WikiRendererUI.booleanControl(container, this.autoRefreshVisibleSurroundingEntities, "auto_refresh_visible_entities");
+            }
+        }
+
         WikiRendererUI.text(container, "entity_data", true);
         container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
             Vec3 coords = renderable.getUsedEntity().position();
@@ -196,15 +210,15 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.booleanControl(container, this.forceSmallArms, "entity_data.small_arms");
         }
         if (renderable.hasEntityType(LivingEntity.class)) {
-            if (renderable.hasEntityProperty(LivingEntity.class, living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty())) {
+            if (renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty())) {
                 WikiRendererUI.booleanControl(container, this.hideHeldItems, "entity_data.hide_held_items");
             }
 
-            if (renderable.hasEntityProperty(LivingEntity.class, living -> living.getArmorCoverPercentage() > 0)) {
+            if (renderable.hasLivingEntityProperty(living -> living.getArmorCoverPercentage() > 0)) {
                 WikiRendererUI.booleanControl(container, this.hideArmor, "entity_data.hide_armor");
             }
 
-            if (renderable.hasEntityProperty(LivingEntity.class, living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil()))) {
+            if (renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil()))) {
                 WikiRendererUI.booleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments");
             }
 

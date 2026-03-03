@@ -14,8 +14,8 @@ import com.pigicial.wikirenderer.render.area.bounds.SingleCuboidMeshBounds;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.ChunkScanResult;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.HorizontalMiniChunk;
 import com.pigicial.wikirenderer.render.area.bounds.chunk.MiniChunkScanner;
+import com.pigicial.wikirenderer.render.entity.EntityCloner;
 import com.pigicial.wikirenderer.render.entity.EntityRenderBoundsUtil;
-import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.entity.EntityVertexBounds;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
@@ -173,7 +173,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 this.entities = this.entities
                         .stream()
                         .map(originalEntity -> {
-                            Entity clonedEntity = EntityRenderable.copy(originalEntity);
+                            Entity clonedEntity = EntityCloner.copy(originalEntity);
                             if (clonedEntity == null) return null;
 
                             clonedEntity.restoreFrom(originalEntity);
@@ -202,12 +202,10 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             AABB areaBoundingBox = AABB.encapsulatingFullBlocks(start, end);
 
             this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-8, -8, -8), end.offset(8, 8, 8)), entity -> {
-                Vec3 entityPosition = entity.position();
-
                 EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
                 this.updateEntityState(entity, state);
 
-                EntityVertexBounds entityVertexBounds = EntityRenderBoundsUtil.getBounds(state, CameraOrientationUtil.createRenderState(this), entityPosition.x, entityPosition.y, entityPosition.z);
+                EntityVertexBounds entityVertexBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity, state, CameraOrientationUtil.createRenderState(this));
                 AABB entityBounds =  entityVertexBounds == null ? null : entityVertexBounds.getBounds();
 
                 if (entityBounds != null && entityBounds.intersects(areaBoundingBox)) {

@@ -96,7 +96,7 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
         if (typeReference.value() instanceof EntityType<?> entityTypeReference) { // basically to avoid the intellij warning, this should be always true
             CompoundTag entityNbt = useNbt ? CompoundTagArgument.getCompoundTag(context, "nbt") : null;
 
-            EntityRenderable renderable = EntityRenderable.of(entityTypeReference, entityNbt);
+            EntityRenderable renderable = EntityRenderable.fromEntityType(entityTypeReference, entityNbt);
             if (renderable != null) {
                 ScreenSchedulerAndSaver.schedule(new RenderScreen(renderable));
             }
@@ -115,7 +115,7 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
             return;
         }
 
-        ScreenSchedulerAndSaver.schedule(new RenderScreen(EntityRenderable.copyAsRenderable(targetEntity)));
+        ScreenSchedulerAndSaver.schedule(new RenderScreen(EntityRenderable.fromEntity(targetEntity)));
     }
 
     public static Entity getClosestHit(Player source, AttackRange attackRange) {

@@ -31,8 +31,13 @@ public class EntityRenderBoundsUtil {
         float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
         EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, tickDelta);
         CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
+        return getPositionOffsetBasedBounds(entity, entityRenderState, cameraRenderState);
+    }
+
+    @Nullable
+    public static EntityVertexBounds getPositionOffsetBasedBounds(Entity entity, EntityRenderState renderState, CameraRenderState cameraRenderState) {
         Vec3 position = entity.position();
-        return getBounds(entityRenderState, cameraRenderState, position.x, position.y, position.z);
+        return getBounds(renderState, cameraRenderState, position.x, position.y, position.z);
     }
 
     // this gets the actual bounds of the rendered entity, rather than relying on extremely flaky and inconsistent bounding box data
