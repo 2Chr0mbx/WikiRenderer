@@ -38,6 +38,7 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -206,11 +207,13 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 this.updateEntityState(entity, state);
 
                 EntityVertexBounds entityVertexBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity, state, CameraOrientationUtil.createRenderState(this));
-                AABB entityBounds =  entityVertexBounds == null ? null : entityVertexBounds.getBounds();
+                AABB entityBounds = entityVertexBounds == null ? null : entityVertexBounds.getBounds();
 
                 if (entityBounds != null && entityBounds.intersects(areaBoundingBox)) {
                     AABB intersection = entityBounds.intersect(areaBoundingBox);
                     double entityVolume = entityBounds.getXsize() * entityBounds.getYsize() * entityBounds.getZsize();
+                    if (entityVolume == 0) return true; // fixes what seems to be single-vertex entities (like some item displays) not appearing from NaN math
+
                     double intersectionVolume = intersection.getXsize() * intersection.getYsize() * intersection.getZsize();
                     double intersectionPercentage = (intersectionVolume / entityVolume) * 100D;
                     return intersectionPercentage >= getProperties().entityBoundsIntersectionRequirement.get();
