@@ -41,6 +41,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.decoration.Mannequin;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -184,6 +185,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             );
 
             this.nearbyEntitiesToShow = level.getEntities((Entity) null, area, entity -> {
+                if (entity instanceof EnderDragonPart) return false; // crash fix
+
                 EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
                 this.updateRenderState(state, properties, timeSinceCreationMs, true);
 

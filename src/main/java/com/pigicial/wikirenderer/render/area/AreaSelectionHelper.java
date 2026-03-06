@@ -13,6 +13,7 @@ import net.minecraft.gizmos.GizmoStyle;
 import net.minecraft.gizmos.Gizmos;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -65,6 +66,8 @@ public class AreaSelectionHelper {
 
             AABB areaEntityBounds = new AABB(pos1.getX() - 8, pos1.getY() - 8, pos1.getZ() - 8, pos2.getX() + 9, pos2.getY() + 9, pos2.getZ() + 9);
             for (Entity entity : level.getEntities((Entity) null, areaEntityBounds, e -> true)) {
+                if (entity instanceof EnderDragonPart) continue; // crash fix
+
                 EntityVertexBounds entityBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity);
                 if (entityBounds != null && entityBounds.getBounds().intersects(areaBounds)) {
                     for (AABB entitySubBound : entityBounds.getClipBounds()) {

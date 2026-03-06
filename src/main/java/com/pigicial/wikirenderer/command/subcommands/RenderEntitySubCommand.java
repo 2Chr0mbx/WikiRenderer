@@ -26,6 +26,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.component.AttackRange;
 import net.minecraft.world.level.ClipContext;
@@ -178,6 +179,7 @@ public class RenderEntitySubCommand extends WikiRendererSubCommand {
         );
 
         for (Entity entity : ((LevelAccessor) level).wikirenderer$getEntities().getAll()) {
+            if (entity instanceof EnderDragonPart) continue; // crash fix
             if (entity == source) continue;
 
             // accurate enough check to remove most entities without instead checking for the more expensive rendered bounding box data

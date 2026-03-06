@@ -38,9 +38,9 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
@@ -203,6 +203,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             AABB areaBoundingBox = AABB.encapsulatingFullBlocks(start, end);
 
             this.entities = level.getEntities((Entity) null, AABB.encapsulatingFullBlocks(start.offset(-8, -8, -8), end.offset(8, 8, 8)), entity -> {
+                if (entity instanceof EnderDragonPart) return false; // crash fix
+
                 EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
                 this.updateEntityState(entity, state);
 
