@@ -13,6 +13,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
@@ -28,14 +29,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
     public final Property<Boolean> spriteRendering = Property.of(false);
     public final Property<Boolean> spriteCropping = Property.of(true);
-    public final IntProperty spriteRotation = IntProperty.of(180, 0, 360).withRollover();
+    public final IntProperty spriteRotation = IntProperty.of(0, 0, 360).withRollover();
     public final IntProperty spriteSlant = IntProperty.of(0, -90, 90);
     public int spriteExportResolution = 64;
 
     public final Property<Boolean> showSurroundingEntities = Property.of(false);
     public final DoubleProperty surroundingEntitiesRadius = DoubleProperty.of(0, 0, 30);
     public final Property<Boolean> autoRefreshVisibleSurroundingEntities = Property.of(true);
-    public final Property<Boolean> showSurroundingParticles = Property.of(false);
     public final DoubleProperty surroundingParticlesRadius = DoubleProperty.of(0, 0, 30);
 
     public final Property<Boolean> useLiveEntity = Property.of(false);
@@ -47,6 +47,12 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     public final IntProperty pitch = IntProperty.of(0, -90, 90);
     public final Property<Boolean> overrideBodyRotations = Property.of(true);
     public final IntProperty entityRotation = IntProperty.of(0, -180, 180).withRollover();
+
+    // handle separately for more customization
+    public final Property<Boolean> overrideEnderDragonBodyRotations = Property.of(true);
+    public final IntProperty enderDragonRotation = IntProperty.of(0, -180, 180).withRollover();
+
+    public final Property<Boolean> hideRedDamageGlow = Property.of(true);
     public final Property<Boolean> useSteveSkin = Property.of(false);
     public final Property<Boolean> hideHeldItems = Property.of(false);
     public final Property<Boolean> hideArmor = Property.of(false);
@@ -62,6 +68,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     @Override
     protected int getDefaultExportResolution() {
         return 512;
+    }
+
+    @Override
+    protected int getDefaultRotation() {
+        return 315;
     }
 
     @Override
@@ -133,7 +144,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             renderable.cachedScaleMultiplier = null;
             this.yaw.set(0);
             this.pitch.set(0);
-            this.spriteRotation.set(180);
+            this.spriteRotation.set(0);
             this.spriteSlant.set(0);
         }));
 
@@ -165,8 +176,25 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             this.spriteSlant.setToDefault();
         })).margins(Insets.of(5, 0, 0, 0));
 
+        WikiRendererUI.text(container, "entity_render_options", true);
         if (renderable.liveNonTickableEntity != null) {
-            WikiRendererUI.text(container, "entity_surroundings", true);
+            WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
+            this.useLiveEntity.futureListen(screen, (booleanProperty, value) -> {
+                renderable.requireTextureReCache = true;
+                if (renderable.textureCancelMarker != null) {
+                    renderable.textureCancelMarker.set(true);
+                }
+                screen.guiRebuildScheduled = true;
+                if (value) {
+                    tickEntityAnimations.set(true);
+                }
+                renderable.cachedCenterOffset = null;
+                renderable.cachedScaleMultiplier = null;
+            });
+        }
+        WikiRendererUI.booleanControl(container, this.tickEntityAnimations, "entity_animations");
+
+        if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, showSurroundingEntities, "show_surrounding_entities");
             showSurroundingEntities.addRebuildListener(screen);
 
@@ -174,6 +202,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 WikiRendererUI.doubleControl(screen, container, surroundingEntitiesRadius, "surrounding_entity_radius");
                 WikiRendererUI.booleanControl(container, this.autoRefreshVisibleSurroundingEntities, "auto_refresh_visible_entities");
             }
+        }
+        WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "show_surrounding_particles");
+        GlobalProperties.get().tickParticles.addRebuildListener(screen);
+        if (GlobalProperties.get().tickParticles.get()) {
+            WikiRendererUI.doubleControl(screen, container, surroundingParticlesRadius, "surrounding_particles_radius");
         }
 
         WikiRendererUI.text(container, "entity_data", true);
@@ -205,6 +238,15 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.intControl(screen, container, this.entityRotation, "entity_data.rotation");
         }
 
+        if (renderable.hasEntityType(EnderDragon.class)) {
+            WikiRendererUI.booleanControl(container, this.overrideEnderDragonBodyRotations, "override_ender_dragon_body_rotations");
+            WikiRendererUI.intControl(screen, container, this.enderDragonRotation, "entity_data.dragon_rotation");
+        }
+
+        if (renderable.hasEntityType(LivingEntity.class) || renderable.hasEntityType(EnderDragon.class)) {
+            WikiRendererUI.booleanControl(container, this.hideRedDamageGlow, "entity_data.hide_red_damage_glow");
+        }
+
         if (renderable.hasEntityType(Player.class)) {
             WikiRendererUI.booleanControl(container, this.useSteveSkin, "entity_data.steve");
             WikiRendererUI.booleanControl(container, this.forceSmallArms, "entity_data.small_arms");
@@ -230,23 +272,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     public void buildRenderOptionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         EntityRenderable renderable = (EntityRenderable) r;
 
-        if (renderable.liveNonTickableEntity != null) {
-            WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
-            this.useLiveEntity.futureListen(screen, (booleanProperty, value) -> {
-                renderable.requireTextureReCache = true;
-                if (renderable.textureCancelMarker != null) {
-                    renderable.textureCancelMarker.set(true);
-                }
-                screen.guiRebuildScheduled = true;
-                if (value) {
-                    tickEntityAnimations.set(true);
-                }
-                renderable.cachedCenterOffset = null;
-                renderable.cachedScaleMultiplier = null;
-            });
-        }
 
-        WikiRendererUI.booleanControl(container, this.tickEntityAnimations, "entity_animations");
     }
 
     @Override

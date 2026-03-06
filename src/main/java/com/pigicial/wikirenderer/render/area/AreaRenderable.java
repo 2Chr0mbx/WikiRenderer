@@ -7,7 +7,7 @@ import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
+import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.area.bounds.ChunkScannedMeshBounds;
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.bounds.SingleCuboidMeshBounds;
@@ -45,6 +45,7 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -142,14 +143,17 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         // this could be better but whatever
         Runnable preTranslucencyTask = () -> {
             this.mesh.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
-            if (!properties.hideEntities.get()) {
-                this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
-            }
 
             if (client.player != null) {
                 Vec3 diff = Vec3.atLowerCornerOf(mesh.bounds.getMinCorner()).subtract(client.player.trackingPosition());
+                standardStack.pushPose();
                 standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
                 this.drawParticles(standardStack.last().pose(), tickDelta);
+                standardStack.popPose();
+            }
+
+            if (!properties.hideEntities.get()) {
+                this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
             }
         };
 
@@ -239,6 +243,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             if (entity instanceof Player && properties.hidePlayers.get()) return;
             if (entity instanceof ArmorStand && properties.hideArmorStands.get()) return;
             if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) return;
+            if (entity instanceof Arrow) return;
 
             BlockPos meshStartPos = mesh.bounds.getMinCorner();
             Vec3 entityPosition = entity.getPosition(tickDelta);
@@ -276,7 +281,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         if (properties.overrideEntityRotations.get()) {
             if (state instanceof LivingEntityRenderState livingEntityRenderState) {
-                livingEntityRenderState.bodyRot = (properties.entityRotationOverride.get() + 180); // 180 makes it face the camera by default in the standard 135-degree rotation
+                livingEntityRenderState.bodyRot = (properties.entityRotationOverride.get());
                 livingEntityRenderState.xRot = properties.entityPitchOverride.get();
                 livingEntityRenderState.yRot = properties.entityYawOverride.get();
             }
@@ -366,9 +371,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     @Override
-    public ParticleRestriction<?> getParticleRestriction() {
+    public ParticleDisplayCondition getParticleDisplayCondition() {
         AABB dimensions = this.mesh.bounds.buildBoundingBox();
-        return ParticleRestriction.inArea(dimensions);
+        return ParticleDisplayCondition.inArea(dimensions);
     }
 
     @Override

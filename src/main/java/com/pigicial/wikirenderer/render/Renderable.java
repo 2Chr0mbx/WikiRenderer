@@ -31,8 +31,8 @@ public interface Renderable<P extends PropertyBundle> {
 
     default void onScreenHandle(RenderScreen screen, float tickDelta) {}
 
-    default ParticleRestriction<?> getParticleRestriction() {
-        return ParticleRestriction.never();
+    default ParticleDisplayCondition getParticleDisplayCondition() {
+        return ParticleDisplayCondition.HIDE_ALL;
     }
 
     default void cleanUp() {}

@@ -12,7 +12,7 @@ import com.pigicial.wikirenderer.components.NotificationComponent;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
+import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
@@ -218,7 +218,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Override
     protected void build(FlowLayout rootComponent) {
         this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
-        WikiRenderer.particleRestriction = this.renderable.getParticleRestriction();
+        WikiRenderer.particleDisplayCondition = this.renderable.getParticleDisplayCondition();
 
         this.leftColumn.margins(Insets.top(20));
         this.rightColumn.margins(Insets.top(20));
@@ -679,7 +679,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public void removed() {
-        WikiRenderer.particleRestriction = ParticleRestriction.always();
+        WikiRenderer.particleDisplayCondition = ParticleDisplayCondition.SHOW_ALL;
         this.minecraft.getFramerateLimitTracker().setFramerateLimit(this.minecraft.options.framerateLimit().get());
 
         PropertyBundle properties = renderable.getProperties();

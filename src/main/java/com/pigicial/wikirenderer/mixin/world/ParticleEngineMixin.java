@@ -3,7 +3,7 @@ package com.pigicial.wikirenderer.mixin.world;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.screen.RenderScreen;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
+import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
@@ -23,20 +23,9 @@ public class ParticleEngineMixin {
             return;
         }
 
-        ParticleRestriction<?> restriction = WikiRenderer.particleRestriction;
-
-        if (restriction.is(ParticleRestriction.ALLOW_NEVER)) {
-            return;
-        }
-
-        if (restriction.is(ParticleRestriction.ALLOW_DURING_TICK)) {
-            if (!restriction.conditionFor(ParticleRestriction.ALLOW_DURING_TICK).get()) {
-                ci.cancel();
-            }
-        } else if (restriction.is(ParticleRestriction.ALLOW_IN_AREA)) {
-            if (!restriction.conditionFor(ParticleRestriction.ALLOW_IN_AREA).test(particle.getBoundingBox())) {
-                ci.cancel();
-            }
+        ParticleDisplayCondition restriction = WikiRenderer.particleDisplayCondition;
+        if (!restriction.test(particle)) {
+            ci.cancel();
         }
     }
 }

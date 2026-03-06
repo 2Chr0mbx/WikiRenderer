@@ -8,7 +8,7 @@ import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
+import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
@@ -273,6 +273,20 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             partVisibilityCallbacks.forEach(Runnable::run);
         });
 
+        if (this.client.player != null) {
+            matrices.pushPose();
+
+            Vec3 playerDifference = getUsedEntity().position().subtract(client.player.getEyePosition());
+            if (cachedScaleMultiplier != null) {
+                matrices.scale(cachedScaleMultiplier, cachedScaleMultiplier, cachedScaleMultiplier);
+                matrices.translate(cachedCenterOffset); // this fits it into the default frame
+            }
+            matrices.translate(-playerDifference.x, -playerDifference.y, -playerDifference.z);
+
+            this.drawParticles(matrices.last().pose(), tickDelta);
+            matrices.popPose();
+        }
+
         matrices.popPose();
     }
 
@@ -304,11 +318,28 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 }
             }
 
-            // +180 is to rotate the camera at 135 degrees
+            if (properties.hideRedDamageGlow.get()) {
+                livingState.hasRedOverlay = false;
+            }
+
             if (properties.overrideBodyRotations.get()) {
-                livingState.bodyRot = properties.entityRotation.get() + 180;
-            } else {
-                livingState.bodyRot += 180; // rotate camera at 135 degrees
+                livingState.bodyRot = properties.entityRotation.get();
+            }
+        }
+
+        if (state instanceof EnderDragonRenderState dragonRenderState) {
+            if (properties.overrideEnderDragonBodyRotations.get()) {
+                for (int i = 0; i < 64; i++) {
+                    dragonRenderState.flightHistory.record(0, properties.enderDragonRotation.get() + 180);
+                }
+            }
+
+            if (properties.hideRedDamageGlow.get()) {
+                dragonRenderState.hasRedOverlay = false;
+            }
+
+            if (properties.tickEntityAnimations.get()) {
+                dragonRenderState.flapTime = timeSinceCreationMs / 2000f;
             }
         }
 
@@ -333,7 +364,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 );
             }
         }
-
         if (state instanceof ArmedEntityRenderState armedEntityRenderState) {
             if (properties.hideHeldItems.get()) {
                 armedEntityRenderState.leftHandItemStack = ItemStack.EMPTY;
@@ -384,8 +414,22 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public ParticleRestriction<?> getParticleRestriction() {
-        return ParticleRestriction.duringTick();
+    public ParticleDisplayCondition getParticleDisplayCondition() {
+        return ParticleDisplayCondition.inArea(() -> {
+            Entity usedEntity = getUsedEntity();
+            EntityRenderState mainEntityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(usedEntity, 0);
+
+            this.updateRenderState(mainEntityRenderState, getProperties(), 0, isUsingLiveEntity());
+            EntityVertexBounds mainEntityVertexBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(usedEntity, mainEntityRenderState, CameraOrientationUtil.createRenderState(this));
+
+            AABB mainEntityBounds = mainEntityVertexBounds != null ? mainEntityVertexBounds.getBounds() : usedEntity.getBoundingBox();
+            double distance = getProperties().surroundingParticlesRadius.get();
+
+            return new AABB(
+                    mainEntityBounds.minX - distance, mainEntityBounds.minY - distance, mainEntityBounds.minZ - distance,
+                    mainEntityBounds.maxX + distance, mainEntityBounds.maxY + distance, mainEntityBounds.maxZ + distance
+            );
+        });
     }
 
     @Override
@@ -413,7 +457,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected boolean hasEntityType(Class<? extends Entity> entityTypeClass) {
         AtomicBoolean found = new AtomicBoolean(false);
 
-        applyToEntityAndPassengers(getUsedEntity(), e -> {
+        // todo: this will cause gui out of sync issues from showing new entities
+        forBaseAndSurroundingEntities(getUsedEntity(), e -> {
             if (entityTypeClass.isAssignableFrom(e.getClass())) {
                 found.set(true);
             }
@@ -422,10 +467,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         return found.get();
     }
 
+    // todo: this will cause gui out of sync issues from showing new entities
     protected boolean hasLivingEntityProperty(Predicate<LivingEntity> predicate) {
         AtomicBoolean found = new AtomicBoolean(false);
 
-        applyToEntityAndPassengers(getUsedEntity(), e -> {
+        forBaseAndSurroundingEntities(getUsedEntity(), e -> {
             if (e instanceof LivingEntity livingEntity && predicate.test(livingEntity)) {
                 found.set(true);
             }

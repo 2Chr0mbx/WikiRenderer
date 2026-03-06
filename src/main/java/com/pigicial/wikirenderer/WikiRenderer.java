@@ -8,7 +8,7 @@ import com.pigicial.wikirenderer.command.WikiRendererCommand;
 import com.pigicial.wikirenderer.components.AreaSelectionComponent;
 import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.pigicial.wikirenderer.render.OrthographicSort;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
+import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
@@ -39,7 +39,7 @@ public class WikiRenderer implements ClientModInitializer {
     public static final String VERSION = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata().getVersion().getFriendlyString();
 
     public static AnimationHandler currentAnimationHandler = null;
-    public static ParticleRestriction<?> particleRestriction = ParticleRestriction.always();
+    public static ParticleDisplayCondition particleDisplayCondition = ParticleDisplayCondition.SHOW_ALL;
     public static boolean inEntityDraw = false;
     public static boolean inSpriteEntityDraw = false;
     public static boolean inAreaRenderDraw = false;

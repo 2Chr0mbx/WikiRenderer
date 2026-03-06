@@ -5,7 +5,7 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
-import com.pigicial.wikirenderer.render.ParticleRestriction;
+import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
@@ -76,8 +76,8 @@ public class BlockStateRenderable
     }
 
     @Override
-    public ParticleRestriction<?> getParticleRestriction() {
-        return ParticleRestriction.duringTick();
+    public ParticleDisplayCondition getParticleDisplayCondition() {
+        return ParticleDisplayCondition.DURING_TICK;
     }
 
     @Nullable
@@ -145,7 +145,7 @@ public class BlockStateRenderable
     @Override
     public void tick() {
         if (client.level == null || client.player == null) return;
-        if (GlobalProperties.get().tickTextureAnimations.get()) { // maybe not the best property to assign this to, but it works i suppose
+        if (GlobalProperties.get().tickParticles.get()) {
             if (this.blockEntity != null && this.state.getTicker(client.level, this.blockEntity.getType()) != null) {
                 BlockEntityTicker<BlockEntity> ticker = this.state.getTicker(client.level, (BlockEntityType<BlockEntity>) this.blockEntity.getType());
                 if (ticker == null) return;

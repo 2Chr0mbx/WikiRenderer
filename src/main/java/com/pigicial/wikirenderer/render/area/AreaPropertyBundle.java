@@ -70,8 +70,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
     public final Property<Boolean> overrideEntityRotations = Property.of(false);
     public final IntProperty entityYawOverride = IntProperty.of(0, -180, 180).withRollover();
-    public final IntProperty entityPitchOverride = IntProperty.of(0, -90, 90).withRollover();
-    public final IntProperty entityRotationOverride = IntProperty.of(0, -90, 90).withRollover();
+    public final IntProperty entityPitchOverride = IntProperty.of(0, -180, 180).withRollover();
+    public final IntProperty entityRotationOverride = IntProperty.of(0, -180, 180).withRollover();
     public final Property<Boolean> useSteveSkinForEntities = Property.of(false);
     public final Property<Boolean> hideHeldItemsForEntities = Property.of(false);
     public final Property<Boolean> hideArmorForEntities = Property.of(false);
