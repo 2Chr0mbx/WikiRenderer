@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ImageCropper {
     public static NativeImage cropTransparentAndCloseSource(NativeImage source) {
@@ -54,7 +55,8 @@ public class ImageCropper {
     }
 
     public static String getFFmpegCropSize(Renderable<?> renderable, List<CropData> dataList) {
-        if (!renderable.shouldCropForFFmpeg()) {
+        dataList.removeIf(Objects::isNull);
+        if (!renderable.shouldCropForFFmpeg() || dataList.isEmpty()) {
             return "";
         }
         int exportResolution = renderable.getProperties().getExportResolution(renderable);

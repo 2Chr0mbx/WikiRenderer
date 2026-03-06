@@ -269,13 +269,6 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     }
 
     @Override
-    public void buildRenderOptionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
-        EntityRenderable renderable = (EntityRenderable) r;
-
-
-    }
-
-    @Override
     public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
         float scale = this.scale.get() / 100f;
         modelViewStack.scale(scale, scale, scale);
