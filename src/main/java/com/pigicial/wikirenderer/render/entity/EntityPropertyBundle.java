@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
+import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -11,6 +12,10 @@ import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
+import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -21,7 +26,9 @@ import org.joml.Matrix4fStack;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class EntityPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
 
@@ -35,6 +42,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
     public final Property<Boolean> showSurroundingEntities = Property.of(false);
     public final DoubleProperty surroundingEntitiesRadius = DoubleProperty.of(0, 0, 30);
+
+    public final Property<Boolean> showHiddenSurroundingEntitiesList = Property.of(false);
+    public transient String entityTypeSearch = "Visible";
+    public final transient List<EntityType<?>> hiddenSurroundingEntityTypes = new ArrayList<>();
+
     public final Property<Boolean> autoRefreshVisibleSurroundingEntities = Property.of(true);
     public final DoubleProperty surroundingParticlesRadius = DoubleProperty.of(0, 0, 30);
 
@@ -142,8 +154,6 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             screen.guiRebuildScheduled = true;
             renderable.cachedCenterOffset = null;
             renderable.cachedScaleMultiplier = null;
-            this.yaw.set(0);
-            this.pitch.set(0);
             this.spriteRotation.set(0);
             this.spriteSlant.set(0);
         }));
@@ -174,11 +184,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         container.child(this.buildResetButton(() -> {
             this.spriteRotation.setToDefault();
             this.spriteSlant.setToDefault();
+            renderable.cachedCenterOffset = null;
+            renderable.cachedScaleMultiplier = null;
         })).margins(Insets.of(5, 0, 0, 0));
 
         WikiRendererUI.text(container, "entity_render_options", true);
         if (renderable.liveNonTickableEntity != null) {
-            WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entity");
+            WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entities");
             this.useLiveEntity.futureListen(screen, (booleanProperty, value) -> {
                 renderable.requireTextureReCache = true;
                 if (renderable.textureCancelMarker != null) {
@@ -202,14 +214,30 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 WikiRendererUI.doubleControl(screen, container, surroundingEntitiesRadius, "surrounding_entity_radius");
                 WikiRendererUI.booleanControl(container, this.autoRefreshVisibleSurroundingEntities, "auto_refresh_visible_entities");
             }
-        }
-        WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "show_surrounding_particles");
-        GlobalProperties.get().tickParticles.addRebuildListener(screen);
-        if (GlobalProperties.get().tickParticles.get()) {
-            WikiRendererUI.doubleControl(screen, container, surroundingParticlesRadius, "surrounding_particles_radius");
+
+            WikiRendererUI.booleanControl(container, this.showHiddenSurroundingEntitiesList, "show_hidden_entities_list");
+            this.showHiddenSurroundingEntitiesList.addRebuildListener(screen);
+            if (showHiddenSurroundingEntitiesList.get()) {
+                EditBox editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
+                editField.setFilter(s -> true);
+                editField.setResponder(text -> entityTypeSearch = text);
+
+                WikiRendererUI.text(container, "visible_keyword", 3);
+                WikiRendererUI.dynamicLabel(container, () -> Translate.gui("hidden_entities_amount", hiddenSurroundingEntityTypes.size()));
+
+                container.child(new SearchableEntityListComponent(hiddenSurroundingEntityTypes, () -> entityTypeSearch, () -> {
+                    List<Entity> shownEntities = new ArrayList<>();
+                    renderable.forBaseAndSurroundingEntities(renderable.getUsedEntity(), shownEntities::add);
+                    return shownEntities;
+                }));
+            }
         }
 
-        WikiRendererUI.text(container, "entity_data", true);
+        if (renderable.hasEntityType(LivingEntity.class)) {
+            WikiRendererUI.booleanControl(container, this.invisible, "entity_data.invisible");
+        }
+
+        WikiRendererUI.text(container, "entity_data", 10);
         container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
             Vec3 coords = renderable.getUsedEntity().position();
 
@@ -249,7 +277,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
         if (renderable.hasEntityType(Player.class)) {
             WikiRendererUI.booleanControl(container, this.useSteveSkin, "entity_data.steve");
-            WikiRendererUI.booleanControl(container, this.forceSmallArms, "entity_data.small_arms");
+            if (!spriteRendering.get()) {
+                WikiRendererUI.booleanControl(container, this.forceSmallArms, "entity_data.small_arms");
+            }
         }
         if (renderable.hasEntityType(LivingEntity.class)) {
             if (renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty())) {
@@ -263,8 +293,17 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             if (renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil()))) {
                 WikiRendererUI.booleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments");
             }
+        }
+    }
 
-            WikiRendererUI.booleanControl(container, this.invisible, "entity_data.invisible");
+    @Override
+    public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        super.buildRenderOptionGUIControls(renderable, screen, container);
+
+        WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "show_surrounding_particles");
+        GlobalProperties.get().tickParticles.addRebuildListener(screen);
+        if (GlobalProperties.get().tickParticles.get()) {
+            WikiRendererUI.doubleControl(screen, container, surroundingParticlesRadius, "surrounding_particles_radius");
         }
     }
 

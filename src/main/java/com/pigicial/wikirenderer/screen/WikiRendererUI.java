@@ -101,10 +101,9 @@ public class WikiRendererUI {
         return label;
     }
 
-    public static void booleanControl(FlowLayout container, Property<Boolean> property, String key) {
-        container.child(new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5)));
+    public static void booleanControl(FlowLayout container, Property<Boolean> property, String key, Object... args) {
+        container.child(new PropertyCheckboxComponent(Translate.gui(key, args), property).margins(Insets.top(5)));
     }
-
 
     public static void drawExportProgressBar(GuiGraphics context, int x, int y, int drawWidth, int barWidth, double speed) {
         int end = x + drawWidth + barWidth;

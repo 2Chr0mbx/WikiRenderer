@@ -41,11 +41,8 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
-import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
-import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -64,7 +61,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     public final WorldBlockMesh mesh;
 
     protected List<Entity> entities = new ArrayList<>();
-    private boolean entitiesFrozen;
+    private boolean entitiesFrozen = false;
+    private boolean entitiesLoaded = false;
 
     public AreaRenderable(WorldBlockMesh mesh) {
         this.mesh = mesh;
@@ -171,7 +169,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     private void refreshEntities() {
-        if (this.getProperties().freezeEntities.get()) {
+        if (this.getProperties().freezeEntities.get() && entitiesLoaded) {
             if (!this.entitiesFrozen) {
                 this.entitiesFrozen = true;
 
@@ -199,7 +197,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         }
 
         // not frozen selected by here
-        if (getProperties().autoRefreshVisibleEntities.get() || this.entitiesFrozen) {
+        if (getProperties().autoRefreshVisibleEntities.get() || this.entitiesFrozen || !entitiesLoaded) {
+            entitiesLoaded = true;
+
             ClientLevel level = Minecraft.getInstance().level;
             assert level != null;
             BlockPos start = mesh.bounds.getMinCorner();
@@ -240,10 +240,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         this.refreshEntities();
         this.entities.forEach(entity -> {
-            if (entity instanceof Player && properties.hidePlayers.get()) return;
-            if (entity instanceof ArmorStand && properties.hideArmorStands.get()) return;
+            if (properties.hiddenEntityTypes.contains(entity.getType())) return;
             if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) return;
-            if (entity instanceof Arrow) return;
 
             BlockPos meshStartPos = mesh.bounds.getMinCorner();
             Vec3 entityPosition = entity.getPosition(tickDelta);
@@ -399,8 +397,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         if (!properties.hideEntities.get()) {
             List<Integer> entityAnimationTimings = new LinkedList<>();
             for (Entity entity : entities) {
-                if (entity instanceof Player && properties.hidePlayers.get()) continue;
-                if (entity instanceof ArmorStand && properties.hideArmorStands.get()) continue;
+                if (properties.hiddenEntityTypes.contains(entity.getType())) continue;
                 if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) continue;
                 AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, entityAnimationTimings);
             }

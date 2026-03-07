@@ -94,7 +94,6 @@ public class DefaultPropertyBundle implements PropertyBundle {
         WikiRendererUI.doubleControl(screen, container, slant, "slant");
         WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed");
         WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
-        container.child(this.buildResetButton());
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
             builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
@@ -107,6 +106,8 @@ public class DefaultPropertyBundle implements PropertyBundle {
                 this.slant.set(35.264);
             }));
         }
+
+        container.child(this.buildResetButton());
     }
 
     protected ButtonComponent buildResetButton() {

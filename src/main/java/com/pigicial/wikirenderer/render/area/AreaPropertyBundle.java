@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.render.area;
 
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.components.ConditionalButton;
+import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -22,10 +23,13 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.EntityType;
 import org.joml.Matrix4fStack;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
 
@@ -58,8 +62,11 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final Property<Boolean> hideBeaconBeams = Property.of(false);
 
     public final Property<Boolean> hideEntities = Property.of(false);
-    public final Property<Boolean> hidePlayers = Property.of(false);
-    public final Property<Boolean> hideArmorStands = Property.of(false);
+
+    public final Property<Boolean> showHiddenEntitiesList = Property.of(false);
+    public transient String entityTypeSearch = "Visible";
+    public final transient List<EntityType<?>> hiddenEntityTypes = new ArrayList<>();
+
     public final Property<Boolean> hideLivingEntities = Property.of(false);
     public final IntProperty entityBoundsIntersectionRequirement = IntProperty.of(20, 0, 100);
     public final Property<Boolean> freezeEntities = Property.of(false);
@@ -291,7 +298,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             BlockPos maxCorner = mesh.bounds.getMaxCorner();
             String command = "/wikirender area pos " + minCorner.getX() + " " + minCorner.getY() + " " + minCorner.getZ() + " " + maxCorner.getX() + " " + maxCorner.getY() + " " + maxCorner.getZ();
 
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {});
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {
+            });
         }));
 
         WikiRendererUI.text(container, "block_visibility", true);
@@ -307,9 +315,21 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WikiRendererUI.booleanControl(container, this.hideEntities, "hide_entities");
         this.hideEntities.addRebuildListener(screen);
         if (!this.hideEntities.get()) {
-            WikiRendererUI.booleanControl(container, this.hidePlayers, "hide_players");
-            WikiRendererUI.booleanControl(container, this.hideArmorStands, "hide_armor_stands");
             WikiRendererUI.booleanControl(container, this.hideLivingEntities, "hide_living_entities");
+
+            WikiRendererUI.booleanControl(container, this.showHiddenEntitiesList, "show_hidden_entities_list", hiddenEntityTypes.size());
+            this.showHiddenEntitiesList.addRebuildListener(screen);
+            if (showHiddenEntitiesList.get()) {
+                EditBox editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
+                editField.setFilter(s -> true);
+                editField.setResponder(text -> entityTypeSearch = text);
+
+                WikiRendererUI.text(container, "visible_keyword", 3);
+                WikiRendererUI.dynamicLabel(container, () -> Translate.gui("hidden_entities_amount", hiddenEntityTypes.size()));
+
+                container.child(new SearchableEntityListComponent(hiddenEntityTypes, () -> entityTypeSearch, () -> renderable.entities));
+            }
+
             WikiRendererUI.intPercentageControl(screen, container, this.entityBoundsIntersectionRequirement, "entity_collision_threshold_requirement");
 
             WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");

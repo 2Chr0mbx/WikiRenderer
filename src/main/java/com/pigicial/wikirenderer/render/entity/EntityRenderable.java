@@ -71,8 +71,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected final Entity liveNonTickableEntity;
     protected final Entity clonedTickableEntity;
 
-    private List<Entity> nearbyEntitiesToShow = new ArrayList<>();
+    public List<Entity> nearbyEntitiesToShow = new ArrayList<>();
     private boolean nearbyEntitiesFrozen = false;
+    private boolean nearbyEntitiesLoaded = false;
 
     private final Map<String, TextureData> textureData = new LinkedHashMap<>();
     protected boolean requireTextureReCache = true;
@@ -146,30 +147,12 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             return;
         }
 
-        if (!isUsingLiveEntity()) {
-            if (!this.nearbyEntitiesFrozen) {
-                this.nearbyEntitiesFrozen = true;
-
-                this.nearbyEntitiesToShow = this.nearbyEntitiesToShow
-                        .stream()
-                        .map(originalEntity -> {
-                            Entity clonedEntity = EntityCloner.copy(originalEntity);
-                            if (clonedEntity == null) return null;
-                            clonedEntity.restoreFrom(originalEntity);
-                            clonedEntity.baseTick();
-                            return clonedEntity;
-                        })
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-            }
-            return;
-        }
-
         // not frozen selected by here
-        if (properties.autoRefreshVisibleSurroundingEntities.get() || this.nearbyEntitiesFrozen) {
+        if (properties.autoRefreshVisibleSurroundingEntities.get() || !nearbyEntitiesLoaded) {
+            nearbyEntitiesLoaded = true;
+
             ClientLevel level = Minecraft.getInstance().level;
             assert level != null;
-
 
             Entity usedEntity = getUsedEntity();
             EntityRenderState mainEntityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(usedEntity, 0);
@@ -197,11 +180,30 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             });
         }
 
+        if (!isUsingLiveEntity()) {
+            if (!this.nearbyEntitiesFrozen) {
+                this.nearbyEntitiesFrozen = true;
+
+                this.nearbyEntitiesToShow = this.nearbyEntitiesToShow
+                        .stream()
+                        .map(originalEntity -> {
+                            Entity clonedEntity = EntityCloner.copy(originalEntity);
+                            if (clonedEntity == null) return null;
+                            clonedEntity.restoreFrom(originalEntity);
+                            clonedEntity.baseTick();
+                            return clonedEntity;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
+            return;
+        }
+
         this.nearbyEntitiesToShow.removeIf(Entity::isRemoved);
         this.nearbyEntitiesFrozen = false;
     }
 
-    private void forBaseAndSurroundingEntities(Entity baseEntity, Consumer<Entity> predicate) {
+    public void forBaseAndSurroundingEntities(Entity baseEntity, Consumer<Entity> predicate) {
         applyToEntityAndPassengers(baseEntity, predicate);
         for (Entity nearbyEntity : nearbyEntitiesToShow) {
             predicate.accept(nearbyEntity);
@@ -219,6 +221,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         this.refreshSurroundingVisibleEntities(timeSinceCreationMs);
         this.forBaseAndSurroundingEntities(usedEntity, entity -> {
             EntityPropertyBundle properties = this.getProperties();
+            if (properties.hiddenSurroundingEntityTypes.contains(entity.getType())) return;
+
             Vec3 entityPosition = entity.position();
             Vec3 offset = entityPosition.subtract(usedEntity.position());
 
@@ -283,7 +287,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             }
             matrices.translate(-playerDifference.x, -playerDifference.y, -playerDifference.z);
 
-            this.drawParticles(matrices.last().pose(), tickDelta);
+            this.drawParticles(matrices.last().pose(), delta);
             matrices.popPose();
         }
 
@@ -602,7 +606,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     @Override
     public List<List<Integer>> getTicksToFullyAnimate() {
         List<Integer> animationTimings = new LinkedList<>();
-        applyToEntityAndPassengers(getUsedEntity(), entity -> AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, animationTimings));
+        forBaseAndSurroundingEntities(getUsedEntity(), entity -> {
+            if (getProperties().hiddenSurroundingEntityTypes.contains(entity.getType())) return;
+            AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, animationTimings);
+        });
         return List.of(animationTimings);
     }
 
