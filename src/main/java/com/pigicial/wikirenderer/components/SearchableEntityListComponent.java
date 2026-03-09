@@ -56,7 +56,7 @@ public class SearchableEntityListComponent extends DropdownComponent {
                 MutableComponent hideText = Component.literal("Hide " + descriptionString);
                 boolean checked = hiddenEntityTypes.contains(type);
 
-                this.entries.child(new LeftAlignedCheckbox(this, hideText, checked, pressed -> {
+                this.entries.child(new LeftAlignedCheckbox(hideText, checked, pressed -> {
                     if (pressed) {
                         hiddenEntityTypes.add(type);
                     } else {
@@ -67,12 +67,12 @@ public class SearchableEntityListComponent extends DropdownComponent {
         }
     }
 
-    protected static class LeftAlignedCheckbox extends Button {
+    public static class LeftAlignedCheckbox extends Button {
 
         protected boolean state;
 
-        public LeftAlignedCheckbox(DropdownComponent parentDropdown, Component text, boolean state, Consumer<Boolean> onClick) {
-            super(parentDropdown, text, dropdownComponent -> {
+        public LeftAlignedCheckbox(Component text, boolean state, Consumer<Boolean> onClick) {
+            super(text, dropdownComponent -> {
             });
 
             this.state = state;
@@ -80,13 +80,18 @@ public class SearchableEntityListComponent extends DropdownComponent {
                 this.state = !this.state;
                 onClick.accept(this.state);
             };
-
-            this.margins(Insets.of(2, 2, 14, 2));
+            this.horizontalSizing(Sizing.content());
+            this.horizontalTextAlignment(HorizontalAlignment.LEFT);
+            this.margins(Insets.of(2, 2, 2, 2));
         }
 
         @Override
         public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
+            this.width -= 10;
+            this.x += 12;
             super.draw(graphics, mouseX, mouseY, partialTicks, delta);
+            this.x -= 12;
+            this.width += 10;
 
             ParentUIComponent dropdown = this.parent;
             assert dropdown != null;
@@ -99,6 +104,35 @@ public class SearchableEntityListComponent extends DropdownComponent {
                     9, 9,
                     32, 32
             );
+        }
+
+        @Override
+        protected int determineHorizontalContentSize(Sizing sizing) {
+            return super.determineHorizontalContentSize(sizing) + 12;
+        }
+    }
+
+    public static class Button extends DropdownComponent.Button {
+
+        public Button(Component text, Consumer<DropdownComponent> onClick) {
+            super(null, text, onClick);
+        }
+    }
+
+    public static class DynamicTextButton extends DropdownComponent.Button {
+
+        private final Supplier<Component> textSupplier;
+
+        public DynamicTextButton(Supplier<Component> textSupplier, Consumer<DropdownComponent> onClick) {
+            super(null, textSupplier.get(), onClick);
+            this.textSupplier = textSupplier;
+        }
+
+        @Override
+        public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
+            this.text(textSupplier.get());
+            this.applySizing();
+            super.draw(graphics, mouseX, mouseY, partialTicks, delta);
         }
     }
 }

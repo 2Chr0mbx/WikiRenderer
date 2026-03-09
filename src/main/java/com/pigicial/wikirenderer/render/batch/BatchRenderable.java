@@ -11,6 +11,7 @@ import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
+import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
@@ -63,7 +64,7 @@ public class BatchRenderable<R extends Renderable<?>> implements Renderable<Batc
     }
 
     @Override
-    public void onScreenHandle(RenderScreen renderScreen, float tickDelta) {
+    public void onScreenHandle(RenderScreen renderScreen, GuiGraphics graphics, float tickDelta) {
         WikiRenderer.inBatchRender = this.batchActive;
         if (!batchActive || currentIndex >= this.delegates.size() || System.currentTimeMillis() - lastRenderTime < renderDelay || FileIO.taskCount() > 5) {
             return;

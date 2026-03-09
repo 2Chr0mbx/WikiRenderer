@@ -5,6 +5,8 @@ import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.PropertyBundle;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.MouseButtonEvent;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 
@@ -29,7 +31,11 @@ public interface Renderable<P extends PropertyBundle> {
 
     default void prepare() {}
 
-    default void onScreenHandle(RenderScreen screen, float tickDelta) {}
+    default void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {}
+
+    default boolean onScreenViewportClick(MouseButtonEvent click, boolean doubled) {
+        return false;
+    }
 
     default ParticleDisplayCondition getParticleDisplayCondition() {
         return ParticleDisplayCondition.HIDE_ALL;

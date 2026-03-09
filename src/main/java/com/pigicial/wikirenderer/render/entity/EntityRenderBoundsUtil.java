@@ -2,6 +2,9 @@ package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.mixin.access.LevelRendererAccessor;
+import com.pigicial.wikirenderer.util.CornerData;
+import com.pigicial.wikirenderer.util.DrawEntityDataCache;
+import com.pigicial.wikirenderer.util.DrawProjectionDataCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -9,6 +12,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.*;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -45,7 +49,35 @@ public class EntityRenderBoundsUtil {
     public static EntityVertexBounds getBounds(EntityRenderState renderState, CameraRenderState cameraRenderState, double xOffset, double yOffset, double zOffset) {
         SubmitNodeStorage tempStorage = new SubmitNodeStorage();
         Minecraft.getInstance().getEntityRenderDispatcher().submit(renderState, cameraRenderState, xOffset, yOffset, zOffset, new PoseStack(), tempStorage);
+        return submitVertexData(tempStorage);
+    }
 
+    @Nullable
+    public static CornerData getDrawnBounds(CameraRenderState cameraRenderState, DrawEntityDataCache entityDrawData, DrawProjectionDataCache projectionData) {
+        EntityVertexPositionTracker.MODEL_VIEW_PROJECTION = projectionData.getModelViewProjectionMatrix();
+        EntityVertexPositionTracker.SCREEN_WIDTH = projectionData.width();
+        EntityVertexPositionTracker.SCREEN_HEIGHT = projectionData.height();
+
+        Vec3 offset = entityDrawData.offset();
+        PoseStack poseStack = entityDrawData.poseStack();
+        EntityRenderState renderState = entityDrawData.renderState();
+
+        SubmitNodeStorage tempStorage = new SubmitNodeStorage();
+        Minecraft.getInstance().getEntityRenderDispatcher().submit(renderState, cameraRenderState, offset.x, offset.y, offset.z, poseStack, tempStorage);
+        EntityVertexBounds vertexBounds = submitVertexData(tempStorage);
+
+        EntityVertexPositionTracker.MODEL_VIEW_PROJECTION = null;
+        EntityVertexPositionTracker.SCREEN_WIDTH = null;
+        EntityVertexPositionTracker.SCREEN_HEIGHT = null;
+        if (vertexBounds == null) {
+            return null;
+        } else {
+            AABB bounds = vertexBounds.getBounds();
+            return new CornerData((int) bounds.minX, (int) bounds.minY, (int) bounds.maxX, (int) bounds.maxY);
+        }
+    }
+
+    private static EntityVertexBounds submitVertexData(SubmitNodeStorage tempStorage) {
         EntityVertexPositionTracker.BOUNDS = null;
         for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
             MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
@@ -59,7 +91,6 @@ public class EntityRenderBoundsUtil {
             BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
             CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
         }
-
         return EntityVertexPositionTracker.BOUNDS;
     }
 

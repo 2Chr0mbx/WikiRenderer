@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.area;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.context.CommandContext;
 import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.components.EntityTypeSpecificPropertiesComponent;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
@@ -17,14 +18,17 @@ import com.pigicial.wikirenderer.render.area.bounds.chunk.MiniChunkScanner;
 import com.pigicial.wikirenderer.render.entity.EntityCloner;
 import com.pigicial.wikirenderer.render.entity.EntityRenderBoundsUtil;
 import com.pigicial.wikirenderer.render.entity.EntityVertexBounds;
+import com.pigicial.wikirenderer.render.entity.options.EntityTypeSpecificOverrides;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
-import com.pigicial.wikirenderer.util.AnimationTimingUtil;
-import com.pigicial.wikirenderer.util.Translate;
+import com.pigicial.wikirenderer.util.*;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GlobalSettingsUniform;
@@ -54,6 +58,8 @@ import java.util.stream.Collectors;
 
 public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implements AnimationTimingsProvider {
 
+    protected static final Map<Entity, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES = new HashMap<>();
+
     private final Minecraft client = Minecraft.getInstance();
 
     public final IntProperty minFloorYLevelForOverhead;
@@ -64,6 +70,11 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     private boolean entitiesFrozen = false;
     private boolean entitiesLoaded = false;
 
+    private final Map<Entity, DrawEntityDataCache> drawnVertexBoundCache = new HashMap<>();
+    protected final EntityTypeSpecificPropertiesComponent advancedPropertiesComponent;
+    public @Nullable Entity selectedEntity;
+    public @Nullable EntityTypeSpecificOverrides<?> renderStateOverrides = null;
+
     public AreaRenderable(WorldBlockMesh mesh) {
         this.mesh = mesh;
 
@@ -71,6 +82,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         this.minFloorYLevelForOverhead = IntProperty.of((int) dimensions.minY, (int) dimensions.minY, (int) dimensions.maxY);
         this.maxFloorYLevelForOverhead = IntProperty.of((int) dimensions.maxY, (int) dimensions.minY, (int) dimensions.maxY);
         this.mesh.setRenderable(this);
+
+        this.advancedPropertiesComponent = new EntityTypeSpecificPropertiesComponent(() -> selectedEntity, () -> renderStateOverrides);
     }
 
     public static AreaRenderable of(BlockPos start, BlockPos end) {
@@ -150,6 +163,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 standardStack.popPose();
             }
 
+            drawnVertexBoundCache.clear();
             if (!properties.hideEntities.get()) {
                 this.drawEntities(cameraRenderState, tickDelta, standardStack, nodeStorage);
             }
@@ -238,6 +252,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         AreaPropertyBundle properties = this.getProperties();
         EntityRenderDispatcher entityDispatcher = client.getEntityRenderDispatcher();
 
+        drawnVertexBoundCache.clear();
+
         this.refreshEntities();
         this.entities.forEach(entity -> {
             if (properties.hiddenEntityTypes.contains(entity.getType())) return;
@@ -247,8 +263,15 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             Vec3 entityPosition = entity.getPosition(tickDelta);
             Vec3 offsetFromMesh = entityPosition.subtract(meshStartPos.getX(), meshStartPos.getY(), meshStartPos.getZ());
 
+            EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+            if (renderStateOverrides != null && renderStateOverrides.isInvisible()) return;
+
             EntityRenderState state = entityDispatcher.extractEntity(entity, tickDelta);
             this.updateEntityState(entity, state);
+
+            PoseStack clonedPose = new PoseStack();
+            clonedPose.mulPose(standardStack.last().pose());
+            drawnVertexBoundCache.put(entity, new DrawEntityDataCache(state, offsetFromMesh, clonedPose));
 
             entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
         });
@@ -256,6 +279,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     private void updateEntityState(Entity entity, EntityRenderState state) {
+        EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+
         AreaPropertyBundle properties = this.getProperties();
         if (properties.useFullBrightGamma.get() || properties.emulateDaylight.get()) {
             state.lightCoords = LightTexture.FULL_BRIGHT;
@@ -361,6 +386,10 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 state.shadowPieces.addAll(newPieces);
             }
         }
+
+        if (renderStateOverrides != null) {
+            renderStateOverrides.applyOverridesIfPossible(state);
+        }
     }
 
     @Override
@@ -406,5 +435,60 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             }
         }
         return animationTimings;
+    }
+
+    @Override
+    public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
+        int scale = Minecraft.getInstance().getWindow().getGuiScale();
+
+        if (this.selectedEntity != null) {
+            DrawProjectionDataCache projectionData = RenderableDispatcher.PROJECTION_CACHE.get(DrawType.PREVIEW);
+            DrawEntityDataCache entityDrawData = drawnVertexBoundCache.get(selectedEntity);
+            if (entityDrawData == null) return;
+
+            CornerData cornerData = EntityRenderBoundsUtil.getDrawnBounds(CameraOrientationUtil.createRenderState(this), entityDrawData, projectionData);
+            if (cornerData == null) return;
+
+            int minX = cornerData.minX() / scale;
+            int minY = cornerData.minY() / scale;
+            int maxX = cornerData.maxX() / scale;
+            int maxY = cornerData.maxY() / scale;
+            graphics.renderOutline(minX, minY, maxX - minX, maxY - minY, 0xFFFFFFFF);
+        }
+    }
+
+    @Override
+    public boolean onScreenViewportClick(MouseButtonEvent click, boolean doubled) {
+        int scale = Minecraft.getInstance().getWindow().getGuiScale();
+        double x = click.x() * scale;
+        double y = click.y() * scale;
+
+        this.selectedEntity = null;
+
+        Entity closestEntity = null;
+        double lastDistance = Double.MAX_VALUE;
+
+        DrawProjectionDataCache projectionData = RenderableDispatcher.PROJECTION_CACHE.get(DrawType.PREVIEW);
+        for (Map.Entry<Entity, DrawEntityDataCache> drawnEntities : drawnVertexBoundCache.entrySet()) {
+            Entity entity = drawnEntities.getKey();
+            DrawEntityDataCache entityDrawData = drawnEntities.getValue();
+
+            CornerData bounds = EntityRenderBoundsUtil.getDrawnBounds(CameraOrientationUtil.createRenderState(this), entityDrawData, projectionData);
+            if (bounds != null && bounds.contains((int) x, (int) y)) {
+                int distanceToCenter = bounds.getDistanceToCenterSquared((int) x, (int) y);
+                if (distanceToCenter < lastDistance) {
+                    lastDistance = distanceToCenter;
+                    closestEntity = entity;
+                }
+            }
+        }
+
+        if (closestEntity != null) {
+            this.selectedEntity = closestEntity;
+            this.renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.computeIfAbsent(closestEntity, e -> EntityTypeSpecificOverrides.getOverrides(drawnVertexBoundCache.get(e).renderState()));
+            return true;
+        }
+
+        return false;
     }
 }

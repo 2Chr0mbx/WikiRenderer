@@ -347,6 +347,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             }
         }
 
+        WikiRendererUI.text(container, "entity_data", true);
+        container.child(renderable.advancedPropertiesComponent);
+
         WikiRendererUI.text(container, "entity_overrides", 10);
         WikiRendererUI.booleanControl(container, this.overrideEntityRotations, "override_rotations");
         WikiRendererUI.intControl(screen, container, entityYawOverride, "entity_data.yaw");

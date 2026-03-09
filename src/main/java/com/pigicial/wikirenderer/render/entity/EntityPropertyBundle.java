@@ -188,6 +188,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             renderable.cachedScaleMultiplier = null;
         })).margins(Insets.of(5, 0, 0, 0));
 
+        WikiRendererUI.text(container, "entity_data", true);
+        container.child(renderable.advancedPropertiesComponent);
+
         WikiRendererUI.text(container, "entity_render_options", true);
         if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entities");

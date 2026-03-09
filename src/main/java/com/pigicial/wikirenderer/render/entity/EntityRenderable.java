@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.entity;
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.components.EntityTypeSpecificPropertiesComponent;
 import com.pigicial.wikirenderer.mixin.access.ClientMannequinAccessor;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.MannequinAccessor;
@@ -10,17 +11,20 @@ import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
+import com.pigicial.wikirenderer.render.entity.options.EntityTypeSpecificOverrides;
 import com.pigicial.wikirenderer.render.entity.player.RenderablePlayerEntity;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
-import com.pigicial.wikirenderer.util.AnimationTimingUtil;
-import com.pigicial.wikirenderer.util.EntityNBTValidityFilter;
+import com.pigicial.wikirenderer.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -55,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
+import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -65,8 +70,11 @@ import java.util.stream.Collectors;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
+    protected static final Map<Entity, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES = new HashMap<>();
+
     private final Minecraft client = Minecraft.getInstance();
 
+    private final Map<Entity, DrawEntityDataCache> drawnVertexBoundCache = new HashMap<>();
     @Nullable
     protected final Entity liveNonTickableEntity;
     protected final Entity clonedTickableEntity;
@@ -82,9 +90,14 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected Float cachedScaleMultiplier = null;
     protected boolean isNametagOnlyRenderedData = false;
 
+    protected final EntityTypeSpecificPropertiesComponent advancedPropertiesComponent;
+    public @Nullable Entity selectedEntity;
+    public @Nullable EntityTypeSpecificOverrides<?> renderStateOverrides = null;
+
     public EntityRenderable(@Nullable Entity liveNonTickableEntity, Entity clonedTickableEntity) {
         this.liveNonTickableEntity = liveNonTickableEntity;
         this.clonedTickableEntity = clonedTickableEntity;
+        this.advancedPropertiesComponent = new EntityTypeSpecificPropertiesComponent(() -> selectedEntity, () -> renderStateOverrides);
     }
 
     @Nullable
@@ -156,7 +169,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             Entity usedEntity = getUsedEntity();
             EntityRenderState mainEntityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(usedEntity, 0);
-            this.updateRenderState(mainEntityRenderState, properties, timeSinceCreationMs, isUsingLiveEntity());
+            this.updateRenderState(usedEntity, mainEntityRenderState, properties, timeSinceCreationMs, isUsingLiveEntity());
             EntityVertexBounds mainEntityVertexBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(usedEntity, mainEntityRenderState, CameraOrientationUtil.createRenderState(this));
 
             AABB mainEntityBounds = mainEntityVertexBounds != null ? mainEntityVertexBounds.getBounds() : usedEntity.getBoundingBox();
@@ -171,7 +184,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 if (entity instanceof EnderDragonPart) return false; // crash fix
 
                 EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
-                this.updateRenderState(state, properties, timeSinceCreationMs, true);
+                this.updateRenderState(entity, state, properties, timeSinceCreationMs, true);
 
                 EntityVertexBounds entityVertexBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(entity, state, CameraOrientationUtil.createRenderState(this));
                 AABB entityBounds = entityVertexBounds == null ? null : entityVertexBounds.getBounds();
@@ -218,6 +231,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         Entity usedEntity = this.getUsedEntity();
         float tickDelta = usingLiveEntity ? delta : 0;
 
+        this.drawnVertexBoundCache.clear();
         this.refreshSurroundingVisibleEntities(timeSinceCreationMs);
         this.forBaseAndSurroundingEntities(usedEntity, entity -> {
             EntityPropertyBundle properties = this.getProperties();
@@ -237,7 +251,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() ? tickDelta : 0);
-            this.updateRenderState(state, properties, timeSinceCreationMs, usingLiveEntity);
+            EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+            if (renderStateOverrides != null && renderStateOverrides.isInvisible()) return;
+
+            this.updateRenderState(entity, state, properties, timeSinceCreationMs, usingLiveEntity);
 
             List<Runnable> partVisibilityCallbacks = new ArrayList<>();
             if (properties.spriteRendering.get()) {
@@ -247,9 +264,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 }
             }
 
+            EntityVertexBounds vertexBounds = EntityRenderBoundsUtil.getBounds(state, CameraOrientationUtil.createRenderState(this), 0, 0, 0);
+
             if (cachedCenterOffset == null || cachedScaleMultiplier == null) {
                 AABB regularBounds = entity.getBoundingBox();
-                EntityVertexBounds vertexBounds = EntityRenderBoundsUtil.getBounds(state, CameraOrientationUtil.createRenderState(this), 0, 0, 0);
                 if (vertexBounds == null) {
                     cachedCenterOffset = new Vec3(0, 0, 0);
                     cachedScaleMultiplier = 1F;
@@ -267,6 +285,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             matrices.pushPose();
             matrices.scale(cachedScaleMultiplier, cachedScaleMultiplier, cachedScaleMultiplier);
             matrices.translate(cachedCenterOffset); // this fits it into the default frame
+
+            PoseStack clonedPose = new PoseStack();
+            clonedPose.mulPose(matrices.last().pose());
+            drawnVertexBoundCache.put(entity, new DrawEntityDataCache(state, offset, clonedPose));
 
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             this.drawSubmittedRenderFeatures();
@@ -294,7 +316,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         matrices.popPose();
     }
 
-    private void updateRenderState(EntityRenderState state, EntityPropertyBundle properties, long timeSinceCreationMs, boolean usingLiveEntity) {
+    private void updateRenderState(Entity entity, EntityRenderState state, EntityPropertyBundle properties, long timeSinceCreationMs, boolean usingLiveEntity) {
+        EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+
         state.outlineColor = 0; // remove glow (doesn't render properly)
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightTexture.FULL_BRIGHT;
@@ -410,6 +434,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 livingEntityRenderState.isInvisibleToPlayer = true;
             }
         }
+
+        if (renderStateOverrides != null) {
+            renderStateOverrides.applyOverridesIfPossible(state);
+        }
     }
 
     @Override
@@ -423,7 +451,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             Entity usedEntity = getUsedEntity();
             EntityRenderState mainEntityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(usedEntity, 0);
 
-            this.updateRenderState(mainEntityRenderState, getProperties(), 0, isUsingLiveEntity());
+            this.updateRenderState(usedEntity, mainEntityRenderState, getProperties(), 0, isUsingLiveEntity());
             EntityVertexBounds mainEntityVertexBounds = EntityRenderBoundsUtil.getPositionOffsetBasedBounds(usedEntity, mainEntityRenderState, CameraOrientationUtil.createRenderState(this));
 
             AABB mainEntityBounds = mainEntityVertexBounds != null ? mainEntityVertexBounds.getBounds() : usedEntity.getBoundingBox();
@@ -624,5 +652,61 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     @Override
     public Collection<String> buildPresetExamples() {
         return List.of("label_example.entity_type", "label_example.entity_name");
+    }
+
+    @Override
+    public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
+        super.onScreenHandle(screen, graphics, tickDelta);
+        int scale = Minecraft.getInstance().getWindow().getGuiScale();
+
+        if (this.selectedEntity != null) {
+            DrawProjectionDataCache projectionData = RenderableDispatcher.PROJECTION_CACHE.get(DrawType.PREVIEW);
+            DrawEntityDataCache entityDrawData = drawnVertexBoundCache.get(selectedEntity);
+            if (entityDrawData == null) return;
+
+            CornerData cornerData = EntityRenderBoundsUtil.getDrawnBounds(CameraOrientationUtil.createRenderState(this), entityDrawData, projectionData);
+            if (cornerData == null) return;
+
+            int minX = cornerData.minX() / scale;
+            int minY = cornerData.minY() / scale;
+            int maxX = cornerData.maxX() / scale;
+            int maxY = cornerData.maxY() / scale;
+            graphics.renderOutline(minX, minY, maxX - minX, maxY - minY, 0xFFFFFFFF);
+        }
+    }
+
+    @Override
+    public boolean onScreenViewportClick(MouseButtonEvent click, boolean doubled) {
+        int scale = Minecraft.getInstance().getWindow().getGuiScale();
+        double x = click.x() * scale;
+        double y = click.y() * scale;
+
+        this.selectedEntity = null;
+
+        Entity closestEntity = null;
+        double lastDistance = Double.MAX_VALUE;
+
+        DrawProjectionDataCache projectionData = RenderableDispatcher.PROJECTION_CACHE.get(DrawType.PREVIEW);
+        for (Map.Entry<Entity, DrawEntityDataCache> drawnEntities : drawnVertexBoundCache.entrySet()) {
+            Entity entity = drawnEntities.getKey();
+            DrawEntityDataCache entityDrawData = drawnEntities.getValue();
+
+            CornerData bounds = EntityRenderBoundsUtil.getDrawnBounds(CameraOrientationUtil.createRenderState(this), entityDrawData, projectionData);
+            if (bounds != null && bounds.contains((int) x, (int) y)) {
+                int distanceToCenter = bounds.getDistanceToCenterSquared((int) x, (int) y);
+                if (distanceToCenter < lastDistance) {
+                    lastDistance = distanceToCenter;
+                    closestEntity = entity;
+                }
+            }
+        }
+
+        if (closestEntity != null) {
+            this.selectedEntity = closestEntity;
+            this.renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.computeIfAbsent(closestEntity, e -> EntityTypeSpecificOverrides.getOverrides(drawnVertexBoundCache.get(e).renderState()));
+            return true;
+        }
+
+        return false;
     }
 }

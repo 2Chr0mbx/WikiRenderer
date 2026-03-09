@@ -18,6 +18,7 @@ import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.render.batch.BatchPropertyBundle;
+import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
@@ -111,7 +112,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     public int viewportBeginX;
     public int viewportEndX;
-    private boolean hasBothColumns = false;
+    public boolean hasBothColumns = false;
 
     public ButtonComponent exportButton = null;
     private Consumer<File> exportCallback = null;
@@ -416,12 +417,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
             this.guiRebuildScheduled = false;
         }
-
         // smoother, idk why but the provided tickDelta is bad
         tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
-        // basically just for batch rendering
-        this.renderable.onScreenHandle(this, tickDelta);
 
         Window window = minecraft.getWindow();
         Consumer<Matrix4fStack> positionTransformer = this.hasBothColumns ? null : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0);
@@ -449,6 +447,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 -1,
                 null
         ));
+
+        // basically just for batch rendering
+        this.renderable.onScreenHandle(this, context, tickDelta);
 
         if (!this.drawOnlyBackground && this.uiAdapter != null) {
             drawFramingHint(context);
@@ -612,17 +613,23 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (!(this.renderable.getProperties() instanceof DefaultPropertyBundle properties))
             return super.mouseClicked(click, doubled);
 
-        if (this.isInViewport(click.x()) && click.hasControlDown()) {
-            int button = click.button();
-            if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
-                properties.xOffset.setToDefault();
-                properties.yOffset.setToDefault();
-            } else if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                properties.rotation.setToDefault();
-            } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                properties.slant.setToDefault();
+        if (this.isInViewport(click.x())) {
+            if (renderable.onScreenViewportClick(click, doubled)) {
+                return true;
             }
-            return true;
+
+            if (click.hasControlDown()) {
+                int button = click.button();
+                if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+                    properties.xOffset.setToDefault();
+                    properties.yOffset.setToDefault();
+                } else if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                    properties.rotation.setToDefault();
+                } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+                    properties.slant.setToDefault();
+                }
+                return true;
+            }
         }
 
         return super.mouseClicked(click, doubled);

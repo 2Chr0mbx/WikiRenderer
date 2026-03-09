@@ -17,6 +17,8 @@ import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.util.DrawProjectionDataCache;
+import com.pigicial.wikirenderer.util.DrawType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
 import org.jetbrains.annotations.NotNull;
@@ -25,17 +27,21 @@ import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.lwjgl.system.MemoryUtil;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class RenderableDispatcher {
 
+    public static final Map<DrawType, DrawProjectionDataCache> PROJECTION_CACHE = new HashMap<>();
+
     private static final PerspectiveProjectionMatrixBuffer PROJECTION_MATRIX_BUFFER = new PerspectiveProjectionMatrixBuffer("RenderableDispatcher");
     private static final Matrix4f ORTHOGRAPHIC_MATRIX = new Matrix4f();
     private static RenderTarget previewTarget = null;
 
-    public static void drawIntoActiveFramebuffer(RenderScreen renderScreen, Renderable<?> renderable, float aspectRatio, float tickDelta, long timeSinceCreationMs, @Nullable Consumer<Matrix4fStack> transformer) {
+    public static void drawIntoActiveFramebuffer(DrawType drawType, RenderScreen renderScreen, Renderable<?> renderable, float aspectRatio, float tickDelta, long timeSinceCreationMs, @Nullable Consumer<Matrix4fStack> transformer) {
         renderable.prepare();
 
         // view matrix = position/rotation/scale of camera
@@ -49,6 +55,8 @@ public class RenderableDispatcher {
         Matrix4f projectionMatrix = ORTHOGRAPHIC_MATRIX.setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
         WikiRenderer.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
         WikiRenderer.setSortingMethod(projectionMatrix, modelViewStack);
+
+        PROJECTION_CACHE.put(drawType, new DrawProjectionDataCache(new Matrix4f(projectionMatrix), new Matrix4f(modelViewStack), WikiRenderer.mainTargetOverride.width, WikiRenderer.mainTargetOverride.height));
 
         renderable.setupLighting();
         renderable.emitVerticesThenDraw(renderScreen, modelViewStack, new PoseStack(), tickDelta, timeSinceCreationMs);
@@ -163,7 +171,7 @@ public class RenderableDispatcher {
         RenderSystem.outputColorTextureOverride = target.getColorTextureView();
         RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
 
-        RenderableDispatcher.drawIntoActiveFramebuffer(renderScreen, renderable, 1, tickDelta, timeSinceCreationMs, null);
+        RenderableDispatcher.drawIntoActiveFramebuffer(DrawType.EXPORT, renderScreen, renderable, 1, tickDelta, timeSinceCreationMs, null);
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
@@ -204,7 +212,7 @@ public class RenderableDispatcher {
         RenderSystem.outputDepthTextureOverride = previewTarget.getDepthTextureView();
 
         float aspectRatio = width / (float) height;
-        RenderableDispatcher.drawIntoActiveFramebuffer(renderScreen, renderable, aspectRatio, tickDelta, timeSinceCreationMs, transformer);
+        RenderableDispatcher.drawIntoActiveFramebuffer(DrawType.PREVIEW, renderScreen, renderable, aspectRatio, tickDelta, timeSinceCreationMs, transformer);
 
         RenderSystem.outputColorTextureOverride = null;
         RenderSystem.outputDepthTextureOverride = null;
