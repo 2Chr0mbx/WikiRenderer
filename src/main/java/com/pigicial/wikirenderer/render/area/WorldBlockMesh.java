@@ -219,6 +219,10 @@ public class WorldBlockMesh {
                 ? MeshState.REBUILDING
                 : MeshState.BUILDING;
 
+        this.blockEntities.clear();
+        this.builtSubMeshes.forEach(MeshSection::close);
+        this.builtSubMeshes.clear();
+
         this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
         if (ShaderCheck.isUsingShaders() || !async) {
             this.buildFuture = CompletableFuture.completedFuture(null);
@@ -234,12 +238,6 @@ public class WorldBlockMesh {
     }
 
     private synchronized void buildMesh() {
-        Minecraft.getInstance().executeBlocking((() -> {
-            this.blockEntities.clear();
-            this.builtSubMeshes.forEach(MeshSection::close);
-            this.builtSubMeshes.clear();
-        }));
-
         Minecraft client = Minecraft.getInstance();
 
         HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();

@@ -11,7 +11,7 @@ import java.util.function.BiConsumer;
 public class Property<T> implements BiConsumer<Property<T>, T> {
 
     protected T defaultValue;
-    protected T value;
+    protected volatile T value;
     protected final Map<RenderScreen, List<BiConsumer<Property<T>, T>>> changeListeners;
 
     public Property(T defaultValue) {
