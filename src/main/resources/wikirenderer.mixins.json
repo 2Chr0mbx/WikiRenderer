@@ -23,6 +23,7 @@
     "access.ItemStackRenderStateAccessor",
     "access.LevelRendererAccessor",
     "access.LightTextureAccessor",
+    "access.LivingEntityRendererAccessor",
     "access.MannequinAccessor",
     "access.ModelPartAccessor",
     "access.NativeImageAccessor",

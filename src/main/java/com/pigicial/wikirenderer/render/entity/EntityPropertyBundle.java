@@ -289,9 +289,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 WikiRendererUI.booleanControl(container, this.hideHeldItems, "entity_data.hide_held_items");
             }
 
-            if (renderable.hasLivingEntityProperty(living -> living.getArmorCoverPercentage() > 0)) {
-                WikiRendererUI.booleanControl(container, this.hideArmor, "entity_data.hide_armor");
-            }
+            WikiRendererUI.booleanControl(container, this.hideArmor, "entity_data.hide_armor");
 
             if (renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil()))) {
                 WikiRendererUI.booleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments");

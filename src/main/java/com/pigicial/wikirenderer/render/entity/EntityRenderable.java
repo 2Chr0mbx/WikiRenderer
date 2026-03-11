@@ -59,7 +59,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -155,7 +154,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
     private void refreshSurroundingVisibleEntities(long timeSinceCreationMs) {
         EntityPropertyBundle properties = getProperties();
-        if (!properties.showSurroundingEntities.get() || properties.surroundingEntitiesRadius.get() == 0) {
+        if (liveNonTickableEntity == null || !properties.showSurroundingEntities.get() || properties.surroundingEntitiesRadius.get() == 0) {
             this.nearbyEntitiesToShow.clear();
             return;
         }
