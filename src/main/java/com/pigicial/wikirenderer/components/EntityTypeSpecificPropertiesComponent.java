@@ -24,7 +24,7 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
         this.overridesSupplier = overridesSupplier;
 
         this.closeWhenNotHovered(false);
-        this.padding(Insets.of(5));
+        this.padding(Insets.right(5));
         this.surface(Surface.blur(10, 20));
     }
 

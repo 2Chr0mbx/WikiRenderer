@@ -18,13 +18,8 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
     private final Function<S, T> getter;
     private final BiConsumer<S, T> setter;
 
-    private T lastSeenDefaultValue = null;
     private T value;
     protected boolean enabled = false;
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 
     public OptionalOverride(String key, Function<S, T> getter, BiConsumer<S, T> setter) {
         this.key = key;
@@ -43,6 +38,7 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
     public abstract T getDefaultValue();
 
     public void setValue(T value) {
+        this.enabled = true;
         this.value = value;
     }
 
@@ -51,10 +47,13 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
     }
 
     public void apply(S renderState) {
-        this.lastSeenDefaultValue = this.getter.apply(renderState);
         if (enabled) {
             this.setter.accept(renderState, value);
         }
+    }
+
+    public void copyFromRenderState(S renderState) {
+        this.value = this.getter.apply(renderState);
     }
 
     public UIComponent buildComponent() {
@@ -63,7 +62,7 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
         layout.horizontalAlignment(HorizontalAlignment.LEFT);
         layout.verticalAlignment(VerticalAlignment.CENTER);
 
-        layout.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), this.enabled, pressed -> this.enabled = pressed), 0, 0);
+        layout.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), () -> this.enabled, pressed -> this.enabled = pressed), 0, 0);
 
         FlowLayout controlLayout = UIContainers.horizontalFlow(Sizing.expand(50), Sizing.content());
         controlLayout.horizontalAlignment(HorizontalAlignment.RIGHT);

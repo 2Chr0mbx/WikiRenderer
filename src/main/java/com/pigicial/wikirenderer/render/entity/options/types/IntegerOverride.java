@@ -15,6 +15,10 @@ public class IntegerOverride<S extends EntityRenderState> extends OptionalOverri
         super(key, getter, setter);
     }
 
+    public IntegerOverride(String key, Function<S, Integer> getter, BiConsumer<S, Integer> setter, Integer defaultValue) {
+        super(key, getter, setter, defaultValue);
+    }
+
     @Override
     protected void addToComponentRow(@UnknownNullability FlowLayout row) {
         MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.fixed(50), Integer.toString(this.getValue()));

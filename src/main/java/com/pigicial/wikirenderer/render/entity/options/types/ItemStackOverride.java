@@ -52,7 +52,7 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
         this.layout.titleLayout().horizontalAlignment(HorizontalAlignment.RIGHT);
         this.layout.titleLayout().verticalAlignment(VerticalAlignment.CENTER);
         this.layout.titleLayout().children().getFirst().margins(Insets.left(10));
-        this.layout.titleLayout().child(0, new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), this.enabled, pressed -> this.enabled = pressed));
+        this.layout.titleLayout().child(0, new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), () -> this.enabled, pressed -> this.enabled = pressed));
 
         this.itemOptionsLayout = UIContainers.horizontalFlow(Sizing.content(), Sizing.content());
         this.itemOptionsLayout.horizontalAlignment(HorizontalAlignment.LEFT);

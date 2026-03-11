@@ -26,6 +26,7 @@ public class EntityRenderBoundsUtil {
     private static final FlameFeatureRenderer FLAME_FEATURE_RENDERER = new FlameFeatureRenderer();
     private static final NameTagFeatureRenderer NAME_TAG_FEATURE_RENDERER = new NameTagFeatureRenderer();
     private static final TextFeatureRenderer TEXT_FEATURE_RENDERER = new TextFeatureRenderer();
+    private static final LeashFeatureRenderer LEASH_FEATURE_RENDERER = new LeashFeatureRenderer();
     private static final ItemFeatureRenderer ITEM_FEATURE_RENDERER = new ItemFeatureRenderer();
     private static final BlockFeatureRenderer BLOCK_FEATURE_RENDERER = new BlockFeatureRenderer();
     private static final CustomFeatureRenderer CUSTOM_FEATURE_RENDERER = new CustomFeatureRenderer();
@@ -87,6 +88,7 @@ public class EntityRenderBoundsUtil {
             NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
             TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
             EntityVertexPositionTracker.renderingText = false;
+            LEASH_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
             ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
             BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
             CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);

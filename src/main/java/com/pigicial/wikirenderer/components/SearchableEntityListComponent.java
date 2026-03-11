@@ -54,9 +54,8 @@ public class SearchableEntityListComponent extends DropdownComponent {
 
             if (allow) {
                 MutableComponent hideText = Component.literal("Hide " + descriptionString);
-                boolean checked = hiddenEntityTypes.contains(type);
 
-                this.entries.child(new LeftAlignedCheckbox(hideText, checked, pressed -> {
+                this.entries.child(new LeftAlignedCheckbox(hideText, () -> hiddenEntityTypes.contains(type), pressed -> {
                     if (pressed) {
                         hiddenEntityTypes.add(type);
                     } else {
@@ -69,13 +68,15 @@ public class SearchableEntityListComponent extends DropdownComponent {
 
     public static class LeftAlignedCheckbox extends Button {
 
+        private final Supplier<Boolean> stateSupplier;
         protected boolean state;
 
-        public LeftAlignedCheckbox(Component text, boolean state, Consumer<Boolean> onClick) {
+        public LeftAlignedCheckbox(Component text, Supplier<Boolean> stateSupplier, Consumer<Boolean> onClick) {
             super(text, dropdownComponent -> {
             });
 
-            this.state = state;
+            this.state = stateSupplier.get();
+            this.stateSupplier = stateSupplier;
             this.onClick = dropdownComponent -> {
                 this.state = !this.state;
                 onClick.accept(this.state);
@@ -87,6 +88,7 @@ public class SearchableEntityListComponent extends DropdownComponent {
 
         @Override
         public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
+            this.state = stateSupplier.get();
             this.width -= 10;
             this.x += 12;
             super.draw(graphics, mouseX, mouseY, partialTicks, delta);

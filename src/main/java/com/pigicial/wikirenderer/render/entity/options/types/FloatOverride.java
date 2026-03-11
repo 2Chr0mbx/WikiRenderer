@@ -15,6 +15,10 @@ public class FloatOverride<S extends EntityRenderState>  extends OptionalOverrid
         super(key, getter, setter);
     }
 
+    public FloatOverride(String key, Function<S, Float> getter, BiConsumer<S, Float> setter, Float defaultValue) {
+        super(key, getter, setter, defaultValue);
+    }
+
     @Override
     protected void addToComponentRow(@UnknownNullability FlowLayout row) {
         MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.fixed(50), Float.toString(this.getValue()));

@@ -134,7 +134,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         globalSettings.update(
                 client.getWindow().getGuiScaledWidth(),
                 client.getWindow().getGuiScaledHeight(),
-                1.0, 0, client.getDeltaTracker(), 0,
+                1.0,
+                0, client.getDeltaTracker(), 0,
                 new Camera(), // Passing a new/empty camera sets pos to 0,0,0
                 false
         );

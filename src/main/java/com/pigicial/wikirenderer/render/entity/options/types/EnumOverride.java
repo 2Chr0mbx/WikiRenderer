@@ -30,7 +30,7 @@ public class EnumOverride<S extends EntityRenderState, E extends Enum<E>> extend
     protected void addToComponentRow(@UnknownNullability FlowLayout row) {
         CollapsibleContainer enumDropdown = UIContainers.collapsible(Sizing.content(), Sizing.content(), Component.literal("Options"), false);
 
-        enumDropdown.child(addOption(null));
+        //enumDropdown.child(addOption(null));
         for (E enumOption : enumClass.getEnumConstants()) {
             enumDropdown.child(addOption(enumOption));
         }
