@@ -47,7 +47,6 @@
     "texture.ItemStackMixin",
     "texture.TextureManagerMixin",
     "texture.TextureTransformMixin",
-    "world.BeaconRendererMixin",
     "world.BlockEntityRenderDispatcherMixin",
     "world.ChunkSectionsToRenderMixin",
     "world.LevelRendererMixin",
