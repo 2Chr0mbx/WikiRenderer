@@ -126,7 +126,7 @@
   "gui.wikirenderer.open_url": "打开",
   "gui.wikirenderer.copy_texture_id": "复制ID",
   "gui.wikirenderer.copy_json": "复制JSON",
-  "gui.wikirenderer.render_head": "渲染头颅",
+  "gui.wikirenderer.render_head": "渲染头部",
   "gui.wikirenderer.copied_texture_id_to_clipboard": "已将ID复制到剪贴板",
   "gui.wikirenderer.copied_json_to_clipboard": "已将玩家档案JSON复制到剪贴板",
   "gui.wikirenderer.top": "顶部",
