@@ -12,14 +12,8 @@ import net.minecraft.client.model.animal.fish.TropicalFishLargeModel;
 import net.minecraft.client.model.animal.fish.TropicalFishSmallModel;
 import net.minecraft.client.model.animal.frog.TadpoleModel;
 import net.minecraft.client.model.animal.parrot.ParrotModel;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.SalmonRenderer;
-import net.minecraft.client.renderer.entity.TropicalFishRenderer;
-import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
-import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
-import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.client.renderer.entity.layers.WingsLayer;
+import net.minecraft.client.renderer.entity.*;
+import net.minecraft.client.renderer.entity.layers.*;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.core.Direction;
@@ -62,261 +56,263 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
     // this is possibly the worst piece of code in this entire mod, but at least 26.1 will enable doing most this via reflection
     static {
         registerOverrides(AllayRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isDancing", state -> state.isDancing, (state, value) -> state.isDancing = value);
-            overrides.registerBooleanOverride("isSpinning", state -> state.isSpinning, (state, value) -> state.isSpinning = value);
-            overrides.registerFloatOverride("spinningProgress", state -> state.spinningProgress, (state, value) -> state.spinningProgress = value);
-            overrides.registerFloatOverride("holdingAnimationProgress", state -> state.holdingAnimationProgress, (state, value) -> state.holdingAnimationProgress = value);
+            overrides.registerBooleanOverride("isDancing", s -> s.isDancing, (s, value) -> s.isDancing = value);
+            overrides.registerBooleanOverride("isSpinning", s -> s.isSpinning, (s, value) -> s.isSpinning = value);
+            overrides.registerFloatOverride("spinningProgress", s -> s.spinningProgress, (s, value) -> s.spinningProgress = value);
+            overrides.registerFloatOverride("holdingAnimationProgress", s -> s.holdingAnimationProgress, (s, value) -> s.holdingAnimationProgress = value);
         });
 
         registerOverrides(ArmadilloRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isHidingInShell", state -> state.isHidingInShell, (state, value) -> state.isHidingInShell = value);
+            overrides.registerBooleanOverride("isHidingInShell", s -> s.isHidingInShell, (s, value) -> s.isHidingInShell = value);
         });
 
         registerOverrides(ArmedEntityRenderState.class, overrides -> {
-            overrides.registerEnumOverride("mainArm", HumanoidArm.class, state -> state.mainArm, (state, value) -> state.mainArm = value);
-            overrides.registerEnumOverride("rightArmPose", HumanoidModel.ArmPose.class, state -> state.rightArmPose, (state, value) -> state.rightArmPose = value);
-            overrides.registerItemStackOverride("rightHandItemStack", state -> state.rightHandItemStack, (state, value) -> {
+            overrides.registerEnumOverride("mainArm", HumanoidArm.class, s -> s.mainArm, (s, value) -> s.mainArm = value);
+            overrides.registerEnumOverride("rightArmPose", HumanoidModel.ArmPose.class, s -> s.rightArmPose, (s, value) -> s.rightArmPose = value);
+            overrides.registerItemStackOverride("rightHandItemStack", s -> s.rightHandItemStack, (state, value) -> {
                 state.rightHandItemStack = value;
                 state.rightHandItemState.clear();
                 Minecraft.getInstance().getItemModelResolver().updateForLiving(state.rightHandItemState, value, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, Minecraft.getInstance().player);
             });
-            overrides.registerEnumOverride("leftArmPose", HumanoidModel.ArmPose.class, state -> state.leftArmPose, (state, value) -> state.leftArmPose = value);
-            overrides.registerItemStackOverride("leftHandItemStack", state -> state.leftHandItemStack, (state, value) -> {
+            overrides.registerEnumOverride("leftArmPose", HumanoidModel.ArmPose.class, s -> s.leftArmPose, (s, value) -> s.leftArmPose = value);
+            overrides.registerItemStackOverride("leftHandItemStack", s -> s.leftHandItemStack, (state, value) -> {
                 state.leftHandItemStack = value;
                 state.leftHandItemState.clear();
                 Minecraft.getInstance().getItemModelResolver().updateForLiving(state.leftHandItemState, value, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, Minecraft.getInstance().player);
             });
-            overrides.registerEnumOverride("swingAnimationType", SwingAnimationType.class, state -> state.swingAnimationType, (state, value) -> state.swingAnimationType = value);
-            overrides.registerFloatOverride("attackTime", state -> state.attackTime, (state, value) -> state.attackTime = value);
+            overrides.registerEnumOverride("swingAnimationType", SwingAnimationType.class, s -> s.swingAnimationType, (s, value) -> s.swingAnimationType = value);
+            overrides.registerFloatOverride("attackTime", s -> s.attackTime, (s, value) -> s.attackTime = value);
         });
 
         registerOverrides(ArmorStandRenderState.class, overrides -> {
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerFloatOverride("wiggle", state -> state.wiggle, (state, value) -> state.wiggle = value);
-            overrides.registerBooleanOverride("isMarker", state -> state.isMarker, (state, value) -> state.isMarker = value);
-            overrides.registerBooleanOverride("isSmall", state -> state.isSmall, (state, value) -> state.isSmall = value);
-            overrides.registerBooleanOverride("showArms", state -> state.showArms, (state, value) -> state.showArms = value);
-            overrides.registerBooleanOverride("showBasePlate", state -> state.showBasePlate, (state, value) -> state.showBasePlate = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
+            overrides.registerFloatOverride("wiggle", s -> s.wiggle, (s, value) -> s.wiggle = value);
+            overrides.registerBooleanOverride("isMarker", s -> s.isMarker, (s, value) -> s.isMarker = value);
+            overrides.registerBooleanOverride("isSmall", s -> s.isSmall, (s, value) -> s.isSmall = value);
+            overrides.registerBooleanOverride("showArms", s -> s.showArms, (s, value) -> s.showArms = value);
+            overrides.registerBooleanOverride("showBasePlate", s -> s.showBasePlate, (s, value) -> s.showBasePlate = value);
             // rotations
-            overrides.registerRotationsOverrides("headPose", state -> state.headPose, (state, value) -> state.headPose = value);
-            overrides.registerRotationsOverrides("bodyPose", state -> state.bodyPose, (state, value) -> state.bodyPose = value);
-            overrides.registerRotationsOverrides("leftArmPose", state -> state.leftArmPose, (state, value) -> state.leftArmPose = value);
-            overrides.registerRotationsOverrides("rightArmPose", state -> state.rightArmPose, (state, value) -> state.rightArmPose = value);
-            overrides.registerRotationsOverrides("leftLegPose", state -> state.leftLegPose, (state, value) -> state.leftLegPose = value);
-            overrides.registerRotationsOverrides("rightLegPose", state -> state.rightLegPose, (state, value) -> state.rightLegPose = value);
-       });
-
-        registerOverrides(ArrowRenderState.class, overrides -> {
-            overrides.registerFloatOverride("xRot", state -> state.xRot, (state, value) -> state.xRot = value);
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerFloatOverride("shake", state -> state.shake, (state, value) -> state.shake = value);
+            overrides.registerRotationsOverrides("headPose", s -> s.headPose, (s, value) -> s.headPose = value);
+            overrides.registerRotationsOverrides("bodyPose", s -> s.bodyPose, (s, value) -> s.bodyPose = value);
+            overrides.registerRotationsOverrides("leftArmPose", s -> s.leftArmPose, (s, value) -> s.leftArmPose = value);
+            overrides.registerRotationsOverrides("rightArmPose", s -> s.rightArmPose, (s, value) -> s.rightArmPose = value);
+            overrides.registerRotationsOverrides("leftLegPose", s -> s.leftLegPose, (s, value) -> s.leftLegPose = value);
+            overrides.registerRotationsOverrides("rightLegPose", s -> s.rightLegPose, (s, value) -> s.rightLegPose = value);
         });
 
         registerOverrides(ArrowRenderState.class, overrides -> {
-            overrides.registerFloatOverride("xRot", state -> state.xRot, (state, value) -> state.xRot = value);
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerFloatOverride("shake", state -> state.shake, (state, value) -> state.shake = value);
+            overrides.registerFloatOverride("xRot", s -> s.xRot, (s, value) -> s.xRot = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
+            overrides.registerFloatOverride("shake", s -> s.shake, (s, value) -> s.shake = value);
         });
 
         registerOverrides(AvatarRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isSpectator", (state) -> state.isSpectator, (state, value) -> state.isSpectator = value);
-            overrides.registerBooleanOverride("showCape", (state) -> state.showCape, (state, value) -> state.showCape = value);
-            overrides.registerFloatOverride("capeFlap", (state) -> state.capeFlap, (state, value) -> state.capeFlap = value);
-            overrides.registerFloatOverride("capeLean", (state) -> state.capeLean, (state, value) -> state.capeLean = value);
-            overrides.registerFloatOverride("capeLean2", (state) -> state.capeLean2, (state, value) -> state.capeLean2 = value);
-            overrides.registerIntOverride("arrowCount", (state) -> state.arrowCount, (state, value) -> state.arrowCount = value);
-            overrides.registerIntOverride("stingerCount", (state) -> state.stingerCount, (state, value) -> state.stingerCount = value);
-            overrides.registerFloatOverride("fallFlyingTimeInTicks", (state) -> state.fallFlyingTimeInTicks, (state, value) -> state.fallFlyingTimeInTicks = value);
-            overrides.registerFloatOverride("flyingYRot", (state) -> state.flyingYRot, (state, value) -> {
+            overrides.registerBooleanOverride("isSpectator", s -> s.isSpectator, (s, value) -> s.isSpectator = value);
+            overrides.registerBooleanOverride("showCape", s -> s.showCape, (s, value) -> s.showCape = value);
+            overrides.registerFloatOverride("capeFlap", s -> s.capeFlap, (s, value) -> s.capeFlap = value);
+            overrides.registerFloatOverride("capeLean", s -> s.capeLean, (s, value) -> s.capeLean = value);
+            overrides.registerFloatOverride("capeLean2", s -> s.capeLean2, (s, value) -> s.capeLean2 = value);
+            overrides.registerIntOverride("arrowCount", s -> s.arrowCount, (s, value) -> s.arrowCount = value);
+            overrides.registerIntOverride("stingerCount", s -> s.stingerCount, (s, value) -> s.stingerCount = value);
+            overrides.registerFloatOverride("fallFlyingTimeInTicks", s -> s.fallFlyingTimeInTicks, (s, value) -> s.fallFlyingTimeInTicks = value);
+            overrides.registerFloatOverride("flyingYRot", s -> s.flyingYRot, (state, value) -> {
                 state.flyingYRot = value;
                 state.shouldApplyFlyingYRot = true; // this is effectively replaced already
             });
-            overrides.registerEnumOverride("parrotOnLeftShoulder", Parrot.Variant.class, (state) -> state.parrotOnLeftShoulder, (state, value) -> state.parrotOnLeftShoulder = value);
-            overrides.registerEnumOverride("parrotOnRightShoulder", Parrot.Variant.class, (state) -> state.parrotOnRightShoulder, (state, value) -> state.parrotOnRightShoulder = value);
-            overrides.registerBooleanOverride("showExtraEars", (state) -> state.showExtraEars, (state, value) -> state.showExtraEars = value);
+            overrides.registerEnumOverride("parrotOnLeftShoulder", Parrot.Variant.class, s -> s.parrotOnLeftShoulder, (s, value) -> s.parrotOnLeftShoulder = value);
+            overrides.registerEnumOverride("parrotOnRightShoulder", Parrot.Variant.class, s -> s.parrotOnRightShoulder, (s, value) -> s.parrotOnRightShoulder = value);
+            overrides.registerBooleanOverride("showExtraEars", s -> s.showExtraEars, (s, value) -> s.showExtraEars = value);
+            overrides.registerItemStackOverride("heldOnHeadItem", state -> null, (state, value) -> {
+                Minecraft.getInstance().getItemModelResolver().updateForNonLiving(state.heldOnHead, value, ItemDisplayContext.HEAD, Minecraft.getInstance().player);
+            });
         });
 
         registerOverrides(AxolotlRenderState.class, overrides -> {
-            overrides.registerEnumOverride("variant", Axolotl.Variant.class, state -> state.variant, (state, value) -> state.variant = value);
-            overrides.registerFloatOverride("playingDeadFactor", state -> state.playingDeadFactor, (state, value) -> state.playingDeadFactor = value);
-            overrides.registerFloatOverride("movingFactor", state -> state.movingFactor, (state, value) -> state.movingFactor = value);
-            overrides.registerFloatOverride("inWaterFactor", state -> state.inWaterFactor, (state, value) -> state.inWaterFactor = value);
-            overrides.registerFloatOverride("onGroundFactor", state -> state.onGroundFactor, (state, value) -> state.onGroundFactor = value);
+            overrides.registerEnumOverride("variant", Axolotl.Variant.class, s -> s.variant, (s, value) -> s.variant = value);
+            overrides.registerFloatOverride("playingDeadFactor", s -> s.playingDeadFactor, (s, value) -> s.playingDeadFactor = value);
+            overrides.registerFloatOverride("movingFactor", s -> s.movingFactor, (s, value) -> s.movingFactor = value);
+            overrides.registerFloatOverride("inWaterFactor", s -> s.inWaterFactor, (s, value) -> s.inWaterFactor = value);
+            overrides.registerFloatOverride("onGroundFactor", s -> s.onGroundFactor, (s, value) -> s.onGroundFactor = value);
         });
 
         registerOverrides(BatRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isResting", state -> state.isResting, (state, value) -> state.isResting = value);
-            overrides.registerAnimationStateOverride("flyAnimationState", state -> state.flyAnimationState);
-            overrides.registerAnimationStateOverride("restAnimationState", state -> state.restAnimationState);
+            overrides.registerBooleanOverride("isResting", s -> s.isResting, (s, value) -> s.isResting = value);
+            overrides.registerAnimationStateOverride("flyAnimationState", s -> s.flyAnimationState);
+            overrides.registerAnimationStateOverride("restAnimationState", s -> s.restAnimationState);
         });
 
         registerOverrides(BeeRenderState.class, overrides -> {
-            overrides.registerFloatOverride("rollAmount", state -> state.rollAmount, (state, value) -> state.rollAmount = value);
-            overrides.registerBooleanOverride("hasStinger", (state) -> state.hasStinger, (state, value) -> state.hasStinger = value);
-            overrides.registerBooleanOverride("isOnGround", (state) -> state.isOnGround, (state, value) -> state.isOnGround = value);
-            overrides.registerBooleanOverride("isAngry", (state) -> state.isAngry, (state, value) -> state.isAngry = value);
-            overrides.registerBooleanOverride("hasNectar", (state) -> state.hasNectar, (state, value) -> state.hasNectar = value);
+            overrides.registerFloatOverride("rollAmount", s -> s.rollAmount, (s, value) -> s.rollAmount = value);
+            overrides.registerBooleanOverride("hasStinger", s -> s.hasStinger, (s, value) -> s.hasStinger = value);
+            overrides.registerBooleanOverride("isOnGround", s -> s.isOnGround, (s, value) -> s.isOnGround = value);
+            overrides.registerBooleanOverride("isAngry", s -> s.isAngry, (s, value) -> s.isAngry = value);
+            overrides.registerBooleanOverride("hasNectar", s -> s.hasNectar, (s, value) -> s.hasNectar = value);
         });
 
         // block display entity
 
         registerOverrides(BoatRenderState.class, overrides -> {
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerIntOverride("hurtDir", (state) -> state.hurtDir, (state, value) -> state.hurtDir = value);
-            overrides.registerFloatOverride("hurtTime", (state) -> state.hurtTime, (state, value) -> state.hurtTime = value);
-            overrides.registerFloatOverride("damageTime", (state) -> state.damageTime, (state, value) -> state.damageTime = value);
-            overrides.registerFloatOverride("bubbleAngle", (state) -> state.bubbleAngle, (state, value) -> state.bubbleAngle = value);
-            overrides.registerBooleanOverride("boolean", (state) -> state.isUnderWater, (state, value) -> state.isUnderWater = value);
-            overrides.registerFloatOverride("rowingTimeLeft", (state) -> state.rowingTimeLeft, (state, value) -> state.rowingTimeLeft = value);
-            overrides.registerFloatOverride("rowingTimeRight", (state) -> state.rowingTimeRight, (state, value) -> state.rowingTimeRight = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
+            overrides.registerIntOverride("hurtDir", s -> s.hurtDir, (s, value) -> s.hurtDir = value);
+            overrides.registerFloatOverride("hurtTime", s -> s.hurtTime, (s, value) -> s.hurtTime = value);
+            overrides.registerFloatOverride("damageTime", s -> s.damageTime, (s, value) -> s.damageTime = value);
+            overrides.registerFloatOverride("bubbleAngle", s -> s.bubbleAngle, (s, value) -> s.bubbleAngle = value);
+            overrides.registerBooleanOverride("boolean", s -> s.isUnderWater, (s, value) -> s.isUnderWater = value);
+            overrides.registerFloatOverride("rowingTimeLeft", s -> s.rowingTimeLeft, (s, value) -> s.rowingTimeLeft = value);
+            overrides.registerFloatOverride("rowingTimeRight", s -> s.rowingTimeRight, (s, value) -> s.rowingTimeRight = value);
         });
 
         registerOverrides(BoggedRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isSheared", state -> state.isSheared, (state, value) -> state.isSheared = value);
+            overrides.registerBooleanOverride("isSheared", s -> s.isSheared, (s, value) -> s.isSheared = value);
         });
 
         registerOverrides(BreezeRenderState.class, overrides -> {
-            overrides.registerAnimationStateOverride("idle", state -> state.idle);
-            overrides.registerAnimationStateOverride("shoot", state -> state.shoot);
-            overrides.registerAnimationStateOverride("slide", state -> state.slide);
-            overrides.registerAnimationStateOverride("slideBack", state -> state.slideBack);
-            overrides.registerAnimationStateOverride("inhale", state -> state.inhale);
-            overrides.registerAnimationStateOverride("longJump", state -> state.longJump);
+            overrides.registerAnimationStateOverride("idle", s -> s.idle);
+            overrides.registerAnimationStateOverride("shoot", s -> s.shoot);
+            overrides.registerAnimationStateOverride("slide", s -> s.slide);
+            overrides.registerAnimationStateOverride("slideBack", s -> s.slideBack);
+            overrides.registerAnimationStateOverride("inhale", s -> s.inhale);
+            overrides.registerAnimationStateOverride("longJump", s -> s.longJump);
         });
 
         registerOverrides(CamelRenderState.class, overrides -> {
-            overrides.registerItemStackOverride("saddle", state -> state.saddle, (state, value) -> state.saddle = value);
-            overrides.registerBooleanOverride("isRidden", state -> state.isRidden, (state, value) -> state.isRidden = value);
-            overrides.registerFloatOverride("jumpCooldown", state -> state.jumpCooldown, (state, value) -> state.jumpCooldown = value);
-            overrides.registerAnimationStateOverride("sitAnimationState", state -> state.sitAnimationState);
-            overrides.registerAnimationStateOverride("sitPoseAnimationState", state -> state.sitPoseAnimationState);
-            overrides.registerAnimationStateOverride("sitUpAnimationState", state -> state.sitUpAnimationState);
-            overrides.registerAnimationStateOverride("idleAnimationState", state -> state.idleAnimationState);
-            overrides.registerAnimationStateOverride("dashAnimationState", state -> state.dashAnimationState);
+            overrides.registerItemStackOverride("saddle", s -> s.saddle, (s, value) -> s.saddle = value);
+            overrides.registerBooleanOverride("isRidden", s -> s.isRidden, (s, value) -> s.isRidden = value);
+            overrides.registerFloatOverride("jumpCooldown", s -> s.jumpCooldown, (s, value) -> s.jumpCooldown = value);
+            overrides.registerAnimationStateOverride("sitAnimationState", s -> s.sitAnimationState);
+            overrides.registerAnimationStateOverride("sitPoseAnimationState", s -> s.sitPoseAnimationState);
+            overrides.registerAnimationStateOverride("sitUpAnimationState", s -> s.sitUpAnimationState);
+            overrides.registerAnimationStateOverride("idleAnimationState", s -> s.idleAnimationState);
+            overrides.registerAnimationStateOverride("dashAnimationState", s -> s.dashAnimationState);
         });
 
         registerOverrides(CatRenderState.class, overrides -> {
             // identifier
-            overrides.registerBooleanOverride("isLyingOnTopOfSleepingPlayer", state -> state.isLyingOnTopOfSleepingPlayer, (state, value) -> state.isLyingOnTopOfSleepingPlayer = value);
-            overrides.registerEnumOverride("collarColor", DyeColor.class, state -> state.collarColor, (state, value) -> state.collarColor = value);
+            overrides.registerBooleanOverride("isLyingOnTopOfSleepingPlayer", s -> s.isLyingOnTopOfSleepingPlayer, (s, value) -> s.isLyingOnTopOfSleepingPlayer = value);
+            overrides.registerEnumOverride("collarColor", DyeColor.class, s -> s.collarColor, (s, value) -> s.collarColor = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(ChickenRenderState.class, overrides -> {
-            overrides.registerFloatOverride("flap", state -> state.flap, (state, value) -> state.flap = value);
-            overrides.registerFloatOverride("flapSpeed", state -> state.flapSpeed, (state, value) -> state.flapSpeed = value);
+            overrides.registerFloatOverride("flap", s -> s.flap, (s, value) -> s.flap = value);
+            overrides.registerFloatOverride("flapSpeed", s -> s.flapSpeed, (s, value) -> s.flapSpeed = value);
             // variant
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(CopperGolemRenderState.class, overrides -> {
-            overrides.registerEnumOverride("weathering", WeatheringCopper.WeatherState.class, state -> state.weathering, (state, value) -> state.weathering = value);
-            overrides.registerEnumOverride("copperGolemState", CopperGolemState.class, state -> state.copperGolemState, (state, value) -> state.copperGolemState = value);
-            overrides.registerAnimationStateOverride("idleAnimationState", state -> state.idleAnimationState);
-            overrides.registerAnimationStateOverride("interactionGetItem", state -> state.interactionGetItem);
-            overrides.registerAnimationStateOverride("interactionGetNoItem", state -> state.interactionGetNoItem);
-            overrides.registerAnimationStateOverride("interactionDropItem", state -> state.interactionDropItem);
-            overrides.registerAnimationStateOverride("interactionDropNoItem", state -> state.interactionDropNoItem);
+            overrides.registerEnumOverride("weathering", WeatheringCopper.WeatherState.class, s -> s.weathering, (s, value) -> s.weathering = value);
+            overrides.registerEnumOverride("copperGolemState", CopperGolemState.class, s -> s.copperGolemState, (s, value) -> s.copperGolemState = value);
+            overrides.registerAnimationStateOverride("idleAnimationState", s -> s.idleAnimationState);
+            overrides.registerAnimationStateOverride("interactionGetItem", s -> s.interactionGetItem);
+            overrides.registerAnimationStateOverride("interactionGetNoItem", s -> s.interactionGetNoItem);
+            overrides.registerAnimationStateOverride("interactionDropItem", s -> s.interactionDropItem);
+            overrides.registerAnimationStateOverride("interactionDropNoItem", s -> s.interactionDropNoItem);
             // block state
         });
 
         registerOverrides(CowRenderState.class, overrides -> {
             // variant
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(CreakingRenderState.class, overrides -> {
-            overrides.registerAnimationStateOverride("invulnerabilityAnimationState", state -> state.invulnerabilityAnimationState);
-            overrides.registerAnimationStateOverride("attackAnimationState", state -> state.attackAnimationState);
-            overrides.registerAnimationStateOverride("deathAnimationState", state -> state.deathAnimationState);
-            overrides.registerBooleanOverride("eyesGlowing", state -> state.eyesGlowing, (state, value) -> state.eyesGlowing = value);
-            overrides.registerBooleanOverride("canMove", state -> state.canMove, (state, value) -> state.canMove = value);
+            overrides.registerAnimationStateOverride("invulnerabilityAnimationState", s -> s.invulnerabilityAnimationState);
+            overrides.registerAnimationStateOverride("attackAnimationState", s -> s.attackAnimationState);
+            overrides.registerAnimationStateOverride("deathAnimationState", s -> s.deathAnimationState);
+            overrides.registerBooleanOverride("eyesGlowing", s -> s.eyesGlowing, (s, value) -> s.eyesGlowing = value);
+            overrides.registerBooleanOverride("canMove", s -> s.canMove, (s, value) -> s.canMove = value);
         });
 
         registerOverrides(CreeperRenderState.class, overrides -> {
-            overrides.registerFloatOverride("swelling", state -> state.swelling, (state, value) -> state.swelling = value);
-            overrides.registerBooleanOverride("isPowered", state -> state.isPowered, (state, value) -> state.isPowered = value);
+            overrides.registerFloatOverride("swelling", s -> s.swelling, (s, value) -> s.swelling = value);
+            overrides.registerBooleanOverride("isPowered", s -> s.isPowered, (s, value) -> s.isPowered = value);
         });
 
         // display entity
 
         registerOverrides(DolphinRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isMoving", state -> state.isMoving, (state, value) -> state.isMoving = value);
+            overrides.registerBooleanOverride("isMoving", s -> s.isMoving, (s, value) -> s.isMoving = value);
         });
 
         registerOverrides(DonkeyRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("hasChest", state -> state.hasChest, (state, value) -> state.hasChest = value);
+            overrides.registerBooleanOverride("hasChest", s -> s.hasChest, (s, value) -> s.hasChest = value);
         });
 
         registerOverrides(EndCrystalRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("showsBottom", state -> state.showsBottom, (state, value) -> state.showsBottom = value);
+            overrides.registerBooleanOverride("showsBottom", s -> s.showsBottom, (s, value) -> s.showsBottom = value);
             // vec3 beam offset
         });
 
         registerOverrides(EnderDragonRenderState.class, overrides -> {
-            overrides.registerFloatOverride("flapTime", state -> state.flapTime, (state, value) -> state.flapTime = value);
-            overrides.registerFloatOverride("deathTime", state -> state.deathTime, (state, value) -> state.deathTime = value);
-            overrides.registerBooleanOverride("hasRedOverlay", state -> state.hasRedOverlay, (state, value) -> state.hasRedOverlay = value);
+            overrides.registerFloatOverride("flapTime", s -> s.flapTime, (s, value) -> s.flapTime = value);
+            overrides.registerFloatOverride("deathTime", s -> s.deathTime, (s, value) -> s.deathTime = value);
+            overrides.registerBooleanOverride("hasRedOverlay", s -> s.hasRedOverlay, (s, value) -> s.hasRedOverlay = value);
             // vec3 beam offset
-            overrides.registerBooleanOverride("isLandingOrTakingOff", state -> state.isLandingOrTakingOff, (state, value) -> state.isLandingOrTakingOff = value);
-            overrides.registerBooleanOverride("isSitting", state -> state.isSitting, (state, value) -> state.isSitting = value);
-            overrides.registerDoubleOverride("distanceToEgg", state -> state.distanceToEgg, (state, value) -> state.distanceToEgg = value);
-            overrides.registerFloatOverride("partialTicks", state -> state.partialTicks, (state, value) -> state.partialTicks = value);
+            overrides.registerBooleanOverride("isLandingOrTakingOff", s -> s.isLandingOrTakingOff, (s, value) -> s.isLandingOrTakingOff = value);
+            overrides.registerBooleanOverride("isSitting", s -> s.isSitting, (s, value) -> s.isSitting = value);
+            overrides.registerDoubleOverride("distanceToEgg", s -> s.distanceToEgg, (s, value) -> s.distanceToEgg = value);
+            overrides.registerFloatOverride("partialTicks", s -> s.partialTicks, (s, value) -> s.partialTicks = value);
             // flight history
         });
 
         registerOverrides(EndermanRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isCreepy", state -> state.isCreepy, (state, value) -> state.isCreepy = value);
+            overrides.registerBooleanOverride("isCreepy", s -> s.isCreepy, (s, value) -> s.isCreepy = value);
             // carried block
         });
 
         registerOverrides(EntityRenderState.class, overrides -> {
-            overrides.registerFloatOverride("ageInTicks", state -> state.ageInTicks, (state, value) -> state.ageInTicks = value);
+            overrides.registerFloatOverride("ageInTicks", s -> s.ageInTicks, (s, value) -> s.ageInTicks = value);
 
             if (overrides.renderer instanceof LivingEntityRenderer) {
-                overrides.registerFloatOverride("eyeHeight", state -> state.eyeHeight, (state, value) -> state.eyeHeight = value);
+                overrides.registerFloatOverride("eyeHeight", s -> s.eyeHeight, (s, value) -> s.eyeHeight = value);
             }
+            overrides.registerBooleanOverride("displayFireAnimation", s -> s.displayFireAnimation, (s, value) -> s.displayFireAnimation = value);
         });
 
         registerOverrides(EquineRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("hasSaddle", state -> state.saddle != null, (state, value) -> {
+            overrides.registerBooleanOverride("hasSaddle", s -> s.saddle != null, (state, value) -> {
                 if (value) {
                     state.saddle = new ItemStack(Items.SADDLE);
                 } else {
                     state.saddle = ItemStack.EMPTY;
                 }
             });
-            overrides.registerItemStackOverride("bodyArmorItem", state -> state.bodyArmorItem, (state, value) -> state.bodyArmorItem = value);
-            overrides.registerBooleanOverride("isRidden", state -> state.isRidden, (state, value) -> state.isRidden = value);
-            overrides.registerBooleanOverride("animateTail", state -> state.animateTail, (state, value) -> state.animateTail = value);
-            overrides.registerFloatOverride("eatAnimation", state -> state.eatAnimation, (state, value) -> state.eatAnimation = value);
-            overrides.registerFloatOverride("standAnimation", state -> state.standAnimation, (state, value) -> state.standAnimation = value);
-            overrides.registerFloatOverride("feedingAnimation", state -> state.feedingAnimation, (state, value) -> state.feedingAnimation = value);
+            overrides.registerItemStackOverride("bodyArmorItem", s -> s.bodyArmorItem, (s, value) -> s.bodyArmorItem = value);
+            overrides.registerBooleanOverride("isRidden", s -> s.isRidden, (s, value) -> s.isRidden = value);
+            overrides.registerBooleanOverride("animateTail", s -> s.animateTail, (s, value) -> s.animateTail = value);
+            overrides.registerFloatOverride("eatAnimation", s -> s.eatAnimation, (s, value) -> s.eatAnimation = value);
+            overrides.registerFloatOverride("standAnimation", s -> s.standAnimation, (s, value) -> s.standAnimation = value);
+            overrides.registerFloatOverride("feedingAnimation", s -> s.feedingAnimation, (s, value) -> s.feedingAnimation = value);
         });
 
         registerOverrides(EvokerFangsRenderState.class, overrides -> {
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerFloatOverride("biteProgress", state -> state.biteProgress, (state, value) -> state.biteProgress = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
+            overrides.registerFloatOverride("biteProgress", s -> s.biteProgress, (s, value) -> s.biteProgress = value);
         });
 
         registerOverrides(EvokerRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isCastingSpell", state -> state.isCastingSpell, (state, value) -> state.isCastingSpell = value);
+            overrides.registerBooleanOverride("isCastingSpell", s -> s.isCastingSpell, (s, value) -> s.isCastingSpell = value);
         });
 
         registerOverrides(ExperienceOrbRenderState.class, overrides -> {
-            overrides.registerIntOverride("icon", state -> state.icon, (state, value) -> state.icon = value);
+            overrides.registerIntOverride("icon", s -> s.icon, (s, value) -> s.icon = value);
         });
 
         // falling block
 
         registerOverrides(FelineRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isCrouching", state -> state.isCrouching, (state, value) -> state.isCrouching = value);
-            overrides.registerBooleanOverride("isSprinting", state -> state.isSprinting, (state, value) -> state.isSprinting = value);
-            overrides.registerBooleanOverride("isSitting", state -> state.isSitting, (state, value) -> state.isSitting = value);
-            overrides.registerFloatOverride("lieDownAmount", state -> state.lieDownAmount, (state, value) -> state.lieDownAmount = value);
-            overrides.registerFloatOverride("lieDownAmountTail", state -> state.lieDownAmountTail, (state, value) -> state.lieDownAmountTail = value);
-            overrides.registerFloatOverride("relaxStateOneAmount", state -> state.relaxStateOneAmount, (state, value) -> state.relaxStateOneAmount = value);
+            overrides.registerBooleanOverride("isCrouching", s -> s.isCrouching, (s, value) -> s.isCrouching = value);
+            overrides.registerBooleanOverride("isSprinting", s -> s.isSprinting, (s, value) -> s.isSprinting = value);
+            overrides.registerBooleanOverride("isSitting", s -> s.isSitting, (s, value) -> s.isSitting = value);
+            overrides.registerFloatOverride("lieDownAmount", s -> s.lieDownAmount, (s, value) -> s.lieDownAmount = value);
+            overrides.registerFloatOverride("lieDownAmountTail", s -> s.lieDownAmountTail, (s, value) -> s.lieDownAmountTail = value);
+            overrides.registerFloatOverride("relaxStateOneAmount", s -> s.relaxStateOneAmount, (s, value) -> s.relaxStateOneAmount = value);
+            overrides.registerFloatOverride("ageScale", s -> s.ageScale, (s, value) -> s.ageScale = value, 0.5f);
         });
 
         registerOverrides(FireworkRocketRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isShotAtAngle", state -> state.isShotAtAngle, (state, value) -> state.isShotAtAngle = value);
+            overrides.registerBooleanOverride("isShotAtAngle", s -> s.isShotAtAngle, (s, value) -> s.isShotAtAngle = value);
             overrides.registerItemStackOverride("item", state -> null, (state, value) -> {
                 Minecraft.getInstance().getItemModelResolver().updateForNonLiving(state.item, value, ItemDisplayContext.GROUND, Minecraft.getInstance().player);
             });
@@ -325,40 +321,41 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
         // fishing hook
 
         registerOverrides(FoxRenderState.class, overrides -> {
-            overrides.registerFloatOverride("headRollAngle", state -> state.headRollAngle, (state, value) -> state.headRollAngle = value);
-            overrides.registerFloatOverride("crouchAmount", state -> state.crouchAmount, (state, value) -> state.crouchAmount = value);
-            overrides.registerBooleanOverride("isCrouching", state -> state.isCrouching, (state, value) -> state.isCrouching = value);
-            overrides.registerBooleanOverride("isSleeping", state -> state.isSleeping, (state, value) -> state.isSleeping = value);
-            overrides.registerBooleanOverride("isSitting", state -> state.isSitting, (state, value) -> state.isSitting = value);
-            overrides.registerBooleanOverride("isFaceplanted", state -> state.isFaceplanted, (state, value) -> state.isFaceplanted = value);
-            overrides.registerBooleanOverride("isPouncing", state -> state.isPouncing, (state, value) -> state.isPouncing = value);
-            overrides.registerEnumOverride("variant", Fox.Variant.class, state -> state.variant, (state, value) -> state.variant = value);
+            overrides.registerFloatOverride("headRollAngle", s -> s.headRollAngle, (s, value) -> s.headRollAngle = value);
+            overrides.registerFloatOverride("crouchAmount", s -> s.crouchAmount, (s, value) -> s.crouchAmount = value);
+            overrides.registerBooleanOverride("isCrouching", s -> s.isCrouching, (s, value) -> s.isCrouching = value);
+            overrides.registerBooleanOverride("isSleeping", s -> s.isSleeping, (s, value) -> s.isSleeping = value);
+            overrides.registerBooleanOverride("isSitting", s -> s.isSitting, (s, value) -> s.isSitting = value);
+            overrides.registerBooleanOverride("isFaceplanted", s -> s.isFaceplanted, (s, value) -> s.isFaceplanted = value);
+            overrides.registerBooleanOverride("isPouncing", s -> s.isPouncing, (s, value) -> s.isPouncing = value);
+            overrides.registerEnumOverride("variant", Fox.Variant.class, s -> s.variant, (s, value) -> s.variant = value);
+            overrides.registerFloatOverride("ageScale", s -> s.ageScale, (s, value) -> s.ageScale = value, 1f);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(FrogRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isSwimming", state -> state.isSwimming, (state, value) -> state.isSwimming = value);
-            overrides.registerAnimationStateOverride("jumpAnimationState", state -> state.jumpAnimationState);
-            overrides.registerAnimationStateOverride("croakAnimationState", state -> state.croakAnimationState);
-            overrides.registerAnimationStateOverride("tongueAnimationState", state -> state.tongueAnimationState);
-            overrides.registerAnimationStateOverride("swimIdleAnimationState", state -> state.swimIdleAnimationState);
+            overrides.registerBooleanOverride("isSwimming", s -> s.isSwimming, (s, value) -> s.isSwimming = value);
+            overrides.registerAnimationStateOverride("jumpAnimationState", s -> s.jumpAnimationState);
+            overrides.registerAnimationStateOverride("croakAnimationState", s -> s.croakAnimationState);
+            overrides.registerAnimationStateOverride("tongueAnimationState", s -> s.tongueAnimationState);
+            overrides.registerAnimationStateOverride("swimIdleAnimationState", s -> s.swimIdleAnimationState);
         });
 
         registerOverrides(GhastRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isCharging", state -> state.isCharging, (state, value) -> state.isCharging = value);
+            overrides.registerBooleanOverride("isCharging", s -> s.isCharging, (s, value) -> s.isCharging = value);
         });
 
         registerOverrides(GoatRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("hasLeftHorn", state -> state.hasLeftHorn, (state, value) -> state.hasLeftHorn = value);
-            overrides.registerBooleanOverride("hasRightHorn", state -> state.hasRightHorn, (state, value) -> state.hasRightHorn = value);
-            overrides.registerFloatOverride("rammingXHeadRot", state -> state.rammingXHeadRot, (state, value) -> state.rammingXHeadRot = value);
+            overrides.registerBooleanOverride("hasLeftHorn", s -> s.hasLeftHorn, (s, value) -> s.hasLeftHorn = value);
+            overrides.registerBooleanOverride("hasRightHorn", s -> s.hasRightHorn, (s, value) -> s.hasRightHorn = value);
+            overrides.registerFloatOverride("rammingXHeadRot", s -> s.rammingXHeadRot, (s, value) -> s.rammingXHeadRot = value);
         });
 
         registerOverrides(GuardianRenderState.class, overrides -> {
-            overrides.registerFloatOverride("spikesAnimation", state -> state.spikesAnimation, (state, value) -> state.spikesAnimation = value);
-            overrides.registerFloatOverride("tailAnimation", state -> state.tailAnimation, (state, value) -> state.tailAnimation = value);
+            overrides.registerFloatOverride("spikesAnimation", s -> s.spikesAnimation, (s, value) -> s.spikesAnimation = value);
+            overrides.registerFloatOverride("tailAnimation", s -> s.tailAnimation, (s, value) -> s.tailAnimation = value);
             // vec3s
-            overrides.registerFloatOverride("attackTime", state -> state.attackTime, (state, value) -> state.attackTime = value);
-            overrides.registerFloatOverride("attackScale", state -> state.attackScale, (state, value) -> state.attackScale = value);
+            // attack time and attack scale is based on the vec3s, which aren't modifiable atm - they should probably be based on offsets from the guardian rather than world pos
         });
 
         registerOverrides(HappyGhastRenderState.class, overrides -> {
@@ -370,43 +367,47 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                     state.bodyItem.set(DataComponents.EQUIPPABLE, Equippable.harness(value));
                 }
             });
-            overrides.registerBooleanOverride("isRidden", state -> state.isRidden, (state, value) -> state.isRidden = value);
-            overrides.registerBooleanOverride("isLeashHolder", state -> state.isLeashHolder, (state, value) -> state.isLeashHolder = value);
+            overrides.registerBooleanOverride("isRidden", s -> s.isRidden, (s, value) -> s.isRidden = value);
+            overrides.registerBooleanOverride("isLeashHolder", s -> s.isLeashHolder, (s, value) -> s.isLeashHolder = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(HoglinRenderState.class, overrides -> {
-            overrides.registerIntOverride("attackAnimationRemainingTicks", state -> state.attackAnimationRemainingTicks, (state, value) -> state.attackAnimationRemainingTicks = value);
-            overrides.registerBooleanOverride("isConverting", state -> state.isConverting, (state, value) -> state.isConverting = value);
+            overrides.registerIntOverride("attackAnimationRemainingTicks", s -> s.attackAnimationRemainingTicks, (s, value) -> s.attackAnimationRemainingTicks = value);
+            overrides.registerBooleanOverride("isConverting", s -> s.isConverting, (s, value) -> s.isConverting = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(HorseRenderState.class, overrides -> {
-            overrides.registerEnumOverride("variant", Variant.class, state -> state.variant, (state, value) -> state.variant = value);
-            overrides.registerEnumOverride("markings", Markings.class, state -> state.markings, (state, value) -> state.markings = value);
+            overrides.registerEnumOverride("variant", Variant.class, s -> s.variant, (s, value) -> s.variant = value);
+            overrides.registerEnumOverride("markings", Markings.class, s -> s.markings, (s, value) -> s.markings = value);
         });
         registerOverrides(HumanoidRenderState.class, overrides -> {
+            if (overrides.renderer instanceof AvatarRenderer) {
+                overrides.registerBooleanOverride("isVisuallySwimming", s -> s.isVisuallySwimming, (s, value) -> s.isVisuallySwimming = value);
+            }
             if (overrides.hasModelType(m -> m instanceof HumanoidModel)) {
-                overrides.registerFloatOverride("swimAmount", state -> state.swimAmount, (state, value) -> state.swimAmount = value);
-                overrides.registerFloatOverride("speedValue", state -> state.speedValue, (state, value) -> state.speedValue = value, 1f);
-                overrides.registerFloatOverride("maxCrossbowChargeDuration", state -> state.maxCrossbowChargeDuration, (state, value) -> state.maxCrossbowChargeDuration = value);
-                overrides.registerFloatOverride("ticksUsingItem", state -> state.ticksUsingItem, (state, value) -> state.ticksUsingItem = value);
-                overrides.registerEnumOverride("attackArm", HumanoidArm.class, state -> state.attackArm, (state, value) -> state.attackArm = value);
+                overrides.registerFloatOverride("swimAmount", s -> s.swimAmount, (s, value) -> s.swimAmount = value);
+                overrides.registerFloatOverride("speedValue", s -> s.speedValue, (s, value) -> s.speedValue = value, 1f);
+                //overrides.registerFloatOverride("maxCrossbowChargeDuration", s -> s.maxCrossbowChargeDuration, (s, value) -> s.maxCrossbowChargeDuration = value);
+                overrides.registerFloatOverride("ticksUsingItem", s -> s.ticksUsingItem, (s, value) -> s.ticksUsingItem = value);
+                overrides.registerEnumOverride("attackArm", HumanoidArm.class, s -> s.attackArm, (s, value) -> s.attackArm = value);
             }
 
-            overrides.registerEnumOverride("useItemHand", InteractionHand.class, state -> state.useItemHand, (state, value) -> state.useItemHand = value);
-            overrides.registerBooleanOverride("isUsingItem", state -> state.isUsingItem, (state, value) -> state.isUsingItem = value);
+            overrides.registerEnumOverride("useItemHand", InteractionHand.class, s -> s.useItemHand, (s, value) -> s.useItemHand = value);
+            overrides.registerBooleanOverride("isUsingItem", s -> s.isUsingItem, (s, value) -> s.isUsingItem = value);
 
-            overrides.registerBooleanOverride("isCrouching", state -> state.isCrouching, (state, value) -> state.isCrouching = value);
-            overrides.registerBooleanOverride("isFallFlying", state -> state.isFallFlying, (state, value) -> state.isFallFlying = value);
-            overrides.registerBooleanOverride("isVisuallySwimming", state -> state.isVisuallySwimming, (state, value) -> state.isVisuallySwimming = value);
-            overrides.registerBooleanOverride("isPassenger", state -> state.isPassenger, (state, value) -> state.isPassenger = value);
+            overrides.registerBooleanOverride("isCrouching", s -> s.isCrouching, (s, value) -> s.isCrouching = value);
+            overrides.registerBooleanOverride("isFallFlying", s -> s.isFallFlying, (s, value) -> s.isFallFlying = value);
+            overrides.registerBooleanOverride("isPassenger", s -> s.isPassenger, (s, value) -> s.isPassenger = value);
 
             if (overrides.hasLayerType(layer -> layer instanceof WingsLayer)) {
-                overrides.registerFloatOverride("elytraRotX", state -> state.elytraRotX, (state, value) -> state.elytraRotX = value);
-                overrides.registerFloatOverride("elytraRotY", state -> state.elytraRotY, (state, value) -> state.elytraRotY = value);
-                overrides.registerFloatOverride("elytraRotZ", state -> state.elytraRotZ, (state, value) -> state.elytraRotZ = value);
+                overrides.registerFloatOverride("elytraRotX", s -> s.elytraRotX, (s, value) -> s.elytraRotX = value);
+                overrides.registerFloatOverride("elytraRotY", s -> s.elytraRotY, (s, value) -> s.elytraRotY = value);
+                overrides.registerFloatOverride("elytraRotZ", s -> s.elytraRotZ, (s, value) -> s.elytraRotZ = value);
             }
             if (overrides.hasLayerType(layer -> layer instanceof HumanoidArmorLayer || layer instanceof CustomHeadLayer)) {
-                overrides.registerItemStackOverride("helmet", state -> state.headEquipment, (state, value) -> {
+                overrides.registerItemStackOverride("helmet", s -> s.headEquipment, (state, value) -> {
                     state.headEquipment = value;
 
                     if (value.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof AbstractSkullBlock abstractSkullBlock) {
@@ -425,29 +426,29 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                 });
             }
             if (overrides.hasLayerType(layer -> layer instanceof HumanoidArmorLayer)) {
-                overrides.registerItemStackOverride("chestplate", state -> state.chestEquipment, (state, value) -> state.chestEquipment = value);
-                overrides.registerItemStackOverride("leggings", state -> state.legsEquipment, (state, value) -> state.legsEquipment = value);
-                overrides.registerItemStackOverride("boots", state -> state.feetEquipment, (state, value) -> state.feetEquipment = value);
+                overrides.registerItemStackOverride("chestplate", s -> s.chestEquipment, (s, value) -> s.chestEquipment = value);
+                overrides.registerItemStackOverride("leggings", s -> s.legsEquipment, (s, value) -> s.legsEquipment = value);
+                overrides.registerItemStackOverride("boots", s -> s.feetEquipment, (s, value) -> s.feetEquipment = value);
             }
         });
 
 
         registerOverrides(IllagerRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isRiding", state -> state.isRiding, (state, value) -> state.isRiding = value);
-            overrides.registerBooleanOverride("isAggressive", state -> state.isAggressive, (state, value) -> state.isAggressive = value);
-            overrides.registerEnumOverride("mainArm", HumanoidArm.class, state -> state.mainArm, (state, value) -> state.mainArm = value);
-            overrides.registerEnumOverride("armPose", AbstractIllager.IllagerArmPose.class, state -> state.armPose, (state, value) -> state.armPose = value);
-            overrides.registerIntOverride("maxCrossbowChargeDuration", state -> state.maxCrossbowChargeDuration, (state, value) -> state.maxCrossbowChargeDuration = value);
-            overrides.registerFloatOverride("ticksUsingItem", state -> state.ticksUsingItem, (state, value) -> state.ticksUsingItem = value);
-            overrides.registerFloatOverride("attackAnim", state -> state.attackAnim, (state, value) -> state.attackAnim = value);
+            overrides.registerBooleanOverride("isRiding", s -> s.isRiding, (s, value) -> s.isRiding = value);
+            overrides.registerBooleanOverride("isAggressive", s -> s.isAggressive, (s, value) -> s.isAggressive = value);
+            overrides.registerEnumOverride("mainArm", HumanoidArm.class, s -> s.mainArm, (s, value) -> s.mainArm = value);
+            overrides.registerEnumOverride("armPose", AbstractIllager.IllagerArmPose.class, s -> s.armPose, (s, value) -> s.armPose = value);
+            //overrides.registerIntOverride("maxCrossbowChargeDuration", s -> s.maxCrossbowChargeDuration, (s, value) -> s.maxCrossbowChargeDuration = value);
+            overrides.registerFloatOverride("ticksUsingItem", s -> s.ticksUsingItem, (s, value) -> s.ticksUsingItem = value);
+            overrides.registerFloatOverride("attackAnim", s -> s.attackAnim, (s, value) -> s.attackAnim = value);
         });
 
         // illusioner (vec3[])
 
         registerOverrides(IronGolemRenderState.class, overrides -> {
-            overrides.registerFloatOverride("attackTicksRemaining", state -> state.attackTicksRemaining, (state, value) -> state.attackTicksRemaining = value);
-            overrides.registerIntOverride("offerFlowerTick", state -> state.offerFlowerTick, (state, value) -> state.offerFlowerTick = value);
-            overrides.registerEnumOverride("crackiness", Crackiness.Level.class, state -> state.crackiness, (state, value) -> state.crackiness = value);
+            overrides.registerFloatOverride("attackTicksRemaining", s -> s.attackTicksRemaining, (s, value) -> s.attackTicksRemaining = value);
+            overrides.registerIntOverride("offerFlowerTick", s -> s.offerFlowerTick, (s, value) -> s.offerFlowerTick = value);
+            overrides.registerEnumOverride("crackiness", Crackiness.Level.class, s -> s.crackiness, (s, value) -> s.crackiness = value);
         });
 
         registerOverrides(ItemClusterRenderState.class, overrides -> {
@@ -455,63 +456,65 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                 state.item.clear();
                 Minecraft.getInstance().getItemModelResolver().updateForNonLiving(state.item, value, ItemDisplayContext.GROUND, Minecraft.getInstance().player);
             });
-            overrides.registerIntOverride("count", state -> state.count, (state, value) -> state.count = value, 1);
-            overrides.registerIntOverride("seed", state -> state.seed, (state, value) -> state.seed = value);
+            overrides.registerIntOverride("count", s -> s.count, (s, value) -> s.count = value, 1);
+            overrides.registerIntOverride("seed", s -> s.seed, (s, value) -> s.seed = value);
         });
 
         // item display entity
 
         registerOverrides(ItemEntityRenderState.class, overrides -> {
-            overrides.registerFloatOverride("bobOffset", state -> state.bobOffset, (state, value) -> state.bobOffset = value);
+            overrides.registerFloatOverride("bobOffset", s -> s.bobOffset, (s, value) -> s.bobOffset = value);
         });
 
         registerOverrides(ItemFrameRenderState.class, overrides -> {
-            overrides.registerEnumOverride("direction", Direction.class, state -> state.direction, (state, value) -> state.direction = value);
+            overrides.registerEnumOverride("direction", Direction.class, s -> s.direction, (s, value) -> s.direction = value);
             overrides.registerItemStackOverride("item", state -> null, (state, value) -> {
                 state.item.clear();
                 Minecraft.getInstance().getItemModelResolver().updateForNonLiving(state.item, value, ItemDisplayContext.FIXED, Minecraft.getInstance().player);
             });
-            overrides.registerIntOverride("rotation", state -> state.rotation, (state, value) -> state.rotation = value);
-            overrides.registerBooleanOverride("isGlowFrame", state -> state.isGlowFrame, (state, value) -> state.isGlowFrame = value);
-            overrides.registerIntOverride("mapId", state -> state.mapId.id(), (state, value) -> state.mapId = new MapId(value));
+            overrides.registerIntOverride("rotation", s -> s.rotation, (s, value) -> s.rotation = value);
+            overrides.registerBooleanOverride("isGlowFrame", s -> s.isGlowFrame, (s, value) -> s.isGlowFrame = value);
+            overrides.registerIntOverride("mapId", s -> s.mapId.id(), (s, value) -> s.mapId = new MapId(value));
             // map render state
         });
 
         registerOverrides(LightningBoltRenderState.class, overrides -> {
-            overrides.registerIntOverride("seed", state -> (int) state.seed, (state, value) -> state.seed = value);
+            overrides.registerIntOverride("seed", state -> (int) state.seed, (s, value) -> s.seed = value);
         });
 
         registerOverrides(LivingEntityRenderState.class, overrides -> {
-            //if (overrides.renderer instanceof ArmorStandRenderer || overrides.renderer instanceof SquidRenderer) return;
-            overrides.registerFloatOverride("bodyRot", state -> state.bodyRot, (state, value) -> state.bodyRot = value);
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerFloatOverride("xRot", state -> state.xRot, (state, value) -> state.xRot = value);
-            overrides.registerFloatOverride("deathTime", state -> state.deathTime, (state, value) -> state.deathTime = value);
-            overrides.registerFloatOverride("walkAnimationPos", state -> state.walkAnimationPos, (state, value) -> state.walkAnimationPos = value);
-            overrides.registerFloatOverride("walkAnimationSpeed", state -> state.walkAnimationSpeed, (state, value) -> state.walkAnimationSpeed = value);
-            overrides.registerFloatOverride("scale", state -> state.scale, (state, value) -> state.scale = value, 1f);
-            overrides.registerFloatOverride("ageScale", state -> state.ageScale, (state, value) -> state.ageScale = value, 1f);
-            overrides.registerFloatOverride("ticksSinceSpearHitFeedback", state -> state.ticksSinceKineticHitFeedback, (state, value) -> state.ticksSinceKineticHitFeedback = value);
-            overrides.registerBooleanOverride("isUpsideDown", state -> state.isUpsideDown, (state, value) -> state.isUpsideDown = value);
-            overrides.registerBooleanOverride("isFullyFrozen", state -> state.isFullyFrozen, (state, value) -> state.isFullyFrozen = value);
-            overrides.registerBooleanOverride("isBaby", state -> state.isBaby, (state, value) -> state.isBaby = value);
+
+            overrides.registerFloatOverride("bodyRot", s -> s.bodyRot, (s, value) -> s.bodyRot = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
+            overrides.registerFloatOverride("xRot", s -> s.xRot, (s, value) -> s.xRot = value);
+            overrides.registerFloatOverride("walkAnimationPos", s -> s.walkAnimationPos, (s, value) -> s.walkAnimationPos = value);
+            overrides.registerFloatOverride("walkAnimationSpeed", s -> s.walkAnimationSpeed, (s, value) -> s.walkAnimationSpeed = value);
+            overrides.registerFloatOverride("scale", s -> s.scale, (s, value) -> s.scale = value, 1f);
+
+            if (overrides.hasLayerType(l -> l instanceof ItemInHandLayer)) {
+                overrides.registerFloatOverride("ticksSinceSpearHitFeedback", s -> s.ticksSinceKineticHitFeedback, (s, value) -> s.ticksSinceKineticHitFeedback = value);
+            }
+            overrides.registerBooleanOverride("isUpsideDown", s -> s.isUpsideDown, (s, value) -> s.isUpsideDown = value);
+            overrides.registerBooleanOverride("isFullyFrozen", s -> s.isFullyFrozen, (s, value) -> s.isFullyFrozen = value);
+
 
             // i hate this
             if (overrides.hasModelType(model -> model instanceof AbstractEquineModel || model instanceof CowModel || model instanceof SalmonModel
                                                 || model instanceof TropicalFishSmallModel || model instanceof TropicalFishLargeModel || model instanceof TadpoleModel)
                 || overrides.renderer instanceof SalmonRenderer || overrides.renderer instanceof TropicalFishRenderer || overrides.renderer instanceof AvatarRenderer) {
-                overrides.registerBooleanOverride("isInWater", state -> state.isInWater, (state, value) -> state.isInWater = value);
+                overrides.registerBooleanOverride("isInWater", s -> s.isInWater, (s, value) -> s.isInWater = value);
             }
 
-            overrides.registerBooleanOverride("isAutoSpinAttack", state -> state.isAutoSpinAttack, (state, value) -> state.isAutoSpinAttack = value);
-            overrides.registerBooleanOverride("hasRedOverlay", state -> state.hasRedOverlay, (state, value) -> state.hasRedOverlay = value);
-
+            overrides.registerBooleanOverride("hasRedOverlay", s -> s.hasRedOverlay, (s, value) -> s.hasRedOverlay = value);
+            //if (overrides.renderer instanceof ArmorStandRenderer || overrides.renderer instanceof SquidRenderer) return;
+            overrides.registerFloatOverride("deathTime", s -> s.deathTime, (s, value) -> s.deathTime = value);
+            overrides.registerBooleanOverride("isAutoSpinAttack", s -> s.isAutoSpinAttack, (s, value) -> s.isAutoSpinAttack = value);
             // other pose types aren't checked anywhere, only sleeping is used, so just have an option for that instead
-            overrides.registerBooleanOverride("isSleeping", state -> state.hasPose(Pose.SLEEPING), (state, value) -> state.pose = value ? Pose.SLEEPING : Pose.STANDING);
-            overrides.registerEnumOverride("bedOrientation", Direction.class, state -> state.bedOrientation, (state, value) -> state.bedOrientation = value);
+            overrides.registerBooleanOverride("isSleeping", s -> s.hasPose(Pose.SLEEPING), (s, value) -> s.pose = value ? Pose.SLEEPING : Pose.STANDING);
+            overrides.registerEnumOverride("bedOrientation", Direction.class, s -> s.bedOrientation, (s, value) -> s.bedOrientation = value);
 
             if (overrides.hasLayerType(l -> l instanceof CustomHeadLayer) && !overrides.hasLayerType(l -> l instanceof HumanoidArmorLayer)) {
-                overrides.registerEnumOverride("wornHeadType", SkullBlock.Types.class, state -> (SkullBlock.Types) state.wornHeadType, (state, value) -> state.wornHeadType = value);
+                overrides.registerEnumOverride("wornHeadType", SkullBlock.Types.class, state -> (SkullBlock.Types) state.wornHeadType, (s, value) -> s.wornHeadType = value);
                 overrides.registerItemStackOverride("headItem", state -> null, (state, value) -> {
                     if (value.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof AbstractSkullBlock abstractSkullBlock) {
                         state.headItem.clear();
@@ -527,14 +530,14 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                         }
                     }
                 });
+                // for custom head items it seems
+                overrides.registerFloatOverride("wornHeadAnimationPos", s -> s.wornHeadAnimationPos, (s, value) -> s.wornHeadAnimationPos = value);
             }
-            // for custom head items it seems
-            overrides.registerFloatOverride("wornHeadAnimationPos", state -> state.wornHeadAnimationPos, (state, value) -> state.wornHeadAnimationPos = value);
         });
 
         registerOverrides(LlamaRenderState.class, overrides -> {
-            overrides.registerEnumOverride("variant", Llama.Variant.class, state -> state.variant, (state, value) -> state.variant = value);
-            overrides.registerBooleanOverride("hasChest", state -> state.hasChest, (state, value) -> state.hasChest = value);
+            overrides.registerEnumOverride("variant", Llama.Variant.class, s -> s.variant, (s, value) -> s.variant = value);
+            overrides.registerBooleanOverride("hasChest", s -> s.hasChest, (s, value) -> s.hasChest = value);
             overrides.registerEnumOverride("swagColor", DyeColor.class, state -> null, (state, value) -> {
                 if (value == null) {
                     state.bodyItem = null;
@@ -543,86 +546,90 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                     state.bodyItem.set(DataComponents.EQUIPPABLE, Equippable.llamaSwag(value));
                 }
             });
-            overrides.registerBooleanOverride("isTraderLlama", state -> state.isTraderLlama, (state, value) -> state.isTraderLlama = value);
+            overrides.registerBooleanOverride("isTraderLlama", s -> s.isTraderLlama, (s, value) -> s.isTraderLlama = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(LlamaSpitRenderState.class, overrides -> {
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerFloatOverride("xRot", state -> state.xRot, (state, value) -> state.xRot = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
+            overrides.registerFloatOverride("xRot", s -> s.xRot, (s, value) -> s.xRot = value);
         });
 
         registerOverrides(MinecartRenderState.class, overrides -> {
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerFloatOverride("xRot", state -> state.xRot, (state, value) -> state.xRot = value);
-            overrides.registerIntOverride("offsetSeed", state -> (int) state.offsetSeed, (state, value) -> state.offsetSeed = value);
-            overrides.registerIntOverride("hurtDir", state -> state.hurtDir, (state, value) -> state.hurtDir = value);
-            overrides.registerFloatOverride("hurtTime", state -> state.hurtTime, (state, value) -> state.hurtTime = value);
-            overrides.registerFloatOverride("damageTime", state -> state.damageTime, (state, value) -> state.damageTime = value);
-            overrides.registerIntOverride("displayOffset", state -> state.displayOffset, (state, value) -> state.displayOffset = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
+            overrides.registerFloatOverride("xRot", s -> s.xRot, (s, value) -> s.xRot = value);
+            overrides.registerIntOverride("offsetSeed", state -> (int) state.offsetSeed, (s, value) -> s.offsetSeed = value);
+            overrides.registerIntOverride("hurtDir", s -> s.hurtDir, (s, value) -> s.hurtDir = value);
+            overrides.registerFloatOverride("hurtTime", s -> s.hurtTime, (s, value) -> s.hurtTime = value);
+            overrides.registerFloatOverride("damageTime", s -> s.damageTime, (s, value) -> s.damageTime = value);
+            overrides.registerIntOverride("displayOffset", s -> s.displayOffset, (s, value) -> s.displayOffset = value);
             // block state
-            overrides.registerBooleanOverride("isNewRender", state -> state.isNewRender, (state, value) -> state.isNewRender = value);
+            overrides.registerBooleanOverride("isNewRender", s -> s.isNewRender, (s, value) -> s.isNewRender = value);
             // position stuff vec3s
         });
 
         registerOverrides(MinecartTntRenderState.class, overrides -> {
-            overrides.registerFloatOverride("fuseRemainingInTicks", state -> state.fuseRemainingInTicks, (state, value) -> state.fuseRemainingInTicks = value);
+            overrides.registerFloatOverride("fuseRemainingInTicks", s -> s.fuseRemainingInTicks, (s, value) -> s.fuseRemainingInTicks = value);
         });
 
         registerOverrides(MushroomCowRenderState.class, overrides -> {
-            overrides.registerEnumOverride("variant", MushroomCow.Variant.class, state -> state.variant, (state, value) -> state.variant = value);
+            overrides.registerEnumOverride("variant", MushroomCow.Variant.class, s -> s.variant, (s, value) -> s.variant = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(NautilusRenderState.class, overrides -> {
-            overrides.registerItemStackOverride("saddle", state -> state.saddle, (state, value) -> state.saddle = value);
-            overrides.registerItemStackOverride("bodyArmorItem", state -> state.bodyArmorItem, (state, value) -> state.bodyArmorItem = value);
+            overrides.registerItemStackOverride("saddle", s -> s.saddle, (s, value) -> s.saddle = value);
+            overrides.registerItemStackOverride("bodyArmorItem", s -> s.bodyArmorItem, (s, value) -> s.bodyArmorItem = value);
             // variant
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(PaintingRenderState.class, overrides -> {
-            overrides.registerEnumOverride("direction", Direction.class, state -> state.direction, (state, value) -> state.direction = value);
+            overrides.registerEnumOverride("direction", Direction.class, s -> s.direction, (s, value) -> s.direction = value);
             // variant
             // lighting
         });
 
         registerOverrides(PandaRenderState.class, overrides -> {
-            overrides.registerEnumOverride("variant", Panda.Gene.class,state -> state.variant, (state, value) -> state.variant = value);
-            overrides.registerBooleanOverride("variant", state -> state.isUnhappy, (state, value) -> state.isUnhappy = value);
-            overrides.registerBooleanOverride("variant", state -> state.isSneezing, (state, value) -> state.isSneezing = value);
-            overrides.registerIntOverride("variant", state -> state.sneezeTime, (state, value) -> state.sneezeTime = value);
-            overrides.registerBooleanOverride("isEating", state -> state.isEating, (state, value) -> state.isEating = value);
-            overrides.registerBooleanOverride("isScared", state -> state.isScared, (state, value) -> state.isScared = value);
-            overrides.registerBooleanOverride("isSitting", state -> state.isSitting, (state, value) -> state.isSitting = value);
-            overrides.registerFloatOverride("sitAmount", state -> state.sitAmount, (state, value) -> state.sitAmount = value);
-            overrides.registerFloatOverride("lieOnBackAmount", state -> state.lieOnBackAmount, (state, value) -> state.lieOnBackAmount = value);
-            overrides.registerFloatOverride("rollAmount", state -> state.rollAmount, (state, value) -> state.rollAmount = value);
-            overrides.registerFloatOverride("rollTime", state -> state.rollTime, (state, value) -> state.rollTime = value);
+            overrides.registerEnumOverride("variant", Panda.Gene.class, s -> s.variant, (s, value) -> s.variant = value);
+            overrides.registerBooleanOverride("variant", s -> s.isUnhappy, (s, value) -> s.isUnhappy = value);
+            overrides.registerBooleanOverride("variant", s -> s.isSneezing, (s, value) -> s.isSneezing = value);
+            overrides.registerIntOverride("variant", s -> s.sneezeTime, (s, value) -> s.sneezeTime = value);
+            overrides.registerBooleanOverride("isEating", s -> s.isEating, (s, value) -> s.isEating = value);
+            overrides.registerBooleanOverride("isScared", s -> s.isScared, (s, value) -> s.isScared = value);
+            overrides.registerBooleanOverride("isSitting", s -> s.isSitting, (s, value) -> s.isSitting = value);
+            overrides.registerFloatOverride("sitAmount", s -> s.sitAmount, (s, value) -> s.sitAmount = value);
+            overrides.registerFloatOverride("lieOnBackAmount", s -> s.lieOnBackAmount, (s, value) -> s.lieOnBackAmount = value);
+            overrides.registerFloatOverride("rollAmount", s -> s.rollAmount, (s, value) -> s.rollAmount = value);
+            overrides.registerFloatOverride("rollTime", s -> s.rollTime, (s, value) -> s.rollTime = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(ParrotRenderState.class, overrides -> {
-            overrides.registerEnumOverride("variant", Parrot.Variant.class,state -> state.variant, (state, value) -> state.variant = value);
-            overrides.registerFloatOverride("flapAngle", state -> state.flapAngle, (state, value) -> state.flapAngle = value);
-            overrides.registerEnumOverride("pose", ParrotModel.Pose.class, state -> state.pose, (state, value) -> state.pose = value);
+            overrides.registerEnumOverride("variant", Parrot.Variant.class, s -> s.variant, (s, value) -> s.variant = value);
+            overrides.registerFloatOverride("flapAngle", s -> s.flapAngle, (s, value) -> s.flapAngle = value);
+            overrides.registerEnumOverride("pose", ParrotModel.Pose.class, s -> s.pose, (s, value) -> s.pose = value);
         });
 
         registerOverrides(PhantomRenderState.class, overrides -> {
-            overrides.registerFloatOverride("flapTime", state -> state.flapTime, (state, value) -> state.flapTime = value);
-            overrides.registerIntOverride("size", state -> state.size, (state, value) -> state.size = value);
+            overrides.registerFloatOverride("flapTime", s -> s.flapTime, (s, value) -> s.flapTime = value);
+            overrides.registerIntOverride("size", s -> s.size, (s, value) -> s.size = value);
         });
 
         registerOverrides(PhantomRenderState.class, overrides -> {
-            overrides.registerFloatOverride("flapTime", state -> state.flapTime, (state, value) -> state.flapTime = value);
-            overrides.registerIntOverride("size", state -> state.size, (state, value) -> state.size = value);
+            overrides.registerFloatOverride("flapTime", s -> s.flapTime, (s, value) -> s.flapTime = value);
+            overrides.registerIntOverride("size", s -> s.size, (s, value) -> s.size = value);
         });
 
         registerOverrides(PiglinRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isBrute", state -> state.isBrute, (state, value) -> state.isBrute = value);
-            overrides.registerBooleanOverride("isConverting", state -> state.isConverting, (state, value) -> state.isConverting = value);
-            overrides.registerFloatOverride("maxCrossbowChageDuration", state -> state.maxCrossbowChageDuration, (state, value) -> state.maxCrossbowChageDuration = value);
-            overrides.registerEnumOverride("armPose", PiglinArmPose.class, state -> state.armPose, (state, value) -> state.armPose = value);
+            overrides.registerBooleanOverride("isBrute", s -> s.isBrute, (s, value) -> s.isBrute = value);
+            overrides.registerBooleanOverride("isConverting", s -> s.isConverting, (s, value) -> s.isConverting = value);
+            overrides.registerFloatOverride("maxCrossbowChageDuration", s -> s.maxCrossbowChageDuration, (s, value) -> s.maxCrossbowChageDuration = value);
+            overrides.registerEnumOverride("armPose", PiglinArmPose.class, s -> s.armPose, (s, value) -> s.armPose = value);
         });
 
         registerOverrides(PigRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("hasSaddle", state -> state.saddle != null, (state, value) -> {
+            overrides.registerBooleanOverride("hasSaddle", s -> s.saddle != null, (state, value) -> {
                 if (value) {
                     state.saddle = new ItemStack(Items.SADDLE);
                 } else {
@@ -630,94 +637,102 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                 }
             });
             // variant
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(PolarBearRenderState.class, overrides -> {
-            overrides.registerFloatOverride("standScale", state -> state.standScale, (state, value) -> state.standScale = value);
+            overrides.registerFloatOverride("standScale", s -> s.standScale, (s, value) -> s.standScale = value);
+            overrides.registerFloatOverride("ageScale", s -> s.ageScale, (s, value) -> s.ageScale = value, 1f);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(PufferfishRenderState.class, overrides -> {
-            overrides.registerIntOverride("puffState", state -> state.puffState, (state, value) -> state.puffState = value);
+            overrides.registerIntOverride("puffState", s -> s.puffState, (s, value) -> s.puffState = value);
         });
 
         registerOverrides(RabbitRenderState.class, overrides -> {
-            overrides.registerFloatOverride("jumpCompletion", state -> state.jumpCompletion, (state, value) -> state.jumpCompletion = value);
-            overrides.registerBooleanOverride("isToast", state -> state.isToast, (state, value) -> state.isToast = value);
-            overrides.registerEnumOverride("variant", Rabbit.Variant.class, state -> state.variant, (state, value) -> state.variant = value);
+            overrides.registerFloatOverride("jumpCompletion", s -> s.jumpCompletion, (s, value) -> s.jumpCompletion = value);
+            overrides.registerBooleanOverride("isToast", s -> s.isToast, (s, value) -> s.isToast = value);
+            overrides.registerEnumOverride("variant", Rabbit.Variant.class, s -> s.variant, (s, value) -> s.variant = value);
         });
 
         registerOverrides(RavagerRenderState.class, overrides -> {
-            overrides.registerFloatOverride("stunnedTicksRemaining", state -> state.stunnedTicksRemaining, (state, value) -> state.stunnedTicksRemaining = value);
-            overrides.registerFloatOverride("attackTicksRemaining", state -> state.attackTicksRemaining, (state, value) -> state.attackTicksRemaining = value);
-            overrides.registerFloatOverride("roarAnimation", state -> state.roarAnimation, (state, value) -> state.roarAnimation = value);
+            overrides.registerFloatOverride("stunnedTicksRemaining", s -> s.stunnedTicksRemaining, (s, value) -> s.stunnedTicksRemaining = value);
+            overrides.registerFloatOverride("attackTicksRemaining", s -> s.attackTicksRemaining, (s, value) -> s.attackTicksRemaining = value);
+            overrides.registerFloatOverride("roarAnimation", s -> s.roarAnimation, (s, value) -> s.roarAnimation = value);
         });
 
         registerOverrides(SalmonRenderState.class, overrides -> {
-            overrides.registerEnumOverride("variant", Salmon.Variant.class, state -> state.variant, (state, value) -> state.variant = value);
+            overrides.registerEnumOverride("variant", Salmon.Variant.class, s -> s.variant, (s, value) -> s.variant = value);
         });
 
         registerOverrides(SheepRenderState.class, overrides -> {
-            overrides.registerFloatOverride("headEatPositionScale",  state -> state.headEatPositionScale, (state, value) -> state.headEatPositionScale = value);
-            overrides.registerFloatOverride("headEatAngleScale",  state -> state.headEatAngleScale, (state, value) -> state.headEatAngleScale = value);
-            overrides.registerBooleanOverride("isSheared",  state -> state.isSheared, (state, value) -> state.isSheared = value);
-            overrides.registerEnumOverride("woolColor", DyeColor.class, state -> state.woolColor, (state, value) -> state.woolColor = value);
-            overrides.registerBooleanOverride("isJebSheep",  state -> state.isJebSheep, (state, value) -> state.isJebSheep = value);
+            overrides.registerFloatOverride("headEatPositionScale", s -> s.headEatPositionScale, (s, value) -> s.headEatPositionScale = value);
+            overrides.registerFloatOverride("headEatAngleScale", s -> s.headEatAngleScale, (s, value) -> s.headEatAngleScale = value);
+            overrides.registerBooleanOverride("isSheared", s -> s.isSheared, (s, value) -> s.isSheared = value);
+            overrides.registerEnumOverride("woolColor", DyeColor.class, s -> s.woolColor, (s, value) -> s.woolColor = value);
+            overrides.registerBooleanOverride("isJebSheep", s -> s.isJebSheep, (s, value) -> s.isJebSheep = value);
+            overrides.registerFloatOverride("ageScale", s -> s.ageScale, (s, value) -> s.ageScale = value, 1f);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(ShulkerBulletRenderState.class, overrides -> {
-            overrides.registerFloatOverride("xRot", state -> state.xRot, (state, value) -> state.xRot = value);
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
+            overrides.registerFloatOverride("xRot", s -> s.xRot, (s, value) -> s.xRot = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
         });
 
         registerOverrides(ShulkerRenderState.class, overrides -> {
             // vec3 renderOffset
-            overrides.registerEnumOverride("color", DyeColor.class, state -> state.color, (state, value) -> state.color = value);
-            overrides.registerFloatOverride("peekAmount", state -> state.peekAmount, (state, value) -> state.peekAmount = value);
-            overrides.registerFloatOverride("yHeadRot", state -> state.yHeadRot, (state, value) -> state.yHeadRot = value);
-            overrides.registerFloatOverride("yBodyRot", state -> state.yBodyRot, (state, value) -> state.yBodyRot = value);
-            overrides.registerEnumOverride("yBodyRot", Direction.class, state -> state.attachFace, (state, value) -> state.attachFace = value);
+            overrides.registerEnumOverride("color", DyeColor.class, s -> s.color, (s, value) -> s.color = value);
+            overrides.registerFloatOverride("peekAmount", s -> s.peekAmount, (s, value) -> s.peekAmount = value);
+            overrides.registerFloatOverride("yHeadRot", s -> s.yHeadRot, (s, value) -> s.yHeadRot = value);
+            overrides.registerFloatOverride("yBodyRot", s -> s.yBodyRot, (s, value) -> s.yBodyRot = value);
+            overrides.registerEnumOverride("yBodyRot", Direction.class, s -> s.attachFace, (s, value) -> s.attachFace = value);
         });
 
         registerOverrides(SkeletonRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isAggressive", state -> state.isAggressive, (state, value) -> state.isAggressive = value);
-            overrides.registerBooleanOverride("isShaking", state -> state.isShaking, (state, value) -> state.isShaking = value);
-            overrides.registerBooleanOverride("isHoldingBow", state -> state.isHoldingBow, (state, value) -> state.isHoldingBow = value);
+            overrides.registerBooleanOverride("isAggressive", s -> s.isAggressive, (s, value) -> s.isAggressive = value);
+            overrides.registerBooleanOverride("isShaking", s -> s.isShaking, (s, value) -> s.isShaking = value);
+            overrides.registerBooleanOverride("isHoldingBow", s -> s.isHoldingBow, (s, value) -> s.isHoldingBow = value);
         });
 
         registerOverrides(SlimeRenderState.class, overrides -> {
-            overrides.registerFloatOverride("squish", state -> state.squish, (state, value) -> state.squish = value);
-            overrides.registerIntOverride("size", state -> state.size, (state, value) -> state.size = value, 1);
+            overrides.registerFloatOverride("squish", s -> s.squish, (s, value) -> s.squish = value);
+            overrides.registerIntOverride("size", s -> s.size, (s, value) -> s.size = value, 1);
         });
 
         registerOverrides(SnifferRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isSearching", state -> state.isSearching, (state, value) -> state.isSearching = value);
-            overrides.registerAnimationStateOverride("diggingAnimationState", state -> state.diggingAnimationState);
-            overrides.registerAnimationStateOverride("sniffingAnimationState", state -> state.sniffingAnimationState);
-            overrides.registerAnimationStateOverride("risingAnimationState", state -> state.risingAnimationState);
-            overrides.registerAnimationStateOverride("feelingHappyAnimationState", state -> state.feelingHappyAnimationState);
-            overrides.registerAnimationStateOverride("scentingAnimationState", state -> state.scentingAnimationState);
+            overrides.registerBooleanOverride("isSearching", s -> s.isSearching, (s, value) -> s.isSearching = value);
+            overrides.registerAnimationStateOverride("diggingAnimationState", s -> s.diggingAnimationState);
+            overrides.registerAnimationStateOverride("sniffingAnimationState", s -> s.sniffingAnimationState);
+            overrides.registerAnimationStateOverride("risingAnimationState", s -> s.risingAnimationState);
+            overrides.registerAnimationStateOverride("feelingHappyAnimationState", s -> s.feelingHappyAnimationState);
+            overrides.registerAnimationStateOverride("scentingAnimationState", s -> s.scentingAnimationState);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(SnowGolemRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("hasPumpkin", state -> state.hasPumpkin, (state, value) -> state.hasPumpkin = value);
+            overrides.registerBooleanOverride("hasPumpkin", s -> s.hasPumpkin, (s, value) -> s.hasPumpkin = value);
         });
 
         registerOverrides(SquidRenderState.class, overrides -> {
-            overrides.registerFloatOverride("tentacleAngle", state -> state.tentacleAngle, (state, value) -> state.tentacleAngle = value);
-            overrides.registerFloatOverride("xBodyRot", state -> state.xBodyRot, (state, value) -> state.xBodyRot = value);
-            overrides.registerFloatOverride("zBodyRot", state -> state.zBodyRot, (state, value) -> state.zBodyRot = value);
+            overrides.registerFloatOverride("tentacleAngle", s -> s.tentacleAngle, (s, value) -> s.tentacleAngle = value);
+            overrides.registerFloatOverride("xBodyRot", s -> s.xBodyRot, (s, value) -> s.xBodyRot = value);
+            overrides.registerFloatOverride("zBodyRot", s -> s.zBodyRot, (s, value) -> s.zBodyRot = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(StriderRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("hasSaddle", state -> state.saddle != null, (state, value) -> {
+            overrides.registerBooleanOverride("hasSaddle", s -> s.saddle != null, (state, value) -> {
                 if (value) {
                     state.saddle = new ItemStack(Items.SADDLE);
                 } else {
                     state.saddle = ItemStack.EMPTY;
                 }
             });
-            overrides.registerBooleanOverride("isSuffocating", state -> state.isSuffocating, (state, value) -> state.isSuffocating = value);
-            overrides.registerBooleanOverride("isRidden", state -> state.isRidden, (state, value) -> state.isRidden = value);
+            overrides.registerBooleanOverride("isSuffocating", s -> s.isSuffocating, (s, value) -> s.isSuffocating = value);
+            overrides.registerBooleanOverride("isRidden", s -> s.isRidden, (s, value) -> s.isRidden = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         // text display
@@ -730,83 +745,85 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
         });
 
         registerOverrides(ThrownTridentRenderState.class, overrides -> {
-            overrides.registerFloatOverride("xRot", state -> state.xRot, (state, value) -> state.xRot = value);
-            overrides.registerFloatOverride("yRot", state -> state.yRot, (state, value) -> state.yRot = value);
-            overrides.registerBooleanOverride("isFoil", state -> state.isFoil, (state, value) -> state.isFoil = value);
+            overrides.registerFloatOverride("xRot", s -> s.xRot, (s, value) -> s.xRot = value);
+            overrides.registerFloatOverride("yRot", s -> s.yRot, (s, value) -> s.yRot = value);
+            overrides.registerBooleanOverride("isFoil", s -> s.isFoil, (s, value) -> s.isFoil = value);
         });
 
         registerOverrides(TippableArrowRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isTipped", state -> state.isTipped, (state, value) -> state.isTipped = value);
+            overrides.registerBooleanOverride("isTipped", s -> s.isTipped, (s, value) -> s.isTipped = value);
         });
 
         registerOverrides(TntRenderState.class, overrides -> {
-            overrides.registerFloatOverride("fuseRemainingInTicks", state -> state.fuseRemainingInTicks, (state, value) -> state.fuseRemainingInTicks = value);
+            overrides.registerFloatOverride("fuseRemainingInTicks", s -> s.fuseRemainingInTicks, (s, value) -> s.fuseRemainingInTicks = value);
             // block state
         });
 
         registerOverrides(TropicalFishRenderState.class, overrides -> {
-            overrides.registerEnumOverride("pattern", TropicalFish.Pattern.class, state -> state.pattern, (state, value) -> state.pattern = value);
-            overrides.registerIntOverride("baseColor", state -> state.baseColor, (state, value) -> state.baseColor = value, -1);
-            overrides.registerIntOverride("patternColor", state -> state.patternColor, (state, value) -> state.patternColor = value, -1);
+            overrides.registerEnumOverride("pattern", TropicalFish.Pattern.class, s -> s.pattern, (s, value) -> s.pattern = value);
+            overrides.registerIntOverride("baseColor", s -> s.baseColor, (s, value) -> s.baseColor = value, -1);
+            overrides.registerIntOverride("patternColor", s -> s.patternColor, (s, value) -> s.patternColor = value, -1);
         });
 
         registerOverrides(TurtleRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isOnLand", state -> state.isOnLand, (state, value) -> state.isOnLand = value);
-            overrides.registerBooleanOverride("isLayingEgg", state -> state.isLayingEgg, (state, value) -> state.isLayingEgg = value);
-            overrides.registerBooleanOverride("hasEgg", state -> state.hasEgg, (state, value) -> state.hasEgg = value);
+            overrides.registerBooleanOverride("isOnLand", s -> s.isOnLand, (s, value) -> s.isOnLand = value);
+            overrides.registerBooleanOverride("isLayingEgg", s -> s.isLayingEgg, (s, value) -> s.isLayingEgg = value);
+            overrides.registerBooleanOverride("hasEgg", s -> s.hasEgg, (s, value) -> s.hasEgg = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(VexRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isCharging", state -> state.isCharging, (state, value) -> state.isCharging = value);
+            overrides.registerBooleanOverride("isCharging", s -> s.isCharging, (s, value) -> s.isCharging = value);
         });
 
         registerOverrides(VillagerRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isUnhappy", state -> state.isUnhappy, (state, value) -> state.isUnhappy = value);
+            overrides.registerBooleanOverride("isUnhappy", s -> s.isUnhappy, (s, value) -> s.isUnhappy = value);
             // villagerData (profession/type)
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         registerOverrides(WardenRenderState.class, overrides -> {
-            overrides.registerFloatOverride("tendrilAnimation", state -> state.tendrilAnimation, (state, value) -> state.tendrilAnimation = value);
-            overrides.registerFloatOverride("heartAnimation", state -> state.heartAnimation, (state, value) -> state.heartAnimation = value);
-            overrides.registerAnimationStateOverride("roarAnimationState", state -> state.roarAnimationState);
-            overrides.registerAnimationStateOverride("sniffAnimationState", state -> state.sniffAnimationState);
-            overrides.registerAnimationStateOverride("emergeAnimationState", state -> state.emergeAnimationState);
-            overrides.registerAnimationStateOverride("diggingAnimationState", state -> state.diggingAnimationState);
-            overrides.registerAnimationStateOverride("attackAnimationState", state -> state.attackAnimationState);
-            overrides.registerAnimationStateOverride("sonicBoomAnimationState", state -> state.sonicBoomAnimationState);
+            overrides.registerFloatOverride("tendrilAnimation", s -> s.tendrilAnimation, (s, value) -> s.tendrilAnimation = value);
+            overrides.registerFloatOverride("heartAnimation", s -> s.heartAnimation, (s, value) -> s.heartAnimation = value);
+            overrides.registerAnimationStateOverride("roarAnimationState", s -> s.roarAnimationState);
+            overrides.registerAnimationStateOverride("sniffAnimationState", s -> s.sniffAnimationState);
+            overrides.registerAnimationStateOverride("emergeAnimationState", s -> s.emergeAnimationState);
+            overrides.registerAnimationStateOverride("diggingAnimationState", s -> s.diggingAnimationState);
+            overrides.registerAnimationStateOverride("attackAnimationState", s -> s.attackAnimationState);
+            overrides.registerAnimationStateOverride("sonicBoomAnimationState", s -> s.sonicBoomAnimationState);
         });
 
         registerOverrides(WitchRenderState.class, overrides -> {
-            overrides.registerIntOverride("entityId", state -> state.entityId, (state, value) -> state.entityId = value);
-            overrides.registerBooleanOverride("isHoldingItem", state -> state.isHoldingItem, (state, value) -> state.isHoldingItem = value);
-            overrides.registerBooleanOverride("isHoldingPotion", state -> state.isHoldingPotion, (state, value) -> state.isHoldingPotion = value);
+            overrides.registerIntOverride("entityId", s -> s.entityId, (s, value) -> s.entityId = value);
+            overrides.registerBooleanOverride("isHoldingItem", s -> s.isHoldingItem, (s, value) -> s.isHoldingItem = value);
+            overrides.registerBooleanOverride("isHoldingPotion", s -> s.isHoldingPotion, (s, value) -> s.isHoldingPotion = value);
         });
 
         registerOverrides(WitherRenderState.class, overrides -> {
-            overrides.registerFloatOverride("xHeadRot 1", state -> state.xHeadRots[0], (state, value) -> state.xHeadRots[0] = value);
-            overrides.registerFloatOverride("xHeadRot 1", state -> state.xHeadRots[1], (state, value) -> state.xHeadRots[1] = value);
-            overrides.registerFloatOverride("yHeadRot 1", state -> state.yHeadRots[0], (state, value) -> state.yHeadRots[0] = value);
-            overrides.registerFloatOverride("yHeadRot 1", state -> state.yHeadRots[1], (state, value) -> state.yHeadRots[1] = value);
-            overrides.registerFloatOverride("invulnerableTicks", state -> state.invulnerableTicks, (state, value) -> state.invulnerableTicks = value);
-            overrides.registerBooleanOverride("isPowered", state -> state.isPowered, (state, value) -> state.isPowered = value);
+            overrides.registerFloatOverride("xHeadRot 1", s -> s.xHeadRots[0], (s, value) -> s.xHeadRots[0] = value);
+            overrides.registerFloatOverride("xHeadRot 1", s -> s.xHeadRots[1], (s, value) -> s.xHeadRots[1] = value);
+            overrides.registerFloatOverride("yHeadRot 1", s -> s.yHeadRots[0], (s, value) -> s.yHeadRots[0] = value);
+            overrides.registerFloatOverride("yHeadRot 1", s -> s.yHeadRots[1], (s, value) -> s.yHeadRots[1] = value);
+            overrides.registerFloatOverride("invulnerableTicks", s -> s.invulnerableTicks, (s, value) -> s.invulnerableTicks = value);
+            overrides.registerBooleanOverride("isPowered", s -> s.isPowered, (s, value) -> s.isPowered = value);
         });
 
         registerOverrides(WitherSkullRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isDangerous", state -> state.isDangerous, (state, value) -> state.isDangerous = value);
-            overrides.registerFloatOverride("animationPos", state -> state.modelState.animationPos, (state, value) -> state.modelState.animationPos = value);
-            overrides.registerFloatOverride("yRot", state -> state.modelState.yRot, (state, value) -> state.modelState.yRot = value);
-            overrides.registerFloatOverride("xRot", state -> state.modelState.xRot, (state, value) -> state.modelState.xRot = value);
+            overrides.registerBooleanOverride("isDangerous", s -> s.isDangerous, (s, value) -> s.isDangerous = value);
+            overrides.registerFloatOverride("animationPos", s -> s.modelState.animationPos, (s, value) -> s.modelState.animationPos = value);
+            overrides.registerFloatOverride("yRot", s -> s.modelState.yRot, (s, value) -> s.modelState.yRot = value);
+            overrides.registerFloatOverride("xRot", s -> s.modelState.xRot, (s, value) -> s.modelState.xRot = value);
         });
 
         registerOverrides(WolfRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isAngry", state -> state.isAngry, (state, value) -> state.isAngry = value);
-            overrides.registerBooleanOverride("isSitting", state -> state.isSitting, (state, value) -> state.isSitting = value);
-            overrides.registerFloatOverride("tailAngle", state -> state.tailAngle, (state, value) -> state.tailAngle = value, (float) (Math.PI / 5));
-            overrides.registerFloatOverride("headRollAngle", state -> state.headRollAngle, (state, value) -> state.headRollAngle = value);
-            overrides.registerFloatOverride("shakeAnim", state -> state.shakeAnim, (state, value) -> state.shakeAnim = value);
-            overrides.registerFloatOverride("wetShade", state -> state.wetShade, (state, value) -> state.wetShade = value, 1);
+            overrides.registerBooleanOverride("isAngry", s -> s.isAngry, (s, value) -> s.isAngry = value);
+            overrides.registerBooleanOverride("isSitting", s -> s.isSitting, (s, value) -> s.isSitting = value);
+            overrides.registerFloatOverride("tailAngle", s -> s.tailAngle, (s, value) -> s.tailAngle = value, (float) (Math.PI / 5));
+            overrides.registerFloatOverride("headRollAngle", s -> s.headRollAngle, (s, value) -> s.headRollAngle = value);
+            overrides.registerFloatOverride("shakeAnim", s -> s.shakeAnim, (s, value) -> s.shakeAnim = value);
+            overrides.registerFloatOverride("wetShade", s -> s.wetShade, (s, value) -> s.wetShade = value, 1);
             // texture
-            overrides.registerEnumOverride("collarColor", DyeColor.class, state -> state.collarColor, (state, value) -> state.collarColor = value);
+            overrides.registerEnumOverride("collarColor", DyeColor.class, s -> s.collarColor, (s, value) -> s.collarColor = value);
             overrides.registerBooleanOverride("hasWolfArmor", state -> !state.bodyArmorItem.isEmpty(), (state, value) -> {
                 if (value) {
                     state.bodyArmorItem = new ItemStack(Items.WOLF_ARMOR);
@@ -814,17 +831,19 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                     state.bodyArmorItem = ItemStack.EMPTY;
                 }
             });
+            overrides.registerFloatOverride("ageScale", s -> s.ageScale, (s, value) -> s.ageScale = value, 1f);
         });
 
         registerOverrides(ZombieRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isAggressive", state -> state.isAggressive, (state, value) -> state.isAggressive = value);
-            overrides.registerBooleanOverride("isConverting", state -> state.isConverting, (state, value) -> state.isConverting = value);
+            overrides.registerBooleanOverride("isAggressive", s -> s.isAggressive, (s, value) -> s.isAggressive = value);
+            overrides.registerBooleanOverride("isConverting", s -> s.isConverting, (s, value) -> s.isConverting = value);
+            overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
         // zombie villager
 
         registerOverrides(ZombifiedPiglinRenderState.class, overrides -> {
-            overrides.registerBooleanOverride("isAggressive", state -> state.isAggressive, (state, value) -> state.isAggressive = value);
+            overrides.registerBooleanOverride("isAggressive", s -> s.isAggressive, (s, value) -> s.isAggressive = value);
         });
 
     }

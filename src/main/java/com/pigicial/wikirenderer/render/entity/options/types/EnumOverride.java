@@ -1,12 +1,11 @@
 package com.pigicial.wikirenderer.render.entity.options.types;
 
+import com.pigicial.wikirenderer.components.FullWidthCollapsibleContainer;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import io.wispforest.owo.ui.container.CollapsibleContainer;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
-import io.wispforest.owo.ui.core.HorizontalAlignment;
-import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.Sizing;
+import io.wispforest.owo.ui.core.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.network.chat.Component;
@@ -26,20 +25,27 @@ public class EnumOverride<S extends EntityRenderState, E extends Enum<E>> extend
         this.enumClass = enumClass;
     }
 
+    public UIComponent buildComponent() {
+        SearchableEntityListComponent.LeftAlignedCheckbox checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(
+                Component.literal(toDisplayName(key)),
+                () -> this.enabled,
+                pressed -> this.enabled = pressed
+        );
+
+        FullWidthCollapsibleContainer layout = new FullWidthCollapsibleContainer(checkbox, () -> {
+            E value = getValue();
+            return Component.literal(value == null ? "Not Set" : toDisplayName(value.toString()));
+        }, false);
+        for (E enumOption : enumClass.getEnumConstants()) {
+            layout.child(addOption(enumOption));
+        }
+
+        return layout;
+    }
+
     @Override
     protected void addToComponentRow(@UnknownNullability FlowLayout row) {
-        CollapsibleContainer enumDropdown = UIContainers.collapsible(Sizing.content(), Sizing.content(), Component.literal("Options"), false);
 
-        //enumDropdown.child(addOption(null));
-        for (E enumOption : enumClass.getEnumConstants()) {
-            enumDropdown.child(addOption(enumOption));
-        }
-        //enumDropdown.padding(Insets.top(2));
-        enumDropdown.horizontalAlignment(HorizontalAlignment.RIGHT);
-        enumDropdown.titleLayout().padding(Insets.vertical(2));
-        enumDropdown.titleLayout().children().get(1).margins(Insets.left(5));
-
-        row.child(enumDropdown);
     }
 
     private SearchableEntityListComponent.DynamicTextButton addOption(@Nullable E enumOption) {

@@ -81,7 +81,7 @@ public class SearchableEntityListComponent extends DropdownComponent {
                 this.state = !this.state;
                 onClick.accept(this.state);
             };
-            this.horizontalSizing(Sizing.content());
+            this.horizontalSizing(Sizing.fill(65));
             this.horizontalTextAlignment(HorizontalAlignment.LEFT);
             this.margins(Insets.of(2, 2, 2, 2));
         }

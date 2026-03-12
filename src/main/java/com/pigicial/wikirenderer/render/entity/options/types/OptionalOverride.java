@@ -8,7 +8,9 @@ import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,17 +59,13 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
     }
 
     public UIComponent buildComponent() {
-        GridLayout layout = UIContainers.grid(Sizing.expand(100), Sizing.content(), 1, 2);
-        layout.margins(Insets.of(0, 0, 0, 0));
-        layout.horizontalAlignment(HorizontalAlignment.LEFT);
-        layout.verticalAlignment(VerticalAlignment.CENTER);
-
-        layout.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), () -> this.enabled, pressed -> this.enabled = pressed), 0, 0);
-
         FlowLayout controlLayout = UIContainers.horizontalFlow(Sizing.expand(50), Sizing.content());
         controlLayout.horizontalAlignment(HorizontalAlignment.RIGHT);
-
         this.addToComponentRow(controlLayout);
+
+        GridLayout layout = UIContainers.grid(Sizing.expand(100), Sizing.content(), 1, 2);
+        layout.verticalAlignment(VerticalAlignment.CENTER);
+        layout.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), () -> this.enabled, pressed -> this.enabled = pressed), 0, 0);
         layout.child(controlLayout, 0, 1);
         return layout;
     }

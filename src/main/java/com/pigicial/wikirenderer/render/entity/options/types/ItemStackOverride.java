@@ -2,12 +2,12 @@ package com.pigicial.wikirenderer.render.entity.options.types;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.pigicial.wikirenderer.components.FullWidthCollapsibleContainer;
 import com.pigicial.wikirenderer.components.MiniEditBoxComponent;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import io.wispforest.owo.ui.component.ItemComponent;
 import io.wispforest.owo.ui.component.UIComponents;
-import io.wispforest.owo.ui.container.CollapsibleContainer;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
@@ -31,7 +31,7 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
     private String itemName = "";
     private String playerHeadTextureID = "";
 
-    private CollapsibleContainer layout;
+    private FullWidthCollapsibleContainer layout;
     private FlowLayout itemOptionsLayout = null;
     private ItemComponent itemIconComponent = null;
 
@@ -43,16 +43,17 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
 
     @Override
     public UIComponent buildComponent() {
-        this.layout = UIContainers.collapsible(Sizing.fill(), Sizing.content(), Component.literal("Options"), false);
-        this.layout.margins(Insets.of(0, 0, 0, 0));
-        this.layout.horizontalAlignment(HorizontalAlignment.LEFT);
-        this.layout.verticalAlignment(VerticalAlignment.CENTER);
+        SearchableEntityListComponent.LeftAlignedCheckbox checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(
+                Component.literal(toDisplayName(key)),
+                () -> this.enabled, pressed ->
+                this.enabled = pressed
+        );
 
-        this.layout.titleLayout().padding(Insets.of(0));
-        this.layout.titleLayout().horizontalAlignment(HorizontalAlignment.RIGHT);
-        this.layout.titleLayout().verticalAlignment(VerticalAlignment.CENTER);
-        this.layout.titleLayout().children().getFirst().margins(Insets.left(10));
-        this.layout.titleLayout().child(0, new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), () -> this.enabled, pressed -> this.enabled = pressed));
+        this.layout = new FullWidthCollapsibleContainer(checkbox, () -> {
+            ItemStack item = getValue();
+            return item == null || item.isEmpty() ? Component.literal("Not Set") : item.getItemName().copy();
+        }, false);
+        this.layout.margins(Insets.of(0, 0, 0, 0));
 
         this.itemOptionsLayout = UIContainers.horizontalFlow(Sizing.content(), Sizing.content());
         this.itemOptionsLayout.horizontalAlignment(HorizontalAlignment.LEFT);
