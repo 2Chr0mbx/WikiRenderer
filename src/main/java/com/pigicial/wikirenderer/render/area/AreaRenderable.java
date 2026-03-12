@@ -154,7 +154,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         // this could be better but whatever
         Runnable preTranslucencyTask = () -> {
-            this.mesh.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
+            if (!properties.hideMesh.get()) {
+                this.mesh.drawBlockEntities(standardStack, nodeStorage, cameraRenderState, tickDelta);
+            }
 
             if (client.player != null) {
                 Vec3 diff = Vec3.atLowerCornerOf(mesh.bounds.getMinCorner()).subtract(client.player.trackingPosition());
