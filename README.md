@@ -117,7 +117,7 @@ Below is an example of rendering a furnace using `/wikirender block minecraft:fu
 Item Tooltips can be rendered in similar ways to item renders:
 1. Hold an item and type `/wikirender tooltip`
 2. Hover over an item in your inventory and press the render tooltip hotkey (defaults to `k`)
-3. Type `/wikirender tooltip <tooltip>`, where `<item>` is something like `minecraft:diamond`
+3. Type `/wikirender tooltip <item>`, where `<item>` is something like `minecraft:diamond`
 
 Tooltips are rendered using per-pixel resolution scaling, defaulting at 4 image pixels per font pixel.
 
