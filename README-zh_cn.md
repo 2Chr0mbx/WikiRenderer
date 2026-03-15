@@ -1,195 +1,192 @@
 # WikiRenderer
-WikiRenderer is a heavily modified version of [Isometric Renders](https://github.com/gliscowo/isometric-renders) that allows you to create renders of game objects like parts
-of world, blocks, items and entities.
+WikiRenderer 是 MOD [Isometric Renders](https://github.com/gliscowo/isometric-renders) 高度修改的版本，允许你创建游戏内对象的渲染，如世界的一部分、方块、物品和实体。
 
-These are automatically keyed to have a transparent background, and you can adjust scale, positioning and many more
-options right in-game in a menu.
+游戏会自动设置透明背景，你可以在游戏内的菜单中调整比例、位置等多种选项。
 
-Not only is this version of the mod also designed for modded wikis in mind, but it also has a couple of additional
-features targeted for use on the [Hypixel SkyBlock Wiki](https://hypixel-skyblock.fandom.com).
+这个版本的模组不仅是为模组维基设计的，还包含了一些面向 [Hypixel SkyBlock Wiki](https://hypixel-skyblock.fandom.com) 的额外功能。
 
-> Note: WikiRenderer relies on [owo-lib](https://modrinth.com/mod/owo-lib) for 1.21.11, which can be downloaded [here](https://modrinth.com/mod/owo-lib/versions).
+> 注意：WIkiRenderer 在1.21.11版本中依赖 MOD [owo-lib](https://modrinth.com/mod/owo-lib) ，您可以在[这里](https://modrinth.com/mod/owo-lib/versions)下载此 MOD。
 
-# Usage
-WikiRenderer supports the following render types:
+# 用途
+WikiRenderer 支持以下渲染类型：
 
-- Items
-- Entities
-    - Also supports sprite rendering
-- Areas in the world
-    - Also supports overhead images for minimaps
-- Block States
-- Item Tooltips
-- Batch export of multiple blocks or items
-    - Can pull from creative tabs, item namespaces, or your inventory
-    - Can also render multiple items into an atlas
-- Animated exports for items, entities, blocks states or world areas (in `.gif`, `.apng`, `.webp`, or `.mp4` formats)
+- 物品
+- 实体
+    - 还支持精灵图（即实体头部）渲染
+- 世界区域
+    - 还支持可用于小地图的俯视图
+- 不同状态的方块
+- 物品提示框
+- 批量渲染多个方块或物品
+    - 可以从创造模式标签页、物品命名空间或你的物品栏中选取
+    - 还可以将多个物品渲染到同一图集中
+- 物品、实体、不同状态的方块或世界区域可以以动画形式导出 （格式为 `.gif`， `.apng`， `.webp`，或 `.mp4` ）
 
-The main command is `/wikirender`, but `/wr` also exists as an alias.
+主命令是 `/wikirender`，可以简写为 `/wr`。
 
-## Items
-Items can be rendered in three ways:
-1. Hold an item and type `/wikirender item`
-2. Hover over an item in your inventory and press the render hotkey (defaults to `h`)
-3. Type `/wikirender item id <item>`, where `<item>` is something like `minecraft:diamond`
-4. Type `/wikirender item texture <item>`, where `<texture>` is a texture ID or base64 of a texture ID for a player head
+## 物品
+物品可以通过三种方式渲染：
+1. 手持物品输入： `/wikirender item`
+2. 鼠标悬停在物品栏中的物品上，按下渲染快捷键（默认为 `h`）
+3. 输入 `/wikirender item id <item>`， 其中  `<item>` 类似于 `minecraft:diamond`
+4. 输入 `/wikirender item texture <item>`, 其中 `<texture>` 是一个纹理 ID 或 base64 编码的玩家头颅纹理 ID
 
-Below is an example of an enchanted compass made using `/wikirender item id minecraft:compass[minecraft:enchantment_glint_override=true]`:
+下面是一个用指令 `/wikirender item id minecraft:compass[minecraft:enchantment_glint_override=true]` 渲染的已附魔的指南针:
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/enchanted_compass_menu.png" width="600" alt="Enchanted Compass Menu">
 
-On the right is an option to speed up enchantment glint speeds. Normally, at 100% glint speed (seen in Minecraft's accessibility settings), a full loop of the glint animation takes 41.25 seconds, but this option speeds it up to 15 seconds, while barely being a noticeable difference.  The `Use Enchanted Items Timings` button then sets the animation timing settings to this duration.
+右侧有一个选项，可以加快附魔光效闪烁速度。通常，在 100% 闪光速度时（见 Minecraft 的无障碍设置）时，闪烁动画需要 41.25 秒才能循环一次，但这个选项会将其加速到 15 秒，几乎没有明显差别。点击 `Use Enchanted Items Timings`（`同步为动画时长`） 按钮后，会将导出的动画时长设置为加速后的时长（即上文的 15 秒）。
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/enchanted_item_animation_options.png" width="300" alt="Enchantment Animation Options">
 
-Player Heads can also be rendered, and you can also grab their texture data with included buttons:
+玩家头部也可以被渲染，你也可以用附带的按钮获取他们的纹理数据：
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/player_head_item_render_menu.png" width="600" alt="Player Head Render Menu">
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/item_texture_grabbing.png" width="300" alt="Player Texture Copy Buttons">
 
-## Areas
+## 区域
 
-Areas in the world can be rendered in three ways:
-1. Select two points in the world with the hotkey (defaults to `c`), and type `/wikirender area`.
-2. Type `/wikirender area pos <start> <end>`, where `<start>` and `<end>` represent coordinates.
-3. Type `/wikirender area island <chunk_size> <distance_limit>`, which scans outwards in mini chunks (specified by
-   `<chunk_size>`), not continuing past empty chunks or until the distance limit is reached.
-    - This is useful for rendering everything nearby you quickly, or for rendering a non-square-shaped island close to
-      other islands. In the latter case, simply lower `<chunk_size>` until the surrounding islands are not hit in the
-      scan.
+世界中的区域可以用三种方式渲染：
+1. 使用快捷键 （默认为 `c`）选取世界中的两个点，然后输入 `/wikirender area`。
+2. 输入 `/wikirender area pos <start> <end>`， 其中 `<start>` 和 `<end>` 代表两个点的坐标。
+3.  输入 `/wikirender area island <chunk_size> <distance_limit>`，该命令会以迷你区块（由 `<chunk_size>` 指定其大小）为单位向外扫描，遇到空区块时会停止，或在达到距离限制时停止。
+    - 此命令适用于快速渲染你附近的所有区域，或渲染靠近其他岛屿的非正方形岛屿。在后一种情况下，只需降低 `<chunk_size>`，直到扫描范围不再触及周围的岛屿。
 
-Below is an example of the Hypixel Prototype lobby, rendered using `/wikirender area island 8 200`, featuring a variety of render options on both sides of the menu:
+下方是使用 `/wikirender area island 8 200` 渲染的 Hypixel 大厅示例，菜单两侧展示了多种渲染选项：
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/ptl_lobby_menu.png" width="600" alt="Hypixel Prototype Lobby">
 
-Area renders are quite configurable. You can control block and entity visibility, override certain types of data on visible entities, modify how lighting is handled, and more.
+区域渲染器的可配置性很高。你可以控制方块与实体的可见性、覆盖特定类型实体的显示规则、修改光照的处理方式，以及进行更多其他自定义设置。
 
-### Minimap Renders
-Area renders also feature topdown and side-view rendering modes, which allow you to create minimap images with adjustable texture resolution scaling. There is also a cave mode that lets you create underground images.
+### 小地图渲染
+区域渲染还提供俯视和侧视渲染模式，可让你创建类似小地图的图像，并支持可调节的分辨率和缩放。此外还有一个洞穴模式，可用于生成地下洞穴的可视化图像。
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/spiders_den_minimap_menu.png" width="600" alt="Hypixel SkyBlock Spider's Den Minimap Render">
 <img src="src/main/resources/assets/wikirenderer/readme_images/lapis_quarry_cave_mode.png" width="600" alt="Hypixel SkyBlock Lapis Quarry Cave Minimap Render">
 
-Minimap data can also be exported for use on the [Hypixel SkyBlock Fandom Wiki's Module:Minimap/Datasheet Minimap Calibrator tool](https://hypixel-skyblock.fandom.com/wiki/Module:Minimap/Datasheet).
+小地图数据可被导出并用于： [Hypixel SkyBlock Fandom Wiki's Module:Minimap/Datasheet Minimap Calibrator tool](https://hypixel-skyblock.fandom.com/wiki/Module:Minimap/Datasheet).
 
-### Item Frame Minimaps
-On the topic of Minimaps, you can also use area rendering and side angle viewing to render pixel-perfect maps:
+### 物品展示框内地图
+ 关于小地图，你还可以使用区域渲染和侧视角来渲染像素级完美的地图。这些图像使用与源地图图像完全相同的色彩数据和亮度渲染：
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/item_frame_map_render_area.png" height="256" alt="Item Frame Map">
 <img src="src/main/resources/assets/wikirenderer/readme_images/item_frame_map_render.png" width="384" alt="Item Frame Map">
 
-## Entities
-Entities can be rendered in four ways:
-1. Type `/wikirender player` to render yourself
-2. Look at an entity and pressing the render hotkey (defaults to `h`)
-3. Look at an entity and type `/wikirender entity`
-4. Type `/wikirender entity <entity_type> <nbt>`, where `<entity_type>` is something like `minecraft:zombie`, and `<nbt>` is optional but something like `{IsBaby:1b}`
+## 实体
+实体可以通过四种方式渲染：
+1. 输入 `/wikirender player` 来渲染你自己
+2. 看向一个实体，然后按下渲染快捷键 （默认为 `h`）
+3. 看向一个实体，然后输入 `/wikirender entity`
+4. 输入 `/wikirender entity <entity_type> <nbt>`，其中 `<entity_type>` 类似于 `minecraft:zombie`； `<nbt>` 为可选项，类似于 `{IsBaby:1b}`
 
-Below are examples of myself being rendered, both normally and in an optional sprite mode:
+下方是我自己（即作者 Pigicial）的渲染示例，分别为普通模式和可选的精灵图（即头部渲染）模式：
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/rendering_myself_menu.png" width="600" alt="Me wearing Diamond Armor and an Iron Helmet whilst holding a Golden Spear">
 <img src="src/main/resources/assets/wikirenderer/readme_images/rendering_myself_sprite_menu.png" width="600" alt="A sprite of me wearing an iron helmet">
 
-Entity renders have multiple options, such as the ability to use the live entity (useful for animated armor), freeze the arms, toggle item or enchantment visibility, and more.
+实体渲染支持多种自定义选项，包括：启用实体的实时状态（适合带动画的盔甲）、固定手臂姿态、切换物品 / 附魔的可见性，以及其他更多设置。
 
-Similar to player head item renders, you can also grab the texture data of rendered players, as well as player heads worn or held by rendered entities.
+与头部物品渲染类似，你也可以提取已渲染玩家的纹理数据，以及被渲染实体所佩戴的玩家头颅纹理。
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/entity_texture_grabbing.png" width="600" alt="Options to copy texture data">
 
-### Entity Lighting
-Entities are lit in a way where in isometric viewing angles (`45°`, `135°`, `225°`, and `315°`), the top is 100% brightness, the left side is 80% brightness, and the right side is 60% brightness. Sprites are rendered at 100% brightness.
+### 实体亮度规则
+实体的光照规则如下：在等距视角（`45°`， `135°`， `225°` 和 `315°`）下，实体顶部为 100% 亮度，左侧为 80% 亮度，右侧为 60% 亮度。精灵图渲染时为 100% 亮度。
 
-## Blocks
-Individual blocks and block states can be rendered in three ways:
-1. Look at a block and type `/wikirender block`
-2. Type `/wikirender block <block>`, where `<block>` is something like `minecraft:cobblestone`
-3. Type `/wikirender block <block>[data]`, as seen below
+## 方块
+单个方块及方块状态可通过三种方式渲染：
+1. 注视一个方块并输入 `/wikirender block`
+2. 输入 `/wikirender block <block>`，其中 `<block>` 类似 `minecraft:cobblestone`
+3. 输入 `/wikirender block <block>[data]`，如下所示：
 
-Below is an example of rendering a furnace using `/wikirender block minecraft:furnace[lit=true]{Items:[{Slot:0b, Count: 1b, id: "minecraft:coal"}]}` ([definitely not a copied command](https://docs.wispforest.io/isometric-renders/slash_isorender#isorender-block))
+下面是一个用指令  `/wikirender block minecraft:furnace[lit=true]{Items:[{Slot:0b, Count: 1b, id: "minecraft:coal"}]}` ([绝对不是照抄人家等轴渲染wiki的示例](https://docs.wispforest.io/isometric-renders/slash_isorender#isorender-block)) 渲染熔炉的示例：
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/furnace_block_state_render.png" width="300" alt="Furnace Block State Render Menu">
 
-> Note: Waterlogged blocks currently do not render properly. For those, use a single-block area render.
+> 注意：所有含水方块目前无法正常渲染。对于这些，使用区域渲染单个方块来解决。
 
 
-## Item Tooltips
-Item Tooltips can be rendered in similar ways to item renders:
-1. Hold an item and type `/wikirender tooltip`
-2. Hover over an item in your inventory and press the render tooltip hotkey (defaults to `k`)
-3. Type `/wikirender tooltip <tooltip>`, where `<item>` is something like `minecraft:diamond`
+## 物品提示框
+物品提示框的渲染方式与物品渲染类似：
+1. 手持物品输入 `/wikirender tooltip`
+2. 鼠标悬停在物品栏中的物品上，按下渲染提示框快捷键 （默认为 `k`）
+3. 输入 `/wikirender tooltip <tooltip>`， 其中 `<item>` 类似于 `minecraft:diamond`
 
-Tooltips are rendered using per-pixel resolution scaling, defaulting at 4 image pixels per font pixel.
+提示框采用逐像素分辨率缩放渲染，默认每 1 个字体像素对应 4 个图像像素。
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/plasmaflux_tooltip_render.png" width="600" alt="Plasmaflux Power Orb Tooltip Menu">
 
-## Item-Based Batch Rendering
-There are several ways to multiple render items, blocks, or tooltips at once:
+## 基于物品的批量渲染
+有多种方式可以一次性批量渲染多个物品、方块或物品提示框：
 
-### Inventories
-To render every item in your inventory, press the associated hotkey (default `k`), which will open a popup allowing you to render the items, block item states, tooltips, or items in an atlas:
+### 物品栏
+要渲染你物品栏中的所有物品，按下对应的快捷键（默认为 `k`），这将打开一个弹窗，允许你选择：
+- 渲染物品
+- 渲染方块物品的所有状态
+- 渲染物品提示框
+- 或将物品整理为图集进行渲染
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/bazaar_batch_render_menu.png" width="600" alt="Bazaar Inventory Batch Render Popup Menu">
 
-### Creative Tabs
-To render a creative tab:
-1. Type `/wikirender group item creative_tab <tab> itematlas` to render a certain tab as an atlas texture
-2. Type `/wikirender group item creative_tab <tab> batch (blocks|items|tooltips)` to batch render a certain tab's items, blocks, or tooltips
+### 创造模式物品栏
+要渲染一个创造模式物品栏标签页：
+1. 输入 `/wikirender group item creative_tab <tab> itematlas`，将指定标签页渲染为一张纹理图集
+2. 输入 `/wikirender group item creative_tab <tab> batch (blocks|items|tooltips)` ，批量渲染指定标签页内的物品、方块或物品提示框。
 
-Below is an example of every combat item rendered in an atlas using `/wikirender group item creative_tab minecraft:combat itematlas`:
+下方是一个使用命令 `/wikirender group item creative_tab minecraft:combat itematlas` 渲染的示例：战斗用品标签页渲染为一张图集。
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/creative_tab_atlas_render.png" width="600" alt="Creative Mode Atlas Render">
 
-### Tagged Items
-To render items, blocks or tooltips given a select tag:
-1. Type `/wikirender group item tag <#namespace:tag> itematlas` to render the tag's items as an atlas texture
-2. Type `/wikirender group item tag <#namespace:tag> batch (blocks|items|tooltips)` to batch render the tag's items, blocks, or tooltips
-
-Below is an example of a batch render of every flower using `/wikirender group item tag #minecraft:flowers batch items`. The left side of the screen shows 30 items remaining, and they can all be rendered by pressing the start button.
-
+### 带标签物品
+要根据指定标签批量渲染物品、方块或物品提示框：
+1. 输入 `/wikirender group item tag <#namespace:tag> itematlas`，将该标签下的所有物品渲染为一张纹理图集
+2. 输入 `/wikirender group item tag <#namespace:tag> batch (blocks|items|tooltips)`，批量渲染该标签下的物品、方块或物品提示框。
+下方是一个批量渲染所有花朵的示例，使用命令： `/wikirender group item tag #minecraft:flowers batch items`。屏幕左侧显示还剩 30 个物品待渲染，点击开始按钮即可完成全部渲染。
 <img src="src/main/resources/assets/wikirenderer/readme_images/flower_batch_render.png" width="600" alt="Flower Batch Render">
 
-### Namespace Items
-To render items, blocks or tooltips from a select namespace:
-1. Type `/wikirender group item namespace <namespace> itematlas` to render the namespace's items as an atlas texture
-2. Type `/wikirender group item namespace <namespace> batch (blocks|items|tooltips)` to batch render the namespace's items, blocks, or tooltips
+### 命名空间物品
+要渲染来自指定命名空间的物品、方块或物品提示框：
+1. 输入 `/wikirender group item namespace <namespace> itematlas`，将该命名空间下的所有物品渲染为一张纹理图集。
+2. 输入 `/wikirender group item namespace <namespace> batch (blocks|items|tooltips)`，批量渲染该命名空间下的物品、方块或物品提示框。
 
-Below is an example of an atlas render of every vanilla item using `/wikirender group item namespace minecraft itematlas`.
+下方是一个使用命令 `/wikirender group item namespace minecraft itematlas` 渲染的示例：将所有原版物品渲染为一张图集。
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/namespace_items_render.png" width="600" alt="Minecraft Items Batch Render">
 
-## Entity-Based Batch Rendering
-There are several ways to multiple entities at once:
-### Tagged Entities
-To render entities given a select tag:
-1. Type `/wikirender group entity tag <#namespace:tag>` to render the tag's entities
-2. Type `/wikirender group entity tag <#namespace:tag> nbt <nbt>` to render the tag's entities with NBT applied to each of them
-3. Type `/wikirender group entity tag <#namespace:tag> nbt_filter <filter> <nbt>` to render the tag's entities with NBT applied to each of them, but only rendering those with pass the filter check (see below)
+## 基于实体的批量渲染
+有多种方式可以一次性批量渲染多个实体：
+### 带标签实体
+要根据指定标签批量渲染实体：
+1. 输入 `/wikirender group entity tag <#namespace:tag>`，渲染该标签下的所有实体。
+2. 输入 `/wikirender group entity tag <#namespace:tag> nbt <nbt>`，为该标签下的所有实体应用指定 NBT 数据后进行渲染。
+3. 输入 `/wikirender group entity tag <#namespace:tag> nbt_filter <filter> <nbt>`，为该标签下的所有实体应用指定 NBT 数据，但仅渲染通过过滤器检查的实体（详见下文）。
 
-Below is an example of a batch render of every aquatic Minecraft mob using `/wikirender group entity tag #minecraft:aquatic`
+下方是一个批量渲染所有 Minecraft 水生生物的示例，使用命令： `/wikirender group entity tag #minecraft:aquatic`
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/aquatic_entity_batch_menu.png" width="600" alt="Minecraft Entities Batch Render">
 
 
-### Namespace Entities
-To render entities given a select tag:
-1. Type `/wikirender group entity namespace <namespace>` to render the namespace's entities
-2. Type `/wikirender group entity namespace <namespace> nbt <nbt>` to render the namespace's entities with NBT applied to each of them
-3. Type `/wikirender group entity namespace <namespace> nbt_filter <filter> <nbt>` to render the namespace's entities with NBT applied to each of them, but only rendering those with pass the filter check (see below)
+### 命名空间实体
+要渲染来自指定命名空间的实体：
+1. 输入 `/wikirender group entity namespace <namespace>`，渲染该命名空间下的所有实体。
+2. 输入 `/wikirender group entity namespace <namespace> nbt <nbt>`，为该命名空间下的所有实体应用指定 NBT 数据后进行渲染。
+3. 输入 `/wikirender group entity namespace <namespace> nbt_filter <filter> <nbt>`，为该命名空间下的所有实体应用指定 NBT 数据，但仅渲染通过过滤器检查的实体（详见下文）。
 
-Below is an example of a batch render of every Minecraft mob using `/wikirender group entity namespace minecraft`:
+下方是一个批量渲染所有 Minecraft 生物的示例，使用命令： `/wikirender group entity namespace minecraft`:
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/entity_batch_menu.png" width="600" alt="Minecraft Entities Batch Render">
 
 
-### NBT Filtering:
-When rendering entities from a namespace or tag, you can filter which entities from those lists actually get used by filtering by the applied NBT. There are three filter modes to choose from:
-1. `require_all_valid`: Allows an entity to render if all the provided NBT tags are valid
-2. `require_one_valid`: Allows an entity to render if at least one of the provided NBT tags is valid
-3. `require_none_valid`: Allows an entity to render if none of the provided NBT tags are valid
+### NBT 过滤：
+在按命名空间或标签批量渲染实体时，你可以通过应用 NBT 数据来筛选实际要渲染的实体。共有三种过滤模式可供选择：
+1. `require_all_valid`：仅当**所有**提供的 NBT 标签均有效时，才允许渲染该实体。
+2. `require_one_valid`：只要**至少一个**提供的 NBT 标签有效，就允许渲染该实体。
+3. `require_none_valid`：仅当所有提供的 NBT 标签**均无效时**，才允许渲染该实体。
 
-More specifically, a "valid" tag is a tag that is saved with the entity when it tries to save its NBT. Some tags are exported for all entities, regardless of if they change how they render (i.e. `Equipment` for all living entities), whereas others only get saved for specific types (i.e. `Pumpkin` for snow golems)
+更具体地说，“有效标签”指的是实体在保存 NBT 时会被一并存储的标签。
+有些标签会对所有实体导出（例如所有活体实体的 `Equipment` 标签），无论它们是否会改变渲染外观；而另一些标签则仅会为特定类型实体保存（例如雪傀儡的 `Pumpkin` 标签）。
 
-For example, typing `/wikirender group entity namespace minecraft nbt_filter require_one_valid {Age:-1,IsBaby:1b}` will render all baby mobs, with some extra mobs included, as seen below:
+例如，输入命令： `/wikirender group entity namespace minecraft nbt_filter require_one_valid {Age:-1,IsBaby:1b}` 将渲染所有幼年生物，并会额外包含一些其他生物，如下方示例所示。
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/baby_entity_batch_menu.png" width="600" alt="Minecraft Entities Batch Render">
