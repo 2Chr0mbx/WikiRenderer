@@ -32,7 +32,7 @@ Items can be rendered in three ways:
 1. Hold an item and type `/wikirender item`
 2. Hover over an item in your inventory and press the render hotkey (defaults to `h`)
 3. Type `/wikirender item id <item>`, where `<item>` is something like `minecraft:diamond`
-4. Type `/wikirender item texture <item>`, where `<item>` is a texture ID or base64 of a texture ID for a player head
+4. Type `/wikirender item texture <texture>`, where `<texture>` is a texture ID or base64 of a texture ID for a player head
 
 Below is an example of an enchanted compass made using `/wikirender item id minecraft:compass[minecraft:enchantment_glint_override=true]`:
 
