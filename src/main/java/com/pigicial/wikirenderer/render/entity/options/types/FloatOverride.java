@@ -6,6 +6,7 @@ import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import org.jetbrains.annotations.UnknownNullability;
 
+import java.math.BigDecimal;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -21,16 +22,24 @@ public class FloatOverride<S extends EntityRenderState>  extends OptionalOverrid
 
     @Override
     protected void addToComponentRow(@UnknownNullability FlowLayout row) {
-        MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.fixed(50), Float.toString(this.getValue()));
+        MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.fixed(50), toString(this.getValue()));
         editBox.setFilter(this::isValidNumber);
-        editBox.onChanged().subscribe(text -> this.setValue(text.isBlank() ? 0 : Float.parseFloat(text.trim())));
-        editBox.focusLost().subscribe(() -> editBox.text(Float.toString(this.getValue())));
+        editBox.onChanged().subscribe(text -> this.setValue(isWorkInProgressNumber(text) ? 0 : Float.parseFloat(text.trim())));
+        editBox.focusLost().subscribe(() -> editBox.text(toString(this.getValue())));
 
         row.child(editBox);
     }
 
+    private String toString(float value) {
+        return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+    }
+
+    private boolean isWorkInProgressNumber(String s) {
+        return s.isBlank() || s.trim().equals("-");
+    }
+
     private boolean isValidNumber(String s) {
-        if (s.isBlank()) {
+        if (isWorkInProgressNumber(s)) {
             return true;
         }
         try {
