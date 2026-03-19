@@ -46,6 +46,7 @@ import net.minecraft.world.level.block.AbstractSkullBlock;
 import net.minecraft.world.level.block.SkullBlock;
 import net.minecraft.world.level.block.WeatheringCopper;
 import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -269,7 +270,16 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             overrides.registerFloatOverride("flapTime", s -> s.flapTime, (s, value) -> s.flapTime = value);
             overrides.registerFloatOverride("deathTime", s -> s.deathTime, (s, value) -> s.deathTime = value);
             overrides.registerBooleanOverride("hasRedOverlay", s -> s.hasRedOverlay, (s, value) -> s.hasRedOverlay = value);
-            // vec3 beam offset
+            overrides.registerDoubleOverride("beamOffsetX", s -> s.beamOffset == null ? 0 : s.beamOffset.x, (s, value) -> {
+                s.beamOffset = s.beamOffset == null ? new Vec3(value, 0, 0) : new Vec3(value, s.beamOffset.y, s.beamOffset.z);
+            });
+            overrides.registerDoubleOverride("beamOffsetY", s -> s.beamOffset == null ? 0 : s.beamOffset.y, (s, value) -> {
+                s.beamOffset = s.beamOffset == null ? new Vec3(0, value, 0) : new Vec3(s.beamOffset.x, value, s.beamOffset.z);
+            });
+            overrides.registerDoubleOverride("beamOffsetZ", s -> s.beamOffset == null ? 0 : s.beamOffset.x, (s, value) -> {
+                s.beamOffset = s.beamOffset == null ? new Vec3(0, 0, value) : new Vec3(s.beamOffset.x, s.beamOffset.y, value);
+            });
+
             overrides.registerBooleanOverride("isLandingOrTakingOff", s -> s.isLandingOrTakingOff, (s, value) -> s.isLandingOrTakingOff = value);
             overrides.registerBooleanOverride("isSitting", s -> s.isSitting, (s, value) -> s.isSitting = value);
             overrides.registerDoubleOverride("distanceToEgg", s -> s.distanceToEgg, (s, value) -> s.distanceToEgg = value);
@@ -280,6 +290,9 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
         registerOverrides(EndermanRenderState.class, overrides -> {
             overrides.registerBooleanOverride("isCreepy", s -> s.isCreepy, (s, value) -> s.isCreepy = value);
             // carried block
+            overrides.registerItemStackOverride("carriedBlock", s -> s.carriedBlock == null ? null : s.carriedBlock.getBlock().asItem().getDefaultInstance(), (s, value) -> {
+                s.carriedBlock = value.getItem() instanceof BlockItem blockItem ? blockItem.getBlock().defaultBlockState() : null;
+            });
         });
 
         registerOverrides(EntityRenderState.class, overrides -> {

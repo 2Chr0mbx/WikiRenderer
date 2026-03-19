@@ -54,6 +54,7 @@ import org.joml.Matrix4fStack;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implements AnimationTimingsProvider {
@@ -495,6 +496,34 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             this.selectedEntity = closestEntity;
             this.renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.computeIfAbsent(closestEntity, e -> EntityTypeSpecificOverrides.getOverrides(drawnVertexBoundCache.get(e).renderState()));
             return true;
+        }
+
+        return false;
+    }
+
+    protected boolean hasEntityType(Class<? extends Entity> entityTypeClass) {
+        AreaPropertyBundle properties = getProperties();
+
+        for (Entity entity : this.entities) {
+            if (properties.hiddenEntityTypes.contains(entity.getType())) continue;
+            if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) continue;
+            if (entityTypeClass.isAssignableFrom(entity.getClass())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected boolean hasLivingEntityProperty(Predicate<LivingEntity> predicate) {
+        AreaPropertyBundle properties = getProperties();
+
+        for (Entity entity : this.entities) {
+            if (properties.hiddenEntityTypes.contains(entity.getType())) continue;
+            if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) continue;
+            if (entity instanceof LivingEntity livingEntity && predicate.test(livingEntity)) {
+                return true;
+            }
         }
 
         return false;
