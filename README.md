@@ -172,7 +172,7 @@ Below is an example of a batch render of every aquatic Minecraft mob using `/wik
 
 
 ### Namespace Entities
-To render entities given a select tag:
+To render entities given a select namespace:
 1. Type `/wikirender group entity namespace <namespace>` to render the namespace's entities
 2. Type `/wikirender group entity namespace <namespace> nbt <nbt>` to render the namespace's entities with NBT applied to each of them
 3. Type `/wikirender group entity namespace <namespace> nbt_filter <filter> <nbt>` to render the namespace's entities with NBT applied to each of them, but only rendering those with pass the filter check (see below)
