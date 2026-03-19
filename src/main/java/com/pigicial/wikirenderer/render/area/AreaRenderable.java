@@ -284,6 +284,11 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     private void updateEntityState(Entity entity, EntityRenderState state) {
         EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
 
+        if (state instanceof DisplayEntityRenderState displayEntityRenderState) {
+            displayEntityRenderState.cameraYRot = 180 + getProperties().getUsedRotation();
+            displayEntityRenderState.cameraXRot = (float) getProperties().getUsedSlant();
+        }
+
         AreaPropertyBundle properties = this.getProperties();
         if (properties.useFullBrightGamma.get() || properties.emulateDaylight.get()) {
             state.lightCoords = LightTexture.FULL_BRIGHT;

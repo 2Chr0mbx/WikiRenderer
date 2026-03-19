@@ -318,6 +318,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     private void updateRenderState(Entity entity, EntityRenderState state, EntityPropertyBundle properties, long timeSinceCreationMs, boolean usingLiveEntity) {
         EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
 
+        if (state instanceof DisplayEntityRenderState displayEntityRenderState) {
+            displayEntityRenderState.cameraYRot = 180 + getProperties().getUsedRotation();
+            displayEntityRenderState.cameraXRot = (float) getProperties().getUsedSlant();
+        }
+
         state.outlineColor = 0; // remove glow (doesn't render properly)
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightTexture.FULL_BRIGHT;

@@ -106,35 +106,6 @@ public class ContainerScreenRenderable extends DefaultRenderable<DefaultProperty
         WikiRenderer.inContainerScreenDraw = false;
     }
 
-
-    // from Window#calculateScale
-    public int calculateScale() {
-        boolean enforceUnicode = Minecraft.getInstance().isEnforceUnicode();
-
-        int framebufferWidth = WikiRenderer.mainTargetOverride.width;
-        int framebufferHeight = WikiRenderer.mainTargetOverride.height;
-
-        int maxScale = 0;
-        int scale = 1;
-
-        while (scale != maxScale && scale < framebufferWidth && scale < framebufferHeight && framebufferWidth / (scale + 1) >= 320 && framebufferHeight / (scale + 1) >= 240) {
-            scale++;
-        }
-
-        if (enforceUnicode && scale % 2 != 0) {
-            scale++;
-        }
-
-        if (scale > 1) {
-            scale--;
-            if (enforceUnicode && scale > 1) {
-                scale--;
-            }
-        }
-
-        return scale;
-    }
-
     private GuiRenderer getGuiRenderer(Minecraft client, GuiRenderState state) {
         AtlasManager atlasManager = client.getAtlasManager();
         MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
