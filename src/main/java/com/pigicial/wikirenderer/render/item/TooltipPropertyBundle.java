@@ -12,7 +12,7 @@ import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.gui.components.EditBox;
 import org.joml.Matrix4fStack;
 
-public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implements CroppablePropertyBundle, SerializablePropertyBundle {
+public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
     public static final TooltipPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new TooltipPropertyBundle());
 
     private final IntProperty fontScaling = IntProperty.of(4, 1, 128);

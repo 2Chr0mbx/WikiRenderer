@@ -4,12 +4,13 @@ import com.pigicial.wikirenderer.command.subcommands.RenderBlockSubCommand;
 import com.pigicial.wikirenderer.command.subcommands.RenderEntitySubCommand;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
 import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
+import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import com.pigicial.wikirenderer.render.item.TooltipRenderable;
+import com.pigicial.wikirenderer.render.screen.ContainerScreenRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.screen.SelectRenderTaskScreen;
-import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -39,7 +40,8 @@ public class WikiRendererKeybinds {
     public static final KeyMapping KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY = new KeyMapping("key.wikirenderer.render_hovered_item_or_viewed_entity", GLFW.GLFW_KEY_H, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP = new KeyMapping("key.wikirenderer.render_hovered_item_tooltip", GLFW.GLFW_KEY_J, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_TARGETED_BLOCK = new KeyMapping("key.wikirenderer.render_targeted_block", GLFW.GLFW_KEY_L, CATEGORY);
-    public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_K, CATEGORY);
+    public static final KeyMapping KEYBIND_RENDER_INVENTORY = new KeyMapping("key.wikirenderer.render_inventory", GLFW.GLFW_KEY_SEMICOLON, CATEGORY);
+    public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY_ITEMS = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_K, CATEGORY);
 
     public static void registerKeyBinds() {
         KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA);
@@ -47,7 +49,8 @@ public class WikiRendererKeybinds {
         KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY);
         KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP);
         KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_TARGETED_BLOCK);
-        KeyBindingHelper.registerKeyBinding(KEYBIND_BATCH_RENDER_INVENTORY);
+        KeyBindingHelper.registerKeyBinding(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS);
+        KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_INVENTORY);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
@@ -93,10 +96,17 @@ public class WikiRendererKeybinds {
                 }
             }
 
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY).getValue()) {
+            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS).getValue()) {
                 List<ItemStack> items = getItems(client);
                 if (items != null && !items.isEmpty()) {
                     Minecraft.getInstance().setScreen(new SelectRenderTaskScreen(items));
+                }
+            }
+
+            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_INVENTORY).getValue()) {
+                Screen currentScreen = client.screen;
+                if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
+                    ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ContainerScreenRenderable(containerScreen)));
                 }
             }
         }));
