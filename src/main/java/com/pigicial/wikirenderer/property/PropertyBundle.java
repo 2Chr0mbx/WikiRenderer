@@ -52,7 +52,7 @@ public interface PropertyBundle {
                 builder.row.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
                     screen.notify(Translate.gui("copied_to_clipboard"));
 
-                    float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+                    float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
                     RenderableDispatcher.drawIntoImage(screen, renderable, tickDelta, screen.getTimeSinceCreationMs(), renderable.getExportResolution(), renderable.shouldCrop(), null)
                             .whenComplete((image, t) -> {
                                 try (image) {

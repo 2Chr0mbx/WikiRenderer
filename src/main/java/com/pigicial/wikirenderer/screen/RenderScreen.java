@@ -421,7 +421,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.guiRebuildScheduled = false;
         }
         // smoother, idk why but the provided tickDelta is bad
-        tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
 
 
         Window window = minecraft.getWindow();
