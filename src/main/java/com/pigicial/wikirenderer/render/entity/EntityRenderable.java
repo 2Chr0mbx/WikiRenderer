@@ -301,7 +301,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             partVisibilityCallbacks.forEach(Runnable::run);
         });
 
-        if (this.client.player != null) {
+        if (this.client.player != null && isUsingLiveEntity()) {
             matrices.pushPose();
 
             Vec3 playerDifference = getUsedEntity().position().subtract(client.player.getEyePosition());

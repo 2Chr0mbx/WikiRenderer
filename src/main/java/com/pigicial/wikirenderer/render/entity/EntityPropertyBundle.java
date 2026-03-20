@@ -296,14 +296,18 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     }
 
     @Override
-    public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildRenderOptionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
+        EntityRenderable renderable = (EntityRenderable) r;
         super.buildRenderOptionGUIControls(renderable, screen, container);
 
-        WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "show_surrounding_particles");
-        GlobalProperties.get().tickParticles.addRebuildListener(screen);
-        if (GlobalProperties.get().tickParticles.get()) {
-            WikiRendererUI.doubleControl(screen, container, surroundingParticlesRadius, "surrounding_particles_radius");
+        if (renderable.isUsingLiveEntity()) {
+            WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "show_surrounding_particles");
+            GlobalProperties.get().tickParticles.addRebuildListener(screen);
+            if (GlobalProperties.get().tickParticles.get()) {
+                WikiRendererUI.doubleControl(screen, container, surroundingParticlesRadius, "surrounding_particles_radius");
+            }
         }
+
     }
 
     @Override
