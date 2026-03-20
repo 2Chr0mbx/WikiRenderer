@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.entity.options.types;
 import com.pigicial.wikirenderer.components.FullWidthCollapsibleContainer;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.UIComponent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -49,6 +50,7 @@ public class RegistryOverride<S extends EntityRenderState, R> extends OptionalOv
     public UIComponent buildComponent() {
         SearchableEntityListComponent.LeftAlignedCheckbox checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(
                 Component.literal(toDisplayName(key)),
+                Sizing.fill(65),
                 () -> this.enabled,
                 pressed -> this.enabled = pressed
         );

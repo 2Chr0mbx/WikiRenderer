@@ -10,7 +10,10 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -18,6 +21,8 @@ public class SearchableEntityListComponent extends DropdownComponent {
     private final List<EntityType<?>> hiddenEntityTypes;
     private final Supplier<String> searchFilter;
     private final Supplier<List<Entity>> visibleEntitiesSupplier;
+
+    private final Set<EntityType<?>> shownOptions = new HashSet<>();
 
     public SearchableEntityListComponent(List<EntityType<?>> hiddenEntityTypes, Supplier<String> searchFilter, Supplier<List<Entity>> visibleEntitiesSupplier) {
         super(Sizing.content());
@@ -28,6 +33,8 @@ public class SearchableEntityListComponent extends DropdownComponent {
 
         this.hiddenEntityTypes = hiddenEntityTypes;
         this.searchFilter = searchFilter;
+
+        update();
     }
 
     @Override
@@ -36,9 +43,17 @@ public class SearchableEntityListComponent extends DropdownComponent {
         super.draw(graphics, mouseX, mouseY, partialTicks, delta);
     }
 
+    @Override
+    protected void drawChildren(OwoUIGraphics context, int mouseX, int mouseY, float partialTicks, float delta, List<? extends UIComponent> children) {
+        //update();
+        super.drawChildren(context, mouseX, mouseY, partialTicks, delta, children);
+    }
+
     public void update() {
         String filter = searchFilter.get();
-        this.entries.clearChildren();
+
+        List<LeftAlignedCheckbox> checkboxes = new ArrayList<>();
+        boolean needsRefresh = false;
 
         List<Holder.Reference<EntityType<?>>> entityTypes = BuiltInRegistries.ENTITY_TYPE.listElements().toList();
         for (Holder.Reference<EntityType<?>> typeHolder : entityTypes) {
@@ -52,17 +67,25 @@ public class SearchableEntityListComponent extends DropdownComponent {
                 allow = visibleEntitiesSupplier.get().stream().anyMatch(e -> e.getType() == type);
             }
 
+            needsRefresh = needsRefresh || allow != shownOptions.contains(type);
             if (allow) {
                 MutableComponent hideText = Component.literal("Hide " + descriptionString);
-
-                this.entries.child(new LeftAlignedCheckbox(hideText, () -> hiddenEntityTypes.contains(type), pressed -> {
+                shownOptions.add(type);
+                checkboxes.add(new LeftAlignedCheckbox(hideText, Sizing.fill(100), () -> hiddenEntityTypes.contains(type), pressed -> {
                     if (pressed) {
                         hiddenEntityTypes.add(type);
                     } else {
                         hiddenEntityTypes.remove(type);
                     }
                 }));
+            } else {
+                shownOptions.remove(type);
             }
+        }
+
+        if (needsRefresh) {
+            this.entries.clearChildren();
+            this.entries.children(checkboxes);
         }
     }
 
@@ -71,7 +94,7 @@ public class SearchableEntityListComponent extends DropdownComponent {
         private final Supplier<Boolean> stateSupplier;
         protected boolean state;
 
-        public LeftAlignedCheckbox(Component text, Supplier<Boolean> stateSupplier, Consumer<Boolean> onClick) {
+        public LeftAlignedCheckbox(Component text, Sizing horizontalSizing, Supplier<Boolean> stateSupplier, Consumer<Boolean> onClick) {
             super(text, dropdownComponent -> {
             });
 
@@ -81,7 +104,7 @@ public class SearchableEntityListComponent extends DropdownComponent {
                 this.state = !this.state;
                 onClick.accept(this.state);
             };
-            this.horizontalSizing(Sizing.fill(65));
+            this.horizontalSizing(horizontalSizing);
             this.horizontalTextAlignment(HorizontalAlignment.LEFT);
             this.margins(Insets.of(2, 2, 2, 2));
         }

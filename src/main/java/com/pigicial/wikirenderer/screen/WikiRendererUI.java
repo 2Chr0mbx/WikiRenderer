@@ -112,11 +112,16 @@ public class WikiRendererUI {
 
     public static void booleanControl(FlowLayout container, Property<Boolean> property, String key, Object... args) {
         container.child(new PropertyCheckboxComponent(Translate.gui(key, args), property).margins(Insets.top(5)));
+        // container.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Translate.gui(key, args), property::get, property::set).horizontalSizing(Sizing.content()).margins(Insets.of(2, 2, 2, 2)));
+        // container.child(UIContainers.horizontalFlow(Sizing.expand(), Sizing.fixed(7)));
     }
 
     public static void conditionalBooleanControl(FlowLayout container, Property<Boolean> property, String key, Supplier<Boolean> displayCondition) {
         UIComponent checkbox = new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5));
         container.child(new DynamicComponent(checkbox, displayCondition));
+
+        // UIComponent checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(Translate.gui(key), property::get, property::set).horizontalSizing(Sizing.content()).margins(Insets.of(2, 0, 2, 2));
+        // container.child(new DynamicComponent(checkbox, displayCondition));
     }
 
     public static void drawExportProgressBar(GuiGraphics context, int x, int y, int drawWidth, int barWidth, double speed) {

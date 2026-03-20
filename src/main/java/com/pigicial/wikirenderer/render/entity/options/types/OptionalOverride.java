@@ -70,7 +70,7 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
 
         GridLayout layout = UIContainers.grid(Sizing.expand(100), Sizing.content(), 1, 2);
         layout.verticalAlignment(VerticalAlignment.CENTER);
-        layout.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), () -> this.enabled, pressed -> this.enabled = pressed), 0, 0);
+        layout.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), Sizing.fill(65), () -> this.enabled, pressed -> this.enabled = pressed), 0, 0);
         layout.child(controlLayout, 0, 1);
         return layout;
     }

@@ -28,6 +28,7 @@ public class EnumOverride<S extends EntityRenderState, E extends Enum<E>> extend
     public UIComponent buildComponent() {
         SearchableEntityListComponent.LeftAlignedCheckbox checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(
                 Component.literal(toDisplayName(key)),
+                Sizing.fill(65),
                 () -> this.enabled,
                 pressed -> this.enabled = pressed
         );
