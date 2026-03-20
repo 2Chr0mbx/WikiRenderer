@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.components.EntityTypeSpecificPropertiesComponent;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
@@ -21,6 +22,7 @@ import com.pigicial.wikirenderer.render.entity.EntityVertexBounds;
 import com.pigicial.wikirenderer.render.entity.options.EntityTypeSpecificOverrides;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
+import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.*;
@@ -130,13 +132,33 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         }
 
         WikiRenderer.inAreaRenderDraw = true;
+        AreaPropertyBundle properties = getProperties();
 
         GlobalSettingsUniform globalSettings = Minecraft.getInstance().gameRenderer.getGlobalSettingsUniform();
+        ClientLevel level = Minecraft.getInstance().level;
+        long shaderAnimationTicks = 0; // i.e. end portals
+        if (GlobalProperties.get().tickTextureAnimations.get() && level != null) {
+            shaderAnimationTicks = level.getGameTime();
+            if (GlobalProperties.get().syncTextureAnimationsToAnimation.get()) {
+                AnimationHandler animationHandler = WikiRenderer.currentAnimationHandler;
+                if (animationHandler != null && !animationHandler.isFinished()) {
+                    int totalFrameCount = animationHandler.getAnimationFrames();
+                    int framesRenderedSoFar = totalFrameCount - animationHandler.getRemainingFrames();
+                    int frameRate = GlobalProperties.get().exportFramerate.get();
+                    double secondsIntoAnimation = (double) framesRenderedSoFar / (double) frameRate;
+                    shaderAnimationTicks = (int) Math.floor(secondsIntoAnimation * 20);
+                } else {
+                    shaderAnimationTicks = 0;
+                }
+            }
+        }
+
         globalSettings.update(
                 client.getWindow().getGuiScaledWidth(),
                 client.getWindow().getGuiScaledHeight(),
                 1.0,
-                0, client.getDeltaTracker(), 0,
+                shaderAnimationTicks,
+                client.getDeltaTracker(), 0,
                 new Camera(), // Passing a new/empty camera sets pos to 0,0,0
                 false
         );
@@ -146,7 +168,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         double ySize = boundingBox.getYsize();
         double zSize = boundingBox.getZsize();
 
-        AreaPropertyBundle properties = getProperties();
         SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
         CameraRenderState cameraRenderState = CameraOrientationUtil.createRenderState(this);
 
