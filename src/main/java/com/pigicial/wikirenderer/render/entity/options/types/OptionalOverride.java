@@ -18,9 +18,10 @@ import java.util.stream.Collectors;
 public abstract class OptionalOverride<S extends EntityRenderState, T> {
     protected final String key;
     private final Function<S, T> getter;
-    private final BiConsumer<S, T> setter;
+    protected final BiConsumer<S, T> setter;
 
-    private T value;
+    protected T value;
+    protected T lastSeenNonOverwrittenValue;
     protected boolean enabled = false;
 
     public OptionalOverride(String key, Function<S, T> getter, BiConsumer<S, T> setter) {
@@ -46,6 +47,10 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
 
     public T getValue() {
         return value;
+    }
+
+    public T getDisplayedValue() {
+        return enabled ? value : lastSeenNonOverwrittenValue;
     }
 
     public void apply(S renderState) {

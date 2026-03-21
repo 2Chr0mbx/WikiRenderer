@@ -1,0 +1,158 @@
+package com.pigicial.wikirenderer.render.screen;
+
+import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
+import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
+import com.pigicial.wikirenderer.render.DefaultRenderable;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.screen.RenderScreen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.render.GuiRenderer;
+import net.minecraft.client.gui.render.pip.*;
+import net.minecraft.client.gui.render.state.GuiRenderState;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.fog.FogRenderer;
+import net.minecraft.client.resources.model.AtlasManager;
+import org.joml.Matrix4fStack;
+
+import java.util.List;
+
+public class ContainerScreenRenderable extends DefaultRenderable<DefaultPropertyBundle> {
+
+    private final AbstractContainerScreen<?> containerScreen;
+
+    private static final GuiRenderState state = new GuiRenderState();
+    private static GuiRenderer guiRenderer;
+
+    public ContainerScreenRenderable(AbstractContainerScreen<?> containerScreen) {
+        this.containerScreen = containerScreen;
+    }
+
+    @Override
+    public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
+        super.onScreenHandle(screen, graphics, tickDelta);
+    }
+
+    @Override
+    public boolean renderPreviewToEntireScreenWidth() {
+        return false;
+    }
+
+    @Override
+    public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack modelViewStack, PoseStack poseStack, float tickDelta, long timeSinceCreationMs) {
+        WikiRenderer.inContainerScreenDraw = true;
+        state.reset();
+
+        Minecraft client = Minecraft.getInstance();
+        GameRendererAccessor gameRendererAccessor = (GameRendererAccessor) client.gameRenderer;
+
+        int framebufferWidth = WikiRenderer.mainTargetOverride.width;
+        int framebufferHeight = WikiRenderer.mainTargetOverride.height;
+        int guiScale = determineScaleFromResolution(framebufferWidth, framebufferHeight, getProperties().renderOneScaleLower.get());
+
+        int width = (int) (framebufferWidth / (double) guiScale);
+        int guiScaledWidth = (framebufferWidth / (double) guiScale > width) ? width + 1 : width;
+        int height = (int) (framebufferHeight / (double) guiScale);
+        int guiScaledHeight = (framebufferHeight / (double) guiScale > height) ? height + 1 : height;
+
+        Window window = client.getWindow();
+        int savedWidth = window.getWidth();
+        int savedHeight = window.getHeight();
+        int savedScale = window.getGuiScale();
+
+        // todo: this is a tiny bit off in the preview compared to the export (not the biggest issue but yea)
+        double normalizedMouseX = Minecraft.getInstance().mouseHandler.xpos();
+        int normalizedWidthLeftOffset = renderScreen.viewportBeginX * savedScale;
+        int widthForMouseCalculation = ((renderScreen.viewportEndX - renderScreen.viewportBeginX) * savedScale);
+        double mouseXInPreview = normalizedMouseX - normalizedWidthLeftOffset;
+        double percentageMouseX = mouseXInPreview / (double) widthForMouseCalculation;
+        int mouseX = (int) (percentageMouseX * framebufferWidth) / guiScale;
+
+        double rawMouseY = Minecraft.getInstance().mouseHandler.ypos();
+        double percentageMouseY = rawMouseY / (double) savedHeight;
+        int mouseY = (int) (percentageMouseY * framebufferHeight) / guiScale;
+
+        if (guiRenderer == null) {
+            guiRenderer = getGuiRenderer(client, state);
+        }
+
+        window.setWidth(framebufferWidth);
+        window.setHeight(framebufferHeight);
+        window.setGuiScale(guiScale);
+
+        GuiGraphics guiGraphics = new GuiGraphics(client, state, mouseX, mouseY);
+
+        client.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_3D);
+
+        containerScreen.init(guiScaledWidth, guiScaledHeight);
+        containerScreen.resize(guiScaledWidth, guiScaledHeight);
+
+        FogRenderer fogRenderer = gameRendererAccessor.wikirenderer$getFogRenderer();
+
+        containerScreen.renderWithTooltipAndSubtitles(guiGraphics, mouseX, mouseY, tickDelta);
+
+        guiRenderer.render(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+        guiRenderer.incrementFrameNumber();
+
+        // Restore
+        window.setWidth(savedWidth);
+        window.setHeight(savedHeight);
+        window.setGuiScale(savedScale);
+        WikiRenderer.inContainerScreenDraw = false;
+    }
+
+    private GuiRenderer getGuiRenderer(Minecraft client, GuiRenderState state) {
+        AtlasManager atlasManager = client.getAtlasManager();
+        MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
+
+        List<PictureInPictureRenderer<?>> renderers = List.of(
+                new GuiEntityRenderer(bufferSource, client.getEntityRenderDispatcher()),
+                new GuiSkinRenderer(bufferSource),
+                new GuiBookModelRenderer(bufferSource),
+                new GuiBannerResultRenderer(bufferSource, atlasManager),
+                new GuiSignRenderer(bufferSource, atlasManager),
+                new GuiProfilerChartRenderer(bufferSource)
+        );
+
+        return new GuiRenderer(state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);
+    }
+
+    @Override
+    public ContainerScreenPropertyBundle getProperties() {
+        return ContainerScreenPropertyBundle.INSTANCE;
+    }
+
+    @Override
+    public ExportPathSpec getExportPath() {
+        return ExportPathSpec.of("screen", "screen");
+    }
+
+    public static int determineScaleFromResolution(int framebufferWidth, int framebufferHeight, boolean oneLower) {
+        boolean enforceUnicode = Minecraft.getInstance().isEnforceUnicode();
+
+        int maxScale = 0;
+        int guiScale = 1;
+
+        while (guiScale != maxScale && guiScale < framebufferWidth && guiScale < framebufferHeight && framebufferWidth / (guiScale + 1) >= 320 && framebufferHeight / (guiScale + 1) >= 240) {
+            guiScale++;
+        }
+
+        if (enforceUnicode && guiScale % 2 != 0) {
+            guiScale++;
+        }
+
+        if (guiScale > 1 && oneLower) {
+            guiScale--;
+            if (enforceUnicode && guiScale > 1) {
+                guiScale--;
+            }
+        }
+
+        return guiScale;
+    }
+}

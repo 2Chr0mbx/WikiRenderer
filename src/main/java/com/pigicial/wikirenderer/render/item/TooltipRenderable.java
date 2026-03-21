@@ -108,7 +108,7 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
             height += component.getHeight(minecraft.font);
         }
 
-        return Math.max(width + 8, height + 8);
+        return Math.max(width + 12, height + 12);
     }
 
     @Override

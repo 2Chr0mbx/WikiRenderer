@@ -1,10 +1,12 @@
 package com.pigicial.wikirenderer.mixin.access;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(AbstractContainerScreen.class)
 public interface AbstractContainerScreenAccessor {
@@ -15,4 +17,6 @@ public interface AbstractContainerScreenAccessor {
     @Accessor("menu")
     AbstractContainerMenu menu();
 
+    @Invoker("renderBg")
+    void wikirenderer$renderBg(GuiGraphics guiGraphics, float f, int i, int j);
 }

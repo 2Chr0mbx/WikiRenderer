@@ -55,6 +55,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
@@ -181,6 +182,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             this.nearbyEntitiesToShow = level.getEntities((Entity) null, area, entity -> {
                 if (entity instanceof EnderDragonPart) return false; // crash fix
+                if (entity == clonedTickableEntity || entity == liveNonTickableEntity) return false;
 
                 EntityRenderState state = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
                 this.updateRenderState(entity, state, properties, timeSinceCreationMs, true);
@@ -199,6 +201,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 this.nearbyEntitiesToShow = this.nearbyEntitiesToShow
                         .stream()
                         .map(originalEntity -> {
+                            if (originalEntity == clonedTickableEntity || originalEntity == liveNonTickableEntity) return null;
                             Entity clonedEntity = EntityCloner.copy(originalEntity);
                             if (clonedEntity == null) return null;
                             clonedEntity.restoreFrom(originalEntity);
@@ -317,6 +320,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
     private void updateRenderState(Entity entity, EntityRenderState state, EntityPropertyBundle properties, long timeSinceCreationMs, boolean usingLiveEntity) {
         EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+
+        if (state instanceof DisplayEntityRenderState displayEntityRenderState) {
+            displayEntityRenderState.cameraYRot = 180 + getProperties().getUsedRotation();
+            displayEntityRenderState.cameraXRot = (float) getProperties().getUsedSlant();
+        }
 
         state.outlineColor = 0; // remove glow (doesn't render properly)
         state.shadowPieces.clear(); // remove shadows
@@ -484,27 +492,24 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         }
     }
 
-
     protected boolean hasEntityType(Class<? extends Entity> entityTypeClass) {
-        AtomicBoolean found = new AtomicBoolean(false);
+        MutableBoolean found = new MutableBoolean(false);
 
-        // todo: this will cause gui out of sync issues from showing new entities
         forBaseAndSurroundingEntities(getUsedEntity(), e -> {
             if (entityTypeClass.isAssignableFrom(e.getClass())) {
-                found.set(true);
+                found.setTrue();
             }
         });
 
         return found.get();
     }
 
-    // todo: this will cause gui out of sync issues from showing new entities
     protected boolean hasLivingEntityProperty(Predicate<LivingEntity> predicate) {
-        AtomicBoolean found = new AtomicBoolean(false);
+        MutableBoolean found = new MutableBoolean(false);
 
         forBaseAndSurroundingEntities(getUsedEntity(), e -> {
             if (e instanceof LivingEntity livingEntity && predicate.test(livingEntity)) {
-                found.set(true);
+                found.setTrue();
             }
         });
 

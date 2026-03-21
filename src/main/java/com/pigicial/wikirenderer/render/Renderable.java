@@ -29,6 +29,10 @@ public interface Renderable<P extends PropertyBundle> {
 
     void setCustomFileName(@Nullable String fileName);
 
+    default boolean renderPreviewToEntireScreenWidth() {
+        return true;
+    }
+
     default void prepare() {}
 
     default void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {}
