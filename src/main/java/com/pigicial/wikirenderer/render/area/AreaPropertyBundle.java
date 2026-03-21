@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.area;
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.components.ConditionalButton;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
+import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -19,16 +20,24 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4fStack;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
@@ -224,7 +233,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
                 if (showMeshExpansionControls.get()) {
                     for (ExpansionSide expansionSide : ExpansionSide.values()) {
-                        try (WikiRendererUI.RowBuilder rowBuilder = WikiRendererUI.row(container)) {
+                        try (WikiRendererUI.RowBuilder rowBuilder = WikiRendererUI.rowBuilder(container)) {
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_five"), button -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(expansionSide, sideViewRotation, -5);
@@ -355,12 +364,25 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WikiRendererUI.intControl(screen, container, entityYawOverride, "entity_data.yaw");
         WikiRendererUI.intControl(screen, container, entityPitchOverride, "entity_data.pitch");
         WikiRendererUI.intControl(screen, container, entityRotationOverride, "entity_data.rotation");
-        WikiRendererUI.booleanControl(container, useSteveSkinForEntities, "entity_data.steve");
-        WikiRendererUI.booleanControl(container, forceSmallArmsForEntities, "entity_data.small_arms");
-        WikiRendererUI.booleanControl(container, hideHeldItemsForEntities, "entity_data.hide_held_items");
-        WikiRendererUI.booleanControl(container, hideArmorForEntities, "entity_data.hide_armor");
-        WikiRendererUI.booleanControl(container, hideEnchantmentsForEntities, "entity_data.hide_enchantments");
         WikiRendererUI.booleanControl(container, toggleInvisibilityForEntities, "entity_data.invisible");
+
+        WikiRendererUI.conditionalBooleanControl(container, useSteveSkinForEntities, "entity_data.steve",
+                () -> renderable.hasEntityType(Avatar.class));
+        WikiRendererUI.conditionalBooleanControl(container, forceSmallArmsForEntities, "entity_data.small_arms",
+                () -> renderable.hasEntityType(Avatar.class));
+        WikiRendererUI.conditionalBooleanControl(container, hideHeldItemsForEntities, "entity_data.hide_held_items",
+                () -> renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty()));
+        WikiRendererUI.conditionalBooleanControl(container, hideArmorForEntities, "entity_data.hide_armor",
+                () -> renderable.hasLivingEntityProperty(e -> {
+                    EntityRenderer<? super LivingEntity, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
+                    if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
+                        return ((LivingEntityRendererAccessor) livingEntityRenderer).wikirenderer$getLayers().stream().anyMatch(l -> l instanceof HumanoidArmorLayer<?, ?, ?>);
+                    }
+
+                    return false;
+                }));
+        WikiRendererUI.conditionalBooleanControl(container, hideEnchantmentsForEntities, "entity_data.hide_enchantments",
+                () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
     }
 
     @Override

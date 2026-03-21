@@ -18,7 +18,6 @@ import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.area.side_view.MinimapCalibratorData;
 import com.pigicial.wikirenderer.render.batch.BatchPropertyBundle;
-import com.pigicial.wikirenderer.render.entity.EntityRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
@@ -123,6 +122,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     public EditBox fileNameField = null;
     private double[] scrollOffsetData = null;
+    public int mouseX;
+    public int mouseY;
 
     public RenderScreen(Renderable<?> renderable) {
         this.renderable = renderable;
@@ -407,7 +408,9 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float tickDelta) {
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+        this.mouseX = mouseX;
+        this.mouseY = mouseY;
         if (this.guiRebuildScheduled) {
             this.saveScrollOffsetDataIfPossible();
             this.uiAdapter = null;
@@ -418,27 +421,32 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.guiRebuildScheduled = false;
         }
         // smoother, idk why but the provided tickDelta is bad
-        tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
 
 
         Window window = minecraft.getWindow();
         Consumer<Matrix4fStack> positionTransformer = this.hasBothColumns ? null : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0);
+        if (!renderable.renderPreviewToEntireScreenWidth()) positionTransformer = null;
+
         RenderTarget renderedOutput = RenderableDispatcher.drawIntoDuplicateFramebuffer(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), positionTransformer);
 
         GlobalProperties globalProperties = GlobalProperties.get();
         if (this.drawOnlyBackground) {
-            context.fill(0, 0, this.width, this.height, globalProperties.backgroundColor | 255 << 24);
+            graphics.fill(0, 0, this.width, this.height, globalProperties.backgroundColor | 255 << 24);
         } else {
-            this.renderTransparentBackground(context);
+            this.renderTransparentBackground(graphics);
         }
 
-        context.guiRenderState.submitGuiElement(new BlitRenderState(
+        int placementX = renderable.renderPreviewToEntireScreenWidth() ? 0 : viewportBeginX;
+        int placementXEnd = renderable.renderPreviewToEntireScreenWidth() ? window.getGuiScaledWidth() : window.getGuiScaledWidth() - (width - (viewportEndX));
+
+        graphics.guiRenderState.submitGuiElement(new BlitRenderState(
                 RenderPipelines.GUI_TEXTURED,
                 TextureSetup.singleTexture(Objects.requireNonNull(renderedOutput.getColorTextureView()), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST)),
-                new Matrix3x2f(context.pose()),
+                new Matrix3x2f(graphics.pose()),
+                placementX,
                 0,
-                0,
-                window.getGuiScaledWidth(),
+                placementXEnd,
                 window.getGuiScaledHeight(),
                 0,
                 1,
@@ -449,11 +457,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         ));
 
         // basically just for batch rendering
-        this.renderable.onScreenHandle(this, context, tickDelta);
+        this.renderable.onScreenHandle(this, graphics, tickDelta);
 
         if (!this.drawOnlyBackground && this.uiAdapter != null) {
-            drawFramingHint(context);
-            drawGuiBackground(context);
+            drawFramingHint(graphics);
+            drawGuiBackground(graphics);
 
             if (this.exportAnimationButton != null) {
                 int framesStoreInMemory = globalProperties.animationHandlingMode.isStoredInMemory() ? globalProperties.exportFrames.get() : 1;
@@ -465,7 +473,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 this.exportAnimationButton.tooltip(tooltip);
             }
 
-            super.render(context, mouseX, mouseY, tickDelta);
+            super.render(graphics, mouseX, mouseY, tickDelta);
 
             if (FileIO.taskCount() > 0) {
                 if (!this.ioStateComponent.hasParent()) {
@@ -656,7 +664,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         int keyCode = input.key();
 
         if (keyCode == GLFW.GLFW_KEY_F12) {
-            this.captureScheduled = true;
+           this.captureScheduled = true;
         } else if (keyCode == GLFW.GLFW_KEY_F10) {
             this.drawOnlyBackground = !this.drawOnlyBackground;
         } else if (KEYBOARD_CONTROLS.containsKey(keyCode) && this.renderable instanceof DefaultRenderable) {

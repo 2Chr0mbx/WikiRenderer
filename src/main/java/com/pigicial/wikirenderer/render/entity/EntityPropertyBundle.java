@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
+import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -13,13 +14,13 @@ import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4fStack;
 
@@ -236,9 +237,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             }
         }
 
-        if (renderable.hasEntityType(LivingEntity.class)) {
-            WikiRendererUI.booleanControl(container, this.invisible, "entity_data.invisible");
-        }
+        WikiRendererUI.conditionalBooleanControl(container, this.invisible, "entity_data.invisible", () -> renderable.hasEntityType(LivingEntity.class));
 
         WikiRendererUI.text(container, "entity_data", 10);
         container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
@@ -261,40 +260,39 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             });
         }
 
-        if (renderable.hasEntityType(LivingEntity.class)) {
-            WikiRendererUI.booleanControl(container, this.overrideHeadRotations, "override_head_rotations");
-            WikiRendererUI.intControl(screen, container, this.yaw, "entity_data.yaw");
-            WikiRendererUI.intControl(screen, container, this.pitch, "entity_data.pitch");
-            WikiRendererUI.booleanControl(container, this.overrideBodyRotations, "override_body_rotations");
-            WikiRendererUI.intControl(screen, container, this.entityRotation, "entity_data.rotation");
+        // rotation stuff
+        WikiRendererUI.conditionalBooleanControl(container, this.overrideHeadRotations, "override_head_rotations", () -> renderable.hasEntityType(LivingEntity.class));
+        WikiRendererUI.conditionalIntControl(screen, container, this.yaw, "entity_data.yaw", () -> renderable.hasEntityType(LivingEntity.class));
+        WikiRendererUI.conditionalIntControl(screen, container, this.pitch, "entity_data.pitch", () -> renderable.hasEntityType(LivingEntity.class));
+        WikiRendererUI.conditionalBooleanControl(container, this.overrideBodyRotations, "override_body_rotations", () -> renderable.hasEntityType(LivingEntity.class));
+        WikiRendererUI.conditionalIntControl(screen, container, this.entityRotation, "entity_data.rotation", () -> renderable.hasEntityType(LivingEntity.class));
+
+        // dragons
+        WikiRendererUI.conditionalBooleanControl(container, this.overrideEnderDragonBodyRotations, "override_ender_dragon_body_rotations", () -> renderable.hasEntityType(EnderDragon.class));
+        WikiRendererUI.conditionalIntControl(screen, container, this.enderDragonRotation, "entity_data.dragon_rotation", () -> renderable.hasEntityType(EnderDragon.class));
+
+        WikiRendererUI.conditionalBooleanControl(container, this.hideRedDamageGlow, "entity_data.hide_red_damage_glow", () -> renderable.hasEntityType(LivingEntity.class) || renderable.hasEntityType(EnderDragon.class));
+
+        // players
+        WikiRendererUI.conditionalBooleanControl(container, this.useSteveSkin, "entity_data.steve", () -> renderable.hasEntityType(Avatar.class));
+        if (!spriteRendering.get()) {
+            WikiRendererUI.conditionalBooleanControl(container, this.forceSmallArms, "entity_data.small_arms", () -> renderable.hasEntityType(Avatar.class));
         }
 
-        if (renderable.hasEntityType(EnderDragon.class)) {
-            WikiRendererUI.booleanControl(container, this.overrideEnderDragonBodyRotations, "override_ender_dragon_body_rotations");
-            WikiRendererUI.intControl(screen, container, this.enderDragonRotation, "entity_data.dragon_rotation");
-        }
+        WikiRendererUI.conditionalBooleanControl(container, this.hideHeldItems, "entity_data.hide_held_items",
+                () -> renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty()));
+        WikiRendererUI.conditionalBooleanControl(container, this.hideArmor, "entity_data.hide_armor",
+                () -> renderable.hasLivingEntityProperty(e -> {
+                    EntityRenderer<? super LivingEntity, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
+                    if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
+                        return ((LivingEntityRendererAccessor) livingEntityRenderer).wikirenderer$getLayers().stream().anyMatch(l -> l instanceof HumanoidArmorLayer<?, ?, ?>);
+                    }
 
-        if (renderable.hasEntityType(LivingEntity.class) || renderable.hasEntityType(EnderDragon.class)) {
-            WikiRendererUI.booleanControl(container, this.hideRedDamageGlow, "entity_data.hide_red_damage_glow");
-        }
+                    return false;
+                }));
+        WikiRendererUI.conditionalBooleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments",
+                () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
 
-        if (renderable.hasEntityType(Player.class)) {
-            WikiRendererUI.booleanControl(container, this.useSteveSkin, "entity_data.steve");
-            if (!spriteRendering.get()) {
-                WikiRendererUI.booleanControl(container, this.forceSmallArms, "entity_data.small_arms");
-            }
-        }
-        if (renderable.hasEntityType(LivingEntity.class)) {
-            if (renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty())) {
-                WikiRendererUI.booleanControl(container, this.hideHeldItems, "entity_data.hide_held_items");
-            }
-
-            WikiRendererUI.booleanControl(container, this.hideArmor, "entity_data.hide_armor");
-
-            if (renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil()))) {
-                WikiRendererUI.booleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments");
-            }
-        }
     }
 
     @Override

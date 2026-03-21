@@ -12,6 +12,7 @@ import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
+import com.pigicial.wikirenderer.util.DrawType;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.Positioning;
@@ -40,9 +41,11 @@ public class WikiRenderer implements ClientModInitializer {
 
     public static AnimationHandler currentAnimationHandler = null;
     public static ParticleDisplayCondition particleDisplayCondition = ParticleDisplayCondition.SHOW_ALL;
+    public static DrawType currentDrawType = null;
     public static boolean inEntityDraw = false;
     public static boolean inSpriteEntityDraw = false;
     public static boolean inAreaRenderDraw = false;
+    public static boolean inContainerScreenDraw = false;
     public static boolean inRenderableDraw = false;
     public static boolean inRenderableTick = false;
     public static boolean inBatchRender = false;
@@ -94,12 +97,13 @@ public class WikiRenderer implements ClientModInitializer {
         });
     }
 
-	public static void beginRenderableDraw(PerspectiveProjectionMatrixBuffer matrixStore, Matrix4f projectionMatrix) {
+	public static void beginRenderableDraw(PerspectiveProjectionMatrixBuffer matrixStore, Matrix4f projectionMatrix, DrawType drawType) {
 		prevProjectionType = RenderSystem.getProjectionType();
 		prevProjectionMatrix = RenderSystem.getProjectionMatrixBuffer();
 		renderableDrawProjectionBuffer = matrixStore.getBuffer(projectionMatrix);
 		RenderSystem.setProjectionMatrix(renderableDrawProjectionBuffer, ProjectionType.ORTHOGRAPHIC);
 		inRenderableDraw = true;
+        currentDrawType = drawType;
     }
 
     public static void setSortingMethod(Matrix4f projectionMatrix, Matrix4fStack modelViewStack) {
@@ -113,5 +117,6 @@ public class WikiRenderer implements ClientModInitializer {
 		renderableDrawProjectionBuffer = null;
 		inRenderableDraw = false;
         orthographicSorting = null;
+        currentDrawType = null;
     }
 }

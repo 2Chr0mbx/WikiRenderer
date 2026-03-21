@@ -50,10 +50,12 @@ public class RenderableDispatcher {
         modelViewStack.pushMatrix();
         modelViewStack.identity();
         if (transformer != null) transformer.accept(modelViewStack);
+
+        WikiRenderer.currentDrawType = drawType;
         renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
         Matrix4f projectionMatrix = ORTHOGRAPHIC_MATRIX.setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
-        WikiRenderer.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix);
+        WikiRenderer.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix, drawType);
         WikiRenderer.setSortingMethod(projectionMatrix, modelViewStack);
 
         PROJECTION_CACHE.put(drawType, new DrawProjectionDataCache(new Matrix4f(projectionMatrix), new Matrix4f(modelViewStack), WikiRenderer.mainTargetOverride.width, WikiRenderer.mainTargetOverride.height));
@@ -168,13 +170,13 @@ public class RenderableDispatcher {
         );
 
         WikiRenderer.mainTargetOverride = target;
-        RenderSystem.outputColorTextureOverride = target.getColorTextureView();
-        RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
+        //RenderSystem.outputColorTextureOverride = target.getColorTextureView();
+        //RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
 
         RenderableDispatcher.drawIntoActiveFramebuffer(DrawType.EXPORT, renderScreen, renderable, 1, tickDelta, timeSinceCreationMs, null);
 
-        RenderSystem.outputColorTextureOverride = null;
-        RenderSystem.outputDepthTextureOverride = null;
+        //RenderSystem.outputColorTextureOverride = null;
+        // RenderSystem.outputDepthTextureOverride = null;
         WikiRenderer.mainTargetOverride = null;
 
         // Release depth attachment and FBO to save on VRAM - we only need
@@ -188,6 +190,11 @@ public class RenderableDispatcher {
         Window window = Minecraft.getInstance().getWindow();
         int width = window.getWidth();
         int height = window.getHeight();
+
+        if (!renderable.renderPreviewToEntireScreenWidth()) {
+            int widthAvailable = (renderScreen.width - (renderScreen.viewportEndX - renderScreen.viewportBeginX)) * window.getGuiScale();
+            width -= widthAvailable;
+        }
 
         if (previewTarget == null) {
             previewTarget = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Mirror Framebuffer", width, height, true);
@@ -208,14 +215,14 @@ public class RenderableDispatcher {
         );
 
         WikiRenderer.mainTargetOverride = previewTarget;
-        RenderSystem.outputColorTextureOverride = previewTarget.getColorTextureView();
-        RenderSystem.outputDepthTextureOverride = previewTarget.getDepthTextureView();
+        //RenderSystem.outputColorTextureOverride = previewTarget.getColorTextureView();
+        //RenderSystem.outputDepthTextureOverride = previewTarget.getDepthTextureView();
 
         float aspectRatio = width / (float) height;
         RenderableDispatcher.drawIntoActiveFramebuffer(DrawType.PREVIEW, renderScreen, renderable, aspectRatio, tickDelta, timeSinceCreationMs, transformer);
 
-        RenderSystem.outputColorTextureOverride = null;
-        RenderSystem.outputDepthTextureOverride = null;
+        //RenderSystem.outputColorTextureOverride = null;
+        //RenderSystem.outputDepthTextureOverride = null;
         WikiRenderer.mainTargetOverride = null;
 
         return previewTarget;

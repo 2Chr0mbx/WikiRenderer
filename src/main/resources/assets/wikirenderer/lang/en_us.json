@@ -6,7 +6,9 @@
   "key.wikirenderer.render_hovered_item_tooltip": "Render Hovered Item Tooltip",
   "key.wikirenderer.render_targeted_block": "Render Targeted Block",
   "key.wikirenderer.batch_render_inventory": "Render Inventory Items",
+  "key.wikirenderer.render_inventory": "Render Inventory UI",
 
+  "gui.wikirenderer.render_gui_one_scale_lower": "Render One Scale Lower",
   "gui.wikirenderer.animations": "Tick Animations",
   "gui.wikirenderer.texture_animations": "Tick Texture Animations",
   "gui.wikirenderer.entity_animations": "Tick Entity Animations (some)",
@@ -190,6 +192,7 @@
   "gui.wikirenderer.renderer_resolution_rescale_disabled": "Resolution",
   "gui.wikirenderer.block_resolution": "Block Resolution",
   "gui.wikirenderer.font_resolution": "Font Resolution",
+  "gui.wikirenderer.gui_scale_resolution": "GUI Scale Resolution",
   "gui.wikirenderer.item_resolution": "Item Resolution",
   "gui.wikirenderer.player_head_resolution": "Player Head Resolution",
   "gui.wikirenderer.hide_tooltip_background": "Hide Tooltip Background",

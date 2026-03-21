@@ -33,7 +33,7 @@ public class EntityRenderBoundsUtil {
 
     @Nullable
     public static EntityVertexBounds getPositionOffsetBasedBounds(Entity entity) {
-        float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
         EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, tickDelta);
         CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
         return getPositionOffsetBasedBounds(entity, entityRenderState, cameraRenderState);

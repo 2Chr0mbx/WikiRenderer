@@ -12,6 +12,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
+import io.wispforest.owo.ui.core.UIComponent;
 import io.wispforest.owo.ui.core.VerticalAlignment;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -22,7 +23,7 @@ import java.util.function.Supplier;
 public class WikiRendererUI {
 
     public static EditBox labelledTextField(FlowLayout container, String content, String key, Sizing sizing) {
-        try (RowBuilder builder = row(container)) {
+        try (RowBuilder builder = rowBuilder(container)) {
             TextBoxComponent textBox = UIComponents.textBox(sizing, content);
             textBox.setMaxLength(100); // allow more characters
             builder.row.child(textBox);
@@ -32,7 +33,7 @@ public class WikiRendererUI {
     }
 
     public static void labelledTextField(RenderScreen screen, FlowLayout container, IntProperty property, String key, Sizing sizing) {
-        try (RowBuilder builder = row(container)) {
+        try (RowBuilder builder = rowBuilder(container)) {
             TextBoxComponent textBox = new IntegerPropertyTextFieldComponent(screen, sizing, property, false);
 
             builder.row.child(textBox);
@@ -41,15 +42,23 @@ public class WikiRendererUI {
     }
 
     public static void intControl(RenderScreen screen, FlowLayout container, IntProperty property, String name) {
-        try (RowBuilder builder = row(container)) {
+        try (RowBuilder builder = rowBuilder(container)) {
             builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fixed(45), property, false));
             builder.row.child(new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(name), property).margins(Insets.horizontal(5)));
             builder.row.child(new ResetPropertyButton(property).margins(Insets.right(5)));
         }
     }
 
+    public static void conditionalIntControl(RenderScreen screen, FlowLayout container, IntProperty property, String name, Supplier<Boolean> displayCondition) {
+        FlowLayout row = row();
+        row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fixed(45), property, false));
+        row.child(new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(name), property).margins(Insets.horizontal(5)));
+        row.child(new ResetPropertyButton(property).margins(Insets.right(5)));
+        container.child(new DynamicComponent(row, displayCondition));
+    }
+
     public static void intPercentageControl(RenderScreen screen, FlowLayout container, IntProperty property, String name) {
-        try (RowBuilder builder = row(container)) {
+        try (RowBuilder builder = rowBuilder(container)) {
             builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fixed(45), property, true));
             builder.row.child(new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(name), property).margins(Insets.horizontal(5)));
             builder.row.child(new ResetPropertyButton(property).margins(Insets.right(5)));
@@ -57,7 +66,7 @@ public class WikiRendererUI {
     }
 
     public static void doubleControl(RenderScreen screen, FlowLayout container, DoubleProperty property, String name) {
-        try (RowBuilder builder = row(container)) {
+        try (RowBuilder builder = rowBuilder(container)) {
             builder.row.child(new DoublePropertyTextFieldComponent(screen, Sizing.fixed(45), property));
             builder.row.child(new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(name), property).margins(Insets.horizontal(5)));
             builder.row.child(new ResetPropertyButton(property).margins(Insets.right(5)));
@@ -105,6 +114,11 @@ public class WikiRendererUI {
         container.child(new PropertyCheckboxComponent(Translate.gui(key, args), property).margins(Insets.top(5)));
     }
 
+    public static void conditionalBooleanControl(FlowLayout container, Property<Boolean> property, String key, Supplier<Boolean> displayCondition) {
+        UIComponent checkbox = new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5));
+        container.child(new DynamicComponent(checkbox, displayCondition));
+    }
+
     public static void drawExportProgressBar(GuiGraphics context, int x, int y, int drawWidth, int barWidth, double speed) {
         int end = x + drawWidth + barWidth;
 
@@ -116,10 +130,14 @@ public class WikiRendererUI {
         context.fill(Math.max(x + offset - barWidth, x), y, Math.min(endWithOffset, x + drawWidth), y + 2, 0xFF00FF00);
     }
 
-    public static RowBuilder row(FlowLayout container) {
+    public static RowBuilder rowBuilder(FlowLayout container) {
+        return new RowBuilder(row(), container);
+    }
+
+    public static FlowLayout row() {
         FlowLayout layout = UIContainers.horizontalFlow(Sizing.fill(100), Sizing.content());
         layout.margins(Insets.of(5, 5, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
-        return new RowBuilder(layout, container);
+        return layout;
     }
 
     public static RowBuilder autoNewLineRow(FlowLayout container) {
