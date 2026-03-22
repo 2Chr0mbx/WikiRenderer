@@ -6,7 +6,9 @@
   "key.wikirenderer.render_hovered_item_tooltip": "渲染物品提示框",
   "key.wikirenderer.render_targeted_block": "渲染准心对准的方块",
   "key.wikirenderer.batch_render_inventory": "批量渲染物品栏物品",
+  "key.wikirenderer.render_inventory": "渲染物品栏 UI",
 
+  "gui.wikirenderer.render_gui_one_scale_lower": "以更低一级分辨率渲染",
   "gui.wikirenderer.animations": "启用动画",
   "gui.wikirenderer.texture_animations": "启用方块纹理动画",
   "gui.wikirenderer.entity_animations": "启用实体动画（仅部分实体生效）",
@@ -190,6 +192,7 @@
   "gui.wikirenderer.renderer_resolution_rescale_disabled": "分辨率",
   "gui.wikirenderer.block_resolution": "方块分辨率",
   "gui.wikirenderer.font_resolution": "字体分辨率",
+  "gui.wikirenderer.gui_scale_resolution": "GUI 缩放分辨率",
   "gui.wikirenderer.item_resolution": "物品分辨率",
   "gui.wikirenderer.player_head_resolution": "玩家头颅分辨率",
   "gui.wikirenderer.hide_tooltip_background": "隐藏提示框背景",
