@@ -908,9 +908,9 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
 
         registerOverrides(WitherRenderState.class, overrides -> {
             overrides.registerFloatOverride("xHeadRot 1", s -> s.xHeadRots[0], (s, value) -> s.xHeadRots[0] = value);
-            overrides.registerFloatOverride("xHeadRot 1", s -> s.xHeadRots[1], (s, value) -> s.xHeadRots[1] = value);
+            overrides.registerFloatOverride("xHeadRot 2", s -> s.xHeadRots[1], (s, value) -> s.xHeadRots[1] = value);
             overrides.registerFloatOverride("yHeadRot 1", s -> s.yHeadRots[0], (s, value) -> s.yHeadRots[0] = value);
-            overrides.registerFloatOverride("yHeadRot 1", s -> s.yHeadRots[1], (s, value) -> s.yHeadRots[1] = value);
+            overrides.registerFloatOverride("yHeadRot 2", s -> s.yHeadRots[1], (s, value) -> s.yHeadRots[1] = value);
             overrides.registerFloatOverride("invulnerableTicks", s -> s.invulnerableTicks, (s, value) -> s.invulnerableTicks = value);
             overrides.registerBooleanOverride("isPowered", s -> s.isPowered, (s, value) -> s.isPowered = value);
         });

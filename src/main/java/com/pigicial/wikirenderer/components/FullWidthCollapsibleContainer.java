@@ -37,7 +37,7 @@ public class FullWidthCollapsibleContainer extends FlowLayout {
     protected boolean expanded;
 
     protected final SpinnyBoiComponent spinningArrowComponent;
-    protected final GridLayout textAndTitleComponent;
+    protected final FlowLayout textAndTitleComponent;
     protected final FlowLayout expansionComponent;
     protected final FlowLayout contentLayout;
 
@@ -46,19 +46,22 @@ public class FullWidthCollapsibleContainer extends FlowLayout {
         this.allowOverflow(true);
 
         // Expansion
-        this.textAndTitleComponent = UIContainers.grid(Sizing.expand(100), Sizing.content(), 1, 2);
-        this.textAndTitleComponent.horizontalSizing(Sizing.fill(100));
+        this.textAndTitleComponent = UIContainers.horizontalFlow(Sizing.fill(100), Sizing.content());
+        this.textAndTitleComponent.horizontalSizing(Sizing.content());
 
-        this.expansionComponent = UIContainers.horizontalFlow(Sizing.expand(50), Sizing.content());
+        this.expansionComponent = UIContainers.horizontalFlow(Sizing.expand(100), Sizing.content());
         this.expansionComponent.horizontalAlignment(HorizontalAlignment.RIGHT);
         this.expansionComponent.padding(Insets.vertical(2));
         this.expansionComponent.child(new DynamicLabelComponent(() -> configureTextSupplier.get().withStyle(ChatFormatting.GRAY).withStyle(ChatFormatting.UNDERLINE))
+                .horizontalTextAlignment(HorizontalAlignment.RIGHT)
+                .horizontalSizing(Sizing.fill(90))
                 .cursorStyle(CursorStyle.HAND));
+
         this.spinningArrowComponent = new SpinnyBoiComponent();
         this.expansionComponent.child(spinningArrowComponent);
 
-        this.textAndTitleComponent.child(mainText, 0, 0);
-        this.textAndTitleComponent.child(this.expansionComponent, 0, 1);
+        this.textAndTitleComponent.child(mainText);
+        this.textAndTitleComponent.child(this.expansionComponent);
 
         this.expanded = expanded;
         this.spinningArrowComponent.targetRotation = expanded ? 90 : 0;
@@ -73,6 +76,7 @@ public class FullWidthCollapsibleContainer extends FlowLayout {
 
         super.child(this.contentLayout);
     }
+
     public void toggleExpansion() {
         if (expanded) {
             this.contentLayout.clearChildren();

@@ -54,7 +54,7 @@ public class BlockStateOverride<S extends EntityRenderState> extends OptionalOve
         }, false);
         layout.margins(Insets.of(0, 0, 0, 0));
 
-        FlowLayout blockInputRow = UIContainers.horizontalFlow(Sizing.fill(100), Sizing.content());
+        FlowLayout blockInputRow = UIContainers.horizontalFlow(Sizing.fixed(100), Sizing.content());
         blockInputRow.verticalAlignment(VerticalAlignment.CENTER);
         blockInputRow.margins(Insets.top(5));
 
