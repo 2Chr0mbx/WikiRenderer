@@ -227,7 +227,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 editField.setResponder(text -> entityTypeSearch = text);
 
                 WikiRendererUI.text(container, "visible_keyword", 3);
-                WikiRendererUI.dynamicLabel(container, () -> Translate.gui("hidden_entities_amount", hiddenSurroundingEntityTypes.size()));
+                WikiRendererUI.dynamicText(container, () -> Translate.gui("hidden_entities_amount", hiddenSurroundingEntityTypes.size()));
 
                 container.child(new SearchableEntityListComponent(hiddenSurroundingEntityTypes, () -> entityTypeSearch, () -> {
                     List<Entity> shownEntities = new ArrayList<>();
@@ -240,16 +240,18 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.conditionalBooleanControl(container, this.invisible, "entity_data.invisible", () -> renderable.hasEntityType(LivingEntity.class));
 
         WikiRendererUI.text(container, "entity_data", 10);
-        container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
-            Vec3 coords = renderable.getUsedEntity().position();
+        if (renderable.liveNonTickableEntity != null) {
+            container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
+                Vec3 coords = renderable.getUsedEntity().position();
 
-            DecimalFormat df = new DecimalFormat("0.#######");
-            String text = df.format(coords.x) + " " + df.format(coords.y) + " " + df.format(coords.z);
+                DecimalFormat df = new DecimalFormat("0.#######");
+                String text = df.format(coords.x) + " " + df.format(coords.y) + " " + df.format(coords.z);
 
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (clipboard, contents) -> {
-            });
-            screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
-        }));
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (clipboard, contents) -> {
+                });
+                screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
+            }));
+        }
 
         renderable.isNametagOnlyRenderedData = EntityRenderBoundsUtil.isNametagOnlyRenderedData(renderable.getUsedEntity());
         if (!renderable.isNametagOnlyRenderedData && !spriteRendering.get()) {

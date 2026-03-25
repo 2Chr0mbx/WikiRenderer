@@ -277,7 +277,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             stopBuildingButton.active = false;
             builder.row.child(stopBuildingButton);
 
-            WikiRendererUI.dynamicLabel(builder.row, () -> {
+            WikiRendererUI.dynamicText(builder.row, () -> {
                 MutableComponent meshStatusText;
                 if (!mesh.getMeshState().isBuildStage) {
                     meshStatusText = Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN);
@@ -334,7 +334,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                 editField.setResponder(text -> entityTypeSearch = text);
 
                 WikiRendererUI.text(container, "visible_keyword", 3);
-                WikiRendererUI.dynamicLabel(container, () -> Translate.gui("hidden_entities_amount", hiddenEntityTypes.size()));
+                WikiRendererUI.dynamicText(container, () -> Translate.gui("hidden_entities_amount", hiddenEntityTypes.size()));
 
                 container.child(new SearchableEntityListComponent(hiddenEntityTypes, () -> entityTypeSearch, () -> renderable.entities));
             }

@@ -93,7 +93,7 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
             }));
         }
 
-        WikiRendererUI.dynamicLabel(container, () -> Translate.gui(
+        WikiRendererUI.dynamicText(container, () -> Translate.gui(
                 "batch.amount",
                 batchRenderable.currentIndex + 1,
                 batchRenderable.delegates.size(),
@@ -147,7 +147,7 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
             int delegatesAmount = batchRenderable.delegates.size();
             for (int i = 0; i < Math.min(delegatesAmount, 3); i++) {
                 int index = i;
-                WikiRendererUI.dynamicLabel(container, () -> {
+                WikiRendererUI.dynamicText(container, () -> {
                     int newIndex = (index + Math.max(batchRenderable.currentIndex, 0)) % delegatesAmount;
                     return Component.literal("- " + ((DynamicBatchLabelProvider) batchRenderable.delegates.get(newIndex)).buildFileName(fileNameFormatter));
                 });

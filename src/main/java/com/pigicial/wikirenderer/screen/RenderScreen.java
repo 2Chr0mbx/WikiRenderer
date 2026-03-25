@@ -344,7 +344,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }).horizontalSizing(Sizing.fixed(35)));
         }
 
-        WikiRendererUI.dynamicLabel(rightColumn, () -> {
+        WikiRendererUI.dynamicText(rightColumn, () -> {
             if (this.currentAnimationExportData == null) {
                 return Component.empty();
             } else if (this.currentAnimationExportData.getRemainingFrames() > 0) {
@@ -367,7 +367,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             timingsProvider.buildTimingsSection(rightColumn);
         }
 
-        WikiRendererUI.dynamicLabel(rightColumn, () -> switch (globalProperties.animationHandlingMode) {
+        WikiRendererUI.dynamicText(rightColumn, () -> switch (globalProperties.animationHandlingMode) {
             case DISK_INSTANT_SAVE -> Translate.gui("animation_mode_selected_instant_file_save");
             case MEMORY_CACHE -> Translate.gui("animation_mode_selected_save_in_memory");
             case LIVE_FFMPEG -> Translate.gui("animation_mode_selected_live_ffmpeg");

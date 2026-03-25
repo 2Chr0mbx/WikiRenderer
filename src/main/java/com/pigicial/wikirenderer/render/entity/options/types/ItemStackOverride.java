@@ -45,7 +45,7 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
     public UIComponent buildComponent() {
         SearchableEntityListComponent.LeftAlignedCheckbox checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(
                 Component.literal(toDisplayName(key)),
-                Sizing.fill(65),
+                Sizing.fill(50),
                 () -> this.enabled, pressed ->
                 this.enabled = pressed
         );
