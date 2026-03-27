@@ -12,6 +12,7 @@ import org.lwjgl.glfw.GLFW;
 public class PropertySliderComponent extends SliderComponent {
 
     private final NumberProperty<? extends Number> setting;
+    private boolean ignoringChange = false;
 
     public PropertySliderComponent(RenderScreen screen, Sizing horizontalSizing, Component text, NumberProperty<? extends Number> setting) {
         super(horizontalSizing);
@@ -19,7 +20,13 @@ public class PropertySliderComponent extends SliderComponent {
 
         this.message(s -> text);
 
-        this.onChanged().subscribe(this.setting::setFromProgress);
+        this.onChanged().subscribe(value -> {
+            if (!ignoringChange) {
+                this.ignoringChange = true;
+                this.setting.setFromProgress(value);
+                this.ignoringChange = false;
+            }
+        });
         setting.instantListen(screen, (intSetting, integer) -> ((AbstractSliderButtonInvoker) this).wikirenderer$setValue(setting.progress()));
     }
 

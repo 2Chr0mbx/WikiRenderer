@@ -428,7 +428,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         Consumer<Matrix4fStack> positionTransformer = this.hasBothColumns ? null : matrixStack -> matrixStack.translate(1 - window.getWidth() / (float) window.getHeight(), 0, 0);
         if (!renderable.renderPreviewToEntireScreenWidth()) positionTransformer = null;
 
-        RenderTarget renderedOutput = RenderableDispatcher.drawIntoDuplicateFramebuffer(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), positionTransformer);
+        RenderTarget renderedOutput = RenderableDispatcher.drawPreview(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), positionTransformer);
 
         GlobalProperties globalProperties = GlobalProperties.get();
         if (this.drawOnlyBackground) {

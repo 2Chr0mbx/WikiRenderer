@@ -68,4 +68,12 @@ public interface Renderable<P extends PropertyBundle> {
             return false;
         }
     }
+
+    default int optionallyOverrideExportWidth(int width) {
+        return width;
+    }
+
+    default int optionallyOverrideExportHeight(int height) {
+        return height;
+    }
 }
