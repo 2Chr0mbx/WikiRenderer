@@ -209,9 +209,6 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                             if (originalEntity == clonedTickableEntity || originalEntity == liveNonTickableEntity) return null;
                             Entity clonedEntity = EntityCloner.copy(originalEntity);
                             if (clonedEntity == null) return null;
-                            clonedEntity.restoreFrom(originalEntity);
-                            clonedEntity.baseTick();
-
                             FAKE_TO_REAL_ENTITY_ID_MAP.put(clonedEntity.getId(), originalEntity.getId());
 
                             return clonedEntity;
@@ -337,6 +334,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         if (state instanceof DisplayEntityRenderState displayEntityRenderState) {
             displayEntityRenderState.cameraYRot = 180 + getProperties().getUsedRotation();
             displayEntityRenderState.cameraXRot = (float) getProperties().getUsedSlant();
+        }
+
+        if (!(entity instanceof Leashable leashable && leashable.getLeashHolder() != null && nearbyEntitiesToShow.contains(leashable.getLeashHolder()))) {
+            state.leashStates = null;
         }
 
         state.outlineColor = 0; // remove glow (doesn't render properly)

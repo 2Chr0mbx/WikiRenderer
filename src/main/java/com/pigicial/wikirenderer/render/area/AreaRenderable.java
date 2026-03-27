@@ -45,6 +45,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Leashable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.player.PlayerModelType;
@@ -218,17 +219,6 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                         .map(originalEntity -> {
                             Entity clonedEntity = EntityCloner.copy(originalEntity);
                             if (clonedEntity == null) return null;
-
-                            clonedEntity.restoreFrom(originalEntity);
-                            if (originalEntity instanceof LivingEntity livingOriginal && clonedEntity instanceof LivingEntity livingClone) {
-                                livingClone.yHeadRot = livingOriginal.yHeadRot;
-                                livingClone.yHeadRotO = livingOriginal.yHeadRotO;
-                                livingClone.yBodyRot = livingOriginal.yBodyRot;
-                                livingClone.yBodyRotO = livingOriginal.yBodyRotO;
-                                // this doesn't copy for some reason
-                            }
-                            clonedEntity.baseTick();
-
                             FAKE_TO_REAL_ENTITY_ID_MAP.put(clonedEntity.getId(), originalEntity.getId());
                             return clonedEntity;
                         })
