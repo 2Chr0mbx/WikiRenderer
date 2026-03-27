@@ -45,7 +45,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Leashable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.player.PlayerModelType;
@@ -272,11 +271,12 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         drawnVertexBoundCache.clear();
 
+        WikiRenderer.currentWorldOverrides = mesh.world;
+
         this.refreshEntities();
         this.entities.forEach(entity -> {
             if (properties.hiddenEntityTypes.contains(entity.getType())) return;
             if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) return;
-
 
             BlockPos meshStartPos = mesh.bounds.getMinCorner();
             Vec3 entityPosition = entity.getPosition(tickDelta);
@@ -297,6 +297,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
         });
         super.drawSubmittedRenderFeatures();
+
+        WikiRenderer.currentWorldOverrides = null;
     }
 
     private void updateEntityState(Entity entity, EntityRenderState state) {

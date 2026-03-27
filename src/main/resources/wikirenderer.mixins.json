@@ -52,6 +52,7 @@
     "texture.TextureTransformMixin",
     "world.BlockEntityRenderDispatcherMixin",
     "world.ChunkSectionsToRenderMixin",
+    "world.EntityRendererMixin",
     "world.LevelRendererMixin",
     "world.LightTextureMixin",
     "world.MapRendererMixin",
