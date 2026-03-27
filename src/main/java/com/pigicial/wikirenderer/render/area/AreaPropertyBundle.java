@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.area;
 
 import com.mojang.math.Axis;
+import com.pigicial.wikirenderer.components.AutoResizingLabelComponent;
 import com.pigicial.wikirenderer.components.ConditionalButton;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
@@ -15,8 +16,10 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
@@ -356,9 +359,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             }
         }
 
-        WikiRendererUI.text(container, "entity_data", true);
-        container.child(renderable.advancedPropertiesComponent);
-
         WikiRendererUI.text(container, "entity_overrides", 10);
         WikiRendererUI.booleanControl(container, this.overrideEntityRotations, "override_rotations");
         WikiRendererUI.intControl(screen, container, entityYawOverride, "entity_data.yaw");
@@ -383,6 +383,13 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                 }));
         WikiRendererUI.conditionalBooleanControl(container, hideEnchantmentsForEntities, "entity_data.hide_enchantments",
                 () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
+
+        LabelComponent label = new AutoResizingLabelComponent(Translate.gui("advanced_entity_data_activation"));
+        label.color(Color.ofFormatting(ChatFormatting.GRAY));
+        label.margins(Insets.of(2).withTop(6));
+        container.child(label);
+
+        container.child(renderable.advancedPropertiesComponent);
     }
 
     @Override

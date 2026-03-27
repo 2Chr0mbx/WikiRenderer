@@ -55,6 +55,8 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
                 label.margins(Insets.of(2));
                 this.entries.child(label);
 
+                this.button(Translate.gui("reset_advanced_entity_overrides").withStyle(ChatFormatting.UNDERLINE), comp -> overrides.getOverrides().forEach(OptionalOverride::reset));
+
                 for (OptionalOverride<?, ?> override : overrides.getOverrides()) {
                     this.entries.child(override.buildComponent());
                 }

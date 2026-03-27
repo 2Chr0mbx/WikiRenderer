@@ -2,7 +2,6 @@ package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.components.AutoResizingLabelComponent;
-import com.pigicial.wikirenderer.components.DynamicComponent;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
 import com.pigicial.wikirenderer.property.*;
@@ -242,8 +241,6 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             }
         }
 
-        WikiRendererUI.conditionalBooleanControl(container, this.invisible, "entity_data.invisible", () -> renderable.hasEntityType(LivingEntity.class));
-
         WikiRendererUI.text(container, "entity_data", 10);
         if (renderable.liveNonTickableEntity != null) {
             container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
@@ -286,26 +283,36 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.conditionalBooleanControl(container, this.forceSmallArms, "entity_data.small_arms", () -> renderable.hasEntityType(Avatar.class));
         }
 
-        WikiRendererUI.conditionalBooleanControl(container, this.hideHeldItems, "entity_data.hide_held_items",
-                () -> renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty()));
-        WikiRendererUI.conditionalBooleanControl(container, this.hideArmor, "entity_data.hide_armor",
-                () -> renderable.hasLivingEntityProperty(e -> {
-                    EntityRenderer<? super LivingEntity, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
-                    if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
-                        return ((LivingEntityRendererAccessor) livingEntityRenderer).wikirenderer$getLayers().stream().anyMatch(l -> l instanceof HumanoidArmorLayer<?, ?, ?>);
-                    }
-
-                    return false;
-                }));
-        WikiRendererUI.conditionalBooleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments",
-                () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
+        WikiRendererUI.conditionalBooleanControl(container, this.hideHeldItems, "entity_data.hide_held_items", () -> shouldShowHideHeldItemsOption(renderable));
+        WikiRendererUI.conditionalBooleanControl(container, this.hideArmor, "entity_data.hide_armor", () -> shouldShowHideArmorOption(renderable));
+        WikiRendererUI.conditionalBooleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments", () -> shouldShowHideEnchantmentsOption(renderable));
+        WikiRendererUI.conditionalBooleanControl(container, this.invisible, "entity_data.invisible", () -> renderable.hasEntityType(LivingEntity.class));
 
         LabelComponent label = new AutoResizingLabelComponent(Translate.gui("advanced_entity_data_activation"));
         label.color(Color.ofFormatting(ChatFormatting.GRAY));
         label.margins(Insets.of(2).withTop(6));
-        container.child(new DynamicComponent(label, () -> renderable.selectedEntity == null));
+        container.child(label);
 
         container.child(renderable.advancedPropertiesComponent);
+    }
+
+    private boolean shouldShowHideHeldItemsOption(EntityRenderable renderable) {
+        return renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty());
+    }
+
+    private boolean shouldShowHideArmorOption(EntityRenderable renderable) {
+        return renderable.hasLivingEntityProperty(e -> {
+            EntityRenderer<? super LivingEntity, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
+            if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
+                return ((LivingEntityRendererAccessor) livingEntityRenderer).wikirenderer$getLayers().stream().anyMatch(l -> l instanceof HumanoidArmorLayer<?, ?, ?>);
+            }
+
+            return false;
+        });
+    }
+
+    private boolean shouldShowHideEnchantmentsOption(EntityRenderable renderable) {
+        return renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil()));
     }
 
     private UIComponent buildResetEntityOverridesButton(EntityRenderable renderable) {

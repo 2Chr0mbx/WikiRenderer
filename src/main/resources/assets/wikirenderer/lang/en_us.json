@@ -165,7 +165,7 @@
   "gui.wikirenderer.surrounding_particles_radius": "Radius",
   "gui.wikirenderer.entity_data": "Entity Data",
   "gui.wikirenderer.advanced_entity_data": "Advanced Entity Data",
-  "gui.wikirenderer.advanced_entity_data_notice": "Note: Some settings may have no visual impact or rely on other settings to be used.",
+  "gui.wikirenderer.advanced_entity_data_notice": "Note: Some settings may have no visual impact or rely on other settings to be considered.",
   "gui.wikirenderer.advanced_entity_data_activation": "Tip: Select an entity in the preview to access more advanced overrides!",
   "gui.wikirenderer.copy_entity_coordinates": "Copy Coordinates",
   "gui.wikirenderer.copied_entity_coordinates_to_clipboard": "Copied Entity Coordinates to Clipboard",
@@ -230,6 +230,7 @@
   "gui.wikirenderer.reset_offset_and_scale": "Reset Offset & Scale",
   "gui.wikirenderer.reset_transformations": "Reset Transformations",
   "gui.wikirenderer.reset_entity_overrides": "Reset Entity Overrides",
+  "gui.wikirenderer.reset_advanced_entity_overrides": "> Reset to Defaults",
 
   "gui.wikirenderer.exporter.idle": "Exporter Idle",
   "gui.wikirenderer.exporter.jobs": "Export Jobs: %s",

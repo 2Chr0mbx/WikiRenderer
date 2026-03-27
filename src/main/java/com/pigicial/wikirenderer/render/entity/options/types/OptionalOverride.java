@@ -22,7 +22,6 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
     protected final BiConsumer<S, T> setter;
 
     protected T value;
-    protected T lastSeenNonOverwrittenValue;
     protected boolean enabled = false;
 
     public OptionalOverride(String key, Function<S, T> getter, BiConsumer<S, T> setter) {
@@ -39,6 +38,11 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
         this.value = defaultValue;
     }
 
+    public void reset() {
+        setValue(getDefaultValue());
+        this.enabled = false;
+    }
+
     public abstract T getDefaultValue();
 
     public void setValue(T value) {
@@ -48,10 +52,6 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
 
     public T getValue() {
         return value;
-    }
-
-    public T getDisplayedValue() {
-        return enabled ? value : lastSeenNonOverwrittenValue;
     }
 
     public void apply(S renderState) {
