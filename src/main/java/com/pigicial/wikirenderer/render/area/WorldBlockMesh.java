@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldBlockMesh {
 
-    public static boolean overrideCutoutRenderPipeline = false;
+    public static boolean overrideTerrainTransparencyRenderPipelines = false;
     public static GpuSampler terrainSampler = null;
 
     public final MeshWorldOverrides world;
@@ -130,7 +130,7 @@ public class WorldBlockMesh {
             if (sectionLayer == ChunkSectionLayerGroup.TRANSLUCENT) {
                 preTranslucencyTask.run();
             }
-            overrideCutoutRenderPipeline = sectionLayer == ChunkSectionLayerGroup.OPAQUE;
+            overrideTerrainTransparencyRenderPipelines = sectionLayer == ChunkSectionLayerGroup.OPAQUE;
             for (ChunkSectionsToRender sections : preparedSections) {
                 sections.renderGroup(sectionLayer, terrainSampler);
             }

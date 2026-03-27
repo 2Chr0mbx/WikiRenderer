@@ -2,11 +2,13 @@ package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.render.entity.options.EntityTypeSpecificOverrides;
 import com.pigicial.wikirenderer.render.entity.options.types.OptionalOverride;
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.DropdownComponent;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.OwoUIGraphics;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.Surface;
+import net.minecraft.ChatFormatting;
 import net.minecraft.world.entity.Entity;
 
 import java.util.function.Supplier;
@@ -24,8 +26,8 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
         this.overridesSupplier = overridesSupplier;
 
         this.closeWhenNotHovered(false);
-        this.padding(Insets.right(5));
-        this.surface(Surface.blur(10, 20));
+        this.padding(Insets.of(7, 0, 0, 5));
+        this.surface(Surface.blur(10, 10));
     }
 
     @Override
@@ -47,8 +49,11 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
                 return;
             }
 
-            for (OptionalOverride<?, ?> override : overrides.getOverrides()) {
-                this.entries.child(override.buildComponent());
+            if (!overrides.getOverrides().isEmpty()) {
+                this.text(Translate.gui("entity_data").withStyle(ChatFormatting.WHITE, ChatFormatting.UNDERLINE));
+                for (OptionalOverride<?, ?> override : overrides.getOverrides()) {
+                    this.entries.child(override.buildComponent());
+                }
             }
         }
     }

@@ -226,6 +226,7 @@
   "gui.wikirenderer.stop_building": "Stop",
   "gui.wikirenderer.reset_offset_and_scale": "Reset Offset & Scale",
   "gui.wikirenderer.reset_transformations": "Reset Transformations",
+  "gui.wikirenderer.reset_entity_overrides": "Reset Entity Overrides",
 
   "gui.wikirenderer.exporter.idle": "Exporter Idle",
   "gui.wikirenderer.exporter.jobs": "Export Jobs: %s",

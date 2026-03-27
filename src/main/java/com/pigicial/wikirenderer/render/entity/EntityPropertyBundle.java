@@ -14,6 +14,7 @@ import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
+import io.wispforest.owo.ui.core.UIComponent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -189,10 +190,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             renderable.cachedScaleMultiplier = null;
         })).margins(Insets.of(5, 0, 0, 0));
 
-        WikiRendererUI.text(container, "entity_data", true);
-        container.child(renderable.advancedPropertiesComponent);
-
         WikiRendererUI.text(container, "entity_render_options", true);
+        container.child(this.buildResetEntityOverridesButton(renderable));
+
         if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entities");
             this.useLiveEntity.futureListen(screen, (booleanProperty, value) -> {
@@ -295,6 +295,41 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.conditionalBooleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments",
                 () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
 
+        container.child(renderable.advancedPropertiesComponent);
+    }
+
+    private UIComponent buildResetEntityOverridesButton(EntityRenderable renderable) {
+        return UIComponents.button(Translate.gui("reset_entity_overrides"), (ButtonComponent button) -> {
+            this.showSurroundingEntities.setToDefault();
+            this.surroundingEntitiesRadius.setToDefault();
+            this.showHiddenSurroundingEntitiesList.setToDefault();
+            this.entityTypeSearch = "Visible";
+            this.hiddenSurroundingEntityTypes.clear();
+            this.autoRefreshVisibleSurroundingEntities.setToDefault();
+            this.surroundingParticlesRadius.setToDefault();
+            this.useLiveEntity.setToDefault();
+            this.tickEntityAnimations.setToDefault();
+            this.hideNametags.setToDefault();
+            this.overrideHeadRotations.setToDefault();
+            this.hideNametags.setToDefault();
+            this.overrideHeadRotations.setToDefault();
+            this.yaw.setToDefault();
+            this.pitch.setToDefault();
+            this.overrideBodyRotations.setToDefault();
+            this.entityRotation.setToDefault();
+            this.overrideEnderDragonBodyRotations.setToDefault();
+            this.enderDragonRotation.setToDefault();
+            this.hideRedDamageGlow.setToDefault();
+            this.useSteveSkin.setToDefault();
+            this.hideHeldItems.setToDefault();
+            this.hideArmor.setToDefault();
+            this.hideEnchantments.setToDefault();
+            this.invisible.setToDefault();
+            this.forceSmallArms.setToDefault();
+            EntityRenderable.ENTITY_SPECIFIC_OVERRIDES.clear();
+            renderable.selectedEntity = null;
+            renderable.renderStateOverrides = null;
+        }).margins(Insets.of(5, 0, 0, 0));
     }
 
     @Override
@@ -302,14 +337,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         EntityRenderable renderable = (EntityRenderable) r;
         super.buildRenderOptionGUIControls(renderable, screen, container);
 
-        if (renderable.isUsingLiveEntity()) {
+        if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "show_surrounding_particles");
             GlobalProperties.get().tickParticles.addRebuildListener(screen);
             if (GlobalProperties.get().tickParticles.get()) {
                 WikiRendererUI.doubleControl(screen, container, surroundingParticlesRadius, "surrounding_particles_radius");
             }
         }
-
     }
 
     @Override

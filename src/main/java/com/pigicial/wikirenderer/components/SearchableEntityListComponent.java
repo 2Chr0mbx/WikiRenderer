@@ -91,7 +91,7 @@ public class SearchableEntityListComponent extends DropdownComponent {
     public static class LeftAlignedCheckbox extends Button {
 
         private final Supplier<Boolean> stateSupplier;
-        protected final int iconSpace = 13; // 9px icon + 3px gap
+        protected final int iconSpace = 13;
 
         public LeftAlignedCheckbox(Component text, Sizing horizontalSizing, Supplier<Boolean> stateSupplier, Consumer<Boolean> onClick) {
             super(text, dropdownComponent -> {});

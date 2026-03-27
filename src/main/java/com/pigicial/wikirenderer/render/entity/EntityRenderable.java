@@ -70,7 +70,7 @@ import java.util.stream.Collectors;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
-    protected static final Map<Entity, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES = new HashMap<>();
+    public static final Map<Entity, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES = new HashMap<>();
 
     private final Minecraft client = Minecraft.getInstance();
 
@@ -301,7 +301,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             partVisibilityCallbacks.forEach(Runnable::run);
         });
 
-        if (this.client.player != null && isUsingLiveEntity()) {
+        if (this.client.player != null && liveNonTickableEntity != null) {
             matrices.pushPose();
 
             Vec3 playerDifference = getUsedEntity().position().subtract(client.player.getEyePosition());

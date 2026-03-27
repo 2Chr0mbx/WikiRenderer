@@ -5,19 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.util.Translate;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.data.registries.VanillaRegistries;
-import net.minecraft.world.entity.animal.chicken.ChickenVariant;
-import net.minecraft.world.entity.animal.chicken.ChickenVariants;
-
-import java.util.List;
-import java.util.Optional;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
@@ -72,16 +60,6 @@ public class DebugSubCommand extends WikiRendererSubCommand {
     private void disableUnsafe(CommandContext<FabricClientCommandSource> context) {
         GlobalProperties.get().unsafe.set(false);
         Translate.commandFeedback(context, "unsafe_disabled");
-
-        Optional<? extends HolderLookup.RegistryLookup<ChickenVariant>> lookup = VanillaRegistries.createLookup().lookup(Registries.CHICKEN_VARIANT);
-        if (lookup.isPresent()) {
-            HolderLookup.RegistryLookup<ChickenVariant> registryLookup = lookup.get();
-            List<Holder.Reference<ChickenVariant>> list = registryLookup.listElements().toList();
-            for (Holder.Reference<ChickenVariant> chickenVariantReference : list) {
-                System.out.println("chickenVariantReference.value() = " + chickenVariantReference.value());
-            }
-        }
-
     }
 }
 
