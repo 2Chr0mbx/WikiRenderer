@@ -70,11 +70,12 @@ import java.util.stream.Collectors;
 
 public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> implements TextureDataProvider, DynamicBatchLabelProvider, AnimationTimingsProvider {
 
-    public static final Map<Entity, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES = new HashMap<>();
+    public static final Map<Integer, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES_BY_ID = new HashMap<>();
+    public static final Map<Integer, Integer> FAKE_TO_REAL_ENTITY_ID_MAP = new HashMap<>();
 
     private final Minecraft client = Minecraft.getInstance();
 
-    private final Map<Entity, DrawEntityDataCache> drawnVertexBoundCache = new HashMap<>();
+    private final Map<Integer, DrawEntityDataCache> drawnVertexBoundCache = new HashMap<>();
     @Nullable
     protected final Entity liveNonTickableEntity;
     protected final Entity clonedTickableEntity;
@@ -91,13 +92,17 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected boolean isNametagOnlyRenderedData = false;
 
     protected final EntityTypeSpecificPropertiesComponent advancedPropertiesComponent;
-    public @Nullable Entity selectedEntity;
+    public @Nullable Integer selectedEntityId;
     public @Nullable EntityTypeSpecificOverrides<?> renderStateOverrides = null;
 
     public EntityRenderable(@Nullable Entity liveNonTickableEntity, Entity clonedTickableEntity) {
         this.liveNonTickableEntity = liveNonTickableEntity;
         this.clonedTickableEntity = clonedTickableEntity;
-        this.advancedPropertiesComponent = new EntityTypeSpecificPropertiesComponent(() -> selectedEntity, () -> renderStateOverrides);
+        this.advancedPropertiesComponent = new EntityTypeSpecificPropertiesComponent(() -> selectedEntityId, () -> renderStateOverrides);
+
+        if (liveNonTickableEntity != null) {
+            FAKE_TO_REAL_ENTITY_ID_MAP.put(clonedTickableEntity.getId(), liveNonTickableEntity.getId());
+        }
     }
 
     @Nullable
@@ -206,6 +211,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                             if (clonedEntity == null) return null;
                             clonedEntity.restoreFrom(originalEntity);
                             clonedEntity.baseTick();
+
+                            FAKE_TO_REAL_ENTITY_ID_MAP.put(clonedEntity.getId(), originalEntity.getId());
+
                             return clonedEntity;
                         })
                         .filter(Objects::nonNull)
@@ -253,7 +261,11 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
             EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() && !entity.isRemoved() ? tickDelta : 0);
-            EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+
+            int entityId = entity.getId();
+            entityId = FAKE_TO_REAL_ENTITY_ID_MAP.getOrDefault(entityId, entityId);
+
+            EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES_BY_ID.get(entityId);
             if (renderStateOverrides != null && renderStateOverrides.isInvisible()) return;
 
             this.updateRenderState(entity, state, properties, timeSinceCreationMs, usingLiveEntity);
@@ -290,7 +302,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             PoseStack clonedPose = new PoseStack();
             clonedPose.mulPose(matrices.last().pose());
-            drawnVertexBoundCache.put(entity, new DrawEntityDataCache(state, offset, clonedPose, properties.spriteRendering.get()));
+            drawnVertexBoundCache.put(entityId, new DrawEntityDataCache(state, offset, clonedPose, properties.spriteRendering.get()));
 
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             this.drawSubmittedRenderFeatures();
@@ -319,7 +331,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     private void updateRenderState(Entity entity, EntityRenderState state, EntityPropertyBundle properties, long timeSinceCreationMs, boolean usingLiveEntity) {
-        EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+        int entityId = entity.getId();
+        EntityTypeSpecificOverrides<?> renderStateOverrides =  ENTITY_SPECIFIC_OVERRIDES_BY_ID.get(FAKE_TO_REAL_ENTITY_ID_MAP.getOrDefault(entityId, entityId));
 
         if (state instanceof DisplayEntityRenderState displayEntityRenderState) {
             displayEntityRenderState.cameraYRot = 180 + getProperties().getUsedRotation();
@@ -663,9 +676,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         super.onScreenHandle(screen, graphics, tickDelta);
         int scale = Minecraft.getInstance().getWindow().getGuiScale();
 
-        if (this.selectedEntity != null) {
+        if (this.selectedEntityId != null) {
             DrawProjectionDataCache projectionData = RenderableDispatcher.PROJECTION_CACHE.get(DrawType.PREVIEW);
-            DrawEntityDataCache entityDrawData = drawnVertexBoundCache.get(selectedEntity);
+            DrawEntityDataCache entityDrawData = drawnVertexBoundCache.get(selectedEntityId);
             if (entityDrawData == null) return;
 
             CornerData cornerData = EntityRenderBoundsUtil.getDrawnBounds(CameraOrientationUtil.createRenderState(this), entityDrawData, projectionData);
@@ -685,14 +698,14 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         double x = click.x() * scale;
         double y = click.y() * scale;
 
-        this.selectedEntity = null;
+        this.selectedEntityId = null;
 
-        Entity closestEntity = null;
+        Integer closestEntityId = null;
         double lastDistance = Double.MAX_VALUE;
 
         DrawProjectionDataCache projectionData = RenderableDispatcher.PROJECTION_CACHE.get(DrawType.PREVIEW);
-        for (Map.Entry<Entity, DrawEntityDataCache> drawnEntities : drawnVertexBoundCache.entrySet()) {
-            Entity entity = drawnEntities.getKey();
+        for (Map.Entry<Integer, DrawEntityDataCache> drawnEntities : drawnVertexBoundCache.entrySet()) {
+            int entityId = drawnEntities.getKey();
             DrawEntityDataCache entityDrawData = drawnEntities.getValue();
 
             CornerData bounds = EntityRenderBoundsUtil.getDrawnBounds(CameraOrientationUtil.createRenderState(this), entityDrawData, projectionData);
@@ -700,14 +713,14 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 int distanceToCenter = bounds.getDistanceToCenterSquared((int) x, (int) y);
                 if (distanceToCenter < lastDistance) {
                     lastDistance = distanceToCenter;
-                    closestEntity = entity;
+                    closestEntityId = entityId;
                 }
             }
         }
 
-        if (closestEntity != null) {
-            this.selectedEntity = closestEntity;
-            this.renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.computeIfAbsent(closestEntity, e -> EntityTypeSpecificOverrides.getOverrides(drawnVertexBoundCache.get(e).renderState()));
+        if (closestEntityId != null) {
+            this.selectedEntityId = closestEntityId;
+            this.renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES_BY_ID.computeIfAbsent(closestEntityId, e -> EntityTypeSpecificOverrides.getOverrides(drawnVertexBoundCache.get(e).renderState()));
             return true;
         }
 

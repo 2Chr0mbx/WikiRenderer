@@ -439,8 +439,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             this.hideHeldItemsForEntities.setToDefault();
             this.hideArmorForEntities.setToDefault();
             this.hideEnchantmentsForEntities.setToDefault();
-            AreaRenderable.ENTITY_SPECIFIC_OVERRIDES.clear();
-            renderable.selectedEntity = null;
+            AreaRenderable.ENTITY_SPECIFIC_OVERRIDES_BY_ID.clear();
+            renderable.selectedEntityId = null;
             renderable.renderStateOverrides = null;
             this.emulateDaylight.setToDefault();
             this.useFullBrightGamma.setToDefault();

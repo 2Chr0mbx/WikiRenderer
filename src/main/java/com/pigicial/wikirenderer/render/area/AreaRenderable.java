@@ -61,7 +61,8 @@ import java.util.stream.Collectors;
 
 public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implements AnimationTimingsProvider {
 
-    public static final Map<Entity, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES = new HashMap<>();
+    public static final Map<Integer, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES_BY_ID = new HashMap<>();
+    public static final Map<Integer, Integer> FAKE_TO_REAL_ENTITY_ID_MAP = new HashMap<>();
 
     private final Minecraft client = Minecraft.getInstance();
 
@@ -73,9 +74,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     private boolean entitiesFrozen = false;
     private boolean entitiesLoaded = false;
 
-    private final Map<Entity, DrawEntityDataCache> drawnVertexBoundCache = new HashMap<>();
+    private final Map<Integer, DrawEntityDataCache> drawnVertexBoundCache = new HashMap<>();
     protected final EntityTypeSpecificPropertiesComponent advancedPropertiesComponent;
-    public @Nullable Entity selectedEntity;
+    public @Nullable Integer selectedEntityId;
     public @Nullable EntityTypeSpecificOverrides<?> renderStateOverrides = null;
 
     public AreaRenderable(WorldBlockMesh mesh) {
@@ -86,7 +87,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         this.maxFloorYLevelForOverhead = IntProperty.of((int) dimensions.maxY, (int) dimensions.minY, (int) dimensions.maxY);
         this.mesh.setRenderable(this);
 
-        this.advancedPropertiesComponent = new EntityTypeSpecificPropertiesComponent(() -> selectedEntity, () -> renderStateOverrides);
+        this.advancedPropertiesComponent = new EntityTypeSpecificPropertiesComponent(() -> selectedEntityId, () -> renderStateOverrides);
     }
 
     public static AreaRenderable of(BlockPos start, BlockPos end) {
@@ -227,6 +228,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                                 // this doesn't copy for some reason
                             }
                             clonedEntity.baseTick();
+
+                            FAKE_TO_REAL_ENTITY_ID_MAP.put(clonedEntity.getId(), originalEntity.getId());
                             return clonedEntity;
                         })
                         .filter(Objects::nonNull)
@@ -289,7 +292,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             Vec3 entityPosition = entity.getPosition(tickDelta);
             Vec3 offsetFromMesh = entityPosition.subtract(meshStartPos.getX(), meshStartPos.getY(), meshStartPos.getZ());
 
-            EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+            int entityId = entity.getId();
+            entityId = FAKE_TO_REAL_ENTITY_ID_MAP.getOrDefault(entityId, entityId);
+            EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES_BY_ID.get(entityId);
             if (renderStateOverrides != null && renderStateOverrides.isInvisible()) return;
 
             EntityRenderState state = entityDispatcher.extractEntity(entity, entity.isRemoved() ? 0 : tickDelta);
@@ -297,7 +302,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
             PoseStack clonedPose = new PoseStack();
             clonedPose.mulPose(standardStack.last().pose());
-            drawnVertexBoundCache.put(entity, new DrawEntityDataCache(state, offsetFromMesh, clonedPose, false));
+            drawnVertexBoundCache.put(entityId, new DrawEntityDataCache(state, offsetFromMesh, clonedPose, false));
 
             entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
         });
@@ -305,7 +310,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     private void updateEntityState(Entity entity, EntityRenderState state) {
-        EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
+        int entityId = entity.getId();
+        EntityTypeSpecificOverrides<?> renderStateOverrides =  ENTITY_SPECIFIC_OVERRIDES_BY_ID.get(FAKE_TO_REAL_ENTITY_ID_MAP.getOrDefault(entityId, entityId));
 
         if (state instanceof DisplayEntityRenderState displayEntityRenderState) {
             displayEntityRenderState.cameraYRot = 180 + getProperties().getUsedRotation();
@@ -472,9 +478,9 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
         int scale = Minecraft.getInstance().getWindow().getGuiScale();
 
-        if (this.selectedEntity != null) {
+        if (this.selectedEntityId != null) {
             DrawProjectionDataCache projectionData = RenderableDispatcher.PROJECTION_CACHE.get(DrawType.PREVIEW);
-            DrawEntityDataCache entityDrawData = drawnVertexBoundCache.get(selectedEntity);
+            DrawEntityDataCache entityDrawData = drawnVertexBoundCache.get(selectedEntityId);
             if (entityDrawData == null) return;
 
             CornerData cornerData = EntityRenderBoundsUtil.getDrawnBounds(CameraOrientationUtil.createRenderState(this), entityDrawData, projectionData);
@@ -494,14 +500,14 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         double x = click.x() * scale;
         double y = click.y() * scale;
 
-        this.selectedEntity = null;
+        this.selectedEntityId = null;
 
-        Entity closestEntity = null;
+        Integer closestEntityId = null;
         double lastDistance = Double.MAX_VALUE;
 
         DrawProjectionDataCache projectionData = RenderableDispatcher.PROJECTION_CACHE.get(DrawType.PREVIEW);
-        for (Map.Entry<Entity, DrawEntityDataCache> drawnEntities : drawnVertexBoundCache.entrySet()) {
-            Entity entity = drawnEntities.getKey();
+        for (Map.Entry<Integer, DrawEntityDataCache> drawnEntities : drawnVertexBoundCache.entrySet()) {
+            Integer entityId = drawnEntities.getKey();
             DrawEntityDataCache entityDrawData = drawnEntities.getValue();
 
             CornerData bounds = EntityRenderBoundsUtil.getDrawnBounds(CameraOrientationUtil.createRenderState(this), entityDrawData, projectionData);
@@ -509,14 +515,14 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 int distanceToCenter = bounds.getDistanceToCenterSquared((int) x, (int) y);
                 if (distanceToCenter < lastDistance) {
                     lastDistance = distanceToCenter;
-                    closestEntity = entity;
+                    closestEntityId = entityId;
                 }
             }
         }
 
-        if (closestEntity != null) {
-            this.selectedEntity = closestEntity;
-            this.renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.computeIfAbsent(closestEntity, e -> EntityTypeSpecificOverrides.getOverrides(drawnVertexBoundCache.get(e).renderState()));
+        if (closestEntityId != null) {
+            this.selectedEntityId = closestEntityId;
+            this.renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES_BY_ID.computeIfAbsent(closestEntityId, e -> EntityTypeSpecificOverrides.getOverrides(drawnVertexBoundCache.get(e).renderState()));
             return true;
         }
 

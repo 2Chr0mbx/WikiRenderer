@@ -7,20 +7,20 @@ import io.wispforest.owo.ui.component.DropdownComponent;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.ChatFormatting;
-import net.minecraft.world.entity.Entity;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
 
-    private final Supplier<Entity> entitySupplier;
+    private final Supplier<Integer> entitySupplier;
     private final Supplier<EntityTypeSpecificOverrides<?>> overridesSupplier;
 
-    private Entity lastSavedEntity = null;
+    private Integer lastSavedEntityId = null;
 
-    public EntityTypeSpecificPropertiesComponent(Supplier<Entity> entitySupplier, Supplier<EntityTypeSpecificOverrides<?>> overridesSupplier) {
+    public EntityTypeSpecificPropertiesComponent(Supplier<Integer> entityIdSupplier, Supplier<EntityTypeSpecificOverrides<?>> overridesSupplier) {
         super(Sizing.content());
-        this.entitySupplier = entitySupplier;
+        this.entitySupplier = entityIdSupplier;
         this.overridesSupplier = overridesSupplier;
 
         this.closeWhenNotHovered(false);
@@ -35,12 +35,12 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
     }
 
     public void update() {
-        Entity entity = entitySupplier.get();
-        if (entity != lastSavedEntity) {
+        Integer entityId = entitySupplier.get();
+        if (!Objects.equals(entityId, lastSavedEntityId)) {
             this.entries.clearChildren();
-            this.lastSavedEntity = entity;
+            this.lastSavedEntityId = entityId;
 
-            if (entity == null) return;
+            if (entityId == null) return;
 
             EntityTypeSpecificOverrides<?> overrides = this.overridesSupplier.get();
             if (overrides == null) {

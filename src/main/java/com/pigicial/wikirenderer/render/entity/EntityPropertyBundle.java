@@ -343,8 +343,8 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             this.hideEnchantments.setToDefault();
             this.invisible.setToDefault();
             this.forceSmallArms.setToDefault();
-            EntityRenderable.ENTITY_SPECIFIC_OVERRIDES.clear();
-            renderable.selectedEntity = null;
+            EntityRenderable.ENTITY_SPECIFIC_OVERRIDES_BY_ID.clear();
+            renderable.selectedEntityId = null;
             renderable.renderStateOverrides = null;
         }).margins(Insets.of(5, 0, 0, 0));
     }
