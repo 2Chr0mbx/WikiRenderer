@@ -11,7 +11,7 @@ public class AutoResizingLabelComponent extends LabelComponent {
 
     @Override
     public void inflate(Size space) {
-        this.maxWidth(space.width());
+        this.maxWidth(Math.max(space.width(), 20));
         super.inflate(space);
     }
 }
