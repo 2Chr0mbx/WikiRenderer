@@ -10,10 +10,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -23,6 +20,7 @@ public class SearchableEntityListComponent extends DropdownComponent {
     private final Supplier<List<Entity>> visibleEntitiesSupplier;
 
     private final Set<EntityType<?>> shownOptions = new HashSet<>();
+    private boolean needsReorganization = false;
 
     public SearchableEntityListComponent(List<EntityType<?>> hiddenEntityTypes, Supplier<String> searchFilter, Supplier<List<Entity>> visibleEntitiesSupplier) {
         super(Sizing.content());
@@ -53,9 +51,12 @@ public class SearchableEntityListComponent extends DropdownComponent {
         String filter = searchFilter.get();
 
         List<LeftAlignedCheckbox> checkboxes = new ArrayList<>();
-        boolean needsRefresh = false;
+        boolean needsRefresh = needsReorganization;
 
-        List<Holder.Reference<EntityType<?>>> entityTypes = BuiltInRegistries.ENTITY_TYPE.listElements().toList();
+        List<Holder.Reference<EntityType<?>>> entityTypes = BuiltInRegistries.ENTITY_TYPE.listElements()
+                .sorted(Comparator.comparing(t -> !hiddenEntityTypes.contains(t.value())))
+                .toList();
+
         for (Holder.Reference<EntityType<?>> typeHolder : entityTypes) {
             EntityType<?> type = typeHolder.value();
             Component description = type.getDescription();
@@ -76,6 +77,8 @@ public class SearchableEntityListComponent extends DropdownComponent {
                     } else {
                         hiddenEntityTypes.remove(type);
                     }
+                    needsReorganization = true;
+                    update();
                 }));
             } else {
                 shownOptions.remove(type);

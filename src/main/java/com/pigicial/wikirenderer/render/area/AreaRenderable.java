@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 
 public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implements AnimationTimingsProvider {
 
-    protected static final Map<Entity, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES = new HashMap<>();
+    public static final Map<Entity, EntityTypeSpecificOverrides<?>> ENTITY_SPECIFIC_OVERRIDES = new HashMap<>();
 
     private final Minecraft client = Minecraft.getInstance();
 
@@ -208,7 +208,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     private void refreshEntities() {
-        if (this.getProperties().freezeEntities.get() && entitiesLoaded) {
+        if (this.getProperties().entityRefreshMode == AreaEntityRefreshMode.NOT_REFRESHING_AND_FROZEN && entitiesLoaded) {
             if (!this.entitiesFrozen) {
                 this.entitiesFrozen = true;
 
@@ -236,7 +236,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         }
 
         // not frozen selected by here
-        if (getProperties().autoRefreshVisibleEntities.get() || this.entitiesFrozen || !entitiesLoaded) {
+        if (getProperties().entityRefreshMode == AreaEntityRefreshMode.REFRESHING_WITHIN_BOUNDS || this.entitiesFrozen || !entitiesLoaded) {
             entitiesLoaded = true;
 
             ClientLevel level = Minecraft.getInstance().level;
@@ -284,6 +284,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             if (properties.hiddenEntityTypes.contains(entity.getType())) return;
             if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) return;
 
+
             BlockPos meshStartPos = mesh.bounds.getMinCorner();
             Vec3 entityPosition = entity.getPosition(tickDelta);
             Vec3 offsetFromMesh = entityPosition.subtract(meshStartPos.getX(), meshStartPos.getY(), meshStartPos.getZ());
@@ -291,7 +292,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
             if (renderStateOverrides != null && renderStateOverrides.isInvisible()) return;
 
-            EntityRenderState state = entityDispatcher.extractEntity(entity, tickDelta);
+            EntityRenderState state = entityDispatcher.extractEntity(entity, entity.isRemoved() ? 0 : tickDelta);
             this.updateEntityState(entity, state);
 
             PoseStack clonedPose = new PoseStack();

@@ -252,7 +252,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             EntityRenderDispatcher renderDispatcher = client.getEntityRenderDispatcher();
             SubmitNodeStorage nodeStorage = client.gameRenderer.getSubmitNodeStorage();
 
-            EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() ? tickDelta : 0);
+            EntityRenderState state = renderDispatcher.extractEntity(entity, properties.tickEntityAnimations.get() && !entity.isRemoved() ? tickDelta : 0);
             EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES.get(entity);
             if (renderStateOverrides != null && renderStateOverrides.isInvisible()) return;
 
