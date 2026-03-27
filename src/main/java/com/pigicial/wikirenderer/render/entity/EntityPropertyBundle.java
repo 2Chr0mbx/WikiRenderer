@@ -275,7 +275,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.conditionalIntControl(screen, container, this.entityRotation, "entity_data.rotation", () -> renderable.hasEntityType(LivingEntity.class));
 
         // dragons
-        WikiRendererUI.conditionalBooleanControl(container, this.overrideEnderDragonFlapAnimation, "entity_data.override_dragon_flap_animation", () -> renderable.hasEntityType(EnderDragon.class));
+        WikiRendererUI.conditionalBooleanControl(container, this.overrideEnderDragonFlapAnimation, "override_dragon_flap_animation", () -> renderable.hasEntityType(EnderDragon.class));
 
         WikiRendererUI.conditionalBooleanControl(container, this.hideRedDamageGlow, "entity_data.hide_red_damage_glow", () -> renderable.hasEntityType(LivingEntity.class) || renderable.hasEntityType(EnderDragon.class));
 
