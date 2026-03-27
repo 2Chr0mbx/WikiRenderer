@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.area;
 
 import com.mojang.math.Axis;
+import com.pigicial.wikirenderer.components.AutoResizingLabelComponent;
 import com.pigicial.wikirenderer.components.ConditionalButton;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
@@ -15,10 +16,13 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.DropdownComponent;
+import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.*;
+import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
@@ -71,19 +75,19 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final Property<Boolean> hideBeaconBeams = Property.of(false);
 
     public final Property<Boolean> hideEntities = Property.of(false);
-
+    public final Property<Boolean> hideLivingEntities = Property.of(false);
     public final Property<Boolean> showHiddenEntitiesList = Property.of(false);
     public transient String entityTypeSearch = "Visible";
     public final transient List<EntityType<?>> hiddenEntityTypes = new ArrayList<>();
 
-    public final Property<Boolean> hideLivingEntities = Property.of(false);
     public final IntProperty entityBoundsIntersectionRequirement = IntProperty.of(20, 0, 100);
-    public final Property<Boolean> freezeEntities = Property.of(false);
-    public final Property<Boolean> freezePlayerArms = Property.of(false);
-    public final Property<Boolean> autoRefreshVisibleEntities = Property.of(true);
+
+    public AreaEntityRefreshMode entityRefreshMode = AreaEntityRefreshMode.REFRESHING_WITHIN_BOUNDS;
+
     public final Property<Boolean> hideText = Property.of(false);
     public final Property<Boolean> hideNametags = Property.of(false);
 
+    public final Property<Boolean> freezePlayerArms = Property.of(false);
     public final Property<Boolean> overrideEntityRotations = Property.of(false);
     public final IntProperty entityYawOverride = IntProperty.of(0, -180, 180).withRollover();
     public final IntProperty entityPitchOverride = IntProperty.of(0, -180, 180).withRollover();
@@ -277,7 +281,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             stopBuildingButton.active = false;
             builder.row.child(stopBuildingButton);
 
-            WikiRendererUI.dynamicLabel(builder.row, () -> {
+            WikiRendererUI.dynamicText(builder.row, () -> {
                 MutableComponent meshStatusText;
                 if (!mesh.getMeshState().isBuildStage) {
                     meshStatusText = Translate.gui("mesh_ready").withStyle(ChatFormatting.GREEN);
@@ -312,6 +316,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         }));
 
         WikiRendererUI.text(container, "block_visibility", true);
+        container.child(this.buildResetBlockAndEntityOverridesButton(renderable));
         WikiRendererUI.booleanControl(container, this.hideMesh, "hide_blocks");
         this.hideMesh.addRebuildListener(screen);
         if (!this.hideMesh.get()) {
@@ -334,55 +339,114 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                 editField.setResponder(text -> entityTypeSearch = text);
 
                 WikiRendererUI.text(container, "visible_keyword", 3);
-                WikiRendererUI.dynamicLabel(container, () -> Translate.gui("hidden_entities_amount", hiddenEntityTypes.size()));
+                WikiRendererUI.dynamicText(container, () -> Translate.gui("hidden_entities_amount", hiddenEntityTypes.size()));
 
                 container.child(new SearchableEntityListComponent(hiddenEntityTypes, () -> entityTypeSearch, () -> renderable.entities));
             }
 
-            WikiRendererUI.intPercentageControl(screen, container, this.entityBoundsIntersectionRequirement, "entity_collision_threshold_requirement");
+            WikiRendererUI.text(container, "selected_entity_refresh_mode", false).margins(Insets.of(10, 0, 5, 0));
+            DropdownComponent refreshModeOptionsComponent = UIComponents.dropdown(Sizing.content());
+            refreshModeOptionsComponent.closeWhenNotHovered(false);
+            refreshModeOptionsComponent.padding(Insets.of(5));
+            refreshModeOptionsComponent.surface(Surface.blur(10, 20));
 
-            WikiRendererUI.booleanControl(container, this.freezeEntities, "freeze_entities");
-            this.freezeEntities.addRebuildListener(screen);
-            if (!this.freezeEntities.get()) {
-                WikiRendererUI.booleanControl(container, this.freezePlayerArms, "freeze_player_arms");
+            for (AreaEntityRefreshMode refreshMode : AreaEntityRefreshMode.values()) {
+                MutableComponent text = Translate.gui("entity_refresh_mode_" + refreshMode.name().toLowerCase());
+                if (entityRefreshMode == refreshMode) {
+                    text = Translate.gui("selected", text.withStyle(switch (refreshMode) {
+                        case REFRESHING_WITHIN_BOUNDS -> ChatFormatting.GREEN;
+                        case NOT_REFRESHING -> ChatFormatting.YELLOW;
+                        case NOT_REFRESHING_AND_FROZEN -> ChatFormatting.RED;
+                    }));
+                    text.withStyle(ChatFormatting.WHITE);
+                } else {
+                    text.withStyle(ChatFormatting.GRAY);
+                }
+
+                refreshModeOptionsComponent.button(text, b -> {
+                    entityRefreshMode = refreshMode;
+                    screen.guiRebuildScheduled = true;
+                });
             }
+            container.child(refreshModeOptionsComponent);
 
-            WikiRendererUI.booleanControl(container, this.autoRefreshVisibleEntities, "auto_refresh_visible_entities");
+            if (entityRefreshMode == AreaEntityRefreshMode.REFRESHING_WITHIN_BOUNDS) {
+                WikiRendererUI.intPercentageControl(screen, container, this.entityBoundsIntersectionRequirement, "entity_collision_threshold_requirement");
+            }
 
             WikiRendererUI.booleanControl(container, this.hideText, "hide_text");
             this.hideText.addRebuildListener(screen);
             if (!this.hideText.get()) {
                 WikiRendererUI.booleanControl(container, this.hideNametags, "hide_nametags");
             }
+
+            WikiRendererUI.text(container, "entity_overrides", 10);
+            WikiRendererUI.booleanControl(container, this.overrideEntityRotations, "override_rotations");
+            WikiRendererUI.intControl(screen, container, entityYawOverride, "entity_data.yaw");
+            WikiRendererUI.intControl(screen, container, entityPitchOverride, "entity_data.pitch");
+            WikiRendererUI.intControl(screen, container, entityRotationOverride, "entity_data.rotation");
+            WikiRendererUI.booleanControl(container, toggleInvisibilityForEntities, "entity_data.invisible");
+
+            WikiRendererUI.conditionalBooleanControl(container, this.freezePlayerArms, "freeze_player_arms", () -> renderable.hasEntityType(Avatar.class)
+                                                                                                                   && entityRefreshMode != AreaEntityRefreshMode.NOT_REFRESHING_AND_FROZEN);
+            WikiRendererUI.conditionalBooleanControl(container, useSteveSkinForEntities, "entity_data.steve", () -> renderable.hasEntityType(Avatar.class));
+            WikiRendererUI.conditionalBooleanControl(container, forceSmallArmsForEntities, "entity_data.small_arms", () -> renderable.hasEntityType(Avatar.class));
+            WikiRendererUI.conditionalBooleanControl(container, hideHeldItemsForEntities, "entity_data.hide_held_items",
+                    () -> renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty()));
+            WikiRendererUI.conditionalBooleanControl(container, hideArmorForEntities, "entity_data.hide_armor",
+                    () -> renderable.hasLivingEntityProperty(e -> {
+                        EntityRenderer<? super LivingEntity, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
+                        if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
+                            return ((LivingEntityRendererAccessor) livingEntityRenderer).wikirenderer$getLayers().stream().anyMatch(l -> l instanceof HumanoidArmorLayer<?, ?, ?>);
+                        }
+
+                        return false;
+                    }));
+            WikiRendererUI.conditionalBooleanControl(container, hideEnchantmentsForEntities, "entity_data.hide_enchantments",
+                    () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
+
+            LabelComponent label = new AutoResizingLabelComponent(Translate.gui("advanced_entity_data_activation"));
+            label.color(Color.ofFormatting(ChatFormatting.GRAY));
+            label.margins(Insets.of(2).withTop(6));
+            container.child(label);
+
+            container.child(renderable.advancedPropertiesComponent);
         }
+    }
 
-        WikiRendererUI.text(container, "entity_data", true);
-        container.child(renderable.advancedPropertiesComponent);
+    private UIComponent buildResetBlockAndEntityOverridesButton(AreaRenderable renderable) {
+        return UIComponents.button(Translate.gui("reset_block_and_entity_overrides"), (ButtonComponent button) -> {
+            this.hideMesh.setToDefault();
+            this.hideFluids.setToDefault();
+            this.hideBeaconBeams.setToDefault();
+            this.hideEntities.setToDefault();
+            this.hideLivingEntities.setToDefault();
+            this.showHiddenEntitiesList.setToDefault();
+            this.entityTypeSearch = "Visible";
+            this.hiddenEntityTypes.clear();
+            this.entityRefreshMode = AreaEntityRefreshMode.REFRESHING_WITHIN_BOUNDS;
+            this.entityBoundsIntersectionRequirement.setToDefault();
+            this.hideText.setToDefault();
+            this.hideNametags.setToDefault();
+            this.overrideEntityRotations.setToDefault();
+            this.entityYawOverride.setToDefault();
+            this.entityPitchOverride.setToDefault();
+            this.entityRotationOverride.setToDefault();
+            this.toggleInvisibilityForEntities.setToDefault();
+            this.freezePlayerArms.setToDefault();
+            this.useSteveSkinForEntities.setToDefault();
+            this.forceSmallArmsForEntities.setToDefault();
+            this.hideHeldItemsForEntities.setToDefault();
+            this.hideArmorForEntities.setToDefault();
+            this.hideEnchantmentsForEntities.setToDefault();
+            AreaRenderable.ENTITY_SPECIFIC_OVERRIDES_BY_ID.clear();
+            renderable.selectedEntityId = null;
+            renderable.renderStateOverrides = null;
+            this.emulateDaylight.setToDefault();
+            this.useFullBrightGamma.setToDefault();
+            this.useNightVision.setToDefault();
 
-        WikiRendererUI.text(container, "entity_overrides", 10);
-        WikiRendererUI.booleanControl(container, this.overrideEntityRotations, "override_rotations");
-        WikiRendererUI.intControl(screen, container, entityYawOverride, "entity_data.yaw");
-        WikiRendererUI.intControl(screen, container, entityPitchOverride, "entity_data.pitch");
-        WikiRendererUI.intControl(screen, container, entityRotationOverride, "entity_data.rotation");
-        WikiRendererUI.booleanControl(container, toggleInvisibilityForEntities, "entity_data.invisible");
-
-        WikiRendererUI.conditionalBooleanControl(container, useSteveSkinForEntities, "entity_data.steve",
-                () -> renderable.hasEntityType(Avatar.class));
-        WikiRendererUI.conditionalBooleanControl(container, forceSmallArmsForEntities, "entity_data.small_arms",
-                () -> renderable.hasEntityType(Avatar.class));
-        WikiRendererUI.conditionalBooleanControl(container, hideHeldItemsForEntities, "entity_data.hide_held_items",
-                () -> renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty()));
-        WikiRendererUI.conditionalBooleanControl(container, hideArmorForEntities, "entity_data.hide_armor",
-                () -> renderable.hasLivingEntityProperty(e -> {
-                    EntityRenderer<? super LivingEntity, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
-                    if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
-                        return ((LivingEntityRendererAccessor) livingEntityRenderer).wikirenderer$getLayers().stream().anyMatch(l -> l instanceof HumanoidArmorLayer<?, ?, ?>);
-                    }
-
-                    return false;
-                }));
-        WikiRendererUI.conditionalBooleanControl(container, hideEnchantmentsForEntities, "entity_data.hide_enchantments",
-                () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
+        }).margins(Insets.of(5, 0, 0, 0));
     }
 
     @Override

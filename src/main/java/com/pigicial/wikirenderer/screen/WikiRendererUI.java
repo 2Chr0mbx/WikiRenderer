@@ -73,8 +73,18 @@ public class WikiRendererUI {
         }
     }
 
+    public static void booleanControl(FlowLayout container, Property<Boolean> property, String key, Object... args) {
+        container.child(new PropertyCheckboxComponent(Translate.gui(key, args), property).margins(Insets.top(5)));
+    }
+
+    public static void conditionalBooleanControl(FlowLayout container, Property<Boolean> property, String key, Supplier<Boolean> displayCondition) {
+        UIComponent checkbox = new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5));
+        container.child(new DynamicComponent(checkbox, displayCondition));
+    }
+
     public static LabelComponent text(FlowLayout container, String key, boolean extraVerticalMargins) {
-        LabelComponent label = UIComponents.label(Translate.gui(key)).shadow(true);
+        LabelComponent label = new AutoResizingLabelComponent(Translate.gui(key));
+        label.shadow(true);
         if (extraVerticalMargins) {
             label.margins(Insets.top(20));
         }
@@ -85,7 +95,8 @@ public class WikiRendererUI {
     }
 
     public static LabelComponent text(FlowLayout container, String key, int topMargins) {
-        LabelComponent label = UIComponents.label(Translate.gui(key)).shadow(true);
+        LabelComponent label = new AutoResizingLabelComponent(Translate.gui(key));
+        label.shadow(true);
         label.margins(Insets.top(topMargins));
         label.margins(label.margins().get().withBottom(5));
 
@@ -94,7 +105,8 @@ public class WikiRendererUI {
     }
 
     public static LabelComponent text(FlowLayout container, Component component, int topMargins) {
-        LabelComponent label = UIComponents.label(component).shadow(true);
+        LabelComponent label = new AutoResizingLabelComponent(component);
+        label.shadow(true);
         label.margins(Insets.top(topMargins));
         label.margins(label.margins().get().withBottom(5));
 
@@ -102,21 +114,12 @@ public class WikiRendererUI {
         return label;
     }
 
-    public static DynamicLabelComponent dynamicLabel(FlowLayout container, Supplier<Component> content) {
+    public static DynamicLabelComponent dynamicText(FlowLayout container, Supplier<Component> content) {
         DynamicLabelComponent label = new DynamicLabelComponent(content).shadow(false);
         label.margins(Insets.bottom(5));
 
         container.child(label);
         return label;
-    }
-
-    public static void booleanControl(FlowLayout container, Property<Boolean> property, String key, Object... args) {
-        container.child(new PropertyCheckboxComponent(Translate.gui(key, args), property).margins(Insets.top(5)));
-    }
-
-    public static void conditionalBooleanControl(FlowLayout container, Property<Boolean> property, String key, Supplier<Boolean> displayCondition) {
-        UIComponent checkbox = new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5));
-        container.child(new DynamicComponent(checkbox, displayCondition));
     }
 
     public static void drawExportProgressBar(GuiGraphics context, int x, int y, int drawWidth, int barWidth, double speed) {

@@ -1,14 +1,24 @@
 package com.pigicial.wikirenderer.render.screen;
 
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.components.AutoResizingLabelComponent;
+import com.pigicial.wikirenderer.components.DynamicComponent;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
+import com.pigicial.wikirenderer.util.DrawType;
+import com.pigicial.wikirenderer.util.Translate;
+import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Color;
+import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import org.joml.Matrix4fStack;
 
@@ -16,8 +26,10 @@ public class ContainerScreenPropertyBundle extends DefaultCroppablePropertyBundl
 
     public static final ContainerScreenPropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new ContainerScreenPropertyBundle());
 
-    private final IntProperty guiScaleResolution = IntProperty.of(3, 1, 20);
-    public final Property<Boolean> renderOneScaleLower = Property.of(true);
+    public final IntProperty exportGuiScale = IntProperty.of(3, 1, 20);
+    public final IntProperty previewGuiScale = IntProperty.of(1, 1, 5); // arbitrary max, gets re-calculated later
+    public final Property<Boolean> hideItems = Property.of(false);
+    public final Property<Boolean> hideText = Property.of(false);
 
     @Override
     public boolean allowForRescaling() {
@@ -31,49 +43,52 @@ public class ContainerScreenPropertyBundle extends DefaultCroppablePropertyBundl
 
     @Override
     public void buildMainGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+        WikiRendererUI.text(container, "screen_render_options", 10);
 
+        Window window = Minecraft.getInstance().getWindow();
+        int width = window.getWidth();
+        int height = window.getHeight();
+
+        previewGuiScale.setMaxValue(ContainerScreenRenderable.determineScaleFromResolution(width, height));
+        WikiRendererUI.intControl(screen, container, previewGuiScale, "preview_gui_scale");
+        WikiRendererUI.booleanControl(container, hideItems, "hide_items");
+        WikiRendererUI.booleanControl(container, hideText, "hide_text");
     }
 
     @Override
-    public void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(this.guiScaleResolution.get()), "gui_scale_resolution", Sizing.fixed(28));
+    public void buildExportResolutionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
+        ContainerScreenRenderable renderable = (ContainerScreenRenderable) r;
+
+        EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(this.exportGuiScale.get()), "gui_scale_resolution", Sizing.fixed(28));
         resolutionField.setFilter(s -> s.matches("\\d{0,3}"));
         resolutionField.setResponder(s -> {
             if (s.isBlank()) return;
             int scale = Integer.parseInt(s);
 
-            int resolution = findValidResolutionForTargetScale(scale, this.renderOneScaleLower.get());
+            int[] resolutionWidthHeight = renderable.previewScreenSizeData.getWidthAndHeightForHigherScale(scale);
+            int resolution = Math.max(resolutionWidthHeight[0], resolutionWidthHeight[1]);
 
             if ((scale < 1 || resolution > RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
-                this.guiScaleResolution.set(scale);
-                this.setExportResolution(renderable, resolution);
+                this.exportGuiScale.set(scale);
                 screen.exportButton.active = true;
             }
         });
 
-        WikiRendererUI.booleanControl(container, renderOneScaleLower, "render_gui_one_scale_lower");
-    }
-
-    private int findValidResolutionForTargetScale(int targetScale, boolean renderOneScaleLower) {
-        for (int resolution = 0; resolution <= 9600; resolution += 80) {
-            int scale = ContainerScreenRenderable.determineScaleFromResolution(resolution, resolution, renderOneScaleLower);
-            if (scale == targetScale) {
-                return resolution;
-            }
-        }
-
-        return 0;
+        LabelComponent label = new AutoResizingLabelComponent(Translate.gui("unicode_font_mismatched_scale_notice"));
+        label.color(Color.ofFormatting(ChatFormatting.GRAY));
+        label.margins(Insets.of(2).withTop(6));
+        container.child(new DynamicComponent(label, () -> Minecraft.getInstance().isEnforceUnicode() && this.exportGuiScale.get() % 2 != 0));
     }
 
     @Override
     public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
-        this.setExportResolution(renderable, this.findValidResolutionForTargetScale(this.guiScaleResolution.get(), this.renderOneScaleLower.get()));
-
         int framebufferWidth = WikiRenderer.mainTargetOverride.width;
         int framebufferHeight = WikiRenderer.mainTargetOverride.height;
-        int guiScale = ContainerScreenRenderable.determineScaleFromResolution(framebufferWidth, framebufferHeight, this.renderOneScaleLower.get());
+        int guiScale = WikiRenderer.currentDrawType == DrawType.PREVIEW
+                ? this.previewGuiScale.get()
+                : this.exportGuiScale.get();
 
         int width = (int) (framebufferWidth / (double) guiScale);
         int screenWidth = framebufferWidth / (double) guiScale > width ? width + 1 : width;

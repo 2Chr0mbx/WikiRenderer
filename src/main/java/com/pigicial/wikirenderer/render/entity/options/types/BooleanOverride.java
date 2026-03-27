@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.entity.options.types;
 
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import net.minecraft.ChatFormatting;
@@ -33,9 +34,9 @@ public class BooleanOverride<S extends EntityRenderState> extends OptionalOverri
 
     private Component label() {
         if (this.getValue()) {
-            return Component.literal("True").withStyle(!this.enabled ? ChatFormatting.DARK_GRAY : ChatFormatting.GREEN);
+            return Translate.gui("true").withStyle(!this.enabled ? ChatFormatting.DARK_GRAY : ChatFormatting.GREEN);
         } else {
-            return Component.literal("False").withStyle(!this.enabled ? ChatFormatting.DARK_GRAY : ChatFormatting.RED);
+            return Translate.gui("false").withStyle(!this.enabled ? ChatFormatting.DARK_GRAY : ChatFormatting.RED);
         }
     }
 

@@ -2,30 +2,30 @@ package com.pigicial.wikirenderer.components;
 
 import com.pigicial.wikirenderer.render.entity.options.EntityTypeSpecificOverrides;
 import com.pigicial.wikirenderer.render.entity.options.types.OptionalOverride;
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.DropdownComponent;
-import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.OwoUIGraphics;
-import io.wispforest.owo.ui.core.Sizing;
-import io.wispforest.owo.ui.core.Surface;
-import net.minecraft.world.entity.Entity;
+import io.wispforest.owo.ui.component.LabelComponent;
+import io.wispforest.owo.ui.core.*;
+import net.minecraft.ChatFormatting;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
 
-    private final Supplier<Entity> entitySupplier;
+    private final Supplier<Integer> entitySupplier;
     private final Supplier<EntityTypeSpecificOverrides<?>> overridesSupplier;
 
-    private Entity lastSavedEntity = null;
+    private Integer lastSavedEntityId = null;
 
-    public EntityTypeSpecificPropertiesComponent(Supplier<Entity> entitySupplier, Supplier<EntityTypeSpecificOverrides<?>> overridesSupplier) {
+    public EntityTypeSpecificPropertiesComponent(Supplier<Integer> entityIdSupplier, Supplier<EntityTypeSpecificOverrides<?>> overridesSupplier) {
         super(Sizing.content());
-        this.entitySupplier = entitySupplier;
+        this.entitySupplier = entityIdSupplier;
         this.overridesSupplier = overridesSupplier;
 
         this.closeWhenNotHovered(false);
-        this.padding(Insets.right(5));
-        this.surface(Surface.blur(10, 20));
+        this.padding(Insets.of(7, 0, 0, 5));
+        this.surface(Surface.blur(10, 10));
     }
 
     @Override
@@ -35,20 +35,31 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
     }
 
     public void update() {
-        Entity entity = entitySupplier.get();
-        if (entity != lastSavedEntity) {
+        Integer entityId = entitySupplier.get();
+        if (!Objects.equals(entityId, lastSavedEntityId)) {
             this.entries.clearChildren();
-            lastSavedEntity = entity;
+            this.lastSavedEntityId = entityId;
 
-            if (entity == null) return;
+            if (entityId == null) return;
 
-            EntityTypeSpecificOverrides<?> overrides = overridesSupplier.get();
+            EntityTypeSpecificOverrides<?> overrides = this.overridesSupplier.get();
             if (overrides == null) {
                 return;
             }
 
-            for (OptionalOverride<?, ?> override : overrides.getOverrides()) {
-                this.entries.child(override.buildComponent());
+            if (!overrides.getOverrides().isEmpty()) {
+                this.text(Translate.gui("advanced_entity_data").withStyle(ChatFormatting.WHITE, ChatFormatting.UNDERLINE));
+
+                LabelComponent label = new AutoResizingLabelComponent(Translate.gui("advanced_entity_data_notice"));
+                label.color(Color.ofFormatting(ChatFormatting.GRAY));
+                label.margins(Insets.of(2));
+                this.entries.child(label);
+
+                this.button(Translate.gui("reset_advanced_entity_overrides").withStyle(ChatFormatting.UNDERLINE), comp -> overrides.getOverrides().forEach(OptionalOverride::reset));
+
+                for (OptionalOverride<?, ?> override : overrides.getOverrides()) {
+                    this.entries.child(override.buildComponent());
+                }
             }
         }
     }

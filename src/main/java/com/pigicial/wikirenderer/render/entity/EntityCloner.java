@@ -40,8 +40,12 @@ public class EntityCloner {
             living.hurtTime = 0;
             living.deathTime = 0;
         }
-        clonedEntity.tick();
 
+        if (clonedEntity instanceof Leashable leashableClone && source instanceof Leashable leashableSource) {
+            leashableClone.setLeashData(leashableSource.getLeashData());
+        }
+
+        clonedEntity.tick();
 
         clonedEntity.setXRot(source.getXRot());
         clonedEntity.setYRot(source.getYRot());

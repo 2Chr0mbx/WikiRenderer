@@ -4,13 +4,14 @@ import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.GridLayout;
 import io.wispforest.owo.ui.container.UIContainers;
-import io.wispforest.owo.ui.core.*;
+import io.wispforest.owo.ui.core.HorizontalAlignment;
+import io.wispforest.owo.ui.core.Sizing;
+import io.wispforest.owo.ui.core.UIComponent;
+import io.wispforest.owo.ui.core.VerticalAlignment;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.network.chat.Component;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -21,7 +22,6 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
     protected final BiConsumer<S, T> setter;
 
     protected T value;
-    protected T lastSeenNonOverwrittenValue;
     protected boolean enabled = false;
 
     public OptionalOverride(String key, Function<S, T> getter, BiConsumer<S, T> setter) {
@@ -38,6 +38,11 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
         this.value = defaultValue;
     }
 
+    public void reset() {
+        setValue(getDefaultValue());
+        this.enabled = false;
+    }
+
     public abstract T getDefaultValue();
 
     public void setValue(T value) {
@@ -47,10 +52,6 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
 
     public T getValue() {
         return value;
-    }
-
-    public T getDisplayedValue() {
-        return enabled ? value : lastSeenNonOverwrittenValue;
     }
 
     public void apply(S renderState) {
@@ -70,7 +71,7 @@ public abstract class OptionalOverride<S extends EntityRenderState, T> {
 
         GridLayout layout = UIContainers.grid(Sizing.expand(100), Sizing.content(), 1, 2);
         layout.verticalAlignment(VerticalAlignment.CENTER);
-        layout.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), () -> this.enabled, pressed -> this.enabled = pressed), 0, 0);
+        layout.child(new SearchableEntityListComponent.LeftAlignedCheckbox(Component.literal(toDisplayName(key)), Sizing.fill(50), () -> this.enabled, pressed -> this.enabled = pressed), 0, 0);
         layout.child(controlLayout, 0, 1);
         return layout;
     }

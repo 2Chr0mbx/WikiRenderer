@@ -69,6 +69,67 @@ public class RenderableDispatcher {
         renderable.cleanUp();
     }
 
+    public static RenderTarget drawPreview(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, @Nullable Consumer<Matrix4fStack> transformer) {
+        Window window = Minecraft.getInstance().getWindow();
+        int width = window.getWidth();
+        int height = window.getHeight();
+
+        if (!renderable.renderPreviewToEntireScreenWidth()) {
+            int widthAvailable = (renderScreen.width - (renderScreen.viewportEndX - renderScreen.viewportBeginX)) * window.getGuiScale();
+            width -= widthAvailable;
+        }
+
+        if (previewTarget == null) {
+            previewTarget = new TextureTarget("WikiRenderer RenderableDispatcher Preview Framebuffer", width, height, true);
+        } else {
+            if (previewTarget.width != width || previewTarget.height != height) {
+                previewTarget.resize(width, height);
+            }
+        }
+        float aspectRatio = width / (float) height;
+
+        GlobalProperties globalProperties = GlobalProperties.get();
+        int backgroundColor = globalProperties.showBackgroundColorInExports.get() ? globalProperties.backgroundColor : 0;
+        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
+                Objects.requireNonNull(previewTarget.getColorTexture()),
+                backgroundColor,
+                Objects.requireNonNull(previewTarget.getDepthTexture()),
+                1.0
+        );
+
+        WikiRenderer.mainTargetOverride = previewTarget;
+        RenderableDispatcher.drawIntoActiveFramebuffer(DrawType.PREVIEW, renderScreen, renderable, aspectRatio, tickDelta, timeSinceCreationMs, transformer);
+        WikiRenderer.mainTargetOverride = null;
+
+        return previewTarget;
+    }
+
+    public static GpuTexture drawIntoTexture(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, int size) {
+        int width = renderable.optionallyOverrideExportWidth(size);
+        int height = renderable.optionallyOverrideExportHeight(size);
+        float aspectRatio = width / (float) height;
+        TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", width, height, true);
+
+        GlobalProperties globalProperties = GlobalProperties.get();
+        int backgroundColor = globalProperties.showBackgroundColorInExports.get() ? globalProperties.backgroundColor : 0;
+        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
+                Objects.requireNonNull(target.getColorTexture()),
+                backgroundColor,
+                Objects.requireNonNull(target.getDepthTexture()),
+                1.0
+        );
+
+        WikiRenderer.mainTargetOverride = target;
+        RenderableDispatcher.drawIntoActiveFramebuffer(DrawType.EXPORT, renderScreen, renderable, aspectRatio, tickDelta, timeSinceCreationMs, null);
+        WikiRenderer.mainTargetOverride = null;
+
+        // Release depth attachment and FBO to save on VRAM - we only need
+        // the color attachment texture to later turn into an image
+        GpuTexture texture = RenderableDispatcher.cloneColorAttachment(target);
+        target.destroyBuffers();
+        return texture;
+    }
+
     public static CompletableFuture<NativeImage> drawIntoImage(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, int size, boolean crop, Consumer<MinimapCalibratorData> calibrationDataCallback) {
         return drawIntoImage(renderScreen, renderable, tickDelta, timeSinceCreationMs, size, size, 0, crop, calibrationDataCallback);
     }
@@ -154,78 +215,6 @@ public class RenderableDispatcher {
         }
 
         return image;
-    }
-
-    public static GpuTexture drawIntoTexture(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, int size) {
-        TextureTarget target = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Framebuffer", size, size, true);
-
-        GlobalProperties globalProperties = GlobalProperties.get();
-        int backgroundColor = globalProperties.showBackgroundColorInExports.get() ? globalProperties.backgroundColor : 0;
-
-        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
-                Objects.requireNonNull(target.getColorTexture()),
-                backgroundColor,
-                Objects.requireNonNull(target.getDepthTexture()),
-                1.0
-        );
-
-        WikiRenderer.mainTargetOverride = target;
-        //RenderSystem.outputColorTextureOverride = target.getColorTextureView();
-        //RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
-
-        RenderableDispatcher.drawIntoActiveFramebuffer(DrawType.EXPORT, renderScreen, renderable, 1, tickDelta, timeSinceCreationMs, null);
-
-        //RenderSystem.outputColorTextureOverride = null;
-        // RenderSystem.outputDepthTextureOverride = null;
-        WikiRenderer.mainTargetOverride = null;
-
-        // Release depth attachment and FBO to save on VRAM - we only need
-        // the color attachment texture to later turn into an image
-        GpuTexture texture = RenderableDispatcher.cloneColorAttachment(target);
-        target.destroyBuffers();
-        return texture;
-    }
-
-    public static RenderTarget drawIntoDuplicateFramebuffer(RenderScreen renderScreen, Renderable<?> renderable, float tickDelta, long timeSinceCreationMs, @Nullable Consumer<Matrix4fStack> transformer) {
-        Window window = Minecraft.getInstance().getWindow();
-        int width = window.getWidth();
-        int height = window.getHeight();
-
-        if (!renderable.renderPreviewToEntireScreenWidth()) {
-            int widthAvailable = (renderScreen.width - (renderScreen.viewportEndX - renderScreen.viewportBeginX)) * window.getGuiScale();
-            width -= widthAvailable;
-        }
-
-        if (previewTarget == null) {
-            previewTarget = new TextureTarget("WikiRenderer RenderableDispatcher.drawIntoTexture Mirror Framebuffer", width, height, true);
-        } else {
-            if (previewTarget.width != width || previewTarget.height != height) {
-                previewTarget.resize(width, height);
-            }
-        }
-
-        GlobalProperties globalProperties = GlobalProperties.get();
-        int backgroundColor = globalProperties.showBackgroundColorInExports.get() ? globalProperties.backgroundColor : 0;
-
-        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
-                Objects.requireNonNull(previewTarget.getColorTexture()),
-                backgroundColor,
-                Objects.requireNonNull(previewTarget.getDepthTexture()),
-                1.0
-        );
-
-        WikiRenderer.mainTargetOverride = previewTarget;
-        //RenderSystem.outputColorTextureOverride = previewTarget.getColorTextureView();
-        //RenderSystem.outputDepthTextureOverride = previewTarget.getDepthTextureView();
-
-        float aspectRatio = width / (float) height;
-        RenderableDispatcher.drawIntoActiveFramebuffer(DrawType.PREVIEW, renderScreen, renderable, aspectRatio, tickDelta, timeSinceCreationMs, transformer);
-
-        //RenderSystem.outputColorTextureOverride = null;
-        //RenderSystem.outputDepthTextureOverride = null;
-        WikiRenderer.mainTargetOverride = null;
-
-        return previewTarget;
     }
 
     /**

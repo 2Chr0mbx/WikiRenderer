@@ -21,6 +21,18 @@ public class IntProperty extends NumberProperty<Integer> {
         return new IntProperty(defaultValue, min, max);
     }
 
+    public void setMaxValue(int max) {
+        if (this.max != max) {
+            this.max = max;
+            this.span = max - min;
+            if (this.value > max) {
+                this.value = max;
+            }
+
+            this.invokeListeners();
+        }
+    }
+
     public IntProperty withRollover() {
         this.allowRollover = true;
         return this;
@@ -42,11 +54,12 @@ public class IntProperty extends NumberProperty<Integer> {
             }
         }
 
+        value = Math.min(max, Math.max(value, min));
         super.set(value);
     }
 
     @Override
-    public void modify(double byDouble) {
+    public synchronized void modify(double byDouble) {
         int by = (int) Math.round(byDouble);
         if (this.allowRollover) {
             this.value += by;
@@ -56,17 +69,19 @@ public class IntProperty extends NumberProperty<Integer> {
             this.value = Mth.clamp(this.value + by, this.min, this.max);
         }
 
+        value = Math.min(max, Math.max(value, min));
         this.invokeListeners();
     }
 
     @Override
     public double progress() {
-        return (this.value - this.min) / (double) this.span;
+        return span == 0 ? 1 : (this.value - this.min) / (double) this.span;
     }
 
     @Override
-    public void setFromProgress(double progress) {
+    public synchronized void setFromProgress(double progress) {
         this.value = (int) Math.round(this.min + progress * this.span);
+        this.value = Math.min(max, Math.max(value, min));
         this.invokeListeners();
     }
 }

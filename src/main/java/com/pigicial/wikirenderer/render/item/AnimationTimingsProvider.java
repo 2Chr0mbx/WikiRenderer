@@ -15,7 +15,7 @@ public interface AnimationTimingsProvider {
 
     default void buildTimingsSection(FlowLayout layout) {
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(layout)) {
-            WikiRendererUI.dynamicLabel(builder.row, () -> {
+            WikiRendererUI.dynamicText(builder.row, () -> {
                 List<List<Integer>> textureTimings = this.getTicksToFullyAnimate();
                 if (textureTimings == null || textureTimings.isEmpty() || textureTimings.getFirst().isEmpty()) return Component.empty();
 

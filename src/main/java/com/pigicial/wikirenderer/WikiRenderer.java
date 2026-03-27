@@ -10,6 +10,7 @@ import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.pigicial.wikirenderer.render.OrthographicSort;
 import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
+import com.pigicial.wikirenderer.render.area.MeshWorldOverrides;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
 import com.pigicial.wikirenderer.util.DrawType;
@@ -42,9 +43,11 @@ public class WikiRenderer implements ClientModInitializer {
     public static AnimationHandler currentAnimationHandler = null;
     public static ParticleDisplayCondition particleDisplayCondition = ParticleDisplayCondition.SHOW_ALL;
     public static DrawType currentDrawType = null;
+
+    public static MeshWorldOverrides currentWorldOverrides;
+    public static boolean inAreaRenderDraw = false;
     public static boolean inEntityDraw = false;
     public static boolean inSpriteEntityDraw = false;
-    public static boolean inAreaRenderDraw = false;
     public static boolean inContainerScreenDraw = false;
     public static boolean inRenderableDraw = false;
     public static boolean inRenderableTick = false;

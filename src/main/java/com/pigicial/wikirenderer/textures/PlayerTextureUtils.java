@@ -8,7 +8,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
-import com.mojang.util.UUIDTypeAdapter;
+import com.pigicial.wikirenderer.util.NullSafeUUIDTypeAdapter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.core.component.DataComponents;
@@ -24,7 +24,9 @@ import java.util.UUID;
 
 public class PlayerTextureUtils {
 
-    public static final Gson GSON = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).setPrettyPrinting().create();
+    public static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(UUID.class, new NullSafeUUIDTypeAdapter())
+            .setPrettyPrinting().create();
 
     @Nullable
     public static TextureData getTextureDataFromPlayerHead(ItemStack itemStack) {

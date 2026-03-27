@@ -2,10 +2,10 @@ package com.pigicial.wikirenderer.render.entity.options.types;
 
 import com.pigicial.wikirenderer.components.FullWidthCollapsibleContainer;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
-import io.wispforest.owo.ui.container.CollapsibleContainer;
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.container.UIContainers;
-import io.wispforest.owo.ui.core.*;
+import io.wispforest.owo.ui.core.Sizing;
+import io.wispforest.owo.ui.core.UIComponent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.network.chat.Component;
@@ -28,13 +28,14 @@ public class EnumOverride<S extends EntityRenderState, E extends Enum<E>> extend
     public UIComponent buildComponent() {
         SearchableEntityListComponent.LeftAlignedCheckbox checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(
                 Component.literal(toDisplayName(key)),
+                Sizing.fill(50),
                 () -> this.enabled,
                 pressed -> this.enabled = pressed
         );
 
         FullWidthCollapsibleContainer layout = new FullWidthCollapsibleContainer(checkbox, () -> {
             E value = getValue();
-            return Component.literal(value == null ? "Not Set" : toDisplayName(value.toString()));
+            return value == null ? Translate.gui("not_set") : Component.literal(toDisplayName(value.toString()));
         }, false);
         for (E enumOption : enumClass.getEnumConstants()) {
             layout.child(addOption(enumOption));
@@ -50,7 +51,7 @@ public class EnumOverride<S extends EntityRenderState, E extends Enum<E>> extend
 
     private SearchableEntityListComponent.DynamicTextButton addOption(@Nullable E enumOption) {
         return new SearchableEntityListComponent.DynamicTextButton(() -> {
-            MutableComponent component = Component.literal(enumOption == null ? "None (Null)" : toDisplayName(enumOption.toString()));
+            MutableComponent component = enumOption == null ? Translate.gui("not_set") : Component.literal(toDisplayName(enumOption.toString()));
 
             boolean isOption = getValue() == enumOption;
             ChatFormatting color = this.enabled ? (isOption ? ChatFormatting.GREEN : ChatFormatting.WHITE) : ChatFormatting.DARK_GRAY;

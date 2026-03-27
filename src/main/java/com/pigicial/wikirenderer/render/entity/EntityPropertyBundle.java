@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
+import com.pigicial.wikirenderer.components.AutoResizingLabelComponent;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
 import com.pigicial.wikirenderer.property.*;
@@ -10,10 +11,14 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
+import io.wispforest.owo.ui.core.UIComponent;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -62,8 +67,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     public final IntProperty entityRotation = IntProperty.of(0, -180, 180).withRollover();
 
     // handle separately for more customization
-    public final Property<Boolean> overrideEnderDragonBodyRotations = Property.of(true);
-    public final IntProperty enderDragonRotation = IntProperty.of(0, -180, 180).withRollover();
+    public final Property<Boolean> overrideEnderDragonFlapAnimation = Property.of(true);
 
     public final Property<Boolean> hideRedDamageGlow = Property.of(true);
     public final Property<Boolean> useSteveSkin = Property.of(false);
@@ -189,10 +193,9 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             renderable.cachedScaleMultiplier = null;
         })).margins(Insets.of(5, 0, 0, 0));
 
-        WikiRendererUI.text(container, "entity_data", true);
-        container.child(renderable.advancedPropertiesComponent);
-
         WikiRendererUI.text(container, "entity_render_options", true);
+        container.child(this.buildResetEntityOverridesButton(renderable));
+
         if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entities");
             this.useLiveEntity.futureListen(screen, (booleanProperty, value) -> {
@@ -217,39 +220,43 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             if (showSurroundingEntities.get()) {
                 WikiRendererUI.doubleControl(screen, container, surroundingEntitiesRadius, "surrounding_entity_radius");
                 WikiRendererUI.booleanControl(container, this.autoRefreshVisibleSurroundingEntities, "auto_refresh_visible_entities");
-            }
 
-            WikiRendererUI.booleanControl(container, this.showHiddenSurroundingEntitiesList, "show_hidden_entities_list");
-            this.showHiddenSurroundingEntitiesList.addRebuildListener(screen);
-            if (showHiddenSurroundingEntitiesList.get()) {
-                EditBox editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
-                editField.setFilter(s -> true);
-                editField.setResponder(text -> entityTypeSearch = text);
+                WikiRendererUI.booleanControl(container, this.showHiddenSurroundingEntitiesList, "show_hidden_surrounding_entities_list");
+                this.showHiddenSurroundingEntitiesList.addRebuildListener(screen);
+                if (showHiddenSurroundingEntitiesList.get()) {
+                    EditBox editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
+                    editField.setFilter(s -> true);
+                    editField.setResponder(text -> entityTypeSearch = text);
 
-                WikiRendererUI.text(container, "visible_keyword", 3);
-                WikiRendererUI.dynamicLabel(container, () -> Translate.gui("hidden_entities_amount", hiddenSurroundingEntityTypes.size()));
+                    WikiRendererUI.text(container, "visible_keyword", 3);
+                    WikiRendererUI.dynamicText(container, () -> Translate.gui("hidden_entities_amount", hiddenSurroundingEntityTypes.size()));
 
-                container.child(new SearchableEntityListComponent(hiddenSurroundingEntityTypes, () -> entityTypeSearch, () -> {
-                    List<Entity> shownEntities = new ArrayList<>();
-                    renderable.forBaseAndSurroundingEntities(renderable.getUsedEntity(), shownEntities::add);
-                    return shownEntities;
-                }));
+                    container.child(new SearchableEntityListComponent(hiddenSurroundingEntityTypes, () -> entityTypeSearch, () -> {
+                        List<Entity> shownEntities = new ArrayList<>();
+                        renderable.forBaseAndSurroundingEntities(renderable.getUsedEntity(), (entity, isSurrounding) -> {
+                            if (isSurrounding) {
+                                shownEntities.add(entity);
+                            }
+                        });
+                        return shownEntities;
+                    }));
+                }
             }
         }
 
-        WikiRendererUI.conditionalBooleanControl(container, this.invisible, "entity_data.invisible", () -> renderable.hasEntityType(LivingEntity.class));
-
         WikiRendererUI.text(container, "entity_data", 10);
-        container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
-            Vec3 coords = renderable.getUsedEntity().position();
+        if (renderable.liveNonTickableEntity != null) {
+            container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
+                Vec3 coords = renderable.getUsedEntity().position();
 
-            DecimalFormat df = new DecimalFormat("0.#######");
-            String text = df.format(coords.x) + " " + df.format(coords.y) + " " + df.format(coords.z);
+                DecimalFormat df = new DecimalFormat("0.#######");
+                String text = df.format(coords.x) + " " + df.format(coords.y) + " " + df.format(coords.z);
 
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (clipboard, contents) -> {
-            });
-            screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
-        }));
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (clipboard, contents) -> {
+                });
+                screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
+            }));
+        }
 
         renderable.isNametagOnlyRenderedData = EntityRenderBoundsUtil.isNametagOnlyRenderedData(renderable.getUsedEntity());
         if (!renderable.isNametagOnlyRenderedData && !spriteRendering.get()) {
@@ -268,8 +275,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.conditionalIntControl(screen, container, this.entityRotation, "entity_data.rotation", () -> renderable.hasEntityType(LivingEntity.class));
 
         // dragons
-        WikiRendererUI.conditionalBooleanControl(container, this.overrideEnderDragonBodyRotations, "override_ender_dragon_body_rotations", () -> renderable.hasEntityType(EnderDragon.class));
-        WikiRendererUI.conditionalIntControl(screen, container, this.enderDragonRotation, "entity_data.dragon_rotation", () -> renderable.hasEntityType(EnderDragon.class));
+        WikiRendererUI.conditionalBooleanControl(container, this.overrideEnderDragonFlapAnimation, "override_dragon_flap_animation", () -> renderable.hasEntityType(EnderDragon.class));
 
         WikiRendererUI.conditionalBooleanControl(container, this.hideRedDamageGlow, "entity_data.hide_red_damage_glow", () -> renderable.hasEntityType(LivingEntity.class) || renderable.hasEntityType(EnderDragon.class));
 
@@ -279,30 +285,82 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             WikiRendererUI.conditionalBooleanControl(container, this.forceSmallArms, "entity_data.small_arms", () -> renderable.hasEntityType(Avatar.class));
         }
 
-        WikiRendererUI.conditionalBooleanControl(container, this.hideHeldItems, "entity_data.hide_held_items",
-                () -> renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty()));
-        WikiRendererUI.conditionalBooleanControl(container, this.hideArmor, "entity_data.hide_armor",
-                () -> renderable.hasLivingEntityProperty(e -> {
-                    EntityRenderer<? super LivingEntity, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
-                    if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
-                        return ((LivingEntityRendererAccessor) livingEntityRenderer).wikirenderer$getLayers().stream().anyMatch(l -> l instanceof HumanoidArmorLayer<?, ?, ?>);
-                    }
+        WikiRendererUI.conditionalBooleanControl(container, this.hideHeldItems, "entity_data.hide_held_items", () -> shouldShowHideHeldItemsOption(renderable));
+        WikiRendererUI.conditionalBooleanControl(container, this.hideArmor, "entity_data.hide_armor", () -> shouldShowHideArmorOption(renderable));
+        WikiRendererUI.conditionalBooleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments", () -> shouldShowHideEnchantmentsOption(renderable));
+        WikiRendererUI.conditionalBooleanControl(container, this.invisible, "entity_data.invisible", () -> renderable.hasEntityType(LivingEntity.class));
 
-                    return false;
-                }));
-        WikiRendererUI.conditionalBooleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments",
-                () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
+        LabelComponent label = new AutoResizingLabelComponent(Translate.gui("advanced_entity_data_activation"));
+        label.color(Color.ofFormatting(ChatFormatting.GRAY));
+        label.margins(Insets.of(2).withTop(6));
+        container.child(label);
 
+        container.child(renderable.advancedPropertiesComponent);
+    }
+
+    private boolean shouldShowHideHeldItemsOption(EntityRenderable renderable) {
+        return renderable.hasLivingEntityProperty(living -> !living.getMainHandItem().isEmpty() || !living.getOffhandItem().isEmpty());
+    }
+
+    private boolean shouldShowHideArmorOption(EntityRenderable renderable) {
+        return renderable.hasLivingEntityProperty(e -> {
+            EntityRenderer<? super LivingEntity, ?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
+            if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
+                return ((LivingEntityRendererAccessor) livingEntityRenderer).wikirenderer$getLayers().stream().anyMatch(l -> l instanceof HumanoidArmorLayer<?, ?, ?>);
+            }
+
+            return false;
+        });
+    }
+
+    private boolean shouldShowHideEnchantmentsOption(EntityRenderable renderable) {
+        return renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil()));
+    }
+
+    private UIComponent buildResetEntityOverridesButton(EntityRenderable renderable) {
+        return UIComponents.button(Translate.gui("reset_entity_overrides"), (ButtonComponent button) -> {
+            this.showSurroundingEntities.setToDefault();
+            this.surroundingEntitiesRadius.setToDefault();
+            this.showHiddenSurroundingEntitiesList.setToDefault();
+            this.entityTypeSearch = "Visible";
+            this.hiddenSurroundingEntityTypes.clear();
+            this.autoRefreshVisibleSurroundingEntities.setToDefault();
+            this.surroundingParticlesRadius.setToDefault();
+            this.useLiveEntity.setToDefault();
+            this.tickEntityAnimations.setToDefault();
+            this.hideNametags.setToDefault();
+            this.overrideHeadRotations.setToDefault();
+            this.hideNametags.setToDefault();
+            this.overrideHeadRotations.setToDefault();
+            this.yaw.setToDefault();
+            this.pitch.setToDefault();
+            this.overrideBodyRotations.setToDefault();
+            this.entityRotation.setToDefault();
+            this.overrideEnderDragonFlapAnimation.setToDefault();
+            this.hideRedDamageGlow.setToDefault();
+            this.useSteveSkin.setToDefault();
+            this.hideHeldItems.setToDefault();
+            this.hideArmor.setToDefault();
+            this.hideEnchantments.setToDefault();
+            this.invisible.setToDefault();
+            this.forceSmallArms.setToDefault();
+            EntityRenderable.ENTITY_SPECIFIC_OVERRIDES_BY_ID.clear();
+            renderable.selectedEntityId = null;
+            renderable.renderStateOverrides = null;
+        }).margins(Insets.of(5, 0, 0, 0));
     }
 
     @Override
-    public void buildRenderOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
+    public void buildRenderOptionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
+        EntityRenderable renderable = (EntityRenderable) r;
         super.buildRenderOptionGUIControls(renderable, screen, container);
 
-        WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "show_surrounding_particles");
-        GlobalProperties.get().tickParticles.addRebuildListener(screen);
-        if (GlobalProperties.get().tickParticles.get()) {
-            WikiRendererUI.doubleControl(screen, container, surroundingParticlesRadius, "surrounding_particles_radius");
+        if (renderable.liveNonTickableEntity != null) {
+            WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "show_surrounding_particles");
+            GlobalProperties.get().tickParticles.addRebuildListener(screen);
+            if (GlobalProperties.get().tickParticles.get()) {
+                WikiRendererUI.doubleControl(screen, container, surroundingParticlesRadius, "surrounding_particles_radius");
+            }
         }
     }
 

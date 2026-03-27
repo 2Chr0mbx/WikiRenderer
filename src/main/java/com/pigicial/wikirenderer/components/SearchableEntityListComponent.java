@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.components;
 
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.DropdownComponent;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -10,7 +11,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -18,6 +19,9 @@ public class SearchableEntityListComponent extends DropdownComponent {
     private final List<EntityType<?>> hiddenEntityTypes;
     private final Supplier<String> searchFilter;
     private final Supplier<List<Entity>> visibleEntitiesSupplier;
+
+    private final Set<EntityType<?>> shownOptions = new HashSet<>();
+    private boolean needsReorganization = false;
 
     public SearchableEntityListComponent(List<EntityType<?>> hiddenEntityTypes, Supplier<String> searchFilter, Supplier<List<Entity>> visibleEntitiesSupplier) {
         super(Sizing.content());
@@ -28,6 +32,8 @@ public class SearchableEntityListComponent extends DropdownComponent {
 
         this.hiddenEntityTypes = hiddenEntityTypes;
         this.searchFilter = searchFilter;
+
+        update();
     }
 
     @Override
@@ -36,81 +42,107 @@ public class SearchableEntityListComponent extends DropdownComponent {
         super.draw(graphics, mouseX, mouseY, partialTicks, delta);
     }
 
+    @Override
+    protected void drawChildren(OwoUIGraphics context, int mouseX, int mouseY, float partialTicks, float delta, List<? extends UIComponent> children) {
+        //update();
+        super.drawChildren(context, mouseX, mouseY, partialTicks, delta, children);
+    }
+
     public void update() {
         String filter = searchFilter.get();
-        this.entries.clearChildren();
 
-        List<Holder.Reference<EntityType<?>>> entityTypes = BuiltInRegistries.ENTITY_TYPE.listElements().toList();
+        List<LeftAlignedCheckbox> checkboxes = new ArrayList<>();
+        boolean needsRefresh = needsReorganization;
+
+        List<Holder.Reference<EntityType<?>>> entityTypes = BuiltInRegistries.ENTITY_TYPE.listElements()
+                .sorted(Comparator.comparing(t -> !hiddenEntityTypes.contains(t.value())))
+                .toList();
+
         for (Holder.Reference<EntityType<?>> typeHolder : entityTypes) {
             EntityType<?> type = typeHolder.value();
             Component description = type.getDescription();
             String descriptionString = description.getString();
-            if (descriptionString == null) continue;
 
             boolean allow = descriptionString.toLowerCase().contains(filter);
             if (filter.trim().equalsIgnoreCase("visible")) {
                 allow = visibleEntitiesSupplier.get().stream().anyMatch(e -> e.getType() == type);
             }
 
+            needsRefresh = needsRefresh || allow != shownOptions.contains(type);
             if (allow) {
-                MutableComponent hideText = Component.literal("Hide " + descriptionString);
-
-                this.entries.child(new LeftAlignedCheckbox(hideText, () -> hiddenEntityTypes.contains(type), pressed -> {
+                MutableComponent hideText = Translate.gui("hide", descriptionString);
+                shownOptions.add(type);
+                checkboxes.add(new LeftAlignedCheckbox(hideText, Sizing.fill(100), () -> hiddenEntityTypes.contains(type), pressed -> {
                     if (pressed) {
                         hiddenEntityTypes.add(type);
                     } else {
                         hiddenEntityTypes.remove(type);
                     }
+                    needsReorganization = true;
+                    update();
                 }));
+            } else {
+                shownOptions.remove(type);
             }
+        }
+
+        if (needsRefresh) {
+            this.entries.clearChildren();
+            this.entries.children(checkboxes);
         }
     }
 
     public static class LeftAlignedCheckbox extends Button {
 
         private final Supplier<Boolean> stateSupplier;
-        protected boolean state;
+        protected final int iconSpace = 13;
 
-        public LeftAlignedCheckbox(Component text, Supplier<Boolean> stateSupplier, Consumer<Boolean> onClick) {
-            super(text, dropdownComponent -> {
-            });
+        public LeftAlignedCheckbox(Component text, Sizing horizontalSizing, Supplier<Boolean> stateSupplier, Consumer<Boolean> onClick) {
+            super(text, dropdownComponent -> {});
 
-            this.state = stateSupplier.get();
             this.stateSupplier = stateSupplier;
-            this.onClick = dropdownComponent -> {
-                this.state = !this.state;
-                onClick.accept(this.state);
-            };
-            this.horizontalSizing(Sizing.fill(65));
+            this.onClick = dropdownComponent -> onClick.accept(!stateSupplier.get());
+
+            this.horizontalSizing(horizontalSizing);
             this.horizontalTextAlignment(HorizontalAlignment.LEFT);
             this.margins(Insets.of(2, 2, 2, 2));
         }
 
         @Override
         public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
-            this.state = stateSupplier.get();
-            this.width -= 10;
-            this.x += 12;
             super.draw(graphics, mouseX, mouseY, partialTicks, delta);
-            this.x -= 12;
-            this.width += 10;
 
-            ParentUIComponent dropdown = this.parent;
-            assert dropdown != null;
-            int u = this.state ? 16 : 0;
-            int v = 0;
+            boolean state = stateSupplier.get();
+            int u = state ? 16 : 0;
+            int iconY = this.y + (this.height - 9) / 2;
 
             graphics.blit(RenderPipelines.GUI_TEXTURED, ICONS_TEXTURE,
-                    dropdown.x() + dropdown.padding().get().left() + 1, y,
-                    u, v,
+                    this.x + 2, iconY,
+                    u, 0,
                     9, 9,
                     32, 32
             );
         }
 
         @Override
+        protected void drawText(LabelDrawFunction drawFunction) {
+            this.x += iconSpace;
+            this.width -= iconSpace;
+            super.drawText(drawFunction);
+            this.x -= iconSpace;
+            this.width += iconSpace;
+        }
+
+        @Override
+        public void inflate(Size space) {
+            this.width -= iconSpace;
+            super.inflate(space);
+            this.width += iconSpace;
+        }
+
+        @Override
         protected int determineHorizontalContentSize(Sizing sizing) {
-            return super.determineHorizontalContentSize(sizing) + 12;
+            return super.determineHorizontalContentSize(sizing) + iconSpace;
         }
     }
 
