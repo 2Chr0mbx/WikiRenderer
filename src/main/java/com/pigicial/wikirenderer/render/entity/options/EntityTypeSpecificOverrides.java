@@ -39,6 +39,7 @@ import net.minecraft.world.entity.animal.golem.CopperGolemState;
 import net.minecraft.world.entity.animal.panda.Panda;
 import net.minecraft.world.entity.animal.parrot.Parrot;
 import net.minecraft.world.entity.animal.rabbit.Rabbit;
+import net.minecraft.world.entity.animal.wolf.WolfVariant;
 import net.minecraft.world.entity.animal.wolf.WolfVariants;
 import net.minecraft.world.entity.monster.illager.AbstractIllager;
 import net.minecraft.world.entity.monster.piglin.PiglinArmPose;
@@ -940,6 +941,20 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             });
             overrides.registerFloatOverride("ageScale", s -> s.ageScale, (s, value) -> s.ageScale = value, 1f);
             overrides.registerRegistryOverrideWithFallback("variant", Registries.WOLF_VARIANT, s -> null, (s, value) -> {
+                // extremely jank way of figuring out the non-applied variant
+                if (value == null) {
+                    for (Holder.Reference<WolfVariant> variant : RegistryOverride.getHolderValues(Registries.WOLF_VARIANT)) {
+                        WolfVariant possibleVariant = variant.value();
+                        if (s.texture == possibleVariant.assetInfo().tame().texturePath() || s.texture == possibleVariant.assetInfo().angry().texturePath() || s.texture == possibleVariant.assetInfo().wild().texturePath()) {
+                            value = possibleVariant;
+                            break;
+                        }
+                    }
+                }
+                if (value == null) {
+                    value = RegistryOverride.getHolderValue(Registries.WOLF_VARIANT, WolfVariants.DEFAULT).value();
+                }
+
                 if (s.collarColor != null) {
                     s.texture = value.assetInfo().tame().texturePath();
                 } else {
@@ -948,7 +963,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             }, (key, s) -> {
                 String id = s.assetInfo().tame().id().toString();
                 return OptionalOverride.toDisplayName(id.substring(id.lastIndexOf("/") + 1).replace("_tame", ""));
-            }, WolfVariants.DEFAULT, true);
+            }, null, true);
 
         });
 

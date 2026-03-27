@@ -83,6 +83,12 @@ public class RegistryOverride<S extends EntityRenderState, R> extends OptionalOv
         throw new RuntimeException();
     }
 
+    public static <R> List<Holder.Reference<R>> getHolderValues(ResourceKey<? extends Registry<? extends R>> registryType) {
+        vanillaLookup = vanillaLookup == null ? VanillaRegistries.createLookup() : vanillaLookup;
+        HolderLookup.RegistryLookup<R> lookup = vanillaLookup.lookupOrThrow(registryType);
+        return lookup.listElements().toList();
+    }
+
     @Override
     public UIComponent buildComponent() {
         SearchableEntityListComponent.LeftAlignedCheckbox checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(
