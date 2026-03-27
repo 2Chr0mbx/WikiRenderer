@@ -64,6 +64,7 @@ import org.joml.Vector3f;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -223,10 +224,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         this.nearbyEntitiesFrozen = false;
     }
 
-    public void forBaseAndSurroundingEntities(Entity baseEntity, Consumer<Entity> predicate) {
-        applyToEntityAndPassengers(baseEntity, predicate);
+    public void forBaseAndSurroundingEntities(Entity baseEntity, BiConsumer<Entity, Boolean> predicate) {
+        applyToEntityAndPassengers(baseEntity, e -> predicate.accept(e, false));
         for (Entity nearbyEntity : nearbyEntitiesToShow) {
-            predicate.accept(nearbyEntity);
+            predicate.accept(nearbyEntity, true);
         }
     }
 
@@ -240,9 +241,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         this.drawnVertexBoundCache.clear();
         this.refreshSurroundingVisibleEntities(timeSinceCreationMs);
-        this.forBaseAndSurroundingEntities(usedEntity, entity -> {
+        this.forBaseAndSurroundingEntities(usedEntity, (entity, isSurrounding) -> {
             EntityPropertyBundle properties = this.getProperties();
-            if (properties.hiddenSurroundingEntityTypes.contains(entity.getType())) return;
+            if (isSurrounding && properties.hiddenSurroundingEntityTypes.contains(entity.getType())) return;
 
             Vec3 entityPosition = entity.position();
             Vec3 offset = entityPosition.subtract(usedEntity.position());
@@ -377,9 +378,9 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         }
 
         if (state instanceof EnderDragonRenderState dragonRenderState) {
-            if (properties.overrideEnderDragonBodyRotations.get()) {
+            if (properties.overrideBodyRotations.get()) {
                 for (int i = 0; i < 64; i++) {
-                    dragonRenderState.flightHistory.record(0, properties.enderDragonRotation.get() + 180);
+                    dragonRenderState.flightHistory.record(0, properties.entityRotation.get() + 180);
                 }
             }
 
@@ -387,7 +388,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 dragonRenderState.hasRedOverlay = false;
             }
 
-            if (properties.tickEntityAnimations.get()) {
+            if (properties.tickEntityAnimations.get() && properties.overrideEnderDragonFlapAnimation.get()) {
                 dragonRenderState.flapTime = timeSinceCreationMs / 2000f;
             }
         }
@@ -509,8 +510,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected boolean hasEntityType(Class<? extends Entity> entityTypeClass) {
         MutableBoolean found = new MutableBoolean(false);
 
-        forBaseAndSurroundingEntities(getUsedEntity(), e -> {
-            if (entityTypeClass.isAssignableFrom(e.getClass())) {
+        forBaseAndSurroundingEntities(getUsedEntity(), (entity, isSurrounding) -> {
+            if (entityTypeClass.isAssignableFrom(entity.getClass())) {
                 found.setTrue();
             }
         });
@@ -521,8 +522,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected boolean hasLivingEntityProperty(Predicate<LivingEntity> predicate) {
         MutableBoolean found = new MutableBoolean(false);
 
-        forBaseAndSurroundingEntities(getUsedEntity(), e -> {
-            if (e instanceof LivingEntity livingEntity && predicate.test(livingEntity)) {
+        forBaseAndSurroundingEntities(getUsedEntity(), (entity, isSurrounding) -> {
+            if (entity instanceof LivingEntity livingEntity && predicate.test(livingEntity)) {
                 found.setTrue();
             }
         });
@@ -652,8 +653,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     @Override
     public List<List<Integer>> getTicksToFullyAnimate() {
         List<Integer> animationTimings = new LinkedList<>();
-        forBaseAndSurroundingEntities(getUsedEntity(), entity -> {
-            if (getProperties().hiddenSurroundingEntityTypes.contains(entity.getType())) return;
+        forBaseAndSurroundingEntities(getUsedEntity(), (entity, isSurrounding) -> {
+            if (isSurrounding && getProperties().hiddenSurroundingEntityTypes.contains(entity.getType())) return;
             AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, animationTimings);
         });
         return List.of(animationTimings);

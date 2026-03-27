@@ -169,13 +169,6 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
             guiScale++;
         }
 
-        /*
-        boolean enforceUnicode = Minecraft.getInstance().isEnforceUnicode();
-        if (enforceUnicode && guiScale % 2 != 0) {
-            guiScale++;
-        }
-         */
-
         return guiScale;
     }
 }

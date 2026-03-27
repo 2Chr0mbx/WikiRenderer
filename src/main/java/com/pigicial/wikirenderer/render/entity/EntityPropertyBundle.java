@@ -67,8 +67,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     public final IntProperty entityRotation = IntProperty.of(0, -180, 180).withRollover();
 
     // handle separately for more customization
-    public final Property<Boolean> overrideEnderDragonBodyRotations = Property.of(true);
-    public final IntProperty enderDragonRotation = IntProperty.of(0, -180, 180).withRollover();
+    public final Property<Boolean> overrideEnderDragonFlapAnimation = Property.of(true);
 
     public final Property<Boolean> hideRedDamageGlow = Property.of(true);
     public final Property<Boolean> useSteveSkin = Property.of(false);
@@ -221,23 +220,27 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             if (showSurroundingEntities.get()) {
                 WikiRendererUI.doubleControl(screen, container, surroundingEntitiesRadius, "surrounding_entity_radius");
                 WikiRendererUI.booleanControl(container, this.autoRefreshVisibleSurroundingEntities, "auto_refresh_visible_entities");
-            }
 
-            WikiRendererUI.booleanControl(container, this.showHiddenSurroundingEntitiesList, "show_hidden_entities_list");
-            this.showHiddenSurroundingEntitiesList.addRebuildListener(screen);
-            if (showHiddenSurroundingEntitiesList.get()) {
-                EditBox editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
-                editField.setFilter(s -> true);
-                editField.setResponder(text -> entityTypeSearch = text);
+                WikiRendererUI.booleanControl(container, this.showHiddenSurroundingEntitiesList, "show_hidden_surrounding_entities_list");
+                this.showHiddenSurroundingEntitiesList.addRebuildListener(screen);
+                if (showHiddenSurroundingEntitiesList.get()) {
+                    EditBox editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
+                    editField.setFilter(s -> true);
+                    editField.setResponder(text -> entityTypeSearch = text);
 
-                WikiRendererUI.text(container, "visible_keyword", 3);
-                WikiRendererUI.dynamicText(container, () -> Translate.gui("hidden_entities_amount", hiddenSurroundingEntityTypes.size()));
+                    WikiRendererUI.text(container, "visible_keyword", 3);
+                    WikiRendererUI.dynamicText(container, () -> Translate.gui("hidden_entities_amount", hiddenSurroundingEntityTypes.size()));
 
-                container.child(new SearchableEntityListComponent(hiddenSurroundingEntityTypes, () -> entityTypeSearch, () -> {
-                    List<Entity> shownEntities = new ArrayList<>();
-                    renderable.forBaseAndSurroundingEntities(renderable.getUsedEntity(), shownEntities::add);
-                    return shownEntities;
-                }));
+                    container.child(new SearchableEntityListComponent(hiddenSurroundingEntityTypes, () -> entityTypeSearch, () -> {
+                        List<Entity> shownEntities = new ArrayList<>();
+                        renderable.forBaseAndSurroundingEntities(renderable.getUsedEntity(), (entity, isSurrounding) -> {
+                            if (isSurrounding) {
+                                shownEntities.add(entity);
+                            }
+                        });
+                        return shownEntities;
+                    }));
+                }
             }
         }
 
@@ -272,8 +275,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.conditionalIntControl(screen, container, this.entityRotation, "entity_data.rotation", () -> renderable.hasEntityType(LivingEntity.class));
 
         // dragons
-        WikiRendererUI.conditionalBooleanControl(container, this.overrideEnderDragonBodyRotations, "override_ender_dragon_body_rotations", () -> renderable.hasEntityType(EnderDragon.class));
-        WikiRendererUI.conditionalIntControl(screen, container, this.enderDragonRotation, "entity_data.dragon_rotation", () -> renderable.hasEntityType(EnderDragon.class));
+        WikiRendererUI.conditionalBooleanControl(container, this.overrideEnderDragonFlapAnimation, "entity_data.override_dragon_flap_animation", () -> renderable.hasEntityType(EnderDragon.class));
 
         WikiRendererUI.conditionalBooleanControl(container, this.hideRedDamageGlow, "entity_data.hide_red_damage_glow", () -> renderable.hasEntityType(LivingEntity.class) || renderable.hasEntityType(EnderDragon.class));
 
@@ -334,8 +336,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             this.pitch.setToDefault();
             this.overrideBodyRotations.setToDefault();
             this.entityRotation.setToDefault();
-            this.overrideEnderDragonBodyRotations.setToDefault();
-            this.enderDragonRotation.setToDefault();
+            this.overrideEnderDragonFlapAnimation.setToDefault();
             this.hideRedDamageGlow.setToDefault();
             this.useSteveSkin.setToDefault();
             this.hideHeldItems.setToDefault();

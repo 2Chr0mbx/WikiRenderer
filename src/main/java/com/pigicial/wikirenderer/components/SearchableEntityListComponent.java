@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.components;
 
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.DropdownComponent;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -69,7 +70,7 @@ public class SearchableEntityListComponent extends DropdownComponent {
 
             needsRefresh = needsRefresh || allow != shownOptions.contains(type);
             if (allow) {
-                MutableComponent hideText = Component.literal("Hide " + descriptionString);
+                MutableComponent hideText = Translate.gui("hide", descriptionString);
                 shownOptions.add(type);
                 checkboxes.add(new LeftAlignedCheckbox(hideText, Sizing.fill(100), () -> hiddenEntityTypes.contains(type), pressed -> {
                     if (pressed) {

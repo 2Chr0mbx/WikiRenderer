@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer.render.entity.options.types;
 
 import com.pigicial.wikirenderer.components.FullWidthCollapsibleContainer;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.UIComponent;
@@ -98,9 +99,11 @@ public class RegistryOverride<S extends EntityRenderState, R> extends OptionalOv
                 pressed -> this.enabled = pressed
         );
 
-        FullWidthCollapsibleContainer layout = new FullWidthCollapsibleContainer(checkbox, () -> {
-            return Component.literal(valueAsReference == null ? "Not Set" : this.toString.apply(valueAsReference.key(), valueAsReference.value()));
-        }, false);
+        FullWidthCollapsibleContainer layout = new FullWidthCollapsibleContainer(
+                checkbox,
+                () -> valueAsReference == null ? Translate.gui("not_set") : Component.literal(this.toString.apply(valueAsReference.key(), valueAsReference.value())),
+                false
+        );
 
         for (Holder.Reference<R> enumOption : this.options) {
             layout.child(addOption(enumOption));
@@ -133,7 +136,7 @@ public class RegistryOverride<S extends EntityRenderState, R> extends OptionalOv
 
     private SearchableEntityListComponent.DynamicTextButton addOption(@Nullable Holder.Reference<R> registryOption) {
         return new SearchableEntityListComponent.DynamicTextButton(() -> {
-            MutableComponent component = Component.literal(registryOption == null ? "None (Null)" : this.toString.apply(registryOption.key(), registryOption.value()));
+            MutableComponent component = registryOption == null ? Translate.gui("not_set") : Component.literal(this.toString.apply(registryOption.key(), registryOption.value()));
 
             boolean isOption = getValue() == registryOption;
             ChatFormatting color = this.enabled ? (isOption ? ChatFormatting.GREEN : ChatFormatting.WHITE) : ChatFormatting.DARK_GRAY;

@@ -5,6 +5,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.pigicial.wikirenderer.components.FullWidthCollapsibleContainer;
 import com.pigicial.wikirenderer.components.MiniEditBoxComponent;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
@@ -50,7 +51,7 @@ public class BlockStateOverride<S extends EntityRenderState> extends OptionalOve
 
         FullWidthCollapsibleContainer layout = new FullWidthCollapsibleContainer(checkbox, () -> {
             BlockState state = getValue();
-            return state == null || state.isAir() ? Component.literal("Not Set") : state.getBlock().getName();
+            return state == null || state.isAir() ? Translate.gui("not_set") : state.getBlock().getName();
         }, false);
         layout.margins(Insets.of(0, 0, 0, 0));
 
@@ -58,7 +59,7 @@ public class BlockStateOverride<S extends EntityRenderState> extends OptionalOve
         blockInputRow.verticalAlignment(VerticalAlignment.CENTER);
         blockInputRow.margins(Insets.top(5));
 
-        blockInputRow.child(UIComponents.label(Component.literal("Block ")).margins(Insets.right(5)));
+        blockInputRow.child(UIComponents.label(Translate.gui("block")).margins(Insets.right(5)));
         blockInputRow.child(this.buildBlockNameComponent());
         layout.child(blockInputRow);
 
@@ -105,12 +106,12 @@ public class BlockStateOverride<S extends EntityRenderState> extends OptionalOve
             BlockState value = getValue();
             if (value == null) return Component.empty();
             T val = value.getValue(property);
-            return Component.literal(property.getName(val));
+            return Component.literal(OptionalOverride.toDisplayName(property.getName(val)));
         }, false);
 
         for (T possibleValue : property.getPossibleValues()) {
             propContainer.child(new SearchableEntityListComponent.DynamicTextButton(() -> {
-                Component text = Component.literal(property.getName(possibleValue));
+                Component text = Component.literal(OptionalOverride.toDisplayName(property.getName(possibleValue)));
 
                 BlockState value = getValue();
                 boolean isSelected = value != null && value.getValue(property).equals(possibleValue);
