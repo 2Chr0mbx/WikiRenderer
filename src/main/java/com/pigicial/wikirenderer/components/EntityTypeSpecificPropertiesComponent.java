@@ -4,10 +4,8 @@ import com.pigicial.wikirenderer.render.entity.options.EntityTypeSpecificOverrid
 import com.pigicial.wikirenderer.render.entity.options.types.OptionalOverride;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.DropdownComponent;
-import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.OwoUIGraphics;
-import io.wispforest.owo.ui.core.Sizing;
-import io.wispforest.owo.ui.core.Surface;
+import io.wispforest.owo.ui.component.LabelComponent;
+import io.wispforest.owo.ui.core.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.world.entity.Entity;
 
@@ -40,17 +38,23 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
         Entity entity = entitySupplier.get();
         if (entity != lastSavedEntity) {
             this.entries.clearChildren();
-            lastSavedEntity = entity;
+            this.lastSavedEntity = entity;
 
             if (entity == null) return;
 
-            EntityTypeSpecificOverrides<?> overrides = overridesSupplier.get();
+            EntityTypeSpecificOverrides<?> overrides = this.overridesSupplier.get();
             if (overrides == null) {
                 return;
             }
 
             if (!overrides.getOverrides().isEmpty()) {
-                this.text(Translate.gui("entity_data").withStyle(ChatFormatting.WHITE, ChatFormatting.UNDERLINE));
+                this.text(Translate.gui("advanced_entity_data").withStyle(ChatFormatting.WHITE, ChatFormatting.UNDERLINE));
+
+                LabelComponent label = new AutoResizingLabelComponent(Translate.gui("advanced_entity_data_notice"));
+                label.color(Color.ofFormatting(ChatFormatting.GRAY));
+                label.margins(Insets.of(2));
+                this.entries.child(label);
+
                 for (OptionalOverride<?, ?> override : overrides.getOverrides()) {
                     this.entries.child(override.buildComponent());
                 }

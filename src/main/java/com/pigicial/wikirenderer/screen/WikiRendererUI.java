@@ -83,7 +83,8 @@ public class WikiRendererUI {
     }
 
     public static LabelComponent text(FlowLayout container, String key, boolean extraVerticalMargins) {
-        LabelComponent label = UIComponents.label(Translate.gui(key)).shadow(true);
+        LabelComponent label = new AutoResizingLabelComponent(Translate.gui(key));
+        label.shadow(true);
         if (extraVerticalMargins) {
             label.margins(Insets.top(20));
         }
@@ -94,7 +95,8 @@ public class WikiRendererUI {
     }
 
     public static LabelComponent text(FlowLayout container, String key, int topMargins) {
-        LabelComponent label = UIComponents.label(Translate.gui(key)).shadow(true);
+        LabelComponent label = new AutoResizingLabelComponent(Translate.gui(key));
+        label.shadow(true);
         label.margins(Insets.top(topMargins));
         label.margins(label.margins().get().withBottom(5));
 
@@ -103,7 +105,8 @@ public class WikiRendererUI {
     }
 
     public static LabelComponent text(FlowLayout container, Component component, int topMargins) {
-        LabelComponent label = UIComponents.label(component).shadow(true);
+        LabelComponent label = new AutoResizingLabelComponent(component);
+        label.shadow(true);
         label.margins(Insets.top(topMargins));
         label.margins(label.margins().get().withBottom(5));
 

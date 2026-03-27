@@ -1,6 +1,5 @@
 package com.pigicial.wikirenderer.components;
 
-import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.OwoUIGraphics;
 import io.wispforest.owo.ui.core.Sizing;
@@ -10,7 +9,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.function.Supplier;
 
-public class DynamicLabelComponent extends LabelComponent {
+public class DynamicLabelComponent extends AutoResizingLabelComponent {
 
     private final Font textRenderer = Minecraft.getInstance().font;
 

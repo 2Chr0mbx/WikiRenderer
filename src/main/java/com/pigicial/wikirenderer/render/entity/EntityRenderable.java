@@ -290,7 +290,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
             PoseStack clonedPose = new PoseStack();
             clonedPose.mulPose(matrices.last().pose());
-            drawnVertexBoundCache.put(entity, new DrawEntityDataCache(state, offset, clonedPose));
+            drawnVertexBoundCache.put(entity, new DrawEntityDataCache(state, offset, clonedPose, properties.spriteRendering.get()));
 
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             this.drawSubmittedRenderFeatures();
@@ -649,7 +649,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     public String buildFileName(String preset) {
         String type = BuiltInRegistries.ENTITY_TYPE.getKey(this.getUsedEntity().getType()).getPath();
         Component displayName = this.getUsedEntity().getDisplayName();
-        String name = displayName == null ? "" : displayName.getString();
+        String name = displayName.getString();
         return preset.replace("%entity_type%", type).replace("%name%", name);
     }
 

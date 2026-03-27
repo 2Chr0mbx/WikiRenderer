@@ -296,7 +296,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
             PoseStack clonedPose = new PoseStack();
             clonedPose.mulPose(standardStack.last().pose());
-            drawnVertexBoundCache.put(entity, new DrawEntityDataCache(state, offsetFromMesh, clonedPose));
+            drawnVertexBoundCache.put(entity, new DrawEntityDataCache(state, offsetFromMesh, clonedPose, false));
 
             entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
         });

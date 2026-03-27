@@ -1,6 +1,7 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.LevelRendererAccessor;
 import com.pigicial.wikirenderer.util.CornerData;
 import com.pigicial.wikirenderer.util.DrawEntityDataCache;
@@ -8,6 +9,9 @@ import com.pigicial.wikirenderer.util.DrawProjectionDataCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.*;
 import net.minecraft.client.renderer.state.CameraRenderState;
@@ -15,6 +19,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class EntityRenderBoundsUtil {
 
@@ -62,11 +69,24 @@ public class EntityRenderBoundsUtil {
         Vec3 offset = entityDrawData.offset();
         PoseStack poseStack = entityDrawData.poseStack();
         EntityRenderState renderState = entityDrawData.renderState();
+        boolean sprite = entityDrawData.sprite();
+        EntityRenderDispatcher renderDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+
+        List<Runnable> partVisibilityCallbacks = new ArrayList<>();
+        if (sprite) {
+            WikiRenderer.inSpriteEntityDraw = true;
+            EntityRenderer<?, ?> renderer = renderDispatcher.getRenderer(renderState);
+            if (renderer instanceof LivingEntityRenderer<?, ?, ?> livingEntityRenderer) {
+                EntitySpriteModelVisibilityUtil.hideNonHeadParts(livingEntityRenderer, partVisibilityCallbacks);
+            }
+        }
 
         SubmitNodeStorage tempStorage = new SubmitNodeStorage();
-        Minecraft.getInstance().getEntityRenderDispatcher().submit(renderState, cameraRenderState, offset.x, offset.y, offset.z, poseStack, tempStorage);
+        renderDispatcher.submit(renderState, cameraRenderState, offset.x, offset.y, offset.z, poseStack, tempStorage);
         EntityVertexBounds vertexBounds = submitVertexData(tempStorage);
 
+        WikiRenderer.inSpriteEntityDraw = false;
+        partVisibilityCallbacks.forEach(Runnable::run);
         EntityVertexPositionTracker.MODEL_VIEW_PROJECTION = null;
         EntityVertexPositionTracker.SCREEN_WIDTH = null;
         EntityVertexPositionTracker.SCREEN_HEIGHT = null;

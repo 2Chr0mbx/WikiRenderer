@@ -1,6 +1,8 @@
 package com.pigicial.wikirenderer.render.entity;
 
 import com.mojang.math.Axis;
+import com.pigicial.wikirenderer.components.AutoResizingLabelComponent;
+import com.pigicial.wikirenderer.components.DynamicComponent;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
 import com.pigicial.wikirenderer.property.*;
@@ -10,11 +12,14 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.UIComponent;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -294,6 +299,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 }));
         WikiRendererUI.conditionalBooleanControl(container, this.hideEnchantments, "entity_data.hide_enchantments",
                 () -> renderable.hasLivingEntityProperty(living -> Arrays.stream(EquipmentSlot.values()).anyMatch(slot -> living.getItemBySlot(slot).hasFoil())));
+
+        LabelComponent label = new AutoResizingLabelComponent(Translate.gui("advanced_entity_data_activation"));
+        label.color(Color.ofFormatting(ChatFormatting.GRAY));
+        label.margins(Insets.of(2).withTop(6));
+        container.child(new DynamicComponent(label, () -> renderable.selectedEntity == null));
 
         container.child(renderable.advancedPropertiesComponent);
     }
