@@ -29,14 +29,11 @@ public class Property<T> implements BiConsumer<Property<T>, T> {
         this.invokeListeners();
     }
 
-    public Property<T> setDefaultValue(T defaultValue) {
-        this.defaultValue = defaultValue;
-        return this;
-    }
-
     public void setToDefault() {
-        this.value = this.defaultValue;
-        this.invokeListeners();
+        if (value != defaultValue) {
+            this.value = this.defaultValue;
+            this.invokeListeners();
+        }
     }
 
     public boolean isDefault() {
@@ -67,12 +64,6 @@ public class Property<T> implements BiConsumer<Property<T>, T> {
 
     public T get() {
         return value;
-    }
-
-    public void copyFrom(Property<T> source) {
-        this.defaultValue = source.defaultValue;
-        this.value = source.value;
-        this.invokeListeners();
     }
 
     protected void invokeListeners() {

@@ -2,9 +2,9 @@ package com.pigicial.wikirenderer.property;
 
 public abstract class NumberProperty<T extends Number> extends Property<T> {
 
-    protected final T max;
+    protected T max;
     protected final T min;
-    protected final T span;
+    protected T span;
     protected boolean allowRollover = false;
 
     protected NumberProperty(T defaultValue, T min, T max) {

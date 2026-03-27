@@ -14,14 +14,24 @@ import net.minecraft.util.Util;
 import java.util.function.Function;
 
 public class CustomRenderPipelines {
-    public static final RenderPipeline CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
-            .withLocation("pipeline/wikirenderer_cutout_terrain")
-            .withFragmentShader(Identifier.fromNamespaceAndPath(WikiRenderer.MOD_ID, "cutout_layer_no_transparency"))
+    public static final RenderPipeline CORE_TERRAIN_CUTOUT_NO_TRANSPARENCY = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
+            .withLocation("pipeline/wikirenderer_terrain_cutout_no_transparency")
+            .withFragmentShader(Identifier.fromNamespaceAndPath(WikiRenderer.MOD_ID, "core_terrain_no_transparency"))
             .withBlend(new BlendFunction(
                     SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA,
                     SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA
             ))
             .withShaderDefine("ALPHA_CUTOUT", 0.5f)
+            .build();
+
+    // to fix leaves with transparent leaves turned off
+    public static final RenderPipeline CORE_TERRAIN_SOLID_NO_TRANSPARENCY = RenderPipeline.builder(RenderPipelines.TERRAIN_SNIPPET)
+            .withLocation("pipeline/wikirenderer_terrain_solid_no_transparency")
+            .withFragmentShader(Identifier.fromNamespaceAndPath(WikiRenderer.MOD_ID, "core_terrain_no_transparency"))
+            .withBlend(new BlendFunction(
+                    SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA,
+                    SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA
+            ))
             .build();
 
     // based on RenderPipelines.TEXT

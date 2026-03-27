@@ -5,10 +5,10 @@ import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
-import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.util.DrawType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.render.GuiRenderer;
@@ -22,25 +22,52 @@ import org.joml.Matrix4fStack;
 
 import java.util.List;
 
-public class ContainerScreenRenderable extends DefaultRenderable<DefaultPropertyBundle> {
+public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreenPropertyBundle> {
 
     private final AbstractContainerScreen<?> containerScreen;
 
     private static final GuiRenderState state = new GuiRenderState();
     private static GuiRenderer guiRenderer;
 
+    public ScreenSizeData previewScreenSizeData;
+
     public ContainerScreenRenderable(AbstractContainerScreen<?> containerScreen) {
         this.containerScreen = containerScreen;
     }
 
     @Override
-    public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
-        super.onScreenHandle(screen, graphics, tickDelta);
+    public boolean renderPreviewToEntireScreenWidth() {
+        return false;
     }
 
     @Override
-    public boolean renderPreviewToEntireScreenWidth() {
-        return false;
+    public int optionallyOverrideExportWidth(int width) {
+        if (previewScreenSizeData != null) {
+            // shouldn't be null
+            return previewScreenSizeData.getWidthAndHeightForHigherScale(getProperties().exportGuiScale.get())[0];
+        }
+        return super.optionallyOverrideExportWidth(width);
+    }
+
+    @Override
+    public int optionallyOverrideExportHeight(int height) {
+        if (previewScreenSizeData != null) {
+            // shouldn't be null
+            return previewScreenSizeData.getWidthAndHeightForHigherScale(getProperties().exportGuiScale.get())[1];
+        }
+        return super.optionallyOverrideExportHeight(height);
+    }
+
+    @Override
+    public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
+        if (previewScreenSizeData != null) {
+            int maxScale = determineScaleFromResolution(previewScreenSizeData.previewWidth(), previewScreenSizeData.previewHeight());
+            if (getProperties().previewGuiScale.max() != maxScale) {
+                getProperties().previewGuiScale.setMaxValue(maxScale);
+            }
+        }
+
+        super.onScreenHandle(screen, graphics, tickDelta);
     }
 
     @Override
@@ -53,7 +80,13 @@ public class ContainerScreenRenderable extends DefaultRenderable<DefaultProperty
 
         int framebufferWidth = WikiRenderer.mainTargetOverride.width;
         int framebufferHeight = WikiRenderer.mainTargetOverride.height;
-        int guiScale = determineScaleFromResolution(framebufferWidth, framebufferHeight, getProperties().renderOneScaleLower.get());
+        int guiScale = WikiRenderer.currentDrawType == DrawType.EXPORT
+                ? getProperties().exportGuiScale.get()
+                : getProperties().previewGuiScale.get();
+
+        if (WikiRenderer.currentDrawType == DrawType.PREVIEW) {
+            this.previewScreenSizeData = new ScreenSizeData(framebufferWidth, framebufferHeight, guiScale);
+        }
 
         int width = (int) (framebufferWidth / (double) guiScale);
         int guiScaledWidth = (framebufferWidth / (double) guiScale > width) ? width + 1 : width;
@@ -65,7 +98,6 @@ public class ContainerScreenRenderable extends DefaultRenderable<DefaultProperty
         int savedHeight = window.getHeight();
         int savedScale = window.getGuiScale();
 
-        // todo: this is a tiny bit off in the preview compared to the export (not the biggest issue but yea)
         double normalizedMouseX = Minecraft.getInstance().mouseHandler.xpos();
         int normalizedWidthLeftOffset = renderScreen.viewportBeginX * savedScale;
         int widthForMouseCalculation = ((renderScreen.viewportEndX - renderScreen.viewportBeginX) * savedScale);
@@ -78,7 +110,7 @@ public class ContainerScreenRenderable extends DefaultRenderable<DefaultProperty
         int mouseY = (int) (percentageMouseY * framebufferHeight) / guiScale;
 
         if (guiRenderer == null) {
-            guiRenderer = getGuiRenderer(client, state);
+            guiRenderer = getGuiRenderer(client);
         }
 
         window.setWidth(framebufferWidth);
@@ -92,11 +124,8 @@ public class ContainerScreenRenderable extends DefaultRenderable<DefaultProperty
         containerScreen.init(guiScaledWidth, guiScaledHeight);
         containerScreen.resize(guiScaledWidth, guiScaledHeight);
 
-        FogRenderer fogRenderer = gameRendererAccessor.wikirenderer$getFogRenderer();
-
         containerScreen.renderWithTooltipAndSubtitles(guiGraphics, mouseX, mouseY, tickDelta);
-
-        guiRenderer.render(fogRenderer.getBuffer(FogRenderer.FogMode.NONE));
+        guiRenderer.render(gameRendererAccessor.wikirenderer$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
         guiRenderer.incrementFrameNumber();
 
         // Restore
@@ -106,7 +135,7 @@ public class ContainerScreenRenderable extends DefaultRenderable<DefaultProperty
         WikiRenderer.inContainerScreenDraw = false;
     }
 
-    private GuiRenderer getGuiRenderer(Minecraft client, GuiRenderState state) {
+    private GuiRenderer getGuiRenderer(Minecraft client) {
         AtlasManager atlasManager = client.getAtlasManager();
         MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
 
@@ -119,7 +148,7 @@ public class ContainerScreenRenderable extends DefaultRenderable<DefaultProperty
                 new GuiProfilerChartRenderer(bufferSource)
         );
 
-        return new GuiRenderer(state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);
+        return new GuiRenderer(ContainerScreenRenderable.state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);
     }
 
     @Override
@@ -132,25 +161,12 @@ public class ContainerScreenRenderable extends DefaultRenderable<DefaultProperty
         return ExportPathSpec.of("screen", "screen");
     }
 
-    public static int determineScaleFromResolution(int framebufferWidth, int framebufferHeight, boolean oneLower) {
-        boolean enforceUnicode = Minecraft.getInstance().isEnforceUnicode();
-
+    public static int determineScaleFromResolution(int framebufferWidth, int framebufferHeight) {
         int maxScale = 0;
         int guiScale = 1;
 
         while (guiScale != maxScale && guiScale < framebufferWidth && guiScale < framebufferHeight && framebufferWidth / (guiScale + 1) >= 320 && framebufferHeight / (guiScale + 1) >= 240) {
             guiScale++;
-        }
-
-        if (enforceUnicode && guiScale % 2 != 0) {
-            guiScale++;
-        }
-
-        if (guiScale > 1 && oneLower) {
-            guiScale--;
-            if (enforceUnicode && guiScale > 1) {
-                guiScale--;
-            }
         }
 
         return guiScale;

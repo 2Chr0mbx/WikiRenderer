@@ -16,8 +16,14 @@ public class MixinChunkSectionLayer {
     private void onGetPipeline(CallbackInfoReturnable<RenderPipeline> cir) {
         ChunkSectionLayer layer = (ChunkSectionLayer) (Object) this;
 
-        if (layer == ChunkSectionLayer.CUTOUT && WorldBlockMesh.overrideCutoutRenderPipeline) {
-            cir.setReturnValue(CustomRenderPipelines.CUTOUT_WITH_NO_TRANSPARENCY_AVERAGING);
+        if (WorldBlockMesh.overrideTerrainTransparencyRenderPipelines) {
+            if (layer == ChunkSectionLayer.CUTOUT) {
+                cir.setReturnValue(CustomRenderPipelines.CORE_TERRAIN_CUTOUT_NO_TRANSPARENCY);
+            } else if (layer == ChunkSectionLayer.SOLID) {
+                // used to fix leaves that have transparency turned off
+                // in that case, despite being cutout-based-blocks, they can have transparent pixels
+                cir.setReturnValue(CustomRenderPipelines.CORE_TERRAIN_SOLID_NO_TRANSPARENCY);
+            }
         }
     }
 

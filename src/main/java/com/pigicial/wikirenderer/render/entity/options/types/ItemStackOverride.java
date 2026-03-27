@@ -6,6 +6,7 @@ import com.pigicial.wikirenderer.components.FullWidthCollapsibleContainer;
 import com.pigicial.wikirenderer.components.MiniEditBoxComponent;
 import com.pigicial.wikirenderer.components.SearchableEntityListComponent;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
+import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ItemComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -45,13 +46,14 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
     public UIComponent buildComponent() {
         SearchableEntityListComponent.LeftAlignedCheckbox checkbox = new SearchableEntityListComponent.LeftAlignedCheckbox(
                 Component.literal(toDisplayName(key)),
+                Sizing.fill(50),
                 () -> this.enabled, pressed ->
                 this.enabled = pressed
         );
 
         this.layout = new FullWidthCollapsibleContainer(checkbox, () -> {
             ItemStack item = getValue();
-            return item == null || item.isEmpty() ? Component.literal("Not Set") : item.getItemName().copy();
+            return item == null || item.isEmpty() ? Translate.gui("not_set") : item.getItemName().copy();
         }, false);
         this.layout.margins(Insets.of(0, 0, 0, 0));
 
@@ -59,7 +61,7 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
         this.itemOptionsLayout.horizontalAlignment(HorizontalAlignment.LEFT);
         this.itemOptionsLayout.verticalAlignment(VerticalAlignment.CENTER);
 
-        this.itemOptionsLayout.child(UIComponents.label(Component.literal("Item")));
+        this.itemOptionsLayout.child(UIComponents.label(Translate.gui("item")));
         this.itemOptionsLayout.child(this.buildItemNameComponent());
 
         ItemStack currentItem = getValue();
@@ -73,7 +75,7 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
         this.playerHeadOptionsLayout = UIContainers.horizontalFlow(Sizing.content(), Sizing.content());
         this.playerHeadOptionsLayout.horizontalAlignment(HorizontalAlignment.LEFT);
         this.playerHeadOptionsLayout.verticalAlignment(VerticalAlignment.CENTER);
-        this.playerHeadOptionsLayout.child(UIComponents.label(Component.literal("Head Texture ID")));
+        this.playerHeadOptionsLayout.child(UIComponents.label(Translate.gui("head_texture_id")));
         this.playerHeadOptionsLayout.child(this.buildPlayerHeadTextureComponent());
         this.playerHeadOptionsLayout.id("player_head_layout");
 
