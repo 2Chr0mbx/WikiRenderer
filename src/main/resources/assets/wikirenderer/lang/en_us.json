@@ -235,8 +235,6 @@
   "gui.wikirenderer.hide": "Hide %s",
   "gui.wikirenderer.not_set": "None",
   "gui.wikirenderer.block": "Block ",
-  "gui.wikirenderer.true": "True",
-  "gui.wikirenderer.false": "False",
   "gui.wikirenderer.head_texture_id": "Head Texture ID",
   "gui.wikirenderer.item": "Item",
   "gui.wikirenderer.search": "Search",

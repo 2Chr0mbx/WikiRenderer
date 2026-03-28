@@ -20,6 +20,7 @@ WikiRenderer supports the following render types:
     - Also supports overhead images for minimaps
 - Block States
 - Item Tooltips
+- Container Screens at various GUI scales
 - Batch export of multiple blocks or items
     - Can pull from creative tabs, item namespaces, or your inventory
     - Can also render multiple items into an atlas
@@ -122,6 +123,16 @@ Item Tooltips can be rendered in similar ways to item renders:
 Tooltips are rendered using per-pixel resolution scaling, defaulting at 4 image pixels per font pixel.
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/plasmaflux_tooltip_render.png" width="600" alt="Plasmaflux Power Orb Tooltip Menu">
+
+## Container Screens
+Container Screens can be rendered by opening one up and pressing the keybind (defaults to `;`). You can then change your preview GUI scale, as well as the export GUI scale. The preview scale determines how much space you have to work with.
+
+You can use the export keybind (`F12`) to render the image, allowing you to keep your mouse hovered over an item to show its tooltip.
+
+<img src="src/main/resources/assets/wikirenderer/readme_images/creative_inventory_screen_render_menu.png" width="600" alt="Plasmaflux Power Orb Tooltip Menu">
+
+<img src="src/main/resources/assets/wikirenderer/readme_images/creative_inventory_screen_render_example.png" width="500" alt="Plasmaflux Power Orb Tooltip Menu">
+
 
 ## Item-Based Batch Rendering
 There are several ways to multiple render items, blocks, or tooltips at once:
