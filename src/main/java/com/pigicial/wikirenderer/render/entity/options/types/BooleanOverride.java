@@ -34,9 +34,9 @@ public class BooleanOverride<S extends EntityRenderState> extends OptionalOverri
 
     private Component label() {
         if (this.getValue()) {
-            return Translate.gui("true").withStyle(!this.enabled ? ChatFormatting.DARK_GRAY : ChatFormatting.GREEN);
+            return Component.literal("True").withStyle(!this.enabled ? ChatFormatting.DARK_GRAY : ChatFormatting.GREEN);
         } else {
-            return Translate.gui("false").withStyle(!this.enabled ? ChatFormatting.DARK_GRAY : ChatFormatting.RED);
+            return Component.literal("False").withStyle(!this.enabled ? ChatFormatting.DARK_GRAY : ChatFormatting.RED);
         }
     }
 
