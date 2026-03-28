@@ -34,6 +34,7 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GlobalSettingsUniform;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -439,8 +440,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     @Override
     public void dispose() {
         super.dispose();
-        //mesh.builtSubMeshes.forEach(CompiledSectionMesh::close);
-        //mesh.builtSubMeshes.clear();
+        mesh.builtSubMeshes.forEach(SectionRenderDispatcher.RenderSection::reset);
+        mesh.builtSubMeshes.clear();
     }
 
     @Override
