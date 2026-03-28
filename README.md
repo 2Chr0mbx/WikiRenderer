@@ -127,7 +127,7 @@ Tooltips are rendered using per-pixel resolution scaling, defaulting at 4 image 
 ## Container Screens
 Container Screens can be rendered by opening one up and pressing the keybind (defaults to `;`). You can then change your preview GUI scale, as well as the export GUI scale. The preview scale determines how much space you have to work with.
 
-You can use the export keybind (`F12`) to render the image, allowing you to keep your mouse hovered over an item to show it's tooltip.
+You can use the export keybind (`F12`) to render the image, allowing you to keep your mouse hovered over an item to show its tooltip.
 
 <img src="src/main/resources/assets/wikirenderer/readme_images/creative_inventory_screen_render_menu.png" width="600" alt="Plasmaflux Power Orb Tooltip Menu">
 
