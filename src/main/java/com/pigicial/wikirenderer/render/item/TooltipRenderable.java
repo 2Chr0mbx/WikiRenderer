@@ -10,16 +10,16 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.ItemNameUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.gui.render.pip.*;
-import net.minecraft.client.gui.render.state.GuiRenderState;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.fog.FogRenderer;
-import net.minecraft.client.resources.model.AtlasManager;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -57,8 +57,8 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
         if (getProperties().hideBackground.get()) {
             WikiRenderer.skipTooltipBackgroundRender = true;
         }
-        GuiGraphics guiGraphics = new GuiGraphics(client, state, xScale, yScale);
-        guiGraphics.renderTooltip(client.font, list, 0, 0, this::positionTooltip, this.stack.get(DataComponents.TOOLTIP_STYLE));
+        GuiGraphicsExtractor guiGraphics = new GuiGraphicsExtractor(client, state, xScale, yScale);
+        guiGraphics.tooltip(client.font, list, 0, 0, this::positionTooltip, this.stack.get(DataComponents.TOOLTIP_STYLE));
         WikiRenderer.skipTooltipBackgroundRender = false;
 
 		renderer.render(((GameRendererAccessor) client.gameRenderer).wikirenderer$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));

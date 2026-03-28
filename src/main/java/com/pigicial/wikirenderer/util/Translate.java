@@ -2,11 +2,11 @@ package com.pigicial.wikirenderer.util;
 
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 
 public class Translate {
@@ -39,7 +39,7 @@ public class Translate {
 
     public static void sendMessage(String key, Object... args) {
         Component message = msg(key, args);
-        Minecraft.getInstance().gui.getChat().addMessage(message);
+        Minecraft.getInstance().gui.getChat().addClientSystemMessage(message);
         Minecraft.getInstance().getNarrator().saySystemChatQueued(message);
     }
 
@@ -70,7 +70,7 @@ public class Translate {
     public static void actionBar(String key, Object... args) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
-            player.displayClientMessage(make(key, args), true);
+            player.sendOverlayMessage(make(key, args));
         }
     }
 }

@@ -27,8 +27,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class RenderItemSubCommand extends WikiRendererSubCommand {
     @Override
@@ -69,7 +69,7 @@ public class RenderItemSubCommand extends WikiRendererSubCommand {
 
     private void renderItemWithArgument(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
         ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new ItemRenderable(ItemArgument.getItem(context, "item").createItemStack(1, false))
+                new ItemRenderable(ItemArgument.getItem(context, "item").createItemStack(1))
         ));
     }
 
@@ -92,7 +92,7 @@ public class RenderItemSubCommand extends WikiRendererSubCommand {
 
         CompletableFuture<ItemRenderable> future = Minecraft.getInstance().getSkinManager()
                 .get(gameProfile)
-                .exceptionally(throwable -> Optional.empty())
+                .exceptionally(_ -> Optional.empty())
                 .thenApply(s -> {
                     if (s.isPresent()) {
                         ItemStack stack = PlayerTextureUtils.createPlayerHead(gameProfile);

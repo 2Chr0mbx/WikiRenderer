@@ -40,14 +40,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
 
 public class RenderEntitySubCommand extends WikiRendererSubCommand {
     private static final SuggestionProvider<FabricClientCommandSource> CLIENT_SUMMONABLE_ENTITIES;
     public static final List<? extends EntityType<?>> DEFAULT_INVISIBLE_ENTITY_TYPES;
 
     static {
-        CLIENT_SUMMONABLE_ENTITIES = (context, builder) -> SharedSuggestionProvider.suggestResource(
+        CLIENT_SUMMONABLE_ENTITIES = (_, builder) -> SharedSuggestionProvider.suggestResource(
                 BuiltInRegistries.ENTITY_TYPE.stream().filter(EntityType::canSummon),
                 builder,
                 EntityType::getKey,

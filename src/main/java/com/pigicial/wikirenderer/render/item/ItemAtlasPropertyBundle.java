@@ -6,8 +6,8 @@ import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.SerializablePropertyBundle;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import io.wispforest.owo.ui.container.FlowLayout;
 import org.joml.Matrix4fStack;
 

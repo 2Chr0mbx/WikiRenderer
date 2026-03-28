@@ -27,23 +27,22 @@ import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.*;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GlobalSettingsUniform;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Rotations;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
@@ -160,7 +159,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
                 1.0,
                 shaderAnimationTicks,
                 client.getDeltaTracker(), 0,
-                new Camera(), // Passing a new/empty camera sets pos to 0,0,0
+                new Vec3(0, 0, 0), // Passing a new/empty camera sets pos to 0,0,0
                 false
         );
 
@@ -312,7 +311,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         AreaPropertyBundle properties = this.getProperties();
         if (properties.useFullBrightGamma.get() || properties.emulateDaylight.get()) {
-            state.lightCoords = LightTexture.FULL_BRIGHT;
+            state.lightCoords = LightCoordsUtil.FULL_BRIGHT;
         } else {
             state.lightCoords = client.getEntityRenderDispatcher().getPackedLightCoords(entity, 0);
         }
@@ -440,8 +439,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     @Override
     public void dispose() {
         super.dispose();
-        mesh.builtSubMeshes.forEach(MeshSection::close);
-        mesh.builtSubMeshes.clear();
+        //mesh.builtSubMeshes.forEach(CompiledSectionMesh::close);
+        //mesh.builtSubMeshes.clear();
     }
 
     @Override
@@ -467,7 +466,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     }
 
     @Override
-    public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
+    public void onScreenHandle(RenderScreen screen, GuiGraphicsExtractor graphics, float tickDelta) {
         int scale = Minecraft.getInstance().getWindow().getGuiScale();
 
         if (this.selectedEntityId != null) {
@@ -482,7 +481,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             int minY = cornerData.minY() / scale;
             int maxX = cornerData.maxX() / scale;
             int maxY = cornerData.maxY() / scale;
-            graphics.renderOutline(minX, minY, maxX - minX, maxY - minY, 0xFFFFFFFF);
+            graphics.outline(minX, minY, maxX - minX, maxY - minY, 0xFFFFFFFF);
         }
     }
 

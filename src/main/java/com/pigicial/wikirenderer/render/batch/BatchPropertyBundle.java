@@ -75,17 +75,17 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
                 button.active = false;
             });
             builder.row.child(startButton.horizontalSizing(Sizing.content(20)));
-            builder.row.child(UIComponents.button(Translate.gui("batch.reset"), button -> {
+            builder.row.child(UIComponents.button(Translate.gui("batch.reset"), _ -> {
                 batchRenderable.reset(screen);
                 startButton.active = true;
             }));
-            builder.row.child(UIComponents.button(Translate.gui("batch.previous"), button -> {
+            builder.row.child(UIComponents.button(Translate.gui("batch.previous"), _ -> {
                 batchRenderable.decreaseIndex();
                 if (batchRenderable.currentDelegate instanceof TextureDataProvider) {
                     screen.guiRebuildScheduled = true;
                 }
             }));
-            builder.row.child(UIComponents.button(Translate.gui("batch.next"), button -> {
+            builder.row.child(UIComponents.button(Translate.gui("batch.next"), _ -> {
                 batchRenderable.increaseIndex();
                 if (batchRenderable.currentDelegate instanceof TextureDataProvider) {
                     screen.guiRebuildScheduled = true;
@@ -137,7 +137,8 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
         if (!batchRenderable.delegates.isEmpty() && this.batchRenderable.currentDelegate instanceof DynamicBatchLabelProvider labelProvider) {
             screen.fileNameField = WikiRendererUI.labelledTextField(container, fileNameFormatter, "batch.file_name_preset", Sizing.fixed(120));
             screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
-            screen.fileNameField.setResponder(renderable::setCustomFileName);
+            screen.fileNameField.onChanged().subscribe(renderable::setCustomFileName);
+
             WikiRendererUI.text(container, "batch.label_presets", 10);
             for (String exampleKey : labelProvider.buildPresetExamples()) {
                 WikiRendererUI.text(container, exampleKey, false);

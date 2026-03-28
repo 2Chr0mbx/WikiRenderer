@@ -24,8 +24,8 @@ import net.minecraft.world.level.storage.TagValueInput;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class RenderPlayerSubCommand extends WikiRendererSubCommand {
     @Override
@@ -35,7 +35,7 @@ public class RenderPlayerSubCommand extends WikiRendererSubCommand {
 
     @Override
     public LiteralArgumentBuilder<FabricClientCommandSource> register(LiteralArgumentBuilder<FabricClientCommandSource> source, CommandBuildContext access) {
-        return source.executes(context -> {
+        return source.executes(_ -> {
                     this.renderSelf();
                     return 0;
                 })

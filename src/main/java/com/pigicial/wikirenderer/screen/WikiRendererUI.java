@@ -14,15 +14,14 @@ import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.UIComponent;
 import io.wispforest.owo.ui.core.VerticalAlignment;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.Supplier;
 
 public class WikiRendererUI {
 
-    public static EditBox labelledTextField(FlowLayout container, String content, String key, Sizing sizing) {
+    public static TextBoxComponent labelledTextField(FlowLayout container, String content, String key, Sizing sizing) {
         try (RowBuilder builder = rowBuilder(container)) {
             TextBoxComponent textBox = UIComponents.textBox(sizing, content);
             textBox.setMaxLength(100); // allow more characters
@@ -122,7 +121,7 @@ public class WikiRendererUI {
         return label;
     }
 
-    public static void drawExportProgressBar(GuiGraphics context, int x, int y, int drawWidth, int barWidth, double speed) {
+    public static void drawExportProgressBar(GuiGraphicsExtractor context, int x, int y, int drawWidth, int barWidth, double speed) {
         int end = x + drawWidth + barWidth;
 
         int offset = (int) (System.currentTimeMillis() / speed % (drawWidth + barWidth));

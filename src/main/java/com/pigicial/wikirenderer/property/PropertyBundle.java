@@ -8,11 +8,11 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.ImageTransferable;
 import com.pigicial.wikirenderer.util.Translate;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.util.Util;
 import org.joml.Matrix4fStack;
 
@@ -41,20 +41,20 @@ public interface PropertyBundle {
         WikiRendererUI.booleanControl(container, globalProperties.overwriteLatest, "overwrite_latest");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-            screen.exportButton = UIComponents.button(Translate.gui("export"), button -> screen.captureScheduled = true);
+            screen.exportButton = UIComponents.button(Translate.gui("export"), _ -> screen.captureScheduled = true);
             builder.row.child(screen.exportButton);
 
-            builder.row.child(UIComponents.button(Translate.gui("open_folder"), button ->
+            builder.row.child(UIComponents.button(Translate.gui("open_folder"), _ ->
                     Util.getPlatform().openFile(renderable.getExportPath().resolveOffset().toFile())
             ));
 
             if (!GraphicsEnvironment.isHeadless()) {
-                builder.row.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
+                builder.row.child(UIComponents.button(Translate.gui("export_to_clipboard"), _ -> {
                     screen.notify(Translate.gui("copied_to_clipboard"));
 
                     float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
                     RenderableDispatcher.drawIntoImage(screen, renderable, tickDelta, screen.getTimeSinceCreationMs(), renderable.getExportResolution(), renderable.shouldCrop(), null)
-                            .whenComplete((image, t) -> {
+                            .whenComplete((image, _) -> {
                                 try (image) {
                                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                                     WritableByteChannel channel = Channels.newChannel(stream);
@@ -75,9 +75,9 @@ public interface PropertyBundle {
     default void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         GlobalProperties globalProperties = GlobalProperties.get();
 
-        EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(renderable.getExportResolution()), "renderer_resolution", Sizing.fixed(50));
+        TextBoxComponent resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(renderable.getExportResolution()), "renderer_resolution", Sizing.fixed(50));
         resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
-        resolutionField.setResponder(s -> {
+        resolutionField.onChanged().subscribe(s -> {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
@@ -93,7 +93,7 @@ public interface PropertyBundle {
     default void buildFileNameGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         screen.fileNameField = WikiRendererUI.labelledTextField(container, renderable.getCustomFileName(), "file_name", Sizing.expand(90));
         screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
-        screen.fileNameField.setResponder(renderable::setCustomFileName);
+        screen.fileNameField.onChanged().subscribe(renderable::setCustomFileName);
     }
 
     void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack);

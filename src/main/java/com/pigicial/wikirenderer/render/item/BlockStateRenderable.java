@@ -3,6 +3,7 @@ package com.pigicial.wikirenderer.render.item;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
+import com.pigicial.wikirenderer.mixin.access.MinecraftAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
@@ -15,14 +16,17 @@ import com.pigicial.wikirenderer.textures.TextureData;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.BlockModelRenderState;
+import net.minecraft.client.renderer.block.BlockModelResolver;
+import net.minecraft.client.renderer.block.model.BlockDisplayContext;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
-import net.minecraft.client.renderer.texture.*;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -44,6 +48,7 @@ public class BlockStateRenderable
         extends ItemBasedRenderable<BlockStatePropertyBundle>
         implements TickingRenderable<BlockStatePropertyBundle>, DynamicBatchLabelProvider, TextureDataProvider, AnimationTimingsProvider {
 
+    private final BlockDisplayContext displayContext = BlockDisplayContext.create();
     private final Minecraft client = Minecraft.getInstance();
 
     private final BlockState state;
@@ -116,18 +121,20 @@ public class BlockStateRenderable
         // renders the extra stuff, like the book on the enchantment table, middle bell within the bell block, etc
 		BlockEntityRenderState renderState = this.blockEntity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, null);
 		if (renderState != null) {
-			renderState.lightCoords = LightTexture.FULL_BRIGHT;
+			renderState.lightCoords = LightCoordsUtil.FULL_BRIGHT;
 			this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), CameraOrientationUtil.createRenderState(this));
         }
 
         // renders the main stuff
         if (this.state.getRenderShape() != RenderShape.INVISIBLE) {
-            MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-            this.client.getBlockRenderer().renderSingleBlock(this.state, matrices, bufferSource, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+            BlockModelRenderState blockModelRenderState = new BlockModelRenderState();
+            BlockModelResolver blockModelResolver = ((MinecraftAccessor) Minecraft.getInstance()).wikirenderer$getBlockModelResolver();
+            blockModelResolver.update(blockModelRenderState, state, displayContext);
+            blockModelRenderState.submit(matrices, this.client.gameRenderer.getSubmitNodeStorage(), LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
             // todo: figure out liquid rendering (waterlogged / fluid states)
         }
 
-		super.drawSubmittedRenderFeatures();
+        super.drawSubmittedRenderFeatures();
 
         assert this.client.player != null;
         double xOffset = this.client.player.getX() % 1d;
@@ -153,8 +160,8 @@ public class BlockStateRenderable
                 ticker.tick(client.level, client.player.blockPosition(), this.state, this.blockEntity);
             }
 
-            if (client.level.random.nextDouble() < 0.150) {
-                this.state.getBlock().animateTick(this.state, client.level, client.player.blockPosition(), client.level.random);
+            if (client.level.getRandom().nextDouble() < 0.150) {
+                this.state.getBlock().animateTick(this.state, client.level, client.player.blockPosition(), client.level.getRandom());
             }
         }
 
@@ -176,7 +183,8 @@ public class BlockStateRenderable
     @Override
     public String buildFileName(String preset) {
         String id = BuiltInRegistries.BLOCK.getKey(this.state.getBlock()).getPath();
-        String name = this.state.getBlock().asItem().getName().getString();
+        Item item = this.state.getBlock().asItem();
+        String name = item.getName(item.getDefaultInstance()).getString();
         return preset.replace("%id%", id).replace("%name%", name);
     }
 

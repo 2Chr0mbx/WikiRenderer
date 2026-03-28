@@ -26,7 +26,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
+import net.minecraft.client.renderer.ProjectionMatrixBuffer;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -75,7 +75,7 @@ public class WikiRenderer implements ClientModInitializer {
         Identifier hudId = Identifier.fromNamespaceAndPath(MOD_ID, "hud");
         Hud.add(hudId, () -> UIContainers.verticalFlow(Sizing.content(), Sizing.content()).positioning(Positioning.absolute(20, 20)));
 
-        HudElementRegistry.addLast(hudId, (matrixStack, tickDelta) -> {
+        HudElementRegistry.addLast(hudId, (_, _) -> {
             Minecraft client = Minecraft.getInstance();
             FlowLayout isometricHud = (FlowLayout) Hud.getComponent(hudId);
             if (isometricHud == null) return;
@@ -100,7 +100,7 @@ public class WikiRenderer implements ClientModInitializer {
         });
     }
 
-	public static void beginRenderableDraw(PerspectiveProjectionMatrixBuffer matrixStore, Matrix4f projectionMatrix, DrawType drawType) {
+	public static void beginRenderableDraw(ProjectionMatrixBuffer matrixStore, Matrix4f projectionMatrix, DrawType drawType) {
 		prevProjectionType = RenderSystem.getProjectionType();
 		prevProjectionMatrix = RenderSystem.getProjectionMatrixBuffer();
 		renderableDrawProjectionBuffer = matrixStore.getBuffer(projectionMatrix);

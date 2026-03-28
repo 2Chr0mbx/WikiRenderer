@@ -5,11 +5,11 @@ import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.AnimationTimingUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +31,7 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
         this.atlasSource = atlasSource;
         this.items = items;
         this.renderStates = new ArrayList<>();
-        items.stream().map(item -> new ItemStackRenderState()).forEach(this.renderStates::add);
+        items.stream().map(_ -> new ItemStackRenderState()).forEach(this.renderStates::add);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class ItemAtlasRenderable extends ItemBasedRenderable<ItemAtlasPropertyBu
                 renderState.submit(
                         matrices,
                         nodeStorage,
-                        LightTexture.FULL_BRIGHT,
+                        LightCoordsUtil.FULL_BRIGHT,
                         OverlayTexture.NO_OVERLAY,
                         0
                 );

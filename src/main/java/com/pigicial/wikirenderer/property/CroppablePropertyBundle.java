@@ -1,16 +1,16 @@
 package com.pigicial.wikirenderer.property;
 
 import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.screen.WikiRendererUI;
-import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.render.export.ImageRescaleMode;
+import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.Surface;
-import net.minecraft.client.gui.components.EditBox;
 
 public interface CroppablePropertyBundle extends PropertyBundle {
 
@@ -35,23 +35,23 @@ public interface CroppablePropertyBundle extends PropertyBundle {
 
         if (cropProperty.get() && allowForRescaling) {
             container.child(UIComponents.dropdown(Sizing.content())
-                    .button(Translate.gui("rescale_longer_side"), b -> {
+                    .button(Translate.gui("rescale_longer_side"), _ -> {
                         resizeModeProperty.set(ImageRescaleMode.LONGER_SIDE);
                         screen.guiRebuildScheduled = true;
                     })
-                    .button(Translate.gui("rescale_shorter_side"), b -> {
+                    .button(Translate.gui("rescale_shorter_side"), _ -> {
                         resizeModeProperty.set(ImageRescaleMode.SHORTER_SIDE);
                         screen.guiRebuildScheduled = true;
                     })
-                    .button(Translate.gui("rescale_vertically"), b -> {
+                    .button(Translate.gui("rescale_vertically"), _ -> {
                         resizeModeProperty.set(ImageRescaleMode.VERTICAL);
                         screen.guiRebuildScheduled = true;
                     })
-                    .button(Translate.gui("rescale_horizontally"), b -> {
+                    .button(Translate.gui("rescale_horizontally"), _ -> {
                         resizeModeProperty.set(ImageRescaleMode.HORIZONTAL);
                         screen.guiRebuildScheduled = true;
                     })
-                    .button(Translate.gui("dont_rescale"), b -> {
+                    .button(Translate.gui("dont_rescale"), _ -> {
                         resizeModeProperty.set(ImageRescaleMode.DISABLED);
                         screen.guiRebuildScheduled = true;
                     })
@@ -75,10 +75,9 @@ public interface CroppablePropertyBundle extends PropertyBundle {
             key = "renderer_resolution_rescale_" + this.getRescaleMode().get().name().toLowerCase();
         }
 
-        EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(renderable.getExportResolution()), key, Sizing.fixed(50));
-
+        TextBoxComponent resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(renderable.getExportResolution()), key, Sizing.fixed(50));
         resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
-        resolutionField.setResponder(s -> {
+        resolutionField.onChanged().subscribe(s -> {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 

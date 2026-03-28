@@ -3,12 +3,12 @@ package com.pigicial.wikirenderer.util;
 import com.pigicial.wikirenderer.mixin.access.ItemStackRenderStateAccessor;
 import com.pigicial.wikirenderer.mixin.access.SpriteContentsAccessor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.block.model.SimpleModelWrapper;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.client.resources.model.SimpleModelWrapper;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
@@ -75,18 +75,18 @@ public class AnimationTimingUtil {
     }
 
     public static void scanTicksToFullyAnimateBlock(BlockState state, List<Integer> animationCompletionTimes, Long randomSeed) {
-        scanTicksToFullyAnimateBlock(Minecraft.getInstance().getBlockRenderer().getBlockModel(state), animationCompletionTimes, randomSeed);
+        scanTicksToFullyAnimateBlock(Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(state), animationCompletionTimes, randomSeed);
     }
 
     // synchronized for the random instance
     public static synchronized void scanTicksToFullyAnimateBlock(BlockStateModel model, List<Integer> animationCompletionTimes, Long randomSeed) {
-        List<BlockModelPart> parts = new ArrayList<>();
+        List<BlockStateModelPart> parts = new ArrayList<>();
         if (randomSeed != null) {
             RANDOM.setSeed(randomSeed);
         }
         model.collectParts(RANDOM, parts);
 
-        for (BlockModelPart part : parts) {
+        for (BlockStateModelPart part : parts) {
             List<BakedQuad> quads = part instanceof SimpleModelWrapper wrapper ? wrapper.quads().getAll() : part.getQuads(null);
             fillTimings(quads, animationCompletionTimes);
         }
@@ -94,7 +94,7 @@ public class AnimationTimingUtil {
 
     private static void fillTimings(Collection<BakedQuad> quads, List<Integer> animationCompletionTimes) {
         for (BakedQuad quad : quads) {
-            SpriteContents.AnimatedTexture animatedTexture = ((SpriteContentsAccessor) quad.sprite().contents()).wikirender$getAnimatedTexture();
+            SpriteContents.AnimatedTexture animatedTexture = ((SpriteContentsAccessor) quad.materialInfo().sprite().contents()).wikirender$getAnimatedTexture();
             if (animatedTexture != null) {
                 int time = 0;
                 for (SpriteContents.FrameInfo frame : animatedTexture.frames) {

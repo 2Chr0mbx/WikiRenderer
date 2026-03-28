@@ -10,8 +10,8 @@ import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
-import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.LabelComponent;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Color;
@@ -20,7 +20,6 @@ import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.UIComponent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
@@ -155,13 +154,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.text(container, "transform_options", false);
         WikiRendererUI.booleanControl(container, this.spriteRendering, "sprite_rendering");
 
-        this.spriteRendering.futureListen(screen, ((booleanProperty, value) -> {
+        this.spriteRendering.futureListen(screen, (_, _) -> {
             screen.guiRebuildScheduled = true;
             renderable.cachedCenterOffset = null;
             renderable.cachedScaleMultiplier = null;
             this.spriteRotation.set(0);
             this.spriteSlant.set(0);
-        }));
+        });
 
         WikiRendererUI.intControl(screen, container, this.scale, "scale");
         if (!this.spriteRendering.get()) {
@@ -175,11 +174,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         WikiRendererUI.booleanControl(container, this.allowRotatingWithMouse, "allow_rotating_with_mouse");
         if (!this.spriteRendering.get()) {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-                builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), _ -> {
                     this.rotation.setToDefault();
                     this.slant.set(30D);
                 }));
-                builder.row.child(UIComponents.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("isometric"), _ -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
                 }));
@@ -198,7 +197,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
         if (renderable.liveNonTickableEntity != null) {
             WikiRendererUI.booleanControl(container, this.useLiveEntity, "entity_data.use_live_entities");
-            this.useLiveEntity.futureListen(screen, (booleanProperty, value) -> {
+            this.useLiveEntity.futureListen(screen, (_, value) -> {
                 renderable.requireTextureReCache = true;
                 if (renderable.textureCancelMarker != null) {
                     renderable.textureCancelMarker.set(true);
@@ -224,9 +223,8 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
                 WikiRendererUI.booleanControl(container, this.showHiddenSurroundingEntitiesList, "show_hidden_surrounding_entities_list");
                 this.showHiddenSurroundingEntitiesList.addRebuildListener(screen);
                 if (showHiddenSurroundingEntitiesList.get()) {
-                    EditBox editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
-                    editField.setFilter(s -> true);
-                    editField.setResponder(text -> entityTypeSearch = text);
+                    TextBoxComponent editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
+                    editField.onChanged().subscribe(text -> entityTypeSearch = text);
 
                     WikiRendererUI.text(container, "visible_keyword", 3);
                     WikiRendererUI.dynamicText(container, () -> Translate.gui("hidden_entities_amount", hiddenSurroundingEntityTypes.size()));
@@ -246,14 +244,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
         WikiRendererUI.text(container, "entity_data", 10);
         if (renderable.liveNonTickableEntity != null) {
-            container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), b -> {
+            container.child(UIComponents.button(Translate.gui("copy_entity_coordinates"), _ -> {
                 Vec3 coords = renderable.getUsedEntity().position();
 
                 DecimalFormat df = new DecimalFormat("0.#######");
                 String text = df.format(coords.x) + " " + df.format(coords.y) + " " + df.format(coords.z);
 
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (clipboard, contents) -> {
-                });
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), (_, _) -> {});
                 screen.notify(Translate.gui("copied_entity_coordinates_to_clipboard"));
             }));
         }
@@ -261,7 +258,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         renderable.isNametagOnlyRenderedData = EntityRenderBoundsUtil.isNametagOnlyRenderedData(renderable.getUsedEntity());
         if (!renderable.isNametagOnlyRenderedData && !spriteRendering.get()) {
             WikiRendererUI.booleanControl(container, this.hideNametags, "hide_nametags");
-            this.hideNametags.futureListen(screen, (p, b) -> {
+            this.hideNametags.futureListen(screen, (_, _) -> {
                 renderable.cachedCenterOffset = null;
                 renderable.cachedScaleMultiplier = null;
             });
@@ -318,7 +315,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     }
 
     private UIComponent buildResetEntityOverridesButton(EntityRenderable renderable) {
-        return UIComponents.button(Translate.gui("reset_entity_overrides"), (ButtonComponent button) -> {
+        return UIComponents.button(Translate.gui("reset_entity_overrides"), _ -> {
             this.showSurroundingEntities.setToDefault();
             this.surroundingEntitiesRadius.setToDefault();
             this.showHiddenSurroundingEntitiesList.setToDefault();

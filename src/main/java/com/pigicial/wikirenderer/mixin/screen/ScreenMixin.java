@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.mixin.screen;
 
 import com.pigicial.wikirenderer.WikiRenderer;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Screen.class)
 public class ScreenMixin {
 
-    @Inject(method = "renderBackground", at = @At("HEAD"), cancellable = true)
-    private void wikirenderer$skipBackground(GuiGraphics guiGraphics, int i, int j, float f, CallbackInfo ci) {
+    @Inject(method = "extractBackground", at = @At("HEAD"), cancellable = true)
+    private void wikirenderer$skipBackground(GuiGraphicsExtractor guiGraphics, int i, int j, float f, CallbackInfo ci) {
         if (WikiRenderer.inContainerScreenDraw) {
             ci.cancel();
         }

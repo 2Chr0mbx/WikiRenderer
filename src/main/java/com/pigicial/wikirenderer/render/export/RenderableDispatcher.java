@@ -20,7 +20,7 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.DrawProjectionDataCache;
 import com.pigicial.wikirenderer.util.DrawType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.PerspectiveProjectionMatrixBuffer;
+import net.minecraft.client.renderer.ProjectionMatrixBuffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -37,7 +37,7 @@ public class RenderableDispatcher {
 
     public static final Map<DrawType, DrawProjectionDataCache> PROJECTION_CACHE = new HashMap<>();
 
-    private static final PerspectiveProjectionMatrixBuffer PROJECTION_MATRIX_BUFFER = new PerspectiveProjectionMatrixBuffer("RenderableDispatcher");
+    private static final ProjectionMatrixBuffer PROJECTION_MATRIX_BUFFER = new ProjectionMatrixBuffer("RenderableDispatcher");
     private static final Matrix4f ORTHOGRAPHIC_MATRIX = new Matrix4f();
     private static RenderTarget previewTarget = null;
 

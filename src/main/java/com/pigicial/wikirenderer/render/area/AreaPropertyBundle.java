@@ -15,17 +15,13 @@ import com.pigicial.wikirenderer.render.area.side_view.MeshSideSlant;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
-import io.wispforest.owo.ui.component.ButtonComponent;
-import io.wispforest.owo.ui.component.DropdownComponent;
-import io.wispforest.owo.ui.component.LabelComponent;
-import io.wispforest.owo.ui.component.UIComponents;
+import io.wispforest.owo.ui.component.*;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Insets;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
@@ -172,7 +168,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WikiRendererUI.text(container, "transform_options", false);
 
         WikiRendererUI.booleanControl(container, this.perPixel90DegreeRendering, "per_pixel_90_degree_rendering");
-        this.perPixel90DegreeRendering.futureListen(screen, (booleanProperty, value) -> {
+        this.perPixel90DegreeRendering.futureListen(screen, (_, value) -> {
             if (value) {
                 this.sideViewRotation = MeshSideRotation.NORTH;
                 this.sideViewSlant = MeshSideSlant.ABOVE;
@@ -182,12 +178,12 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
         if (!this.perPixel90DegreeRendering.get()) {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-                builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), _ -> {
                     this.rotation.setToDefault();
                     this.slant.set(30D);
                 }).margins(Insets.right(5)));
 
-                builder.row.child(UIComponents.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("isometric"), _ -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
                 }));
@@ -200,17 +196,17 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             container.child(this.buildResetButton());
         } else {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-                builder.row.child(UIComponents.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("cycle_rotation"), _ -> {
                     this.sideViewRotation = this.sideViewRotation.nextRotation();
                     screen.guiRebuildScheduled = true;
                 }));
 
-                builder.row.child(UIComponents.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
+                builder.row.child(UIComponents.button(Translate.gui("cycle_slant"), _ -> {
                     this.sideViewSlant = this.sideViewSlant.nextSlant();
                     screen.guiRebuildScheduled = true;
                 }));
             }
-            container.child(UIComponents.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
+            container.child(UIComponents.button(Translate.gui("reset_rotation_and_slant"), _ -> {
                 this.sideViewRotation = MeshSideRotation.NORTH;
                 this.sideViewSlant = MeshSideSlant.ABOVE;
                 screen.guiRebuildScheduled = true;
@@ -238,25 +234,25 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                 if (showMeshExpansionControls.get()) {
                     for (ExpansionSide expansionSide : ExpansionSide.values()) {
                         try (WikiRendererUI.RowBuilder rowBuilder = WikiRendererUI.rowBuilder(container)) {
-                            rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_five"), button -> {
+                            rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_five"), _ -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(expansionSide, sideViewRotation, -5);
                                     renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
-                            rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_one"), button -> {
+                            rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_one"), _ -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(expansionSide, sideViewRotation, -1);
                                     renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
-                            rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_one"), button -> {
+                            rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_one"), _ -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(expansionSide, sideViewRotation, 1);
                                     renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
-                            rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_five"), button -> {
+                            rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_five"), _ -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(expansionSide, sideViewRotation, 5);
                                     renderable.mesh.scheduleRebuild(true);
@@ -274,10 +270,10 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WorldBlockMesh mesh = renderable.mesh;
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-            ButtonComponent buildMeshButton = (ButtonComponent) UIComponents.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild(true)).margins(Insets.top(5));
+            ButtonComponent buildMeshButton = (ButtonComponent) UIComponents.button(Translate.gui("rebuild_mesh"), _ -> mesh.scheduleRebuild(true)).margins(Insets.top(5));
             builder.row.child(buildMeshButton);
 
-            ButtonComponent stopBuildingButton = (ButtonComponent) UIComponents.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding()).margins(Insets.of(5, 0, 5, 0));
+            ButtonComponent stopBuildingButton = (ButtonComponent) UIComponents.button(Translate.gui("stop_building"), _ -> mesh.stopBuilding()).margins(Insets.of(5, 0, 5, 0));
             stopBuildingButton.active = false;
             builder.row.child(stopBuildingButton);
 
@@ -304,15 +300,14 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             }).margins(Insets.of(10, 0, 10, 0));
         }
 
-        container.child(UIComponents.button(Translate.gui("copy_render_command"), button -> {
+        container.child(UIComponents.button(Translate.gui("copy_render_command"), _ -> {
             screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
 
             BlockPos minCorner = mesh.bounds.getMinCorner();
             BlockPos maxCorner = mesh.bounds.getMaxCorner();
             String command = "/wikirender area pos " + minCorner.getX() + " " + minCorner.getY() + " " + minCorner.getZ() + " " + maxCorner.getX() + " " + maxCorner.getY() + " " + maxCorner.getZ();
 
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {
-            });
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (_, _) -> {});
         }));
 
         WikiRendererUI.text(container, "block_visibility", true);
@@ -321,7 +316,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         this.hideMesh.addRebuildListener(screen);
         if (!this.hideMesh.get()) {
             WikiRendererUI.booleanControl(container, this.hideFluids, "hide_fluids");
-            this.hideFluids.futureListen(screen, (p, b) -> mesh.scheduleRebuild(true));
+            this.hideFluids.futureListen(screen, (_, _) -> mesh.scheduleRebuild(true));
         }
         WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
@@ -334,9 +329,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.booleanControl(container, this.showHiddenEntitiesList, "show_hidden_entities_list", hiddenEntityTypes.size());
             this.showHiddenEntitiesList.addRebuildListener(screen);
             if (showHiddenEntitiesList.get()) {
-                EditBox editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
-                editField.setFilter(s -> true);
-                editField.setResponder(text -> entityTypeSearch = text);
+                TextBoxComponent editField = WikiRendererUI.labelledTextField(container, entityTypeSearch, "search", Sizing.expand(90));
+                editField.onChanged().subscribe(text -> entityTypeSearch = text);
 
                 WikiRendererUI.text(container, "visible_keyword", 3);
                 WikiRendererUI.dynamicText(container, () -> Translate.gui("hidden_entities_amount", hiddenEntityTypes.size()));
@@ -363,7 +357,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                     text.withStyle(ChatFormatting.GRAY);
                 }
 
-                refreshModeOptionsComponent.button(text, b -> {
+                refreshModeOptionsComponent.button(text, _ -> {
                     entityRefreshMode = refreshMode;
                     screen.guiRebuildScheduled = true;
                 });
@@ -415,7 +409,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     private UIComponent buildResetBlockAndEntityOverridesButton(AreaRenderable renderable) {
-        return UIComponents.button(Translate.gui("reset_block_and_entity_overrides"), (ButtonComponent button) -> {
+        return UIComponents.button(Translate.gui("reset_block_and_entity_overrides"), _ -> {
             this.hideMesh.setToDefault();
             this.hideFluids.setToDefault();
             this.hideBeaconBeams.setToDefault();
@@ -459,7 +453,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         this.useFullBrightGamma.addRebuildListener(screen);
         if (!this.useFullBrightGamma.get()) {
             WikiRendererUI.booleanControl(container, this.lightUpSurroundingBlocks, "light_up_surrounding_blocks");
-            this.lightUpSurroundingBlocks.futureListen(screen, (p, b) -> renderable.mesh.scheduleRebuild(true));
+            this.lightUpSurroundingBlocks.futureListen(screen, (_, _) -> renderable.mesh.scheduleRebuild(true));
         }
         WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "particles");
     }
@@ -479,9 +473,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             int totalBlocksZ = cornerTwo.getZ() - cornerOne.getZ() + 1;
             int highest = Math.max(totalBlocksY, Math.max(totalBlocksX, totalBlocksZ));
 
-            EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(this.getPixelsPerBlockResolution()), "block_resolution", Sizing.fixed(50));
+            TextBoxComponent resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(this.getPixelsPerBlockResolution()), "block_resolution", Sizing.fixed(50));
             resolutionField.setFilter(s -> s.matches("\\d{0,5}"));
-            resolutionField.setResponder(s -> {
+            resolutionField.onChanged().subscribe(s -> {
                 if (s.isBlank()) return;
                 int pixelsPerBlock = Integer.parseInt(s);
 

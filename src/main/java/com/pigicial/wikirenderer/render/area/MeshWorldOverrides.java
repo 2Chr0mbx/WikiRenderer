@@ -2,9 +2,9 @@ package com.pigicial.wikirenderer.render.area;
 
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.CardinalLighting;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
@@ -28,14 +28,15 @@ public class MeshWorldOverrides implements BlockAndTintGetter {
     }
 
     @Override
-    public float getShade(@NonNull Direction direction, boolean shaded) {
-        return this.delegate.getShade(direction, shaded);
+    @NonNull
+    public LevelLightEngine getLightEngine() {
+        return this.delegate.getLightEngine();
     }
 
     @Override
     @NonNull
-    public LevelLightEngine getLightEngine() {
-        return this.delegate.getLightEngine();
+    public CardinalLighting cardinalLighting() {
+        return this.delegate.cardinalLighting();
     }
 
     @Override

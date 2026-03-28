@@ -23,14 +23,13 @@ import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientMannequin;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -44,6 +43,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.decoration.Mannequin;
@@ -343,7 +343,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
         state.outlineColor = 0; // remove glow (doesn't render properly)
         state.shadowPieces.clear(); // remove shadows
-        state.lightCoords = LightTexture.FULL_BRIGHT;
+        state.lightCoords = LightCoordsUtil.FULL_BRIGHT;
 
         if ((getProperties().hideNametags.get() || getProperties().spriteRendering.get()) && !isNametagOnlyRenderedData) {
             state.nameTag = null;
@@ -510,7 +510,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected boolean hasEntityType(Class<? extends Entity> entityTypeClass) {
         MutableBoolean found = new MutableBoolean(false);
 
-        forBaseAndSurroundingEntities(getUsedEntity(), (entity, isSurrounding) -> {
+        forBaseAndSurroundingEntities(getUsedEntity(), (entity, _) -> {
             if (entityTypeClass.isAssignableFrom(entity.getClass())) {
                 found.setTrue();
             }
@@ -522,7 +522,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     protected boolean hasLivingEntityProperty(Predicate<LivingEntity> predicate) {
         MutableBoolean found = new MutableBoolean(false);
 
-        forBaseAndSurroundingEntities(getUsedEntity(), (entity, isSurrounding) -> {
+        forBaseAndSurroundingEntities(getUsedEntity(), (entity, _) -> {
             if (entity instanceof LivingEntity livingEntity && predicate.test(livingEntity)) {
                 found.setTrue();
             }
@@ -674,7 +674,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     }
 
     @Override
-    public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
+    public void onScreenHandle(RenderScreen screen, GuiGraphicsExtractor graphics, float tickDelta) {
         super.onScreenHandle(screen, graphics, tickDelta);
         int scale = Minecraft.getInstance().getWindow().getGuiScale();
 
@@ -690,7 +690,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             int minY = cornerData.minY() / scale;
             int maxX = cornerData.maxX() / scale;
             int maxY = cornerData.maxY() / scale;
-            graphics.renderOutline(minX, minY, maxX - minX, maxY - minY, 0xFFFFFFFF);
+            graphics.outline(minX, minY, maxX - minX, maxY - minY, 0xFFFFFFFF);
         }
     }
 

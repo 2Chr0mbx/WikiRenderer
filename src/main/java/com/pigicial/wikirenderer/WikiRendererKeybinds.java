@@ -12,7 +12,7 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.screen.SelectRenderTaskScreen;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.KeyMapping;
@@ -44,13 +44,13 @@ public class WikiRendererKeybinds {
     public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY_ITEMS = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_K, CATEGORY);
 
     public static void registerKeyBinds() {
-        KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA);
-        KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA_EXPAND);
-        KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY);
-        KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP);
-        KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_TARGETED_BLOCK);
-        KeyBindingHelper.registerKeyBinding(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS);
-        KeyBindingHelper.registerKeyBinding(KEYBIND_RENDER_INVENTORY);
+        KeyMappingHelper.registerKeyMapping(KEYBIND_SELECT_AREA);
+        KeyMappingHelper.registerKeyMapping(KEYBIND_SELECT_AREA_EXPAND);
+        KeyMappingHelper.registerKeyMapping(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY);
+        KeyMappingHelper.registerKeyMapping(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP);
+        KeyMappingHelper.registerKeyMapping(KEYBIND_RENDER_TARGETED_BLOCK);
+        KeyMappingHelper.registerKeyMapping(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS);
+        KeyMappingHelper.registerKeyMapping(KEYBIND_RENDER_INVENTORY);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
@@ -81,29 +81,29 @@ public class WikiRendererKeybinds {
             }
         });
 
-        ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> ScreenKeyboardEvents.afterKeyPress(screen).register((s, key) -> {
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY).getValue()) {
+        ScreenEvents.AFTER_INIT.register((client, screen, _, _) -> ScreenKeyboardEvents.afterKeyPress(screen).register((_, key) -> {
+            if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY).getValue()) {
                 ItemStack hoveredSlot = getHoveredSlot(client);
                 if (hoveredSlot != null) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ItemRenderable(hoveredSlot)));
                 }
             }
 
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP).getValue()) {
+            if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP).getValue()) {
                 ItemStack hoveredSlot = getHoveredSlot(client);
                 if (hoveredSlot != null) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new TooltipRenderable(hoveredSlot)));
                 }
             }
 
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS).getValue()) {
+            if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS).getValue()) {
                 List<ItemStack> items = getItems(client);
                 if (items != null && !items.isEmpty()) {
                     Minecraft.getInstance().setScreen(new SelectRenderTaskScreen(items));
                 }
             }
 
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_INVENTORY).getValue()) {
+            if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_RENDER_INVENTORY).getValue()) {
                 Screen currentScreen = client.screen;
                 if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ContainerScreenRenderable(containerScreen)));

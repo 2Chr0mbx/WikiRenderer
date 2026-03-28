@@ -1,8 +1,8 @@
 package com.pigicial.wikirenderer.mixin.entity;
 
-import com.pigicial.wikirenderer.WikiRenderer;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.pigicial.wikirenderer.WikiRenderer;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

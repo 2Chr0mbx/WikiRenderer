@@ -31,6 +31,7 @@ import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
@@ -42,16 +43,16 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.gui.render.state.BlitRenderState;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.state.gui.BlitRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,6 @@ import org.joml.Matrix4fStack;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -114,13 +114,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public boolean hasBothColumns = false;
 
     public ButtonComponent exportButton = null;
-    private Consumer<File> exportCallback = null;
-
     public Button exportAnimationButton;
     @Nullable
     public AnimationHandler currentAnimationExportData = null;
 
-    public EditBox fileNameField = null;
+    public TextBoxComponent fileNameField = null;
     private double[] scrollOffsetData = null;
     public int mouseX;
     public int mouseY;
@@ -260,11 +258,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private void buildDefaultRenderOptionsGUIControls() {
         GlobalProperties globalProperties = GlobalProperties.get();
 
-        EditBox colorField = WikiRendererUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
+        TextBoxComponent colorField = WikiRendererUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
         colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
         colorField.setValue(String.format("#%06X", globalProperties.backgroundColor & 0xFFFFFF));
         colorField.moveCursorToStart(false);
-        colorField.setResponder(s -> {
+        colorField.onChanged().subscribe(s -> {
             String text = s.startsWith("#") ? s.substring(1) : s;
             if (text.length() < 6) {
                 return;
@@ -280,7 +278,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private void buildFFmpegSection() {
         if (!FFmpegDispatcher.wasFFmpegDetected()) {
             WikiRendererUI.text(rightColumn, "detecting_ffmpeg", false);
-            FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> this.guiRebuildScheduled = true);
+            FFmpegDispatcher.detectFFmpeg().whenComplete((_, _) -> this.guiRebuildScheduled = true);
             return;
         }
 
@@ -289,7 +287,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             WikiRendererUI.text(rightColumn, "no_ffmpeg_2", false);
             WikiRendererUI.text(rightColumn, "no_ffmpeg_3", false)
                     .cursorStyle(CursorStyle.HAND)
-                    .mouseDown().subscribe((click, doubled) -> {
+                    .mouseDown().subscribe((_, _) -> {
                         this.minecraft.setScreen(new ConfirmLinkScreen(confirmed -> {
                             if (confirmed) {
                                 Util.getPlatform().openUri("https://ffmpeg.org/download.html");
@@ -321,10 +319,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         WikiRendererUI.booleanControl(rightColumn, globalProperties.syncTextureAnimationsToAnimation, "sync_texture_animations");
         WikiRendererUI.booleanControl(rightColumn, globalProperties.syncEnchantmentGlintsToExport, "sync_enchantment_glints");
         WikiRendererUI.booleanControl(rightColumn, globalProperties.speedUpEnchantmentGlints, "speed_up_enchantment_glints");
-        globalProperties.speedUpEnchantmentGlints.futureListen(this, (p, v) -> guiRebuildScheduled = true);
+        globalProperties.speedUpEnchantmentGlints.futureListen(this, (_, _) -> guiRebuildScheduled = true);
 
         if (globalProperties.speedUpEnchantmentGlints.get()) {
-            rightColumn.child(UIComponents.button(Translate.gui("enchantment_glint_preset"), button -> {
+            rightColumn.child(UIComponents.button(Translate.gui("enchantment_glint_preset"), _ -> {
                 int seconds = 120000 / 8000;
                 int framerate = 20;
                 globalProperties.exportFramerate.set(framerate);
@@ -335,7 +333,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         WikiRendererUI.booleanControl(rightColumn, globalProperties.setAnimationFpsCap, "render_with_game_timings");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(rightColumn)) {
-            this.exportAnimationButton = UIComponents.button(Translate.gui("export_animation"), button -> this.queueAnimationExport());
+            this.exportAnimationButton = UIComponents.button(Translate.gui("export_animation"), _ -> this.queueAnimationExport());
             builder.row.child(this.exportAnimationButton.margins(Insets.right(5)));
 
             builder.row.child(UIComponents.button(Translate.gui("format." + globalProperties.animationFormat.extension), button -> {
@@ -374,13 +372,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }).margins(Insets.of(10, 0, 5, 0));
 
         rightColumn.child(UIComponents.dropdown(Sizing.content())
-                .button(Translate.gui("animation_mode_name_live_ffmpeg"), b -> globalProperties.animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG)
+                .button(Translate.gui("animation_mode_name_live_ffmpeg"), _ -> globalProperties.animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG)
                 .text(Translate.gui("animation_mode_description_live_ffmpeg_1"))
                 .text(Translate.gui("animation_mode_description_live_ffmpeg_2"))
-                .button(Translate.gui("animation_mode_name_instant_file_save"), b -> globalProperties.animationHandlingMode = AnimationHandlingMode.DISK_INSTANT_SAVE)
+                .button(Translate.gui("animation_mode_name_instant_file_save"), _ -> globalProperties.animationHandlingMode = AnimationHandlingMode.DISK_INSTANT_SAVE)
                 .text(Translate.gui("animation_mode_description_instant_file_save_1"))
                 .text(Translate.gui("animation_mode_description_instant_file_save_2"))
-                .button(Translate.gui("animation_mode_name_save_in_memory"), b -> globalProperties.animationHandlingMode = AnimationHandlingMode.MEMORY_CACHE)
+                .button(Translate.gui("animation_mode_name_save_in_memory"), _ -> globalProperties.animationHandlingMode = AnimationHandlingMode.MEMORY_CACHE)
                 .text(Translate.gui("animation_mode_description_save_in_memory_1"))
                 .text(Translate.gui("animation_mode_description_save_in_memory_2"))
 
@@ -408,7 +406,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
         this.mouseX = mouseX;
         this.mouseY = mouseY;
         if (this.guiRebuildScheduled) {
@@ -434,13 +432,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (this.drawOnlyBackground) {
             graphics.fill(0, 0, this.width, this.height, globalProperties.backgroundColor | 255 << 24);
         } else {
-            this.renderTransparentBackground(graphics);
+            this.extractTransparentBackground(graphics);
         }
 
         int placementX = renderable.renderPreviewToEntireScreenWidth() ? 0 : viewportBeginX;
         int placementXEnd = renderable.renderPreviewToEntireScreenWidth() ? window.getGuiScaledWidth() : window.getGuiScaledWidth() - (width - (viewportEndX));
 
-        graphics.guiRenderState.submitGuiElement(new BlitRenderState(
+        graphics.guiRenderState.addBlitToCurrentLayer(new BlitRenderState(
                 RenderPipelines.GUI_TEXTURED,
                 TextureSetup.singleTexture(Objects.requireNonNull(renderedOutput.getColorTextureView()), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST)),
                 new Matrix3x2f(graphics.pose()),
@@ -473,7 +471,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 this.exportAnimationButton.tooltip(tooltip);
             }
 
-            super.render(graphics, mouseX, mouseY, tickDelta);
+            super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 
             if (FileIO.taskCount() > 0) {
                 if (!this.ioStateComponent.hasParent()) {
@@ -508,7 +506,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
 
         RenderableDispatcher.drawIntoImage(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
-                .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((f, t) -> img.close()))
+                .thenCompose(img -> FileIO.saveImage(img, exportPath).whenComplete((_, _) -> img.close()))
                 .whenComplete((imageFile, throwable) -> {
                     capturing = false;
                     if (throwable != null) {
@@ -518,10 +516,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                                 Component.literal(String.valueOf(throwable.getMessage())).withStyle(ChatFormatting.GRAY)
                         ));
                         return;
-                    }
-
-                    if (this.exportCallback != null) {
-                        this.exportCallback.accept(imageFile);
                     }
 
                     if (popupText) {
@@ -538,7 +532,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                                 ? defaultExportPath.differentFileName("area_render_minimap_data")
                                 : defaultExportPath.differentFileName(customFileName + "_area_render_minimap_data");
 
-                        FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> {
+                        FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, _) -> {
                             if (popupText) {
                                 this.minecraft.execute(() -> this.notify(
                                         () -> Util.getPlatform().openFile(textFile),
@@ -679,14 +673,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         return true;
     }
 
-    public void scheduleCapture() {
-        this.captureScheduled = true;
-    }
-
-    public void setExportCallback(Consumer<File> exportCallback) {
-        this.exportCallback = exportCallback;
-    }
-
     @Override
     public boolean isPauseScreen() {
         return false;
@@ -734,14 +720,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         propertyListeners.clear();
     }
 
-    private void drawFramingHint(GuiGraphics context) {
+    private void drawFramingHint(GuiGraphicsExtractor context) {
         context.fill(viewportBeginX, 0, viewportEndX, 0, 0x90000000);
         context.fill(viewportBeginX, height, viewportEndX, height, 0x90000000);
         context.fill(viewportBeginX, 0, viewportBeginX, height, 0x90000000);
         context.fill(viewportEndX, 0, viewportEndX, height, 0x90000000);
     }
 
-    private void drawGuiBackground(GuiGraphics context) {
+    private void drawGuiBackground(GuiGraphicsExtractor context) {
         context.fill(0, 0, viewportBeginX, height, 0x90000000);
         context.fill(viewportEndX, 0, width, height, 0x90000000);
     }

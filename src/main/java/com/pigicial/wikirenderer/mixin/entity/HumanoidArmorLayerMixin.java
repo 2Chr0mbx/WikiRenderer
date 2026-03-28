@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.mixin.entity;
 
-import com.pigicial.wikirenderer.WikiRenderer;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.pigicial.wikirenderer.WikiRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import org.spongepowered.asm.mixin.Mixin;

@@ -8,7 +8,7 @@ options right in-game in a menu.
 Not only is this version of the mod also designed for modded wikis in mind, but it also has a couple of additional
 features targeted for use on the [Hypixel SkyBlock Wiki](https://hypixel-skyblock.fandom.com).
 
-> Note: WikiRenderer relies on [owo-lib](https://modrinth.com/mod/owo-lib) for 1.21.11, which can be downloaded [here](https://modrinth.com/mod/owo-lib/versions).
+> Note: WikiRenderer relies on [owo-lib](https://modrinth.com/mod/owo-lib), which can be downloaded [here](https://modrinth.com/mod/owo-lib/versions).
 
 # Usage
 WikiRenderer supports the following render types:

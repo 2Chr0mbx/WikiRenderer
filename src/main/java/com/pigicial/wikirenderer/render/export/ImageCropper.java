@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.render.export;
 
-import com.pigicial.wikirenderer.render.Renderable;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.pigicial.wikirenderer.render.Renderable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

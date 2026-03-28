@@ -1,9 +1,5 @@
 package com.pigicial.wikirenderer.render.skyblock;
 
-import com.pigicial.wikirenderer.render.batch.BatchRenderable;
-import com.pigicial.wikirenderer.render.item.ItemRenderable;
-import com.pigicial.wikirenderer.screen.RenderScreen;
-import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.JsonArray;
@@ -13,6 +9,10 @@ import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
+import com.pigicial.wikirenderer.render.batch.BatchRenderable;
+import com.pigicial.wikirenderer.render.item.ItemRenderable;
+import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;

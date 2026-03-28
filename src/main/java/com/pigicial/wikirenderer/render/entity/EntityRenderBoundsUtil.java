@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.*;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -101,17 +101,18 @@ public class EntityRenderBoundsUtil {
     private static EntityVertexBounds submitVertexData(SubmitNodeStorage tempStorage) {
         EntityVertexPositionTracker.BOUNDS = null;
         for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-            MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
+            renderSolids(collection);
+
+            MODEL_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+            MODEL_PART_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
             EntityVertexPositionTracker.renderingText = true;
-            NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
-            TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+            NAME_TAG_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+            TEXT_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE);
             EntityVertexPositionTracker.renderingText = false;
-            LEASH_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
-            ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
-            BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
-            CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+            ITEM_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
+            BLOCK_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, Minecraft.getInstance().getModelManager().getBlockStateModelSet(), OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE, Minecraft.getInstance().gameRenderer.getGameRenderState().optionsRenderState);
+            CUSTOM_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE);
+
         }
         return EntityVertexPositionTracker.BOUNDS;
     }
@@ -125,24 +126,34 @@ public class EntityRenderBoundsUtil {
 
         EntityVertexPositionTracker.BOUNDS = null;
         for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-            MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
+            renderSolids(collection);
 
-            TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
-            ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
-            BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
-            CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+            MODEL_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+            MODEL_PART_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+            TEXT_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE);
+            ITEM_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
+            BLOCK_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, Minecraft.getInstance().getModelManager().getBlockStateModelSet(), OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE, Minecraft.getInstance().gameRenderer.getGameRenderState().optionsRenderState);
+            CUSTOM_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE);
         }
 
         if (EntityVertexPositionTracker.BOUNDS == null) {
             for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-                NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+                NAME_TAG_FEATURE_RENDERER.renderTranslucent(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
             }
 
             return EntityVertexPositionTracker.BOUNDS != null;
         }
 
         return false;
+    }
+
+    private static void renderSolids(SubmitNodeCollection collection) {
+        MODEL_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+        MODEL_PART_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+        FLAME_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
+        LEASH_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE);
+        ITEM_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
+        BLOCK_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE, Minecraft.getInstance().getModelManager().getBlockStateModelSet(), OUTLINE_BUFFER_SOURCE, Minecraft.getInstance().gameRenderer.getGameRenderState().optionsRenderState);
+        CUSTOM_FEATURE_RENDERER.renderSolid(collection, BUFFER_SOURCE);
     }
 }

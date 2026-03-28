@@ -1,9 +1,9 @@
 package com.pigicial.wikirenderer.render.area.side_view;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
 import com.pigicial.wikirenderer.render.export.ImageCropper;
-import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;

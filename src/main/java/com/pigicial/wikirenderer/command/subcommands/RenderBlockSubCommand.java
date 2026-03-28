@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
 
 public class RenderBlockSubCommand extends WikiRendererSubCommand {
     @Override
@@ -49,7 +49,7 @@ public class RenderBlockSubCommand extends WikiRendererSubCommand {
         if (player == null) return;
 
         AttackRange attackRange = new AttackRange(0, 20, 0, 20, 0, 1);
-        HitResult hitResult = attackRange.getClosesetHit(player, 1, e -> false);
+        HitResult hitResult = attackRange.getClosesetHit(player, 1, _ -> false);
 
         if (hitResult instanceof BlockHitResult blockHitResult) {
             BlockState blockState = client.level.getBlockState(blockHitResult.getBlockPos());

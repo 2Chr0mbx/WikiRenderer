@@ -1,8 +1,8 @@
 package com.pigicial.wikirenderer.mixin.world;
 
-import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.pigicial.wikirenderer.render.DefaultRenderable;
 import net.minecraft.client.particle.QuadParticleGroup;
 import net.minecraft.client.renderer.culling.Frustum;
 import org.spongepowered.asm.mixin.Mixin;

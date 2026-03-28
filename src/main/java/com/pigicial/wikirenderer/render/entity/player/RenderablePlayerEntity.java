@@ -9,6 +9,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.CommonListenerCookie;
 import net.minecraft.client.multiplayer.LevelLoadTracker;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.multiplayer.chat.ChatAbilities;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.telemetry.TelemetryEventSender;
@@ -35,7 +36,8 @@ public class RenderablePlayerEntity extends LocalPlayer {
     protected PlayerSkin skinTextures;
 
     public RenderablePlayerEntity(GameProfile profile, ProfileFetchMode fetchMode) {
-        super(Minecraft.getInstance(),
+        super(
+                Minecraft.getInstance(),
                 Objects.requireNonNull(Minecraft.getInstance().level),
                 new ClientPacketListener(Minecraft.getInstance(),
                         new net.minecraft.network.Connection(PacketFlow.CLIENTBOUND),
@@ -47,7 +49,11 @@ public class RenderablePlayerEntity extends LocalPlayer {
                                 "Wisp Forest Enterprises", null, null, Map.of(), null, Map.of(), ServerLinks.EMPTY, Map.of(),
                                 true
                         )),
-                new StatsCounter(), new ClientRecipeBook(), Input.EMPTY, false
+                new StatsCounter(),
+                new ClientRecipeBook(),
+                Input.EMPTY,
+                false,
+                new ChatAbilities.Builder().build()
         );
 
         this.skinTextures = DefaultPlayerSkin.get(profile);

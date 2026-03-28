@@ -10,14 +10,14 @@ import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.DrawType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.gui.render.pip.*;
-import net.minecraft.client.gui.render.state.GuiRenderState;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.fog.FogRenderer;
-import net.minecraft.client.resources.model.AtlasManager;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
 import org.joml.Matrix4fStack;
 
 import java.util.List;
@@ -59,7 +59,7 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
     }
 
     @Override
-    public void onScreenHandle(RenderScreen screen, GuiGraphics graphics, float tickDelta) {
+    public void onScreenHandle(RenderScreen screen, GuiGraphicsExtractor graphics, float tickDelta) {
         if (previewScreenSizeData != null) {
             int maxScale = determineScaleFromResolution(previewScreenSizeData.previewWidth(), previewScreenSizeData.previewHeight());
             if (getProperties().previewGuiScale.max() != maxScale) {
@@ -117,16 +117,16 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         window.setHeight(framebufferHeight);
         window.setGuiScale(guiScale);
 
-        GuiGraphics guiGraphics = new GuiGraphics(client, state, mouseX, mouseY);
+        GuiGraphicsExtractor guiGraphics = new GuiGraphicsExtractor(client, state, mouseX, mouseY);
 
         client.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_3D);
 
         containerScreen.init(guiScaledWidth, guiScaledHeight);
         containerScreen.resize(guiScaledWidth, guiScaledHeight);
 
-        containerScreen.renderWithTooltipAndSubtitles(guiGraphics, mouseX, mouseY, tickDelta);
+        containerScreen.extractRenderStateWithTooltipAndSubtitles(guiGraphics, mouseX, mouseY, tickDelta);
         guiRenderer.render(gameRendererAccessor.wikirenderer$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
-        guiRenderer.incrementFrameNumber();
+        guiRenderer.endFrame();
 
         // Restore
         window.setWidth(savedWidth);

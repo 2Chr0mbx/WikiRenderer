@@ -24,12 +24,13 @@ public class HumanoidModelMixin {
     private void hideNonHeadParts(CallbackInfo ci) {
         HumanoidModel<?> model = (HumanoidModel<?>)(Object)this;
         if (WikiRenderer.inSpriteEntityDraw) {
-            model.setAllVisible(false);
+            model.allParts().forEach(part -> part.visible = false);
+            //model.setAllVisible(false);
 
             this.head.visible = true;
             this.hat.visible = true;
         } else {
-            model.setAllVisible(true);
+            model.allParts().forEach(part -> part.visible = true);
         }
     }
 }

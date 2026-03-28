@@ -1,12 +1,13 @@
 package com.pigicial.wikirenderer.mixin.world;
 
-import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.pigicial.wikirenderer.WikiRenderer;
+import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.LightmapRenderStateExtractor;
 import net.minecraft.world.attribute.EnvironmentAttribute;
 import net.minecraft.world.attribute.EnvironmentAttributeProbe;
 import net.minecraft.world.attribute.EnvironmentAttributes;
@@ -14,11 +15,11 @@ import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(LightTexture.class)
-public class LightTextureMixin {
+@Mixin(LightmapRenderStateExtractor.class)
+public class LightmapRenderStateExtractorMixin {
 
     @WrapOperation(
-            method = "updateLightTexture",
+            method = "extract",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/attribute/EnvironmentAttributeProbe;getValue(Lnet/minecraft/world/attribute/EnvironmentAttribute;F)Ljava/lang/Object;"
@@ -37,19 +38,19 @@ public class LightTextureMixin {
     }
 
     @WrapOperation(
-            method = "updateLightTexture",
+            method = "extract",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/OptionInstance;get()Ljava/lang/Object;",
-                    ordinal = 2
+                    ordinal = 1
             )
     )
     private Object forceHighGamma(OptionInstance<Double> instance, Operation<Double> original) {
-        return WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useFullBrightGamma.get() ? Double.valueOf(50D) : original.call(instance);
+        return WikiRenderer.inRenderableDraw && AreaPropertyBundle.INSTANCE.useFullBrightGamma.get() && instance == Minecraft.getInstance().options.gamma() ? Double.valueOf(50D) : original.call(instance);
     }
 
     @ModifyExpressionValue(
-            method = "updateLightTexture",
+            method = "extract",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/player/LocalPlayer;hasEffect(Lnet/minecraft/core/Holder;)Z",
@@ -61,7 +62,7 @@ public class LightTextureMixin {
     }
 
     @WrapOperation(
-            method = "updateLightTexture",
+            method = "extract",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/renderer/GameRenderer;getNightVisionScale(Lnet/minecraft/world/entity/LivingEntity;F)F"

@@ -21,20 +21,12 @@ public class WolfArmorLayerMixin {
     @Final
     private WolfModel adultModel;
 
-    @Shadow
-    @Final
-    private WolfModel babyModel;
-
     @Unique
     private final List<Runnable> adultModelVisibilityCallbacks = new ArrayList<>();
-
-    @Unique
-    private final List<Runnable> babyModelVisibilityCallbacks = new ArrayList<>();
 
     @Inject(method = "submit(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/client/renderer/entity/state/WolfRenderState;FF)V", at = @At("TAIL"))
     private void hideNonHeadParts(CallbackInfo ci) {
         EntitySpriteModelVisibilityUtil.hideOrShowNonHeadParts(adultModel, adultModelVisibilityCallbacks);
-        EntitySpriteModelVisibilityUtil.hideOrShowNonHeadParts(babyModel, babyModelVisibilityCallbacks);
     }
 }
 

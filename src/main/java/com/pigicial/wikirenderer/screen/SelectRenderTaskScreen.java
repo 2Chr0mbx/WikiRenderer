@@ -3,13 +3,12 @@ package com.pigicial.wikirenderer.screen;
 import com.pigicial.wikirenderer.render.batch.ItemBatchRenderTask;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
-import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -44,19 +43,19 @@ public class SelectRenderTaskScreen extends BaseOwoScreen<FlowLayout> {
         contentPanel.verticalAlignment(VerticalAlignment.CENTER);
 
         contentPanel.child(UIContainers.verticalFlow(Sizing.content(), Sizing.content())
-                .child(UIComponents.button(Translate.gui("select_item_batch"), (ButtonComponent button) -> {
+                .child(UIComponents.button(Translate.gui("select_item_batch"), _ -> {
                     ItemBatchRenderTask.BATCH_ITEM.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
-                .child(UIComponents.button(Translate.gui("select_block_batch"), (ButtonComponent button) -> {
+                .child(UIComponents.button(Translate.gui("select_block_batch"), _ -> {
                     ItemBatchRenderTask.BATCH_BLOCK.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
-                .child(UIComponents.button(Translate.gui("select_tooltip_batch"), (ButtonComponent button) -> {
+                .child(UIComponents.button(Translate.gui("select_tooltip_batch"), _ -> {
                     ItemBatchRenderTask.BATCH_TOOLTIP.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)).margins(Insets.bottom(5)))
-                .child(UIComponents.button(Translate.gui("select_atlas"), (ButtonComponent button) -> {
+                .child(UIComponents.button(Translate.gui("select_atlas"), _ -> {
                     ItemBatchRenderTask.ITEM_ATLAS.action.accept("inventory", this.items);
                     this.onClose();
                 }).horizontalSizing(Sizing.fixed(80)))

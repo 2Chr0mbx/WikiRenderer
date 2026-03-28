@@ -7,7 +7,10 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.property.*;
+import com.pigicial.wikirenderer.property.DoubleProperty;
+import com.pigicial.wikirenderer.property.IntProperty;
+import com.pigicial.wikirenderer.property.Property;
+import com.pigicial.wikirenderer.property.SerializablePropertyBundle;
 
 import java.io.IOException;
 import java.lang.reflect.Field;

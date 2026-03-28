@@ -13,13 +13,13 @@ import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.DrawType;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.LabelComponent;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.EditBox;
 import org.joml.Matrix4fStack;
 
 public class ContainerScreenPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
@@ -59,9 +59,9 @@ public class ContainerScreenPropertyBundle extends DefaultCroppablePropertyBundl
     public void buildExportResolutionGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         ContainerScreenRenderable renderable = (ContainerScreenRenderable) r;
 
-        EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(this.exportGuiScale.get()), "gui_scale_resolution", Sizing.fixed(28));
+        TextBoxComponent resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(this.exportGuiScale.get()), "gui_scale_resolution", Sizing.fixed(28));
         resolutionField.setFilter(s -> s.matches("\\d{0,3}"));
-        resolutionField.setResponder(s -> {
+        resolutionField.onChanged().subscribe(s -> {
             if (s.isBlank()) return;
             int scale = Integer.parseInt(s);
 

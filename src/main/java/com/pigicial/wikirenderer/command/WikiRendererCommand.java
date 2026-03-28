@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 
 import java.net.URI;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class WikiRendererCommand {
 

@@ -1,9 +1,9 @@
 package com.pigicial.wikirenderer.mixin.world;
 
-import com.pigicial.wikirenderer.WikiRenderer;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.pigicial.wikirenderer.WikiRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.feature.ParticleFeatureRenderer;

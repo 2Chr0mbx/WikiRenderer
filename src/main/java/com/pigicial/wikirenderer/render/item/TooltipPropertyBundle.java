@@ -7,9 +7,9 @@ import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Sizing;
-import net.minecraft.client.gui.components.EditBox;
 import org.joml.Matrix4fStack;
 
 public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
@@ -36,9 +36,9 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
 
     @Override
     public void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
-        EditBox resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(this.fontScaling.get()), "font_resolution", Sizing.fixed(28));
+        TextBoxComponent resolutionField = WikiRendererUI.labelledTextField(container, String.valueOf(this.fontScaling.get()), "font_resolution", Sizing.fixed(28));
         resolutionField.setFilter(s -> s.matches("\\d{0,3}"));
-        resolutionField.setResponder(s -> {
+        resolutionField.onChanged().subscribe(s -> {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 

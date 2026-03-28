@@ -1,19 +1,22 @@
 package com.pigicial.wikirenderer.render;
 
-import com.pigicial.wikirenderer.mixin.access.CameraInvoker;
-import com.pigicial.wikirenderer.mixin.access.LightTextureAccessor;
-import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.pigicial.wikirenderer.mixin.access.CameraInvoker;
+import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
+import com.pigicial.wikirenderer.mixin.access.LightmapRenderStateExtractorAccessor;
+import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Lightmap;
+import net.minecraft.client.renderer.LightmapRenderStateExtractor;
 import net.minecraft.client.renderer.culling.Frustum;
-import net.minecraft.client.renderer.state.CameraRenderState;
-import net.minecraft.client.renderer.state.ParticlesRenderState;
+import net.minecraft.client.renderer.state.LightmapRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.state.level.ParticlesRenderState;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -73,9 +76,16 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 
     protected void updateWorldLightmap() {
         // block lighting / general light map, not light direction (which is handled above)
-        LightTexture lightTexture = Minecraft.getInstance().gameRenderer.lightTexture();
-        ((LightTextureAccessor) lightTexture).wikirenderer$setUpdateLightTexture(true);
-        lightTexture.updateLightTexture(1.0F);
+        GameRendererAccessor gameRenderer = (GameRendererAccessor) Minecraft.getInstance().gameRenderer;
+        LightmapRenderStateExtractor extractor = gameRenderer.wikirenderer$getLightmapRenderStateExtractor();
+
+        ((LightmapRenderStateExtractorAccessor) extractor).wikirenderer$setNeedsUpdate(true);
+
+        LightmapRenderState renderState = new LightmapRenderState();
+        extractor.extract(renderState, 1.0F);
+
+        Lightmap lightmap = gameRenderer.wikirenderer$getLightmap();
+        lightmap.render(renderState);
     }
 
     @Override
@@ -147,7 +157,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
         cameraRenderState.initialized = true;
         cameraRenderState.pos = camera.position();
         cameraRenderState.blockPos = camera.blockPosition();
-        cameraRenderState.entityPos = camera.entity().getPosition(tickDelta);
+        cameraRenderState.pos = camera.entity().getPosition(tickDelta);
 
         /* submit and render to vertexconsumers */
         particleBatch.submit(client.gameRenderer.getSubmitNodeStorage(), cameraRenderState);

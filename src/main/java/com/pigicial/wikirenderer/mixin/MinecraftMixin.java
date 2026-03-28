@@ -29,7 +29,7 @@ public class MinecraftMixin {
         ci.cancel();
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/DeltaTracker$Timer;advanceTime(JZ)I"))
+    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/DeltaTracker$Timer;advanceGameTime(J)I"))
     private void onRenderStart(boolean tick, CallbackInfo ci) {
         if (screen instanceof RenderScreen renderScreen) {
             renderScreen.renderable.getProperties().onRenderStart();

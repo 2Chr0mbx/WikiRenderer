@@ -13,6 +13,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -87,11 +88,10 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
 
     private MiniEditBoxComponent buildItemNameComponent() {
         MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.fixed(100), itemName);
-        editBox.setFilter(s -> true);
         editBox.onChanged().subscribe(text -> {
             this.itemName = text;
             try {
-                ItemParser.ItemResult result = new ItemParser(HolderLookup.Provider.create(Stream.of(BuiltInRegistries.ITEM))).parse(new StringReader(text));
+                ItemInput result = new ItemParser(HolderLookup.Provider.create(Stream.of(BuiltInRegistries.ITEM))).parse(new StringReader(text));
                 setValue(new ItemStack(result.item()));
             } catch (CommandSyntaxException e) {
                 setValue(ItemStack.EMPTY);

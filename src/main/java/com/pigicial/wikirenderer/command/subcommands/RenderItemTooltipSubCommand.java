@@ -14,7 +14,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.world.item.ItemStack;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
 
 public class RenderItemTooltipSubCommand extends WikiRendererSubCommand {
     @Override
@@ -37,7 +37,7 @@ public class RenderItemTooltipSubCommand extends WikiRendererSubCommand {
 
     private void renderItemTooltipWithArgument(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
         ScreenSchedulerAndSaver.schedule(new RenderScreen(
-                new TooltipRenderable(ItemArgument.getItem(context, "item").createItemStack(1, false))
+                new TooltipRenderable(ItemArgument.getItem(context, "item").createItemStack(1))
         ));
     }
 
