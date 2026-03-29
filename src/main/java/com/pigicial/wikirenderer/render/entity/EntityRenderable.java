@@ -341,6 +341,10 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             state.leashStates = null;
         }
 
+        if (properties.spriteRendering.get()) {
+            state.displayFireAnimation = false;
+        }
+
         state.outlineColor = 0; // remove glow (doesn't render properly)
         state.shadowPieces.clear(); // remove shadows
         state.lightCoords = LightCoordsUtil.FULL_BRIGHT;
