@@ -48,6 +48,24 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
         }
     }
 
+    @Override
+    public void modifySlant(double amount) {
+        if (this.actualProperties instanceof DefaultPropertyBundle defaultPropertyBundle) {
+            defaultPropertyBundle.modifySlant(amount);
+        } else {
+            super.modifySlant(amount);
+        }
+    }
+
+    @Override
+    public void modifyRotation(int amount) {
+        if (this.actualProperties instanceof DefaultPropertyBundle delegate) {
+            delegate.modifyRotation(amount);
+        } else {
+            super.modifySlant(amount);
+        }
+    }
+
     public PropertyBundle getActualProperties() {
         return actualProperties;
     }

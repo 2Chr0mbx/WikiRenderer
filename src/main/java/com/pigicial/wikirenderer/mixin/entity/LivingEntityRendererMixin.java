@@ -62,7 +62,8 @@ public class LivingEntityRendererMixin<T extends LivingEntity> {
             CrossedArmsItemLayer.class,
             IronGolemFlowerLayer.class,
             PandaHoldsItemLayer.class,
-            StuckInBodyLayer.class
+            StuckInBodyLayer.class,
+            CapeLayer.class
     );
 
     @Redirect(

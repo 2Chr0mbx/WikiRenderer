@@ -8,8 +8,8 @@ import net.minecraft.client.input.MouseButtonEvent;
 public class MiniEditBoxComponent extends TextBoxComponent {
     public MiniEditBoxComponent(Sizing horizontalSizing, String text) {
         super(horizontalSizing);
-        this.text(text);
         this.setMaxLength(100);
+        this.text(text);
         this.verticalSizing(Sizing.fixed(14));
         this.horizontalSizing(horizontalSizing);
     }

@@ -17,6 +17,7 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
     private final Supplier<EntityTypeSpecificOverrides<?>> overridesSupplier;
 
     private Integer lastSavedEntityId = null;
+    private boolean freezeUpdates = false; // prevents the scroll position from resetting
 
     public EntityTypeSpecificPropertiesComponent(Supplier<Integer> entityIdSupplier, Supplier<EntityTypeSpecificOverrides<?>> overridesSupplier) {
         super(Sizing.content());
@@ -29,21 +30,35 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
     }
 
     @Override
-    public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
+    protected void parentUpdate(float delta, int mouseX, int mouseY) {
         this.update();
-        super.draw(graphics, mouseX, mouseY, partialTicks, delta);
+        super.parentUpdate(delta, mouseX, mouseY);
+    }
+
+    @Override
+    protected void updateLayout() {
+        if (freezeUpdates) return;
+        super.updateLayout();
     }
 
     public void update() {
+        this.freezeUpdates = false;
         Integer entityId = entitySupplier.get();
         if (!Objects.equals(entityId, lastSavedEntityId)) {
+            this.freezeUpdates = true;
             this.entries.clearChildren();
             this.lastSavedEntityId = entityId;
 
-            if (entityId == null) return;
+            if (entityId == null) {
+                this.freezeUpdates = false;
+                this.updateLayout();
+                return;
+            }
 
             EntityTypeSpecificOverrides<?> overrides = this.overridesSupplier.get();
             if (overrides == null) {
+                this.freezeUpdates = false;
+                this.updateLayout();
                 return;
             }
 
@@ -61,6 +76,9 @@ public class EntityTypeSpecificPropertiesComponent extends DropdownComponent {
                     this.entries.child(override.buildComponent());
                 }
             }
+
+            this.freezeUpdates = false;
+            this.updateLayout();
         }
     }
 }

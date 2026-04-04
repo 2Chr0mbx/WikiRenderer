@@ -37,15 +37,8 @@ public class SearchableEntityListComponent extends DropdownComponent {
     }
 
     @Override
-    public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
+    protected void parentUpdate(float delta, int mouseX, int mouseY) {
         this.update();
-        super.draw(graphics, mouseX, mouseY, partialTicks, delta);
-    }
-
-    @Override
-    protected void drawChildren(OwoUIGraphics context, int mouseX, int mouseY, float partialTicks, float delta, List<? extends UIComponent> children) {
-        //update();
-        super.drawChildren(context, mouseX, mouseY, partialTicks, delta, children);
     }
 
     public void update() {
