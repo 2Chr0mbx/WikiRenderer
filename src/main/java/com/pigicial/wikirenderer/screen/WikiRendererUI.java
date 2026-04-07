@@ -25,6 +25,7 @@ public class WikiRendererUI {
         try (RowBuilder builder = rowBuilder(container)) {
             TextBoxComponent textBox = UIComponents.textBox(sizing, content);
             textBox.setMaxLength(100); // allow more characters
+            textBox.text(content); // fixes if it truncates early
             builder.row.child(textBox);
             builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
             return textBox;

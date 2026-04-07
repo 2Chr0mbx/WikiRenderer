@@ -31,7 +31,10 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
     public LiveRenderFFmpegAnimationHandler(RenderScreen screen, Renderable<?> renderable, int framesToRender) {
         super(screen, renderable, framesToRender);
         try {
-            this.tempData = ExportPathSpec.exportRoot().resolve(this.framesFolderName + ".mov");
+            Path rendersFolder = ExportPathSpec.exportRoot();
+            rendersFolder.toFile().mkdirs();
+
+            this.tempData = rendersFolder.resolve(this.framesFolderName + ".mov");
             int exportResolution = renderable.getExportResolution();
             this.session = new FFmpegSession(this.tempData, exportResolution, exportResolution);
             this.remainingAnimationFrames = framesToRender;
