@@ -90,8 +90,8 @@ public class WikiRenderer implements ClientModInitializer {
             }
 
             AreaSelectionComponent selectionHint = isometricHud.childById(AreaSelectionComponent.class, areaSelectionHintId);
-            if ((selectionHint == null) == AreaSelectionHelper.shouldDraw()) {
-                if (AreaSelectionHelper.shouldDraw()) {
+            if ((selectionHint == null) == AreaSelectionHelper.shouldDrawOverlay()) {
+                if (AreaSelectionHelper.shouldDrawOverlay()) {
                     isometricHud.child(new AreaSelectionComponent().id(areaSelectionHintId));
                 } else {
                     isometricHud.removeChild(selectionHint);

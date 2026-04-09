@@ -24,8 +24,12 @@ public class AreaSelectionHelper {
     public static BlockPos pos1 = null;
     public static BlockPos pos2 = null;
 
-    public static boolean shouldDraw() {
+    public static boolean shouldDrawOverlay() {
         return pos1 != null && !(Minecraft.getInstance().screen instanceof RenderScreen);
+    }
+
+    public static boolean shouldDrawBox() {
+        return pos1 != null;
     }
 
     public static void clear() {
@@ -35,7 +39,7 @@ public class AreaSelectionHelper {
     }
 
     public static void renderSelectionBox() {
-        if (!AreaSelectionHelper.shouldDraw()) return;
+        if (!AreaSelectionHelper.shouldDrawBox()) return;
 
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
