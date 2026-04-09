@@ -118,13 +118,6 @@ public class BlockStateRenderable
         matrices.pushPose();
         matrices.translate(-0.5, -0.5, -0.5);
 
-        // renders the extra stuff, like the book on the enchantment table, middle bell within the bell block, etc
-		BlockEntityRenderState renderState = this.blockEntity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, null);
-		if (renderState != null) {
-			renderState.lightCoords = LightCoordsUtil.FULL_BRIGHT;
-			this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), CameraOrientationUtil.createRenderState(this));
-        }
-
         // renders the main stuff
         if (this.state.getRenderShape() != RenderShape.INVISIBLE) {
             BlockModelRenderState blockModelRenderState = new BlockModelRenderState();
@@ -132,6 +125,13 @@ public class BlockStateRenderable
             blockModelResolver.update(blockModelRenderState, state, displayContext);
             blockModelRenderState.submit(matrices, this.client.gameRenderer.getSubmitNodeStorage(), LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
             // todo: figure out liquid rendering (waterlogged / fluid states)
+        }
+
+        // renders the extra stuff, like the book on the enchantment table, middle bell within the bell block, etc
+        BlockEntityRenderState renderState = this.blockEntity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, null);
+        if (renderState != null) {
+            renderState.lightCoords = LightCoordsUtil.FULL_BRIGHT;
+            this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), CameraOrientationUtil.createRenderState(this));
         }
 
         super.drawSubmittedRenderFeatures();
