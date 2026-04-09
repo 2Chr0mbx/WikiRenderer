@@ -28,6 +28,7 @@ public class NotificationComponent extends FlowLayout {
             this.mouseDown().subscribe((click, doubled) -> {
                 if (click.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return false;
 
+                screen.openingFile = true;
                 onClick.run();
                 UISounds.playInteractionSound();
 
