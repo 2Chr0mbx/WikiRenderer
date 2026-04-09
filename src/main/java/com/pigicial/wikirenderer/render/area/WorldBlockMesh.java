@@ -63,14 +63,18 @@ public class WorldBlockMesh {
     private final List<Integer> animationCompletionTimings = new LinkedList<>();
 
     private final SectionRenderDispatcher sectionRenderDispatcher;
+    private final SectionBufferBuilderPack resortBufferPack = new SectionBufferBuilderPack();
     public final List<SectionRenderDispatcher.RenderSection> builtSubMeshes = new ArrayList<>();
+
     private MeshState state = MeshState.NEW;
     private CompletableFuture<Void> buildFuture = null;
+    private OrthographicSort orthographicTransparencySorting = null;
+    private volatile CompletableFuture<Void> sortFuture = null;
+
     private float buildProgress = 0;
     private boolean buildCancelRequested = false;
     private final Map<BlockPos, BlockEntity> blockEntities = new ConcurrentHashMap<>();
 
-    private OrthographicSort orthographicTransparencySorting = null;
     private float lastUsedRotation;
     private double lastUsedSlant;
 
@@ -130,7 +134,7 @@ public class WorldBlockMesh {
                 // anything smaller than 15 you probably wont see transparency issues (i.e. rendering the skyblock hub)
                 this.lastUsedRotation = currentRotation;
                 this.lastUsedSlant = currentSlant;
-                reSortMeshSections();
+                scheduleReSort();
             }
         }
 
@@ -495,9 +499,21 @@ public class WorldBlockMesh {
         this.blockEntities.putAll(blockEntities);
     }
 
+    private synchronized void scheduleReSort() {
+        if (this.sortFuture != null && !this.sortFuture.isDone()) return;
+
+        this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
+        if (ShaderCheck.isUsingShaders()) {
+            this.sortFuture = CompletableFuture.completedFuture(null);
+            this.reSortMeshSections();
+            this.sortFuture = null;
+        } else {
+            this.sortFuture = CompletableFuture.runAsync(this::reSortMeshSections).whenComplete((_, _) -> this.sortFuture = null);
+        }
+    }
+
     // Based on SectionRenderDispatcher.RenderSection.ResortTransparencyTask#doTask
-    private synchronized void reSortMeshSections() {
-        SectionBufferBuilderPack sectionBufferBuilderPack = new SectionBufferBuilderPack();
+    private void reSortMeshSections() {
         for (SectionRenderDispatcher.RenderSection section : builtSubMeshes) {
             if (!(section.getSectionMesh() instanceof CompiledSectionMesh compiledSectionMesh)) {
                 continue;
@@ -506,7 +522,7 @@ public class WorldBlockMesh {
             MeshData.SortState state = compiledSectionMesh.getTransparencyState();
             if (state != null && !compiledSectionMesh.isEmpty(ChunkSectionLayer.TRANSLUCENT)) {
 
-                ByteBufferBuilder.Result indexBuffer = state.buildSortedIndexBuffer(sectionBufferBuilderPack.buffer(ChunkSectionLayer.TRANSLUCENT), orthographicTransparencySorting);
+                ByteBufferBuilder.Result indexBuffer = state.buildSortedIndexBuffer(resortBufferPack.buffer(ChunkSectionLayer.TRANSLUCENT), orthographicTransparencySorting);
                 if (indexBuffer == null) {
                     continue;
                 }
@@ -530,6 +546,12 @@ public class WorldBlockMesh {
 
     public Optional<List<Integer>> getAnimationCompletionTimings() {
         return animationCompletionTimings.isEmpty() ? Optional.empty() : Optional.of(animationCompletionTimings);
+    }
+
+    public void dispose() {
+        builtSubMeshes.forEach(SectionRenderDispatcher.RenderSection::reset);
+        builtSubMeshes.clear();
+        resortBufferPack.close();
     }
 
     public enum MeshState {
