@@ -198,10 +198,10 @@ public class RenderableDispatcher {
                 boolean dontRescale = rescalingDisabled || sameSize || likelyOscillating || batchSecondPass || isAreaTopdown;
 
                 int maxTextureSize = RenderSystem.getDevice().getMaxTextureSize();
-                boolean tooLarge = newSize > maxTextureSize;
+                boolean tooLarge = newSize >= maxTextureSize;
                 if (tooLarge && !dontRescale) {
                     croppedImage.close();
-                    return CompletableFuture.failedFuture(new RuntimeException("Failed to rescale image (too big, " + newSize + " > max " + maxTextureSize + ")"));
+                    return CompletableFuture.failedFuture(new RuntimeException("Failed to rescale image (too big, " + newSize + " >= max " + maxTextureSize + ")"));
                 }
 
                 if (dontRescale) {

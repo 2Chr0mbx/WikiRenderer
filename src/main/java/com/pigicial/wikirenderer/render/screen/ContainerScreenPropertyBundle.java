@@ -68,7 +68,7 @@ public class ContainerScreenPropertyBundle extends DefaultCroppablePropertyBundl
             int[] resolutionWidthHeight = renderable.previewScreenSizeData.getWidthAndHeightForHigherScale(scale);
             int resolution = Math.max(resolutionWidthHeight[0], resolutionWidthHeight[1]);
 
-            if ((scale < 1 || resolution > RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
+            if ((scale < 1 || resolution >= RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 this.exportGuiScale.set(scale);
