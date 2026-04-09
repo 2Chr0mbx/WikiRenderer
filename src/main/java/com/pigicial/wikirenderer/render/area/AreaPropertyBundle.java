@@ -546,7 +546,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             float pixelPerfectScale = (float) (pixelsPerBlock / (bufferSize / orthoWidth));
 
             modelViewStack.scale(pixelPerfectScale, pixelPerfectScale, pixelPerfectScale);
-            modelViewStack.rotate(Axis.XP.rotationDegrees(this.sideViewSlant.getRotationDegrees()));
+            modelViewStack.rotate(Axis.XP.rotationDegrees(180 + this.sideViewSlant.getRotationDegrees()));
             modelViewStack.rotate(Axis.YP.rotationDegrees(this.sideViewRotation.getRotationDegrees()));
 
             if (pixelsPerBlock == 4 && this.halfPixelOffsetFor4x4.get()) {
@@ -558,9 +558,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             modelViewStack.scale(scale, scale, scale);
 
             // offsets arent needed for side rendering because they're already perfectly aligned
-            modelViewStack.translate(this.xOffset.get() / 2600f, this.yOffset.get() / -2600f, 0);
+            modelViewStack.translate(this.xOffset.get() / 2600f, this.yOffset.get() / 2600f, 0);
 
-            modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
+            modelViewStack.rotate(Axis.XP.rotationDegrees(180 + this.slant.get().floatValue()));
             modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get() + this.updateAndGetSpinningRotationOffset()));
         }
     }

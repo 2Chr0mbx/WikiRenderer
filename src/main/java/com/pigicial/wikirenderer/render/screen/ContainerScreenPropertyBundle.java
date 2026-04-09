@@ -68,7 +68,7 @@ public class ContainerScreenPropertyBundle extends DefaultCroppablePropertyBundl
             int[] resolutionWidthHeight = renderable.previewScreenSizeData.getWidthAndHeightForHigherScale(scale);
             int resolution = Math.max(resolutionWidthHeight[0], resolutionWidthHeight[1]);
 
-            if ((scale < 1 || resolution > RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
+            if ((scale < 1 || resolution > RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 this.exportGuiScale.set(scale);
@@ -96,7 +96,7 @@ public class ContainerScreenPropertyBundle extends DefaultCroppablePropertyBundl
         int screenHeight = framebufferHeight / (double) guiScale > height ? height + 1 : height;
 
         double aspectRatio  = screenWidth / (double) screenHeight;
-        modelViewStack.scale((float) ((2.0d * aspectRatio) / screenWidth), (float) (-2.0d / screenHeight), 1.0f);
+        modelViewStack.scale((float) ((2.0d * aspectRatio) / screenWidth), (float) (2.0d / screenHeight), 1.0f);
 
         modelViewStack.translate(-screenWidth / 2.0f, -screenHeight / 2.0f, 0.0f);
     }

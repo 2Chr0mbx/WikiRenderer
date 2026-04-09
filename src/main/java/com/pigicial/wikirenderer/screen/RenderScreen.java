@@ -288,12 +288,12 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             WikiRendererUI.text(rightColumn, "no_ffmpeg_3", false)
                     .cursorStyle(CursorStyle.HAND)
                     .mouseDown().subscribe((_, _) -> {
-                        this.minecraft.setScreen(new ConfirmLinkScreen(confirmed -> {
+                        this.minecraft.setScreenAndShow(new ConfirmLinkScreen(confirmed -> {
                             if (confirmed) {
                                 Util.getPlatform().openUri("https://ffmpeg.org/download.html");
                             }
 
-                            this.minecraft.setScreen(this);
+                            this.minecraft.setScreenAndShow(this);
                         }, "https://ffmpeg.org/download.html", true));
                         return true;
                     });

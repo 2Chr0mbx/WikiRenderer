@@ -8,7 +8,7 @@ public class ScreenSchedulerAndSaver {
     private static RenderScreen SAVED_SCREEN = null;
 
     public static void schedule(RenderScreen screen) {
-        if (Minecraft.getInstance().screen == null) {
+        if (Minecraft.getInstance().gui.screen() == null) {
             SCHEDULED_SCREEN = screen;
             openScheduledScreen();
         } else {
@@ -42,7 +42,7 @@ public class ScreenSchedulerAndSaver {
             SAVED_SCREEN.removed();
             SAVED_SCREEN = null;
         }
-        Minecraft.getInstance().setScreen(SCHEDULED_SCREEN);
+        Minecraft.getInstance().setScreenAndShow(SCHEDULED_SCREEN);
         SCHEDULED_SCREEN = null;
     }
 

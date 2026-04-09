@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.screen.RenderScreen;
@@ -15,7 +14,7 @@ import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.gui.render.pip.*;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.fog.FogRenderer;
+import net.minecraft.client.renderer.state.WindowRenderState;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.resources.model.sprite.AtlasManager;
 import org.joml.Matrix4fStack;
@@ -76,7 +75,6 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         state.reset();
 
         Minecraft client = Minecraft.getInstance();
-        GameRendererAccessor gameRendererAccessor = (GameRendererAccessor) client.gameRenderer;
 
         int framebufferWidth = WikiRenderer.mainTargetOverride.width;
         int framebufferHeight = WikiRenderer.mainTargetOverride.height;
@@ -96,11 +94,13 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         Window window = client.getWindow();
         int savedWidth = window.getWidth();
         int savedHeight = window.getHeight();
-        int savedScale = window.getGuiScale();
+        int savedWindowScale = window.getGuiScale();
+        WindowRenderState windowRenderState = Minecraft.getInstance().gameRenderer.getGameRenderState().windowRenderState;
+        int savedRenderStateGuiScale = windowRenderState.guiScale;
 
         double normalizedMouseX = Minecraft.getInstance().mouseHandler.xpos();
-        int normalizedWidthLeftOffset = renderScreen.viewportBeginX * savedScale;
-        int widthForMouseCalculation = ((renderScreen.viewportEndX - renderScreen.viewportBeginX) * savedScale);
+        int normalizedWidthLeftOffset = renderScreen.viewportBeginX * savedWindowScale;
+        int widthForMouseCalculation = ((renderScreen.viewportEndX - renderScreen.viewportBeginX) * savedWindowScale);
         double mouseXInPreview = normalizedMouseX - normalizedWidthLeftOffset;
         double percentageMouseX = mouseXInPreview / (double) widthForMouseCalculation;
         int mouseX = (int) (percentageMouseX * framebufferWidth) / guiScale;
@@ -116,6 +116,8 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         window.setWidth(framebufferWidth);
         window.setHeight(framebufferHeight);
         window.setGuiScale(guiScale);
+        windowRenderState.guiScale = guiScale;
+
 
         GuiGraphicsExtractor guiGraphics = new GuiGraphicsExtractor(client, state, mouseX, mouseY);
 
@@ -125,13 +127,14 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         containerScreen.resize(guiScaledWidth, guiScaledHeight);
 
         containerScreen.extractRenderStateWithTooltipAndSubtitles(guiGraphics, mouseX, mouseY, tickDelta);
-        guiRenderer.render(gameRendererAccessor.wikirenderer$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
+        guiRenderer.render();
         guiRenderer.endFrame();
 
         // Restore
         window.setWidth(savedWidth);
         window.setHeight(savedHeight);
-        window.setGuiScale(savedScale);
+        window.setGuiScale(savedWindowScale);
+        windowRenderState.guiScale = savedRenderStateGuiScale;
         WikiRenderer.inContainerScreenDraw = false;
     }
 
@@ -140,12 +143,12 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
 
         List<PictureInPictureRenderer<?>> renderers = List.of(
-                new GuiEntityRenderer(bufferSource, client.getEntityRenderDispatcher()),
-                new GuiSkinRenderer(bufferSource),
-                new GuiBookModelRenderer(bufferSource),
-                new GuiBannerResultRenderer(bufferSource, atlasManager),
-                new GuiSignRenderer(bufferSource, atlasManager),
-                new GuiProfilerChartRenderer(bufferSource)
+                new GuiEntityRenderer(client.getEntityRenderDispatcher()),
+                new GuiSkinRenderer(),
+                new GuiBookModelRenderer(),
+                new GuiBannerResultRenderer(atlasManager),
+                new GuiSignRenderer(atlasManager),
+                new GuiProfilerChartRenderer()
         );
 
         return new GuiRenderer(ContainerScreenRenderable.state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);

@@ -99,12 +99,12 @@ public class WikiRendererKeybinds {
             if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS).getValue()) {
                 List<ItemStack> items = getItems(client);
                 if (items != null && !items.isEmpty()) {
-                    Minecraft.getInstance().setScreen(new SelectRenderTaskScreen(items));
+                    Minecraft.getInstance().setScreenAndShow(new SelectRenderTaskScreen(items));
                 }
             }
 
             if (key.key() == KeyMappingHelper.getBoundKeyOf(KEYBIND_RENDER_INVENTORY).getValue()) {
-                Screen currentScreen = client.screen;
+                Screen currentScreen = client.gui.screen();
                 if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ContainerScreenRenderable(containerScreen)));
                 }
@@ -119,7 +119,7 @@ public class WikiRendererKeybinds {
             return null;
         }
 
-        Screen currentScreen = client.screen;
+        Screen currentScreen = client.gui.screen();
         if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
             if (currentScreen.getFocused() instanceof EditBox) return null;
             if (currentScreen instanceof CreativeModeInventoryScreen
@@ -149,7 +149,7 @@ public class WikiRendererKeybinds {
             return null;
         }
 
-        Screen currentScreen = client.screen;
+        Screen currentScreen = client.gui.screen();
         if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
             if (currentScreen.getFocused() instanceof EditBox) return null;
             if (currentScreen instanceof CreativeModeInventoryScreen

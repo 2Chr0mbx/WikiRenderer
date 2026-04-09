@@ -111,7 +111,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
     public void drawSubmittedRenderFeatures() {
         // Draw all buffers
         Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
-        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
+        //Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
     }
 
     @Override

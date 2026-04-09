@@ -25,7 +25,7 @@ public class AreaSelectionHelper {
     public static BlockPos pos2 = null;
 
     public static boolean shouldDraw() {
-        return pos1 != null && !(Minecraft.getInstance().screen instanceof RenderScreen);
+        return pos1 != null && !(Minecraft.getInstance().gui.screen() instanceof RenderScreen);
     }
 
     public static void clear() {

@@ -410,7 +410,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                 if (value == null) {
                     state.bodyItem = null;
                 } else {
-                    state.bodyItem = new ItemStack(Items.WHITE_HARNESS);
+                    state.bodyItem = new ItemStack(Items.HARNESS.white());
                     state.bodyItem.set(DataComponents.EQUIPPABLE, Equippable.harness(value));
                 }
             });
@@ -596,7 +596,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
                 if (value == null) {
                     state.bodyItem = null;
                 } else {
-                    state.bodyItem = new ItemStack(Items.WHITE_CARPET);
+                    state.bodyItem = new ItemStack(Items.CARPET.white());
                     state.bodyItem.set(DataComponents.EQUIPPABLE, Equippable.llamaSwag(value));
                 }
             });

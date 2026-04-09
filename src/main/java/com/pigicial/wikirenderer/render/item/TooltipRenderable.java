@@ -2,7 +2,6 @@ package com.pigicial.wikirenderer.render.item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
@@ -17,7 +16,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.core.component.DataComponents;
@@ -61,7 +59,7 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
         guiGraphics.tooltip(client.font, list, 0, 0, this::positionTooltip, this.stack.get(DataComponents.TOOLTIP_STYLE));
         WikiRenderer.skipTooltipBackgroundRender = false;
 
-		renderer.render(((GameRendererAccessor) client.gameRenderer).wikirenderer$getFogRenderer().getBuffer(FogRenderer.FogMode.NONE));
+		renderer.render();
 		renderer.close();
     }
 
@@ -70,12 +68,12 @@ public class TooltipRenderable extends DefaultRenderable<TooltipPropertyBundle> 
         MultiBufferSource.BufferSource bufferSource = client.renderBuffers().bufferSource();
 
         List<PictureInPictureRenderer<?>> renderers = List.of(
-                new GuiEntityRenderer(bufferSource, client.getEntityRenderDispatcher()),
-                new GuiSkinRenderer(bufferSource),
-                new GuiBookModelRenderer(bufferSource),
-                new GuiBannerResultRenderer(bufferSource, atlasManager),
-                new GuiSignRenderer(bufferSource, atlasManager),
-                new GuiProfilerChartRenderer(bufferSource)
+                new GuiEntityRenderer(client.getEntityRenderDispatcher()),
+                new GuiSkinRenderer(),
+                new GuiBookModelRenderer(),
+                new GuiBannerResultRenderer(atlasManager),
+                new GuiSignRenderer(atlasManager),
+                new GuiProfilerChartRenderer()
         );
 
         return new GuiRenderer(state, bufferSource, client.gameRenderer.getSubmitNodeStorage(), client.gameRenderer.getFeatureRenderDispatcher(), renderers);

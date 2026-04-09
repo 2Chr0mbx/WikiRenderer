@@ -366,13 +366,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         float scale = this.scale.get() / 100f;
         modelViewStack.scale(scale, scale, scale);
 
-        modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
+        modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / 26000f, 0);
 
         if (this.spriteRendering.get()) {
-            modelViewStack.rotate(Axis.XP.rotationDegrees(this.spriteSlant.get()));
+            modelViewStack.rotate(Axis.XP.rotationDegrees(180 + this.spriteSlant.get()));
             modelViewStack.rotate(Axis.YP.rotationDegrees(this.spriteRotation.get()));
         } else {
-            modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
+            modelViewStack.rotate(Axis.XP.rotationDegrees(180 + this.slant.get().floatValue()));
             modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get() + this.updateAndGetSpinningRotationOffset()));
         }
     }

@@ -35,7 +35,7 @@ public class AnimationStateMixin {
     public void tick(CallbackInfo ci) {
         GlobalProperties globalProperties = GlobalProperties.get();
 
-        if (Minecraft.getInstance().screen instanceof RenderScreen && globalProperties.syncTextureAnimationsToAnimation.get()) {
+        if (Minecraft.getInstance().gui.screen() instanceof RenderScreen && globalProperties.syncTextureAnimationsToAnimation.get()) {
             AnimationHandler animationHandler = WikiRenderer.currentAnimationHandler;
             List<SpriteContents.FrameInfo> frames = this.animationInfo.frames;
             if (animationHandler != null && !animationHandler.isFinished()) {

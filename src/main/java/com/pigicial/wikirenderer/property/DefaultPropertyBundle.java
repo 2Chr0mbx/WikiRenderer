@@ -131,9 +131,9 @@ public class DefaultPropertyBundle implements PropertyBundle {
         float scale = this.scale.get() / 100f;
         modelViewStack.scale(scale, scale, scale);
 
-        modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
+        modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / 26000f, 0);
 
-        modelViewStack.rotate(Axis.XP.rotationDegrees(this.slant.get().floatValue()));
+        modelViewStack.rotate(Axis.XP.rotationDegrees(180 + this.slant.get().floatValue()));
         modelViewStack.rotate(Axis.YP.rotationDegrees(this.rotation.get() + this.updateAndGetSpinningRotationOffset()));
     }
 

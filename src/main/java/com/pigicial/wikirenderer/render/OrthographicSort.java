@@ -37,7 +37,7 @@ public class OrthographicSort implements VertexSorting {
             indices[i] = i;
         }
 
-        IntArrays.mergeSort(indices, (a, b) -> Float.compare(zDepths[b], zDepths[a]));
+        IntArrays.mergeSort(indices, (a, b) -> Float.compare(zDepths[a], zDepths[b]));
         return indices;
     }
 }

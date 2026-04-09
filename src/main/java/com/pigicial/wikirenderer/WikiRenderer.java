@@ -81,8 +81,8 @@ public class WikiRenderer implements ClientModInitializer {
             if (isometricHud == null) return;
 
             IOStateComponent ioState = isometricHud.childById(IOStateComponent.class, ioStateId);
-            if ((ioState == null) == (FileIO.taskCount() > 0 && client.screen == null)) {
-                if (FileIO.taskCount() > 0 && client.screen == null) {
+            if ((ioState == null) == (FileIO.taskCount() > 0 && client.gui.screen() == null)) {
+                if (FileIO.taskCount() > 0 && client.gui.screen() == null) {
                     isometricHud.child(new IOStateComponent().positioning(Positioning.absolute(20, 20)).id(ioStateId));
                 } else {
                     isometricHud.removeChild(ioState);

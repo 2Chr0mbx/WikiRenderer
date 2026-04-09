@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.item;
 
+import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.property.DefaultCroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.DoubleProperty;
 import com.pigicial.wikirenderer.property.IntProperty;
@@ -65,6 +66,7 @@ public class ItemAtlasPropertyBundle extends DefaultCroppablePropertyBundle impl
     public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
         float scale = this.scale.get() / 100f;
         modelViewStack.scale(scale, scale, scale);
-        modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
+        modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / 26000f, 0);
+        modelViewStack.rotate(Axis.XP.rotationDegrees(180));
     }
 }

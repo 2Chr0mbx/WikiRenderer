@@ -29,7 +29,7 @@ public class EntityRenderBoundsUtil {
     private static final EntityVertexPositionTracker.OutlineBufferSource OUTLINE_BUFFER_SOURCE = new EntityVertexPositionTracker.OutlineBufferSource();
 
     private static final ModelFeatureRenderer MODEL_FEATURE_RENDERER = new ModelFeatureRenderer();
-    private static final ModelPartFeatureRenderer MODEL_PART_FEATURE_RENDERER = new ModelPartFeatureRenderer();
+    private static final ModelFeatureRenderer MODEL_PART_FEATURE_RENDERER = new ModelFeatureRenderer();
     private static final FlameFeatureRenderer FLAME_FEATURE_RENDERER = new FlameFeatureRenderer();
     private static final NameTagFeatureRenderer NAME_TAG_FEATURE_RENDERER = new NameTagFeatureRenderer();
     private static final TextFeatureRenderer TEXT_FEATURE_RENDERER = new TextFeatureRenderer();

@@ -5,7 +5,6 @@ import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import org.lwjgl.opengl.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +19,6 @@ public class MemoryGuard {
     }
 
     public void update() {
-        int[] data = new int[4];
-        GLCapabilities capabilities = GL.getCapabilities();
-
-        if (capabilities.GL_ATI_meminfo) GL11.glGetIntegerv(ATIMeminfo.GL_TEXTURE_FREE_MEMORY_ATI, data);
-        if (capabilities.GL_NVX_gpu_memory_info) GL11.glGetIntegerv(NVXGPUMemoryInfo.GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, data);
-        GL11.glGetError();
-
         this.availableRamMB = (int) ((Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory()) / 1024 / 1024);
     }
 

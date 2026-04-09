@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.export;
 
+import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
@@ -8,7 +9,6 @@ import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
-import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
@@ -54,12 +54,14 @@ public class RenderableDispatcher {
         WikiRenderer.currentDrawType = drawType;
         renderable.getProperties().applyToViewMatrix(renderable, modelViewStack);
 
-        Matrix4f projectionMatrix = ORTHOGRAPHIC_MATRIX.setOrtho(-aspectRatio, aspectRatio, -1, 1, -100, 100);
+        boolean zZeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
+        Matrix4f projectionMatrix = ORTHOGRAPHIC_MATRIX.setOrtho(-aspectRatio, aspectRatio, 1, -1, -1000, 10, zZeroToOne);
         WikiRenderer.beginRenderableDraw(PROJECTION_MATRIX_BUFFER, projectionMatrix, drawType);
         WikiRenderer.setSortingMethod(projectionMatrix, modelViewStack);
 
         PROJECTION_CACHE.put(drawType, new DrawProjectionDataCache(new Matrix4f(projectionMatrix), new Matrix4f(modelViewStack), WikiRenderer.mainTargetOverride.width, WikiRenderer.mainTargetOverride.height));
 
+        Minecraft.getInstance().gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
         renderable.setupLighting();
         renderable.emitVerticesThenDraw(renderScreen, modelViewStack, new PoseStack(), tickDelta, timeSinceCreationMs);
         renderable.drawSubmittedRenderFeatures();
@@ -94,7 +96,7 @@ public class RenderableDispatcher {
                 Objects.requireNonNull(previewTarget.getColorTexture()),
                 backgroundColor,
                 Objects.requireNonNull(previewTarget.getDepthTexture()),
-                1.0
+                0.0
         );
 
         WikiRenderer.mainTargetOverride = previewTarget;
@@ -116,7 +118,7 @@ public class RenderableDispatcher {
                 Objects.requireNonNull(target.getColorTexture()),
                 backgroundColor,
                 Objects.requireNonNull(target.getDepthTexture()),
-                1.0
+                0.0
         );
 
         WikiRenderer.mainTargetOverride = target;
@@ -197,7 +199,7 @@ public class RenderableDispatcher {
 
                 boolean dontRescale = rescalingDisabled || sameSize || likelyOscillating || batchSecondPass || isAreaTopdown;
 
-                int maxTextureSize = RenderSystem.getDevice().getMaxTextureSize();
+                int maxTextureSize = RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize();
                 boolean tooLarge = newSize > maxTextureSize;
                 if (tooLarge && !dontRescale) {
                     croppedImage.close();
@@ -235,7 +237,7 @@ public class RenderableDispatcher {
         // that simply copies an RGBA8 GpuTexture's contents to an RGBA NativeImage, with vertical flipping.
 
         // Color attachments [in vanilla] are always RGBA8, therefore != RGBA8 implies non-color attachment
-        if (gpuTexture.getFormat() != TextureFormat.RGBA8) {
+        if (gpuTexture.getFormat() != GpuFormat.RGBA8_UNORM) {
             throw new IllegalStateException("Tried to copy non-compatible texture into image");
         }
 
@@ -285,7 +287,7 @@ public class RenderableDispatcher {
 
         GpuTexture copy = RenderSystem.getDevice().createTexture(() -> "[IsometricRenders] Copy of: " + original.getLabel(),
                 GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_COPY_SRC | GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT,
-                TextureFormat.RGBA8, renderTarget.width, renderTarget.height, 1, 1);
+                GpuFormat.RGBA8_UNORM, renderTarget.width, renderTarget.height, 1, 1);
 
         RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(original, copy, 0, 0, 0, 0, 0, renderTarget.width, renderTarget.height);
 

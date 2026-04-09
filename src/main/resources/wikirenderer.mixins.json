@@ -9,6 +9,7 @@
   "plugin": "com.pigicial.wikirenderer.mixin.MixinPlugin",
   "client": [
     "FramerateLimitTrackerMixin",
+    "GuiMixin",
     "GuiRendererMixin",
     "MinecraftMixin",
     "access.AbstractContainerScreenAccessor",

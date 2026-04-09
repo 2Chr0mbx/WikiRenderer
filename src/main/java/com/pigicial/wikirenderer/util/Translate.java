@@ -39,7 +39,7 @@ public class Translate {
 
     public static void sendMessage(String key, Object... args) {
         Component message = msg(key, args);
-        Minecraft.getInstance().gui.getChat().addClientSystemMessage(message);
+        Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(message);
         Minecraft.getInstance().getNarrator().saySystemChatQueued(message);
     }
 

@@ -25,10 +25,10 @@ public class MapRendererMixin {
                     ordinal = 0
             )
     )
-    private RenderType useMaxBrightnessMap(Identifier identifier, MapRenderState mapRenderState) {
+    private RenderType useMaxBrightnessMap(Identifier texture, MapRenderState mapRenderState) {
         if (WikiRenderer.inRenderableDraw && (WikiRenderer.inSpriteEntityDraw || WikiRenderer.inAreaRenderDraw)) {
             // fixes brightness being set to 0.99824 from what is basically hardcoded in the light map (this bypasses the light map)
-            return CustomRenderPipelines.getCustomMapPipeline(identifier);
+            return CustomRenderPipelines.getCustomMapPipeline(texture);
         } else {
             return RenderTypes.text(Objects.requireNonNull(mapRenderState.texture));
         }

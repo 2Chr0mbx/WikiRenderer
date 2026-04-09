@@ -45,7 +45,7 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
             int tooltipSize = ((TooltipRenderable) renderable).getTooltipSize();
             int bufferSizeWithThisResolution = tooltipSize * resolution;
 
-            if ((resolution < 1 || bufferSizeWithThisResolution > RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
+            if ((resolution < 1 || bufferSizeWithThisResolution > RenderSystem.getDevice().getDeviceInfo().limits().maxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 this.fontScaling.set(resolution);
@@ -72,9 +72,5 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
             // without this the image is really blurry
             modelViewStack.translate(-0.5f, -0.5f, 0);
         }
-
-        // invisible without this
-        modelViewStack.rotate(Axis.YP.rotationDegrees(180));
-        modelViewStack.rotate(Axis.ZP.rotationDegrees(180));
     }
 }

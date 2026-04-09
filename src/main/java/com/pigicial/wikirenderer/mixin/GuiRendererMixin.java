@@ -25,15 +25,13 @@ public class GuiRendererMixin {
     }
 
     // If it works, it's not stupid.
-    @WrapOperation(method = "draw", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DynamicUniforms;writeTransform(Lorg/joml/Matrix4fc;Lorg/joml/Vector4fc;Lorg/joml/Vector3fc;Lorg/joml/Matrix4fc;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;"))
-    private GpuBufferSlice overrideDynamicTransforms(DynamicUniforms instance, Matrix4fc modelView, Vector4fc colorModulator, Vector3fc modelOffset, Matrix4fc textureMatrix, Operation<GpuBufferSlice> original) {
-        if (WikiRenderer.inRenderableDraw)
-            return original.call(instance,
-                    RenderSystem.getModelViewMatrix(),
-                    new Vector4f(1.0F, 1.0F, 1.0F, 1.0F),
-                    new Vector3f(0),
-                    new Matrix4f());
-        return original.call(instance, modelView, colorModulator, modelOffset, textureMatrix);
+    @WrapOperation(method = "draw", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DynamicUniforms;writeTransform(Lorg/joml/Matrix4f;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice;"))
+    private GpuBufferSlice overrideDynamicTransforms(DynamicUniforms instance, Matrix4f modelView, Operation<GpuBufferSlice> original) {
+        if (WikiRenderer.inRenderableDraw) {
+            return original.call(instance, RenderSystem.getModelViewMatrixCopy());
+        } else {
+            return original.call(instance, modelView);
+        }
     }
 
     @WrapOperation(method = "draw", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setProjectionMatrix(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V"))
