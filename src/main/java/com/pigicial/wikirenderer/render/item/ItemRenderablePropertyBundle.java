@@ -8,8 +8,8 @@ import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
+import com.pigicial.wikirenderer.util.ItemBlockUtil;
 import io.wispforest.owo.ui.container.FlowLayout;
-import net.minecraft.world.item.Items;
 import org.joml.Matrix4fStack;
 
 public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle implements SerializablePropertyBundle {
@@ -17,7 +17,7 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
     public static final ItemRenderablePropertyBundle INSTANCE = WikiRendererConfigs.loadOrDefault(new ItemRenderablePropertyBundle());
 
     public final Property<Boolean> forceEnchantmentGlints = Property.of(false);
-    protected int playerHeadsExportResolution = 300;
+    protected int blockItemsExportResolution = 300;
 
     @Override
     public String getConfigFileName() {
@@ -31,8 +31,8 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
 
     @Override
     public void setExportResolution(Renderable<?> renderable, int exportResolution) {
-        if (((ItemRenderable) renderable).stack.is(Items.PLAYER_HEAD)) {
-            playerHeadsExportResolution = exportResolution;
+        if (ItemBlockUtil.doesItemUseBlockLight(((ItemRenderable) renderable).stack)) {
+            blockItemsExportResolution = exportResolution;
         } else {
             super.setExportResolution(renderable, exportResolution);
         }
@@ -40,8 +40,8 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
 
     @Override
     public int getExportResolution(Renderable<?> renderable) {
-        if (((ItemRenderable) renderable).stack.is(Items.PLAYER_HEAD)) {
-            return playerHeadsExportResolution;
+        if (ItemBlockUtil.doesItemUseBlockLight(((ItemRenderable) renderable).stack)) {
+            return blockItemsExportResolution;
         } else {
             return super.getExportResolution(renderable);
         }

@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.property;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.NativeImageInvoker;
 import com.pigicial.wikirenderer.render.Renderable;
@@ -81,7 +82,7 @@ public interface PropertyBundle {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
-            if ((resolution < 16 || resolution > 16384) && !globalProperties.unsafe.get()) {
+            if ((resolution < 16 || resolution >= RenderSystem.getDevice().getMaxTextureSize()) && !globalProperties.unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 renderable.getProperties().setExportResolution(renderable, resolution);

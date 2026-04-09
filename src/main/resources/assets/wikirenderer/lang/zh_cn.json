@@ -201,7 +201,7 @@
   "gui.wikirenderer.font_resolution": "字体分辨率",
   "gui.wikirenderer.gui_scale_resolution": "GUI 缩放分辨率",
   "gui.wikirenderer.item_resolution": "物品分辨率",
-  "gui.wikirenderer.player_head_resolution": "玩家头颅分辨率",
+  "gui.wikirenderer.block_item_resolution": "方块物品分辨率",
   "gui.wikirenderer.hide_tooltip_background": "隐藏提示框背景",
   "gui.wikirenderer.file_name": "文件名",
 

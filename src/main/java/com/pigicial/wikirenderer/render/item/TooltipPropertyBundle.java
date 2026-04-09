@@ -45,7 +45,7 @@ public class TooltipPropertyBundle extends DefaultCroppablePropertyBundle implem
             int tooltipSize = ((TooltipRenderable) renderable).getTooltipSize();
             int bufferSizeWithThisResolution = tooltipSize * resolution;
 
-            if ((resolution < 1 || bufferSizeWithThisResolution > RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
+            if ((resolution < 1 || bufferSizeWithThisResolution >= RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 this.fontScaling.set(resolution);

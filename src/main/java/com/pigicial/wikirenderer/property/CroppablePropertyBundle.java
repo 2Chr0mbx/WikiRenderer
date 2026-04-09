@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.property;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.export.ImageRescaleMode;
 import com.pigicial.wikirenderer.screen.RenderScreen;
@@ -81,7 +82,7 @@ public interface CroppablePropertyBundle extends PropertyBundle {
             if (s.isBlank()) return;
             int resolution = Integer.parseInt(s);
 
-            if ((resolution < 16 || resolution > 16384) && !GlobalProperties.get().unsafe.get()) {
+            if ((resolution < 16 || resolution >= RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                 screen.exportButton.active = false;
             } else {
                 renderable.getProperties().setExportResolution(renderable, resolution);
