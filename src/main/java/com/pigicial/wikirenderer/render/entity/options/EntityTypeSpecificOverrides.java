@@ -973,7 +973,27 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             overrides.registerBooleanOverride("isBaby", s -> s.isBaby, (s, value) -> s.isBaby = value);
         });
 
-        // zombie villager
+        registerOverrides(ZombieVillagerRenderState.class, overrides -> {
+            overrides.registerRegistryOverrideWithFallback("type", Registries.VILLAGER_TYPE, s -> null, (s, value) -> {
+                Holder<VillagerType> type = RegistryOverride.getHolderValue(Registries.VILLAGER_TYPE, value);
+                Holder<VillagerProfession> profession = s.villagerData != null ? s.villagerData.profession() : RegistryOverride.getHolderValue(Registries.VILLAGER_PROFESSION, VillagerProfession.NONE);
+                int level = s.villagerData != null ? s.villagerData.level() : 1;
+                s.villagerData = new VillagerData(type, profession, level);
+            }, (key, s) -> OptionalOverride.toDisplayName(key.identifier().getPath()), VillagerType.PLAINS, false);
+
+            overrides.registerRegistryOverrideWithFallback("profession", Registries.VILLAGER_PROFESSION, s -> null, (s, value) -> {
+                Holder<VillagerType> type = s.villagerData != null ? s.villagerData.type() : RegistryOverride.getHolderValue(Registries.VILLAGER_TYPE, VillagerType.PLAINS);
+                Holder<VillagerProfession> profession = RegistryOverride.getHolderValue(Registries.VILLAGER_PROFESSION, value);
+                int level = s.villagerData != null ? s.villagerData.level() : 1;
+                s.villagerData = new VillagerData(type, profession, level);
+            }, (key, s) -> OptionalOverride.toDisplayName(key.identifier().getPath()), VillagerProfession.NONE, false);
+
+            overrides.registerIntOverride("level", s -> s.villagerData == null ? 1 : s.villagerData.level(), (s, value) -> {
+                Holder<VillagerType> type = s.villagerData != null ? s.villagerData.type() : RegistryOverride.getHolderValue(Registries.VILLAGER_TYPE, VillagerType.PLAINS);
+                Holder<VillagerProfession> profession = s.villagerData != null ? s.villagerData.profession() : RegistryOverride.getHolderValue(Registries.VILLAGER_PROFESSION, VillagerProfession.NONE);
+                s.villagerData = new VillagerData(type, profession, value);
+            });
+        });
 
         registerOverrides(ZombifiedPiglinRenderState.class, overrides -> {
             overrides.registerBooleanOverride("isAggressive", s -> s.isAggressive, (s, value) -> s.isAggressive = value);
