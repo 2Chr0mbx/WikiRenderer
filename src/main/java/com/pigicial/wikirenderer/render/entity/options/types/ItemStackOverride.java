@@ -15,13 +15,17 @@ import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.DyedItemColor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -29,14 +33,18 @@ import java.util.stream.Stream;
 
 public class ItemStackOverride<S extends EntityRenderState> extends OptionalOverride<S, ItemStack> {
 
-    private String itemName = "";
-    private String playerHeadTextureID = "";
+    private static final List<Item> DYEABLE_ITEMS = List.of(Items.LEATHER_HELMET, Items.LEATHER_CHESTPLATE, Items.LEATHER_LEGGINGS, Items.LEATHER_BOOTS, Items.WOLF_ARMOR);
 
     private FullWidthCollapsibleContainer layout;
     private FlowLayout itemOptionsLayout = null;
     private ItemComponent itemIconComponent = null;
+    private String itemName = "";
 
     private FlowLayout playerHeadOptionsLayout;
+    private String playerHeadTextureID = "";
+
+    private FlowLayout dyeColorOptionsLayout;
+    private String dyeColor = "";
 
     public ItemStackOverride(String key, Function<S, ItemStack> getter, BiConsumer<S, ItemStack> setter) {
         super(key, getter, setter);
@@ -53,7 +61,7 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
 
         this.layout = new FullWidthCollapsibleContainer(checkbox, () -> {
             ItemStack item = getValue();
-            return item == null || item.isEmpty() ? Translate.gui("not_set") : item.getItemName().copy();
+            return item == null || item.isEmpty() ? Translate.gui("not_set") : (item.getItem() == Items.PLAYER_HEAD ? Items.PLAYER_HEAD.getName().copy() : item.getItemName().copy());
         }, false);
         this.layout.margins(Insets.of(0, 0, 0, 0));
 
@@ -82,11 +90,23 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
         if (currentItem != null && currentItem.getItem() == Items.PLAYER_HEAD) {
             this.layout.child(this.playerHeadOptionsLayout);
         }
+
+        this.dyeColorOptionsLayout = UIContainers.horizontalFlow(Sizing.content(), Sizing.content());
+        this.dyeColorOptionsLayout.horizontalAlignment(HorizontalAlignment.LEFT);
+        this.dyeColorOptionsLayout.verticalAlignment(VerticalAlignment.CENTER);
+        this.dyeColorOptionsLayout.child(UIComponents.label(Translate.gui("dye_color")));
+        this.dyeColorOptionsLayout.child(this.buildArmorColorComponent());
+        this.dyeColorOptionsLayout.id("dye_color_layout");
+
+        if (currentItem != null && DYEABLE_ITEMS.contains(currentItem.getItem())) {
+            this.layout.child(this.dyeColorOptionsLayout);
+        }
+
         return layout;
     }
 
     private MiniEditBoxComponent buildItemNameComponent() {
-        MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.fixed(100), itemName);
+        MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.expand(80), itemName);
         editBox.setFilter(s -> true);
         editBox.onChanged().subscribe(text -> {
             this.itemName = text;
@@ -103,12 +123,21 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
     }
 
     private MiniEditBoxComponent buildPlayerHeadTextureComponent() {
-        MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.fixed(100), playerHeadTextureID);
+        MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.expand(80), playerHeadTextureID);
         editBox.onChanged().subscribe(text -> {
-            this.playerHeadTextureID = text;
+            this.playerHeadTextureID = text.trim();
             setValue(new ItemStack(Items.PLAYER_HEAD));
         });
 
+        return editBox;
+    }
+
+    private MiniEditBoxComponent buildArmorColorComponent() {
+        MiniEditBoxComponent editBox = new MiniEditBoxComponent(Sizing.expand(80), dyeColor);
+        editBox.onChanged().subscribe(text -> {
+            this.dyeColor = text.trim();
+            setValue(getValue());
+        });
         return editBox;
     }
 
@@ -116,6 +145,13 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
     public void setValue(@Nullable ItemStack newItem) {
         if (newItem != null && newItem.getItem() == Items.PLAYER_HEAD) {
             newItem = PlayerTextureUtils.createPlayerHead(PlayerTextureUtils.createTexturedGameProfileFromID(playerHeadTextureID));
+        }
+
+        if (newItem != null && dyeColor != null) {
+            try {
+                int color = Integer.parseInt(dyeColor);
+                newItem.set(DataComponents.DYED_COLOR, new DyedItemColor(color));
+            } catch (NumberFormatException ignored) {}
         }
 
         ItemStack previousItem = getValue();
@@ -136,6 +172,14 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
                 }
             } else {
                 this.layout.removeChild(this.playerHeadOptionsLayout);
+            }
+
+            if (newItem != null && DYEABLE_ITEMS.contains(newItem.getItem())) {
+                if (layout.childById(dyeColorOptionsLayout.getClass(), "dye_color_layout") == null) {
+                    this.layout.child(this.dyeColorOptionsLayout);
+                }
+            } else {
+                this.layout.removeChild(this.dyeColorOptionsLayout);
             }
         }
     }
