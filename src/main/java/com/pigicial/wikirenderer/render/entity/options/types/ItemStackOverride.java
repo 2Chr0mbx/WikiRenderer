@@ -92,7 +92,9 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
             this.itemName = text;
             try {
                 ItemParser.ItemResult result = new ItemParser(HolderLookup.Provider.create(Stream.of(BuiltInRegistries.ITEM))).parse(new StringReader(text));
-                setValue(new ItemStack(result.item()));
+                ItemStack item = new ItemStack(result.item());
+                item.applyComponents(result.components());
+                setValue(item);
             } catch (CommandSyntaxException e) {
                 setValue(ItemStack.EMPTY);
             }
