@@ -23,7 +23,7 @@ public class IOStateComponent extends FlowLayout {
     public void draw(OwoUIGraphics graphics, int mouseX, int mouseY, float partialTicks, float delta) {
         if (FileIO.taskCount() > 0) {
             super.draw(graphics, mouseX, mouseY, partialTicks, delta);
-            WikiRendererUI.drawExportProgressBar(graphics, this.x + 10, this.y + 25, 100, 50, 10);
+            WikiRendererUI.drawExportProgressBar(graphics, this.x + 10, this.y + 30, 70, 35, 15);
         }
     }
 }

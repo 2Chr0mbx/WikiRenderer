@@ -1,5 +1,6 @@
 package com.pigicial.wikirenderer.render.area;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.components.AutoResizingLabelComponent;
 import com.pigicial.wikirenderer.components.ConditionalButton;
@@ -487,7 +488,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
                 double bufferSize = highest * pixelsPerBlock;
 
-                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize > 16384) && !GlobalProperties.get().unsafe.get()) {
+                if ((pixelsPerBlock < 1 || pixelsPerBlock > 256 || bufferSize >= RenderSystem.getDevice().getMaxTextureSize()) && !GlobalProperties.get().unsafe.get()) {
                     screen.exportButton.active = false;
                 } else {
                     if ((this.getPixelsPerBlockResolution() != 4 && pixelsPerBlock == 4) || (pixelsPerBlock != 4 && this.getPixelsPerBlockResolution() == 4)) {

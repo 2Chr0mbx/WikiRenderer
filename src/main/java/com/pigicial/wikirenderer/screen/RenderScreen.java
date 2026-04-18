@@ -113,6 +113,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public int viewportEndX;
     public boolean hasBothColumns = false;
 
+    public boolean openingFile = false;
     public ButtonComponent exportButton = null;
     private Consumer<File> exportCallback = null;
 
@@ -621,7 +622,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (!(this.renderable.getProperties() instanceof DefaultPropertyBundle properties))
             return super.mouseClicked(click, doubled);
 
+        boolean clickHandled = super.mouseClicked(click, doubled);
         if (this.isInViewport(click.x())) {
+            if (this.openingFile) {
+                this.openingFile = false;
+                return true;
+            }
+
             if (renderable.onScreenViewportClick(click, doubled)) {
                 return true;
             }
@@ -640,7 +647,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }
         }
 
-        return super.mouseClicked(click, doubled);
+        this.openingFile = false;
+        return clickHandled;
     }
 
     @Override

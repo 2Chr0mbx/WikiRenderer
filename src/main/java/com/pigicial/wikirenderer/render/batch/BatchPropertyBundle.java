@@ -6,6 +6,7 @@ import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
+import com.pigicial.wikirenderer.util.ItemBlockUtil;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
@@ -13,13 +14,12 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Items;
 import org.joml.Matrix4fStack;
 
 public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
 
     private static final IntProperty ITEM_RESOLUTION_PROPERTY = IntProperty.of(160, 1, Short.MAX_VALUE / 2);
-    private static final IntProperty PLAYER_HEAD_RESOLUTION_PROPERTY = IntProperty.of(300, 1, Short.MAX_VALUE / 2);
+    private static final IntProperty BLOCK_ITEM_RESOLUTION_PROPERTY = IntProperty.of(300, 1, Short.MAX_VALUE / 2);
     public static final Property<Boolean> EXPORT_AS_ANIMATIONS = Property.of(false);
     public static String fileNameFormatter = "%name%";
 
@@ -129,8 +129,8 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
     @Override
     public int getExportResolution(Renderable<?> ignored) {
         if (this.batchRenderable.currentDelegate instanceof ItemRenderable itemRenderable) {
-            if (itemRenderable.stack.is(Items.PLAYER_HEAD)) {
-                return PLAYER_HEAD_RESOLUTION_PROPERTY.get();
+            if (ItemBlockUtil.doesItemUseBlockLight(itemRenderable.stack)) {
+                return BLOCK_ITEM_RESOLUTION_PROPERTY.get();
             } else {
                 return ITEM_RESOLUTION_PROPERTY.get();
             }
@@ -143,7 +143,7 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
     public void buildExportResolutionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         if (this.batchRenderable.currentDelegate instanceof ItemRenderable) {
             WikiRendererUI.labelledTextField(screen, container, ITEM_RESOLUTION_PROPERTY, "item_resolution", Sizing.fixed(50));
-            WikiRendererUI.labelledTextField(screen, container, PLAYER_HEAD_RESOLUTION_PROPERTY, "player_head_resolution", Sizing.fixed(50));
+            WikiRendererUI.labelledTextField(screen, container, BLOCK_ITEM_RESOLUTION_PROPERTY, "block_item_resolution", Sizing.fixed(50));
         } else {
             this.actualProperties.buildExportResolutionGUIControls(this.batchRenderable.currentDelegate, screen, container);
         }

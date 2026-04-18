@@ -201,7 +201,7 @@
   "gui.wikirenderer.font_resolution": "Font Resolution",
   "gui.wikirenderer.gui_scale_resolution": "GUI Scale Resolution",
   "gui.wikirenderer.item_resolution": "Item Resolution",
-  "gui.wikirenderer.player_head_resolution": "Player Head Resolution",
+  "gui.wikirenderer.block_item_resolution": "Block Item Resolution",
   "gui.wikirenderer.hide_tooltip_background": "Hide Tooltip Background",
   "gui.wikirenderer.file_name": "File Name",
 
@@ -236,6 +236,7 @@
   "gui.wikirenderer.not_set": "None",
   "gui.wikirenderer.block": "Block ",
   "gui.wikirenderer.head_texture_id": "Head Texture ID",
+  "gui.wikirenderer.dye_color": "Dye Color",
   "gui.wikirenderer.item": "Item",
   "gui.wikirenderer.search": "Search",
   "gui.wikirenderer.hide_nametags": "Hide Nametags",
