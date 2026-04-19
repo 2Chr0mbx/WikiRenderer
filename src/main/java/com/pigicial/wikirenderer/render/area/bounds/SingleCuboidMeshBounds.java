@@ -26,7 +26,7 @@ public class SingleCuboidMeshBounds implements ExpandableMeshBounds {
 
     @Override
     public int getSizeForSubMesh() {
-        return 64;
+        return 32;
     }
 
     @Override

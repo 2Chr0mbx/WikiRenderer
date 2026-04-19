@@ -46,7 +46,7 @@ public class ChunkScannedMeshBounds implements MeshBounds {
         HorizontalMiniChunk firstChunk = chunksToGrabBlocksFrom.stream().findAny().orElseThrow();
         int chunkSize = (firstChunk.endX - firstChunk.startX) + 1;
         // the region size needs to be an interval of the mini chunk size, otherwise certain mini chunks can be missing
-        while (chunkSize < 64) {
+        while (chunkSize * 2 <= 32) {
             chunkSize *= 2;
         }
         return chunkSize;

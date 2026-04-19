@@ -325,21 +325,23 @@ public class WorldBlockMesh {
 
         int currentScanIndex = 0;
         for (int x = minCorner.getX(); x <= maxCorner.getX(); x += regionSize) {
-            for (int z = minCorner.getZ(); z <= maxCorner.getZ(); z += regionSize) {
-                BlockPos subFrom = new BlockPos(x, minCorner.getY(), z);
-                BlockPos subTo = new BlockPos(
-                        Math.min(x + regionSize - 1, maxCorner.getX()),
-                        maxCorner.getY(),
-                        Math.min(z + regionSize - 1, maxCorner.getZ())
-                );
+            for (int y = minCorner.getY(); y <= maxCorner.getY(); y += regionSize) {
+                for (int z = minCorner.getZ(); z <= maxCorner.getZ(); z += regionSize) {
+                    BlockPos subFrom = new BlockPos(x, y, z);
+                    BlockPos subTo = new BlockPos(
+                            Math.min(x + regionSize - 1, maxCorner.getX()),
+                            Math.min(y + regionSize - 1, maxCorner.getY()),
+                            Math.min(z + regionSize - 1, maxCorner.getZ())
+                    );
 
-                int subMiddleX = subTo.getX() - (subTo.getX() - subFrom.getX()) / 2;
-                int subMiddleZ = subTo.getZ() - (subTo.getZ() - subFrom.getZ()) / 2;
-                double distance = Math.pow(middleX - subMiddleX, 2) + Math.pow(middleZ - subMiddleZ, 2);
+                    int subMiddleX = subTo.getX() - (subTo.getX() - subFrom.getX()) / 2;
+                    int subMiddleZ = subTo.getZ() - (subTo.getZ() - subFrom.getZ()) / 2;
+                    double distance = Math.pow(middleX - subMiddleX, 2) + Math.pow(middleZ - subMiddleZ, 2);
 
-                List<Iterable<BlockPos>> positions = bounds.buildBlockPositionsForSubMesh(subFrom, subTo);
-                scanningAreas += positions.size();
-                unsortedSubMeshes.add(new SubMesh(distance, positions));
+                    List<Iterable<BlockPos>> positions = bounds.buildBlockPositionsForSubMesh(subFrom, subTo);
+                    scanningAreas += positions.size();
+                    unsortedSubMeshes.add(new SubMesh(distance, positions));
+                }
             }
         }
 
