@@ -7,8 +7,8 @@ import com.pigicial.wikirenderer.render.entity.options.types.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.animal.cow.CowModel;
 import net.minecraft.client.model.animal.equine.AbstractEquineModel;
+import net.minecraft.client.model.animal.fish.CodModel;
 import net.minecraft.client.model.animal.fish.SalmonModel;
 import net.minecraft.client.model.animal.fish.TropicalFishLargeModel;
 import net.minecraft.client.model.animal.fish.TropicalFishSmallModel;
@@ -373,7 +373,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             });
         });
 
-        // fishing hook
+
 
         registerOverrides(FoxRenderState.class, overrides -> {
             overrides.registerFloatOverride("headRollAngle", s -> s.headRollAngle, (s, value) -> s.headRollAngle = value);
@@ -394,6 +394,13 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
             overrides.registerAnimationStateOverride("croakAnimationState", s -> s.croakAnimationState);
             overrides.registerAnimationStateOverride("tongueAnimationState", s -> s.tongueAnimationState);
             overrides.registerAnimationStateOverride("swimIdleAnimationState", s -> s.swimIdleAnimationState);
+
+            overrides.registerRegistryOverride("variant", Registries.FROG_VARIANT, s -> null, (s, value) -> {
+                s.texture = value.assetInfo().texturePath();
+            }, (key, s) -> {
+                String id = s.assetInfo().id().toString();
+                return OptionalOverride.toDisplayName(id.substring(id.lastIndexOf("/") + 1));
+            });
         });
 
         registerOverrides(GhastRenderState.class, overrides ->
@@ -567,7 +574,7 @@ public class EntityTypeSpecificOverrides<S extends EntityRenderState> {
 
 
             // i hate this
-            if (overrides.hasModelType(model -> model instanceof AbstractEquineModel || model instanceof CowModel || model instanceof SalmonModel || model instanceof TropicalFishSmallModel || model instanceof TropicalFishLargeModel || model instanceof TadpoleModel) || overrides.renderer instanceof SalmonRenderer || overrides.renderer instanceof TropicalFishRenderer || overrides.renderer instanceof AvatarRenderer) {
+            if (overrides.hasModelType(model -> model instanceof AbstractEquineModel || model instanceof CodModel || model instanceof SalmonModel || model instanceof TropicalFishSmallModel || model instanceof TropicalFishLargeModel || model instanceof TadpoleModel) || overrides.renderer instanceof SalmonRenderer || overrides.renderer instanceof TropicalFishRenderer || overrides.renderer instanceof AvatarRenderer) {
                 overrides.registerBooleanOverrideInCategory("water", "isInWater", s -> s.isInWater, (s, value) -> s.isInWater = value);
             }
 

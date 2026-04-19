@@ -4,6 +4,7 @@ import com.pigicial.wikirenderer.render.entity.EntitySpriteModelVisibilityUtil;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.entity.layers.SimpleEquipmentLayer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,6 +25,7 @@ public abstract class SimpleEquipmentLayerMixin<S extends LivingEntityRenderStat
 
     @Shadow
     @Final
+    @Nullable
     private EM babyModel;
 
     @Unique

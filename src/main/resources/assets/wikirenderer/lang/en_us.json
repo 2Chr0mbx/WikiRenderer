@@ -236,6 +236,7 @@
   "gui.wikirenderer.not_set": "None",
   "gui.wikirenderer.block": "Block ",
   "gui.wikirenderer.head_texture_id": "Head Texture ID",
+  "gui.wikirenderer.dye_color": "Dye Color",
   "gui.wikirenderer.item": "Item",
   "gui.wikirenderer.search": "Search",
   "gui.wikirenderer.hide_nametags": "Hide Nametags",

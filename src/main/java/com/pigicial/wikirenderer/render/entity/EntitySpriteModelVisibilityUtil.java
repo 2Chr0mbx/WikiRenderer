@@ -45,6 +45,7 @@ public class EntitySpriteModelVisibilityUtil {
     }
 
     public static void hideOrShowNonHeadParts(EntityModel<?> model, List<Runnable> toggleCallbacks) {
+        if (model == null) return;
         if (WikiRenderer.inSpriteEntityDraw) {
             if (toggleCallbacks.isEmpty()) {
                 EntitySpriteModelVisibilityUtil.hideNonHeadParts(model, toggleCallbacks);
