@@ -79,6 +79,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     public @Nullable Integer selectedEntityId;
     public @Nullable EntityTypeSpecificOverrides<?> renderStateOverrides = null;
 
+    private List<Integer> lastSeenEntityAnimationTimings = null;
+
     public AreaRenderable(WorldBlockMesh mesh) {
         this.mesh = mesh;
 
@@ -273,6 +275,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
 
         WikiRenderer.currentWorldOverrides = mesh.world;
 
+        List<Integer> animationTimingsToFill = new ArrayList<>();
+
         this.refreshEntities();
         this.entities.forEach(entity -> {
             if (properties.hiddenEntityTypes.contains(entity.getType())) return;
@@ -294,10 +298,15 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             clonedPose.mulPose(standardStack.last().pose());
             drawnVertexBoundCache.put(entityId, new DrawEntityDataCache(state, offsetFromMesh, clonedPose, false));
 
+            WikiRenderer.animationTimingDataRequestedToFill = animationTimingsToFill;
             entityDispatcher.submit(state, cameraRenderState, offsetFromMesh.x, offsetFromMesh.y, offsetFromMesh.z, standardStack, nodeStorage);
+            WikiRenderer.animationTimingDataRequestedToFill = null;
+
         });
         super.drawSubmittedRenderFeatures();
 
+        this.lastSeenEntityAnimationTimings = animationTimingsToFill;
+        WikiRenderer.animationTimingDataRequestedToFill = null;
         WikiRenderer.currentWorldOverrides = null;
     }
 
@@ -451,18 +460,10 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             animationTimings.add(mesh.getAnimationCompletionTimings().get());
         }
 
-        AreaPropertyBundle properties = getProperties();
-        if (!properties.hideEntities.get()) {
-            List<Integer> entityAnimationTimings = new LinkedList<>();
-            for (Entity entity : entities) {
-                if (properties.hiddenEntityTypes.contains(entity.getType())) continue;
-                if (entity instanceof LivingEntity && properties.hideLivingEntities.get()) continue;
-                AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, entityAnimationTimings);
-            }
-            if (!entityAnimationTimings.isEmpty()) {
-                animationTimings.add(entityAnimationTimings);
-            }
+        if (lastSeenEntityAnimationTimings != null && !lastSeenEntityAnimationTimings.isEmpty()) {
+            animationTimings.add(lastSeenEntityAnimationTimings);
         }
+
         return animationTimings;
     }
 

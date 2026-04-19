@@ -7,6 +7,7 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.GameRendererAccessor;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.DrawType;
 import net.minecraft.client.Minecraft;
@@ -20,9 +21,10 @@ import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.client.resources.model.AtlasManager;
 import org.joml.Matrix4fStack;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreenPropertyBundle> {
+public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreenPropertyBundle> implements AnimationTimingsProvider {
 
     private final AbstractContainerScreen<?> containerScreen;
 
@@ -30,6 +32,7 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
     private static GuiRenderer guiRenderer;
 
     public ScreenSizeData previewScreenSizeData;
+    private List<Integer> lastSeenAnimationTimings = null;
 
     public ContainerScreenRenderable(AbstractContainerScreen<?> containerScreen) {
         this.containerScreen = containerScreen;
@@ -71,8 +74,14 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
     }
 
     @Override
+    public void onScreenClose() {
+        containerScreen.onClose();
+    }
+
+    @Override
     public void emitVerticesThenDraw(RenderScreen renderScreen, Matrix4fStack modelViewStack, PoseStack poseStack, float tickDelta, long timeSinceCreationMs) {
         WikiRenderer.inContainerScreenDraw = true;
+        WikiRenderer.animationTimingDataRequestedToFill = new ArrayList<>();
         state.reset();
 
         Minecraft client = Minecraft.getInstance();
@@ -133,6 +142,9 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         window.setHeight(savedHeight);
         window.setGuiScale(savedScale);
         WikiRenderer.inContainerScreenDraw = false;
+
+        lastSeenAnimationTimings = WikiRenderer.animationTimingDataRequestedToFill;
+        WikiRenderer.animationTimingDataRequestedToFill = null;
     }
 
     private GuiRenderer getGuiRenderer(Minecraft client) {
@@ -170,5 +182,10 @@ public class ContainerScreenRenderable extends DefaultRenderable<ContainerScreen
         }
 
         return guiScale;
+    }
+
+    @Override
+    public List<List<Integer>> getTicksToFullyAnimate() {
+        return lastSeenAnimationTimings == null ? new ArrayList<>() : List.of(lastSeenAnimationTimings);
     }
 }
