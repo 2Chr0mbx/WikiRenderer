@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.NativeImageAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.BufferedOutputStream;
@@ -30,8 +31,9 @@ public class FFmpegSession implements AutoCloseable {
         this.buffer = ByteBuffer.allocateDirect(width * height * 4);
         this.buffer.order(ByteOrder.nativeOrder());
 
+        String ffmpegPath = FFmpegDispatcher.getResolvedOrFallbackFFmpegPath();
         List<String> args = new ArrayList<>(List.of(
-                "ffmpeg",
+                ffmpegPath,
                 "-y",
                 "-f", "rawvideo",
                 "-pixel_format", "rgba",

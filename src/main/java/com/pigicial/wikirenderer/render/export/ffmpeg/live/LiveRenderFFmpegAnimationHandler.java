@@ -91,8 +91,9 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
         exportPath.resolveOffset().toFile().mkdirs();
         File animationFile = exportPath.resolveFile(format.extension);
 
+        String ffmpegPath = FFmpegDispatcher.getResolvedOrFallbackFFmpegPath();
         List<String> args = new ArrayList<>(List.of(
-                "ffmpeg",
+                ffmpegPath,
                 "-y",
                 "-threads",
                 String.valueOf(Math.max(1, Runtime.getRuntime().availableProcessors())),

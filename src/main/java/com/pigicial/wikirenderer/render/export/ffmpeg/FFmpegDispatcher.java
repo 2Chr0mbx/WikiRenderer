@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class FFmpegDispatcher {
 
+    public static String resolvedFFmpegPath = null;
     private static Boolean ffmpegDetected = null;
 
     public static boolean wasFFmpegDetected() {
@@ -35,35 +36,67 @@ public class FFmpegDispatcher {
         }
 
         return CompletableFuture.supplyAsync(() -> {
+            String path = findFFmpegPath();
             try {
-                Process process = new ProcessBuilder("ffmpeg", "-version")
+                Process process = new ProcessBuilder(path, "-version")
                         .redirectError(ProcessBuilder.Redirect.DISCARD)
                         .start();
 
                 process.onExit().join();
                 String output = new String(process.getInputStream().readAllBytes());
 
-                WikiRenderer.LOGGER.info("FFmpeg detected, version: {}", output.split(" ")[2]);
+                WikiRenderer.LOGGER.info("FFmpeg detected at {}, version: {}", path, output.split(" ")[2]);
+                resolvedFFmpegPath = path;
                 return true;
-            } catch (IOException exception) {
+            } catch (Exception exception) {
                 WikiRenderer.LOGGER.info("Did not detect FFmpeg for reason: {}", exception.getMessage());
                 return false;
             }
-        }, Util.backgroundExecutor()).whenComplete((result, throwable) -> {
-            if (throwable != null) {
-                ffmpegDetected = false;
-                WikiRenderer.LOGGER.warn("Could not complete FFmpeg detection", throwable);
-            } else {
-                ffmpegDetected = result;
+        }, Util.backgroundExecutor()).whenComplete((result, throwable) -> ffmpegDetected = (throwable == null && result));
+    }
+
+    public static String findFFmpegPath() {
+        String os = System.getProperty("os.name").toLowerCase();
+        String binName = os.contains("win") ? "ffmpeg.exe" : "ffmpeg";
+
+        String cmd = os.contains("win") ? "where" : "which";
+        try {
+            Process p = new ProcessBuilder(cmd, "ffmpeg").start();
+            String foundPath = new String(p.getInputStream().readAllBytes()).trim();
+            if (!foundPath.isEmpty()) {
+                return foundPath.split("\n")[0].trim();
             }
-        });
+        } catch (IOException ignored) {}
+
+        String[] commonDirectories = {
+                "/usr/local/bin/",
+                "/opt/homebrew/bin/",
+                "/usr/bin/",
+                "/bin/",
+                "C:\\ffmpeg\\bin\\",
+                "C:\\Program Files\\ffmpeg\\bin\\"
+        };
+
+        for (String directory : commonDirectories) {
+            File file = new File(directory, binName);
+            if (file.exists() && file.canExecute()) {
+                return file.getAbsolutePath();
+            }
+        }
+
+        return binName;
+    }
+
+    public static String getResolvedOrFallbackFFmpegPath() {
+        return resolvedFFmpegPath == null ? "ffmpeg" : resolvedFFmpegPath;
     }
 
     public static CompletableFuture<File> exportAnimation(ExportPathSpec target, Path sourcePath, Format format, AnimationHandler handler, @Nullable String cropFilter) {
         target.resolveOffset().toFile().mkdirs();
 
+        String ffmpegPath = FFmpegDispatcher.getResolvedOrFallbackFFmpegPath();
         List<String> args = new ArrayList<>(List.of(new String[]{
-                "ffmpeg",
+                ffmpegPath,
                 "-y",
                 "-threads",
                 String.valueOf(Math.max(1, Runtime.getRuntime().availableProcessors())),
