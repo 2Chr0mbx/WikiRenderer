@@ -96,6 +96,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
     public @Nullable Integer selectedEntityId;
     public @Nullable EntityTypeSpecificOverrides<?> renderStateOverrides = null;
 
+    private List<Integer> lastSeenAnimationTimings = null;
+
     public EntityRenderable(@Nullable Entity liveNonTickableEntity, Entity clonedTickableEntity) {
         this.liveNonTickableEntity = liveNonTickableEntity;
         this.clonedTickableEntity = clonedTickableEntity;
@@ -207,7 +209,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
                 this.nearbyEntitiesToShow = this.nearbyEntitiesToShow
                         .stream()
                         .map(originalEntity -> {
-                            if (originalEntity == clonedTickableEntity || originalEntity == liveNonTickableEntity) return null;
+                            if (originalEntity == clonedTickableEntity || originalEntity == liveNonTickableEntity)
+                                return null;
                             Entity clonedEntity = EntityCloner.copy(originalEntity);
                             if (clonedEntity == null) return null;
                             FAKE_TO_REAL_ENTITY_ID_MAP.put(clonedEntity.getId(), originalEntity.getId());
@@ -238,6 +241,8 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
         boolean usingLiveEntity = isUsingLiveEntity();
         Entity usedEntity = this.getUsedEntity();
         float tickDelta = usingLiveEntity ? delta : 0;
+
+        List<Integer> animationTimingsToFill = new ArrayList<>();
 
         this.drawnVertexBoundCache.clear();
         this.refreshSurroundingVisibleEntities(timeSinceCreationMs);
@@ -302,14 +307,20 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
             clonedPose.mulPose(matrices.last().pose());
             drawnVertexBoundCache.put(entityId, new DrawEntityDataCache(state, offset, clonedPose, properties.spriteRendering.get()));
 
+            WikiRenderer.animationTimingDataRequestedToFill = animationTimingsToFill;
+
             renderDispatcher.submit(state, CameraOrientationUtil.createRenderState(this), offset.x(), offset.y(), offset.z(), matrices, nodeStorage);
             this.drawSubmittedRenderFeatures();
 
             matrices.popPose();
             WikiRenderer.inSpriteEntityDraw = false;
             WikiRenderer.inEntityDraw = false;
+            WikiRenderer.animationTimingDataRequestedToFill = null;
             partVisibilityCallbacks.forEach(Runnable::run);
         });
+
+        this.lastSeenAnimationTimings = animationTimingsToFill;
+        WikiRenderer.animationTimingDataRequestedToFill = null;
 
         if (this.client.player != null && liveNonTickableEntity != null) {
             matrices.pushPose();
@@ -330,7 +341,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
     private void updateRenderState(Entity entity, EntityRenderState state, EntityPropertyBundle properties, long timeSinceCreationMs, boolean usingLiveEntity) {
         int entityId = entity.getId();
-        EntityTypeSpecificOverrides<?> renderStateOverrides =  ENTITY_SPECIFIC_OVERRIDES_BY_ID.get(FAKE_TO_REAL_ENTITY_ID_MAP.getOrDefault(entityId, entityId));
+        EntityTypeSpecificOverrides<?> renderStateOverrides = ENTITY_SPECIFIC_OVERRIDES_BY_ID.get(FAKE_TO_REAL_ENTITY_ID_MAP.getOrDefault(entityId, entityId));
 
         if (state instanceof DisplayEntityRenderState displayEntityRenderState) {
             displayEntityRenderState.cameraYRot = 180 + getProperties().getUsedRotation();
@@ -656,12 +667,7 @@ public class EntityRenderable extends DefaultRenderable<EntityPropertyBundle> im
 
     @Override
     public List<List<Integer>> getTicksToFullyAnimate() {
-        List<Integer> animationTimings = new LinkedList<>();
-        forBaseAndSurroundingEntities(getUsedEntity(), (entity, isSurrounding) -> {
-            if (isSurrounding && getProperties().hiddenSurroundingEntityTypes.contains(entity.getType())) return;
-            AnimationTimingUtil.scanTicksToFullyAnimateEntityItems(entity, animationTimings);
-        });
-        return List.of(animationTimings);
+        return lastSeenAnimationTimings == null ? new ArrayList<>() : List.of(lastSeenAnimationTimings);
     }
 
     @Override

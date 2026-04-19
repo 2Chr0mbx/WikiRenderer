@@ -7,15 +7,12 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.SimpleModelWrapper;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Display;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,29 +24,6 @@ import java.util.List;
 public class AnimationTimingUtil {
 
     private static final RandomSource RANDOM = RandomSource.create();
-
-    public static void scanTicksToFullyAnimateEntityItems(Entity entity, List<Integer> animationTimings) {
-        if (entity instanceof LivingEntity livingEntity) {
-            for (EquipmentSlot equipmentSlot : EquipmentSlot.values()) {
-                ItemStack item = livingEntity.getItemBySlot(equipmentSlot);
-                AnimationTimingUtil.scanTicksToFullyAnimateItem(item, animationTimings);
-            }
-        }
-
-        if (entity instanceof Display.ItemDisplay itemDisplay) {
-            Display.ItemDisplay.ItemRenderState itemRenderState = itemDisplay.itemRenderState();
-            if (itemRenderState != null) {
-                AnimationTimingUtil.scanTicksToFullyAnimateItem(itemRenderState.itemStack(), animationTimings);
-            }
-        }
-
-        if (entity instanceof Display.BlockDisplay blockDisplay) {
-            Display.BlockDisplay.BlockRenderState blockRenderState = blockDisplay.blockRenderState();
-            if (blockRenderState != null) {
-                AnimationTimingUtil.scanTicksToFullyAnimateBlock(blockRenderState.blockState(), animationTimings, null);
-            }
-        }
-    }
 
     public static void scanTicksToFullyAnimateItem(ItemStack itemStack, List<Integer> animationTimings) {
         Identifier modelIdentifier = itemStack.get(DataComponents.ITEM_MODEL);
@@ -92,16 +66,20 @@ public class AnimationTimingUtil {
         }
     }
 
-    private static void fillTimings(Collection<BakedQuad> quads, List<Integer> animationCompletionTimes) {
+    public static void fillTimings(Collection<BakedQuad> quads, List<Integer> animationCompletionTimes) {
         for (BakedQuad quad : quads) {
-            SpriteContents.AnimatedTexture animatedTexture = ((SpriteContentsAccessor) quad.materialInfo().sprite().contents()).wikirender$getAnimatedTexture();
-            if (animatedTexture != null) {
-                int time = 0;
-                for (SpriteContents.FrameInfo frame : animatedTexture.frames) {
-                    time += frame.time();
-                }
-                animationCompletionTimes.add(time);
+            fillTimings(quad.materialInfo().sprite(), animationCompletionTimes);
+        }
+    }
+
+    public static void fillTimings(TextureAtlasSprite sprite, List<Integer> animationCompletionTimes) {
+        SpriteContents.AnimatedTexture animatedTexture = ((SpriteContentsAccessor) sprite.contents()).wikirender$getAnimatedTexture();
+        if (animatedTexture != null) {
+            int time = 0;
+            for (SpriteContents.FrameInfo frame : animatedTexture.frames) {
+                time += frame.time();
             }
+            animationCompletionTimes.add(time);
         }
     }
 

@@ -38,6 +38,7 @@
     "entity.HumanoidArmorLayerMixin",
     "entity.LivingEntityRendererMixin",
     "entity.RenderSetupMixin",
+    "entity.SubmitNodeCollectionMixin",
     "entity.sprite.DrownedOuterLayerMixin",
     "entity.sprite.EnergySwirlLayerMixin",
     "entity.sprite.LivingEntityEmissiveLayerMixin",

@@ -687,6 +687,12 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     @Override
+    public void onClose() {
+        super.onClose();
+        this.renderable.onScreenClose();
+    }
+
+    @Override
     public void removed() {
         WikiRenderer.particleDisplayCondition = ParticleDisplayCondition.SHOW_ALL;
         this.minecraft.getFramerateLimitTracker().setFramerateLimit(this.minecraft.options.framerateLimit().get());
