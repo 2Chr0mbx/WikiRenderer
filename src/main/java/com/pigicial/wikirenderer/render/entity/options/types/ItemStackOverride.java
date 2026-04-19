@@ -62,7 +62,7 @@ public class ItemStackOverride<S extends EntityRenderState> extends OptionalOver
 
         this.layout = new FullWidthCollapsibleContainer(checkbox, () -> {
             ItemStack item = getValue();
-            return item == null || item.isEmpty() ? Translate.gui("not_set") : (item.getItem() == Items.PLAYER_HEAD ? Items.PLAYER_HEAD.getName().copy() : item.getItemName().copy());
+            return item == null || item.isEmpty() ? Translate.gui("not_set") : (item.getItem() == Items.PLAYER_HEAD ? Items.PLAYER_HEAD.getName(new ItemStack(Items.PLAYER_HEAD)).copy() : item.getItemName().copy());
         }, false);
         this.layout.margins(Insets.of(0, 0, 0, 0));
 
