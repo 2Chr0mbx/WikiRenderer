@@ -7,6 +7,7 @@ import com.pigicial.wikirenderer.mixin.access.LivingEntityRendererAccessor;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.Renderable;
+import com.pigicial.wikirenderer.render.export.ImageRescaleMode;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
@@ -42,9 +43,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
     public final Property<Boolean> spriteRendering = Property.of(false);
     public final Property<Boolean> spriteCropping = Property.of(true);
+    public final Property<ImageRescaleMode> spriteRescaleMode = Property.of(ImageRescaleMode.DISABLED);
     public final IntProperty spriteRotation = IntProperty.of(0, 0, 360).withRollover();
     public final IntProperty spriteSlant = IntProperty.of(0, -90, 90);
-    public int spriteExportResolution = 64;
+    public final IntProperty spriteScale = IntProperty.of(200, 0, 1000);
+    public int spriteExportResolution = 288;
 
     public final Property<Boolean> showSurroundingEntities = Property.of(false);
     public final DoubleProperty surroundingEntitiesRadius = DoubleProperty.of(0, 0, 30);
@@ -95,6 +98,11 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
     @Override
     public Property<Boolean> getCropProperty() {
         return this.spriteRendering.get() ? this.spriteCropping : super.getCropProperty();
+    }
+
+    @Override
+    public Property<ImageRescaleMode> getRescaleMode() {
+        return this.spriteRendering.get() ? this.spriteRescaleMode : super.getRescaleMode();
     }
 
     @Override
@@ -163,12 +171,13 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
             this.spriteSlant.set(0);
         }));
 
-        WikiRendererUI.intControl(screen, container, this.scale, "scale");
         if (!this.spriteRendering.get()) {
+            WikiRendererUI.intControl(screen, container, this.scale, "scale");
             WikiRendererUI.intControl(screen, container, this.rotation, "rotation");
             WikiRendererUI.doubleControl(screen, container, this.slant, "slant");
             WikiRendererUI.intControl(screen, container, this.rotationSpeed, "rotation_speed");
         } else {
+            WikiRendererUI.intControl(screen, container, this.spriteScale, "scale");
             WikiRendererUI.intControl(screen, container, this.spriteRotation, "rotation");
             WikiRendererUI.intControl(screen, container, this.spriteSlant, "slant");
         }
@@ -189,6 +198,7 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
         container.child(this.buildResetButton(() -> {
             this.spriteRotation.setToDefault();
             this.spriteSlant.setToDefault();
+            this.spriteScale.setToDefault();
             renderable.cachedCenterOffset = null;
             renderable.cachedScaleMultiplier = null;
         })).margins(Insets.of(5, 0, 0, 0));
@@ -366,9 +376,8 @@ public class EntityPropertyBundle extends DefaultCroppablePropertyBundle impleme
 
     @Override
     public void applyToViewMatrix(Renderable<?> renderable, Matrix4fStack modelViewStack) {
-        float scale = this.scale.get() / 100f;
+        float scale = (this.spriteRendering.get() ? this.spriteScale.get() : this.scale.get()) / 100f;
         modelViewStack.scale(scale, scale, scale);
-
         modelViewStack.translate(this.xOffset.get() / 26000f, this.yOffset.get() / -26000f, 0);
 
         if (this.spriteRendering.get()) {
