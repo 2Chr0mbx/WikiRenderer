@@ -32,6 +32,7 @@ public class GlobalProperties implements SerializablePropertyBundle {
     public final IntProperty exportFrames = IntProperty.of(50, 1, 5000);
     public AnimationHandlingMode animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG;
     public FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
+    public Property<Boolean> saveIndividualFrames = Property.of(false);
 
     @Override
     public String getConfigFileName() {

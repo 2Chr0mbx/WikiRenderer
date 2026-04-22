@@ -176,7 +176,8 @@ public class FFmpegDispatcher {
         APNG("apng", new String[]{"-plays", "0", "-pix_fmt", "rgba"}),
 	    WEBP("webp", new String[]{"-plays", "0", "-loop", "0", "-pix_fmt", "rgba"}),
         GIF("gif", new String[]{"-plays", "0"}),
-        MP4("mp4", new String[]{"-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p"});
+        MP4("mp4", new String[]{"-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p"}),
+        MOV("mov", new String[]{"-c:v", "prores_ks", "-profile:v", "4444", "-q:v", "1", "-pix_fmt", "yuva444p10le"});
 
         public final String extension;
         public final String[] arguments;
@@ -188,7 +189,8 @@ public class FFmpegDispatcher {
 
         public Format next() {
             return switch (this) {
-                case MP4 -> APNG;
+                case MP4 -> MOV;
+                case MOV -> APNG;
                 case APNG -> WEBP;
 	            case WEBP -> GIF;
                 case GIF -> MP4;

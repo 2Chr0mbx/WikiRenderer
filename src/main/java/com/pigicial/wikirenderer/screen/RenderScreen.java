@@ -368,6 +368,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             timingsProvider.buildTimingsSection(rightColumn);
         }
 
+        WikiRendererUI.conditionalBooleanControl(rightColumn, globalProperties.saveIndividualFrames, "save_individual_frames", () -> globalProperties.animationHandlingMode.savesFramesToFiles());
         WikiRendererUI.dynamicText(rightColumn, () -> switch (globalProperties.animationHandlingMode) {
             case DISK_INSTANT_SAVE -> Translate.gui("animation_mode_selected_instant_file_save");
             case MEMORY_CACHE -> Translate.gui("animation_mode_selected_save_in_memory");

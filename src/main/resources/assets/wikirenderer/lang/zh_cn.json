@@ -101,6 +101,7 @@
   "gui.wikirenderer.format.apng": "APNG",
   "gui.wikirenderer.format.webp": "WEBP",
   "gui.wikirenderer.format.gif": "GIF",
+  "gui.wikirenderer.format.mov": "MOV",
   "gui.wikirenderer.detecting_ffmpeg": "正在检测FFmpeg...",
   "gui.wikirenderer.no_ffmpeg_1": "未检测到FFmpeg",
   "gui.wikirenderer.no_ffmpeg_2": "从以下地址下载FFmpeg",

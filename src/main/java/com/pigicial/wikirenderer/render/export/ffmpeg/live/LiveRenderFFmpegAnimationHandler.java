@@ -11,6 +11,7 @@ import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
 import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -149,12 +150,12 @@ public final class LiveRenderFFmpegAnimationHandler extends AnimationHandler {
             } catch (Exception e) {
                 throw new RuntimeException("FFmpeg export failed", e);
             }
-        }).whenComplete((f, animationThrowable) -> this.finishAndCleanup(f));
+        }).whenComplete((f, animationThrowable) -> this.finishAndCleanup(f, null));
     }
 
     @Override
-    protected void finishAndCleanup(File animationFile) {
-        super.finishAndCleanup(animationFile);
+    protected void finishAndCleanup(File animationFile, @Nullable Path framesFolderToLinkTo) {
+        super.finishAndCleanup(animationFile, framesFolderToLinkTo);
         try {
             this.session.close();
         } catch (Exception e) {
