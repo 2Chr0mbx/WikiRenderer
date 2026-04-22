@@ -20,7 +20,9 @@ import java.util.concurrent.CompletableFuture;
 public class FFmpegDispatcher {
 
     public static String resolvedFFmpegPath = null;
-    private static Boolean ffmpegDetected = null;
+    public static Boolean ffmpegDetected = null;
+    public static boolean tryCustomPathAgain = false;
+    public static CustomPathState customPathState = CustomPathState.NOT_CHECKED;
 
     public static boolean wasFFmpegDetected() {
         return ffmpegDetected != null;
@@ -31,7 +33,7 @@ public class FFmpegDispatcher {
     }
 
     public static CompletableFuture<Boolean> detectFFmpeg() {
-        if (ffmpegDetected != null) {
+        if (ffmpegDetected != null && !tryCustomPathAgain) {
             return CompletableFuture.completedFuture(ffmpegDetected);
         }
 
@@ -45,17 +47,32 @@ public class FFmpegDispatcher {
                 process.onExit().join();
                 String output = new String(process.getInputStream().readAllBytes());
 
+                if (customPathState == CustomPathState.CHECKING) {
+                    customPathState = CustomPathState.FOUND;
+                }
+
                 WikiRenderer.LOGGER.info("FFmpeg detected at {}, version: {}", path, output.split(" ")[2]);
                 resolvedFFmpegPath = path;
                 return true;
             } catch (Exception exception) {
                 WikiRenderer.LOGGER.info("Did not detect FFmpeg for reason: {}", exception.getMessage());
+                if (customPathState == CustomPathState.CHECKING) {
+                    customPathState = CustomPathState.NOT_FOUND;
+                }
                 return false;
             }
         }, Util.backgroundExecutor()).whenComplete((result, throwable) -> ffmpegDetected = (throwable == null && result));
     }
 
     public static String findFFmpegPath() {
+        GlobalProperties globalProperties = GlobalProperties.get();
+        if (globalProperties.useCustomFFmpegPath.get()) {
+            customPathState = CustomPathState.CHECKING;
+            File file = new File(globalProperties.customFFmpegPath);
+            return file.getAbsolutePath();
+        }
+
+        customPathState = CustomPathState.NOT_CHECKED;
         String os = System.getProperty("os.name").toLowerCase();
         String binName = os.contains("win") ? "ffmpeg.exe" : "ffmpeg";
 
