@@ -40,6 +40,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -344,21 +345,23 @@ public class WorldBlockMesh {
                         poseStack.popPose();
                     }
 
-                    poseStack.pushPose();
-                    poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
+                    if (state.getRenderShape() == RenderShape.MODEL) {
+                        poseStack.pushPose();
+                        poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
 
-                    BlockStateModel model = blockRenderDispatcher.getBlockModel(state);
-                    long randomSeed = state.getSeed(pos);
-                    AnimationTimingUtil.scanTicksToFullyAnimateBlock(model, animationCompletionTimings, randomSeed);
+                        BlockStateModel model = blockRenderDispatcher.getBlockModel(state);
+                        long randomSeed = state.getSeed(pos);
+                        AnimationTimingUtil.scanTicksToFullyAnimateBlock(model, animationCompletionTimings, randomSeed);
 
-                    if (renderContext != null) {
-                        renderContext.tessellateBlock(state, pos, model, poseStack);
-                    } else {
-                        boolean cull = true; // for later searching
-                        blockRenderDispatcher.getModelRenderer().render(this.world, model, state, pos, poseStack, blockLayer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, blockLayer), cull, randomSeed, OverlayTexture.NO_OVERLAY);
+                        if (renderContext != null) {
+                            renderContext.tessellateBlock(state, pos, model, poseStack);
+                        } else {
+                            boolean cull = true; // for later searching
+                            blockRenderDispatcher.getModelRenderer().render(this.world, model, state, pos, poseStack, blockLayer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, blockLayer), cull, randomSeed, OverlayTexture.NO_OVERLAY);
+                        }
+
+                        poseStack.popPose();
                     }
-
-                    poseStack.popPose();
                 }
             }
 
