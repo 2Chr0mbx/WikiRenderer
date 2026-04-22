@@ -54,6 +54,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.state.gui.BlitRenderState;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -276,14 +277,62 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         WikiRendererUI.booleanControl(rightColumn, globalProperties.tickTextureAnimations, "texture_animations");
     }
 
+    private void buildFFmpegCustomPathSection() {
+        GlobalProperties globalProperties = GlobalProperties.get();
+        WikiRendererUI.booleanControl(rightColumn, globalProperties.useCustomFFmpegPath, "use_custom_ffmpeg_path");
+        globalProperties.useCustomFFmpegPath.addRebuildListener(this);
+        globalProperties.useCustomFFmpegPath.futureListen(this, (pro, value) -> {
+            if (value && globalProperties.customFFmpegPath.isBlank()) return; // turning on for first time, don't check
+            this.detectFFmpeg(true);
+        });
+
+        if (globalProperties.useCustomFFmpegPath.get()) {
+            TextBoxComponent editBox = WikiRendererUI.labelledTextField(rightColumn, globalProperties.customFFmpegPath, "custom_ffmpeg_path", Sizing.expand(80));
+            editBox.onChanged().subscribe(path -> globalProperties.customFFmpegPath = path);
+
+            try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(rightColumn)) {
+                builder.row.child(UIComponents.button(Translate.gui("check_ffmpeg_path"), comp -> this.detectFFmpeg(true)));
+
+                WikiRendererUI.dynamicText(builder.row, () -> {
+                    MutableComponent meshStatusText;
+                    meshStatusText = Translate.gui(switch (FFmpegDispatcher.customPathState) {
+                        case NOT_CHECKED -> "ffmpeg_custom_path_not_checked";
+                        case CHECKING -> "ffmpeg_custom_path_checking";
+                        case FOUND -> "ffmpeg_custom_path_found";
+                        case NOT_FOUND -> "ffmpeg_custom_path_not_found";
+                    }).withStyle(FFmpegDispatcher.customPathState.getColor());
+
+                    return meshStatusText;
+                }).margins(Insets.of(6, 0, 8, 0));
+            }
+        }
+    }
+
+    private void detectFFmpeg(boolean bypass) {
+        if (bypass) {
+            FFmpegDispatcher.tryCustomPathAgain = true;
+        }
+        FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> {
+            this.guiRebuildScheduled = true;
+            if (throwable != null) {
+                this.minecraft.execute(() -> this.notify(
+                        Translate.gui("ffmpeg_check_error").withStyle(ChatFormatting.RED),
+                        Component.literal(String.valueOf(throwable.getMessage())).withStyle(ChatFormatting.GRAY)
+                ));
+            }
+        });
+    }
+
     private void buildFFmpegSection() {
         if (!FFmpegDispatcher.wasFFmpegDetected()) {
+            this.buildFFmpegCustomPathSection();
             WikiRendererUI.text(rightColumn, "detecting_ffmpeg", false);
-            FFmpegDispatcher.detectFFmpeg().whenComplete((_, _) -> this.guiRebuildScheduled = true);
+            this.detectFFmpeg(false);
             return;
         }
 
         if (!FFmpegDispatcher.ffmpegAvailable()) {
+            this.buildFFmpegCustomPathSection();
             WikiRendererUI.text(rightColumn, "no_ffmpeg_1", true);
             WikiRendererUI.text(rightColumn, "no_ffmpeg_2", false);
             WikiRendererUI.text(rightColumn, "no_ffmpeg_3", false)
@@ -366,6 +415,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             timingsProvider.buildTimingsSection(rightColumn);
         }
 
+        WikiRendererUI.conditionalBooleanControl(rightColumn, globalProperties.saveIndividualFrames, "save_individual_frames", () -> globalProperties.animationHandlingMode.savesFramesToFiles());
         WikiRendererUI.dynamicText(rightColumn, () -> switch (globalProperties.animationHandlingMode) {
             case DISK_INSTANT_SAVE -> Translate.gui("animation_mode_selected_instant_file_save");
             case MEMORY_CACHE -> Translate.gui("animation_mode_selected_save_in_memory");
@@ -387,6 +437,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 .padding(Insets.of(5))
                 .surface(Surface.blur(10, 20))
         );
+
+        this.buildFFmpegCustomPathSection();
     }
 
     public void queueAnimationExport() {
@@ -497,13 +549,18 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         String customFileName = renderable.getCustomFileName();
         ExportPathSpec exportPath = customFileName == null || customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(customFileName);
 
+        String areaRunCommandIfPossible;
         AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
         Consumer<MinimapCalibratorData> dataConsumer = null;
         if (renderable instanceof AreaRenderable areaRenderable
             && areaRenderable.getProperties().perPixel90DegreeRendering.get()
             && areaRenderable.getProperties().exportSideViewMinimapData.get()
             && areaRenderable.getProperties().areMinimapSettingsExportable()) {
+
             dataConsumer = data::set;
+            areaRunCommandIfPossible = areaRenderable.mesh.bounds.generateAreaCommand();
+        } else {
+            areaRunCommandIfPossible = null;
         }
 
         RenderableDispatcher.drawIntoImage(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
@@ -528,7 +585,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     }
 
                     if (data.get() != null) {
-                        String fileText = data.get().toFileText(imageFile.getName());
+                        String fileText = data.get().toFileText(imageFile.getName(), areaRunCommandIfPossible);
                         ExportPathSpec minimapExportPath = customFileName == null || customFileName.isBlank()
                                 ? defaultExportPath.differentFileName("area_render_minimap_data")
                                 : defaultExportPath.differentFileName(customFileName + "_area_render_minimap_data");
@@ -666,7 +723,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         int keyCode = input.key();
 
         if (keyCode == GLFW.GLFW_KEY_F12) {
-           this.captureScheduled = true;
+            this.captureScheduled = true;
         } else if (keyCode == GLFW.GLFW_KEY_F10) {
             this.drawOnlyBackground = !this.drawOnlyBackground;
         } else if (KEYBOARD_CONTROLS.containsKey(keyCode) && this.renderable instanceof DefaultRenderable) {

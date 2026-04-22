@@ -14,6 +14,10 @@ public enum AnimationHandlingMode {
         return this == MEMORY_CACHE;
     }
 
+    public boolean savesFramesToFiles() {
+        return this == DISK_INSTANT_SAVE || this == MEMORY_CACHE;
+    }
+
     public AnimationHandler createAnimationHandler(RenderScreen screen, Renderable<?> renderable) {
         int framesToRender = GlobalProperties.get().exportFrames.get();
         return switch (this) {

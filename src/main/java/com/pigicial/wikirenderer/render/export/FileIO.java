@@ -75,6 +75,10 @@ public class FileIO {
     }
 
     public static void deleteSequenceFilesFromPath(Path sequencePath) {
+        if (GlobalProperties.get().saveIndividualFrames.get()) {
+            return;
+        }
+
         try (Stream<Path> p = Files.list(sequencePath)) {
             p.filter(path -> path.getFileName().toString().matches("seq_\\d+\\.png"))
                     .forEach(deletePath -> {

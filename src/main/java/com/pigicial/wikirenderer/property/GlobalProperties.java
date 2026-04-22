@@ -22,6 +22,10 @@ public class GlobalProperties implements SerializablePropertyBundle {
     public final Property<Boolean> overwriteLatest = Property.of(false);
 
     public final Property<Boolean> tickParticles = Property.of(true);
+
+    public final Property<Boolean> useCustomFFmpegPath = Property.of(false);
+    public String customFFmpegPath = "";
+
     public final Property<Boolean> speedUpEnchantmentGlints = Property.of(false);
     public final Property<Boolean> syncEnchantmentGlintsToExport = Property.of(false);
     public final Property<Boolean> syncRotationToAnimation = Property.of(false);
@@ -32,6 +36,7 @@ public class GlobalProperties implements SerializablePropertyBundle {
     public final IntProperty exportFrames = IntProperty.of(50, 1, 5000);
     public AnimationHandlingMode animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG;
     public FFmpegDispatcher.Format animationFormat = FFmpegDispatcher.Format.GIF;
+    public Property<Boolean> saveIndividualFrames = Property.of(false);
 
     @Override
     public String getConfigFileName() {
