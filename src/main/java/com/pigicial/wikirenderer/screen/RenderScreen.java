@@ -500,13 +500,18 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         String customFileName = renderable.getCustomFileName();
         ExportPathSpec exportPath = customFileName == null || customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(customFileName);
 
+        String areaRunCommandIfPossible;
         AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
         Consumer<MinimapCalibratorData> dataConsumer = null;
         if (renderable instanceof AreaRenderable areaRenderable
             && areaRenderable.getProperties().perPixel90DegreeRendering.get()
             && areaRenderable.getProperties().exportSideViewMinimapData.get()
             && areaRenderable.getProperties().areMinimapSettingsExportable()) {
+
             dataConsumer = data::set;
+            areaRunCommandIfPossible = areaRenderable.mesh.bounds.generateAreaCommand();
+        } else {
+            areaRunCommandIfPossible = null;
         }
 
         RenderableDispatcher.drawIntoImage(this, this.renderable, tickDelta, this.getTimeSinceCreationMs(), renderable.getExportResolution(), renderable.shouldCrop(), dataConsumer)
@@ -535,7 +540,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                     }
 
                     if (data.get() != null) {
-                        String fileText = data.get().toFileText(imageFile.getName());
+                        String fileText = data.get().toFileText(imageFile.getName(), areaRunCommandIfPossible);
                         ExportPathSpec minimapExportPath = customFileName == null || customFileName.isBlank()
                                 ? defaultExportPath.differentFileName("area_render_minimap_data")
                                 : defaultExportPath.differentFileName(customFileName + "_area_render_minimap_data");

@@ -13,13 +13,14 @@ import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector4f;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * For usage on <a href="https://hypixel-skyblock.fandom.com/wiki/Module:Minimap/Datasheet">the Hypixel SkyBlock Fandom wiki's Module:Minimap/Datasheet Minimap Calibrator tool</a>
+ * For usage on <a href="https://hypixelskyblock.minecraft.wiki/w/Module:Minimap/Datasheet">the Hypixel SkyBlock Fandom wiki's Module:Minimap/Datasheet Minimap Calibrator tool</a>
  */
 public record MinimapCalibratorData(
         int topLeftImagePixelX,
@@ -116,22 +117,29 @@ public record MinimapCalibratorData(
         return new Vec3(pos.x - halfPixelWorldOffset, pos.y, pos.z - halfPixelWorldOffset).add(minCorner.getX(), minCorner.getY(), minCorner.getZ());
     }
 
-    public String toFileText(String imageFileName) {
+    public String toFileText(String imageFileName, String areaCommand) {
+        DecimalFormat df = new DecimalFormat("0.####");
+
         List<String> lines = new ArrayList<>();
-        lines.add("Use this data on https://hypixel-skyblock.fandom.com/wiki/Module:Minimap/Datasheet in the following order:");
+        lines.add("Use this data on https://hypixelskyblock.minecraft.wiki/w/Module:Minimap/Datasheet in the following order:");
         lines.add("");
         lines.add("Corresponding minimap file name: " + imageFileName);
+        lines.add("Run command: " + areaCommand);
         lines.add("");
         lines.add("Top-left Image Pixel X: " + this.topLeftImagePixelX);
         lines.add("Top-left Image Pixel Y: " + this.topLeftImagePixelY);
-        lines.add("Top-left Map Coordinate X: " + this.topLeftMapCoordX);
-        lines.add("Top-left Map Coordinate Y: " + this.topLeftMapCoordY);
+        lines.add("Top-left Map Coordinate X: " + df.format(this.topLeftMapCoordX));
+        lines.add("Top-left Map Coordinate Y: " + df.format(this.topLeftMapCoordY));
         lines.add("Bottom-right Image Pixel X: " + this.bottomRightImagePixelX);
         lines.add("Bottom-right Image Pixel Y: " + this.bottomRightImagePixelY);
-        lines.add("Bottom-right Map Coordinate X: " + this.bottomRightMapCoordX);
-        lines.add("Bottom-right Map Coordinate Y: " + this.bottomRightMapCoordY);
+        lines.add("Bottom-right Map Coordinate X: " + df.format(this.bottomRightMapCoordX));
+        lines.add("Bottom-right Map Coordinate Y: " + df.format(this.bottomRightMapCoordY));
         lines.add("Image Width: " + this.imageWidth);
         lines.add("Image Height: " + this.imageHeight);
+        lines.add("");
+        lines.add("Also be sure to update:");
+        lines.add("- https://hypixelskyblock.minecraft.wiki/w/Module:Minimap/Aliases");
+        lines.add("- https://hypixelskyblock.minecraft.wiki/w/Template:Minimap/styles.css");
         return String.join("\n", lines);
     }
 }

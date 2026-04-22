@@ -18,4 +18,10 @@ public interface MeshBounds {
     BlockPos getMaxCorner();
 
     List<Iterable<BlockPos>> buildBlockPositionsForSubMesh(BlockPos from, BlockPos to);
+
+    default String generateAreaCommand() {
+        BlockPos minCorner = this.getMinCorner();
+        BlockPos maxCorner = this.getMaxCorner();
+        return "/wikirender area pos " + minCorner.getX() + " " + minCorner.getY() + " " + minCorner.getZ() + " " + maxCorner.getX() + " " + maxCorner.getY() + " " + maxCorner.getZ();
+    }
 }

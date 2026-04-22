@@ -308,12 +308,8 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         container.child(UIComponents.button(Translate.gui("copy_render_command"), button -> {
             screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
 
-            BlockPos minCorner = mesh.bounds.getMinCorner();
-            BlockPos maxCorner = mesh.bounds.getMaxCorner();
-            String command = "/wikirender area pos " + minCorner.getX() + " " + minCorner.getY() + " " + minCorner.getZ() + " " + maxCorner.getX() + " " + maxCorner.getY() + " " + maxCorner.getZ();
-
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {
-            });
+            String command = mesh.bounds.generateAreaCommand();
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {});
         }));
 
         WikiRendererUI.text(container, "block_visibility", true);
