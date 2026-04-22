@@ -119,8 +119,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     private Consumer<File> exportCallback = null;
 
     public Button exportAnimationButton;
-    @Nullable
-    public AnimationHandler currentAnimationExportData = null;
+    @Nullable public AnimationHandler currentAnimationExportData = null;
+    @Nullable public Button refreshCustomFFmpegPathButton;
 
     public EditBox fileNameField = null;
     private double[] scrollOffsetData = null;
@@ -293,7 +293,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             editBox.setResponder(path -> globalProperties.customFFmpegPath = path);
 
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(rightColumn)) {
-                builder.row.child(UIComponents.button(Translate.gui("check_ffmpeg_path"), comp -> this.detectFFmpeg(true)));
+                this.refreshCustomFFmpegPathButton = UIComponents.button(Translate.gui("check_ffmpeg_path"), comp -> this.detectFFmpeg(true));
+                builder.row.child(refreshCustomFFmpegPathButton);
 
                 WikiRendererUI.dynamicText(builder.row, () -> {
                     MutableComponent meshStatusText;
@@ -312,6 +313,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     private void detectFFmpeg(boolean bypass) {
         if (bypass) {
+            if (currentAnimationExportData != null) return;
             FFmpegDispatcher.tryCustomPathAgain = true;
         }
         FFmpegDispatcher.detectFFmpeg().whenComplete((aBoolean, throwable) -> {
@@ -457,6 +459,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
             this.exportAnimationButton.active = false;
             this.exportAnimationButton.setMessage(Translate.gui("exporting"));
+            if (this.refreshCustomFFmpegPathButton != null) {
+                this.refreshCustomFFmpegPathButton.active = false;
+                this.refreshCustomFFmpegPathButton.setMessage(Translate.gui("exporting"));
+            }
         }
     }
 
@@ -792,6 +798,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         if (this.exportAnimationButton != null) {
             this.exportAnimationButton.active = true;
             this.exportAnimationButton.setMessage(Translate.gui("export_animation"));
+        }
+        if (this.refreshCustomFFmpegPathButton != null) {
+            this.refreshCustomFFmpegPathButton.active = true;
+            this.refreshCustomFFmpegPathButton.setMessage(Translate.gui("check_ffmpeg_path"));
         }
 
         this.uiAdapter = null;

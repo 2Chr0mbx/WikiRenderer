@@ -105,7 +105,7 @@
   "gui.wikirenderer.format.mov": "MOV",
   "gui.wikirenderer.use_custom_ffmpeg_path": "Use Custom FFmpeg Executable",
   "gui.wikirenderer.custom_ffmpeg_path": "FFmpeg File Path",
-  "gui.wikirenderer.check_ffmpeg_path": "Check",
+  "gui.wikirenderer.check_ffmpeg_path": "Check Path",
   "gui.wikirenderer.ffmpeg_check_error": "Failed to find FFmpeg",
   "gui.wikirenderer.ffmpeg_custom_path_not_checked": "Not Checked",
   "gui.wikirenderer.ffmpeg_custom_path_checking": "Checking...",
