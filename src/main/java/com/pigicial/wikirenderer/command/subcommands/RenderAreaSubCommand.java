@@ -34,7 +34,7 @@ public class RenderAreaSubCommand extends WikiRendererSubCommand {
                     return 0;
                 })
                 .then(literal("island")
-                        .then(argument("chunk_cube_size", IntegerArgumentType.integer(4, 64))
+                        .then(argument("chunk_cube_size", IntegerArgumentType.integer(4, 32))
                                 .then(argument("distance_limit", IntegerArgumentType.integer(1, 2000))
                                         .executes(context -> {
                                             this.renderSurroundingConnectedMiniChunks(context);
