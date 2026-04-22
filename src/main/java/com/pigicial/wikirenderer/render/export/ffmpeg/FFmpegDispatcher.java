@@ -23,6 +23,7 @@ public class FFmpegDispatcher {
     public static Boolean ffmpegDetected = null;
     public static boolean tryCustomPathAgain = false;
     public static CustomPathState customPathState = CustomPathState.NOT_CHECKED;
+    public static boolean activelyCheckingFfmpeg = false;
 
     public static boolean wasFFmpegDetected() {
         return ffmpegDetected != null;
@@ -37,6 +38,11 @@ public class FFmpegDispatcher {
             return CompletableFuture.completedFuture(ffmpegDetected);
         }
 
+        if (activelyCheckingFfmpeg) {
+            return CompletableFuture.completedFuture(ffmpegDetected != null && ffmpegDetected);
+        }
+
+        activelyCheckingFfmpeg = true;
         return CompletableFuture.supplyAsync(() -> {
             String path = findFFmpegPath();
             try {
@@ -61,7 +67,10 @@ public class FFmpegDispatcher {
                 }
                 return false;
             }
-        }, Util.backgroundExecutor()).whenComplete((result, throwable) -> ffmpegDetected = (throwable == null && result));
+        }, Util.backgroundExecutor()).whenComplete((result, throwable) -> {
+            ffmpegDetected = (throwable == null && result);
+            activelyCheckingFfmpeg = false;
+        });
     }
 
     public static String findFFmpegPath() {

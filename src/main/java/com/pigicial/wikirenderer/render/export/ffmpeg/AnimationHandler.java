@@ -81,6 +81,11 @@ public abstract class AnimationHandler implements AutoCloseable {
     protected void finishAndCleanup(File animationFile, @Nullable Path framesFolderToLinkTo) {
         this.screen.exportAnimationButton.active = true;
         this.screen.exportAnimationButton.setMessage(Translate.gui("export_animation"));
+        if (this.screen.refreshCustomFFmpegPathButton != null) {
+            this.screen.refreshCustomFFmpegPathButton.active = true;
+            this.screen.refreshCustomFFmpegPathButton.setMessage(Translate.gui("check_ffmpeg_path"));
+        }
+
         this.screen.currentAnimationExportData = null;
         this.closed = true;
         this.collectedCropData.clear();
