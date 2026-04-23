@@ -41,6 +41,7 @@ dependencies {
 
     runtimeOnly("me.djtheredstoner:DevAuth-fabric:${project.devauth_version}")
     compileOnly "maven.modrinth:iris:${project.iris_version}"
+    compileOnly "maven.modrinth:entityculling:${project.entity_culling_version}"
 }
 
 processResources {

@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer;
+package com.pigicial.wikirenderer.util.compatibility;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.irisshaders.iris.api.v0.IrisApi;
@@ -12,7 +12,6 @@ public class ShaderCheck {
         try {
             return IrisApi.getInstance().isShaderPackInUse();
         } catch (NoClassDefFoundError e) {
-            // Iris is not in the development environment or the game
             return false;
         }
     }
