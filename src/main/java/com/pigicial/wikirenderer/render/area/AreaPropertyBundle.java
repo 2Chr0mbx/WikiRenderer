@@ -71,6 +71,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     public final Property<Boolean> includeCornersWhenIncludingWalls = Property.of(false);
     public final Property<Boolean> showMeshExpansionControls = Property.of(false);
 
+    public final Property<Boolean> freezeBlocks = Property.of(false);
     public final Property<Boolean> hideMesh = Property.of(false);
     public final Property<Boolean> hideFluids = Property.of(false);
     public final Property<Boolean> hideBeaconBeams = Property.of(false);
@@ -241,26 +242,26 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                         try (WikiRendererUI.RowBuilder rowBuilder = WikiRendererUI.rowBuilder(container)) {
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_five"), button -> {
                                 if (renderable.mesh.canRebuild()) {
-                                    expandableMeshBounds.move(expansionSide, sideViewRotation, -5);
-                                    renderable.mesh.scheduleRebuild(true);
+                                    expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, -5);
+                                    //renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_one"), button -> {
                                 if (renderable.mesh.canRebuild()) {
-                                    expandableMeshBounds.move(expansionSide, sideViewRotation, -1);
-                                    renderable.mesh.scheduleRebuild(true);
+                                    expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, -1);
+                                    //renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_one"), button -> {
                                 if (renderable.mesh.canRebuild()) {
-                                    expandableMeshBounds.move(expansionSide, sideViewRotation, 1);
-                                    renderable.mesh.scheduleRebuild(true);
+                                    expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, 1);
+                                    //renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_five"), button -> {
                                 if (renderable.mesh.canRebuild()) {
-                                    expandableMeshBounds.move(expansionSide, sideViewRotation, 5);
-                                    renderable.mesh.scheduleRebuild(true);
+                                    expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, 5);
+                                    //renderable.mesh.scheduleRebuild(true);
                                 }
                             }, renderable.mesh::canRebuild));
 
@@ -319,8 +320,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         if (!this.hideMesh.get()) {
             WikiRendererUI.booleanControl(container, this.hideFluids, "hide_fluids");
             this.hideFluids.futureListen(screen, (p, b) -> mesh.scheduleRebuild(true));
+            WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
+            WikiRendererUI.booleanControl(container, this.freezeBlocks, "freeze_blocks");
         }
-        WikiRendererUI.booleanControl(container, this.hideBeaconBeams, "hide_beacon_beams");
 
         WikiRendererUI.text(container, "entity_visibility_overrides", 10);
         WikiRendererUI.booleanControl(container, this.hideEntities, "hide_entities");

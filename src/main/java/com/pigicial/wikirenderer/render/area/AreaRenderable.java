@@ -177,6 +177,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
         standardStack.setIdentity();
         standardStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
 
+        BlockPos minCorner = mesh.bounds.getMinCorner();
+
         // this could be better but whatever
         Runnable preTranslucencyTask = () -> {
             if (!properties.hideMesh.get()) {
@@ -184,7 +186,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             }
 
             if (client.player != null) {
-                Vec3 diff = Vec3.atLowerCornerOf(mesh.bounds.getMinCorner()).subtract(client.player.trackingPosition());
+                Vec3 diff = Vec3.atLowerCornerOf(minCorner).subtract(client.player.trackingPosition());
                 standardStack.pushPose();
                 standardStack.translate(-diff.x, -diff.y + 1.65, -diff.z);
                 this.drawParticles(standardStack.last().pose(), tickDelta);
@@ -201,6 +203,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
             PoseStack meshStack = new PoseStack();
             meshStack.mulPose(modelViewStack);
             meshStack.translate(-xSize / 2f, -ySize / 2f, -zSize / 2f);
+            meshStack.translate(-minCorner.getX(), -minCorner.getY(),- minCorner.getZ());
 
             this.mesh.drawBlocks(meshStack, preTranslucencyTask);
         } else {
@@ -449,8 +452,8 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     @Override
     public void dispose() {
         super.dispose();
-        mesh.builtSubMeshes.forEach(MeshSection::close);
-        mesh.builtSubMeshes.clear();
+        mesh.subMeshes.values().forEach(MeshRenderSection::close);
+        mesh.subMeshes.clear();
     }
 
     @Override
