@@ -53,7 +53,7 @@ public abstract class DefaultRenderable<P extends DefaultPropertyBundle> impleme
 
     protected void setupLighting(Vector3f light0, Vector3f light1) {
         if (this.lightingBuffer == null) {
-            this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "IsometricRenders Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
+            this.lightingBuffer = RenderSystem.getDevice().createBuffer(() -> "WikiRenderer Lighting UBO", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, LIGHTING_UBO_SIZE);
         }
 
         try (MemoryStack stack = MemoryStack.stackPush()) {

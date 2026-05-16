@@ -9,8 +9,6 @@ public interface MeshBounds {
 
     boolean isInBounds(BlockPos pos);
 
-    int getSizeForSubMesh();
-
     AABB buildBoundingBox();
 
     BlockPos getMinCorner();

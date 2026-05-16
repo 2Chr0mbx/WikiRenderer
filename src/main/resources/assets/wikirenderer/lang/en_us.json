@@ -45,6 +45,7 @@
   "gui.wikirenderer.dimetric_recommended": "Dimetric (Recommended)",
   "gui.wikirenderer.isometric": "Isometric",
 
+  "gui.wikirenderer.freeze_blocks": "Freeze Blocks",
   "gui.wikirenderer.hide_blocks": "Hide Blocks",
   "gui.wikirenderer.hide_fluids": "Hide Fluids (Rebuilds Mesh)",
   "gui.wikirenderer.walkability_filter": "Walkability Filter / \"Cave Mode\"",
