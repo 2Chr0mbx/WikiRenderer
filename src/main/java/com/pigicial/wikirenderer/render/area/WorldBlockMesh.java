@@ -142,6 +142,19 @@ public class WorldBlockMesh {
             enumMap.put(layer, new ArrayList<>());
         }
 
+        List<MeshRenderSection> sortedSections = new ArrayList<>(subMeshes.values());
+
+        if (orthographicTransparencySorting instanceof OrthographicSort orthoSort) {
+            sortedSections.sort(Comparator.comparingDouble(s -> {
+                BlockPos from = s.getFrom();
+                BlockPos to = s.getTo();
+                float cx = (from.getX() + to.getX()) / 2f;
+                float cy = (from.getY() + to.getY()) / 2f;
+                float cz = (from.getZ() + to.getZ()) / 2f;
+                return orthoSort.projectDepth(cx, cy, cz);
+            }));
+        }
+
         List<DynamicUniforms.ChunkSectionInfo> list = new ArrayList<>();
         GpuTextureView gpuTextureView = Minecraft.getInstance().getTextureManager()
                 .getTexture(TextureAtlas.LOCATION_BLOCKS).getTextureView();
@@ -149,7 +162,7 @@ public class WorldBlockMesh {
         int height = gpuTextureView.getHeight(0);
         int maxIndicesRequired = 0;
 
-        for (MeshRenderSection meshSection : subMeshes.values()) {
+        for (MeshRenderSection meshSection : sortedSections) {
             Map<ChunkSectionLayer, SectionBuffers> bufferStorage = meshSection.getBuffers();
             int infoIndex = -1;
 
