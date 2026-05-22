@@ -5,10 +5,11 @@ import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
-import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
+import com.pigicial.wikirenderer.render.particle.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.particle.ParticleRendererAndLooper;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
 import com.pigicial.wikirenderer.textures.TextureData;
@@ -137,7 +138,7 @@ public class BlockStateRenderable
         if (zOffset < 0) zOffset += 1;
 
         matrices.translate(xOffset, 1.65 + this.client.player.getY() % 1d, zOffset);
-        this.drawParticles(matrices.last().pose(), tickDelta);
+        ParticleRendererAndLooper.drawParticles(this, matrices.last().pose(), tickDelta);
 
         matrices.popPose();
     }

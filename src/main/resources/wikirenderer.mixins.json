@@ -29,6 +29,7 @@
     "access.ModelPartAccessor",
     "access.NativeImageAccessor",
     "access.NativeImageInvoker",
+    "access.ParticleAccessor",
     "access.ParticleEngineAccessor",
     "access.SpriteContentsAccessor",
     "entity.DefaultPlayerSkinMixin",
@@ -60,10 +61,10 @@
     "world.LightTextureMixin",
     "world.MapRendererMixin",
     "world.MixinChunkSectionLayer",
-    "world.ParticleEngineMixin",
-    "world.ParticleFeatureRendererMixin",
     "world.ProjectionTypeMixin",
-    "world.QuadParticleGroupMixin"
+    "world.particle.ParticleEngineMixin",
+    "world.particle.ParticleFeatureRendererMixin",
+    "world.particle.QuadParticleGroupMixin"
   ],
   "injectors": {
     "defaultRequire": 1
