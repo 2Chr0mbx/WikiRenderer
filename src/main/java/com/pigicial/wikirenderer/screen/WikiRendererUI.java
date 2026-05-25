@@ -123,6 +123,14 @@ public class WikiRendererUI {
         return label;
     }
 
+    public static void dynamicConditionalText(FlowLayout container, Supplier<Boolean> predicate, Supplier<Component> content) {
+        DynamicLabelComponent label = new DynamicLabelComponent(content);
+        label.shadow(false);
+        label.margins(Insets.bottom(5));
+
+        container.child(new DynamicComponent(label, predicate));
+    }
+
     public static void drawExportProgressBar(GuiGraphics context, int x, int y, int drawWidth, int barWidth, double speed) {
         int end = x + drawWidth + barWidth;
 
