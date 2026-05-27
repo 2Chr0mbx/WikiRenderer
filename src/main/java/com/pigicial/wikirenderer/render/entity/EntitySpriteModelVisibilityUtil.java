@@ -22,13 +22,13 @@ public class EntitySpriteModelVisibilityUtil {
         ModelPart root = model.root();
 
         Function<String, @Nullable ModelPart> partLookup = root.createPartLookup();
-        if (partLookup.apply("head") != null) {
-            EntitySpriteModelVisibilityUtil.hideNonHeadParts(toggleCallbacks, root, "head");
-        } else if (partLookup.apply("center_head") != null) {
-            // wither
-            EntitySpriteModelVisibilityUtil.hideNonHeadParts(toggleCallbacks, root, "center_head");
-        } else if (partLookup.apply("body") != null) {
-            EntitySpriteModelVisibilityUtil.hideNonHeadParts(toggleCallbacks, root, "body");
+
+        String[] partsToFind = {"head_parts" /* Horse */, "head", "center_head" /* Wither */, "body"};
+        for (String part : partsToFind) {
+            if (partLookup.apply(part) != null) {
+                EntitySpriteModelVisibilityUtil.hideNonHeadParts(toggleCallbacks, root, part);
+                break;
+            }
         }
     }
 
