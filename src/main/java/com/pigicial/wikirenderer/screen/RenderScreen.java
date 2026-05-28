@@ -49,6 +49,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.gui.render.state.BlitRenderState;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -128,9 +129,15 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public int mouseX;
     public int mouseY;
 
+    private AbstractContainerScreen<?> previouslyOpenedContainerScreen = null;
+
     public RenderScreen(Renderable<?> renderable) {
         this.renderable = renderable;
         this.memoryGuard.update();
+    }
+
+    public void setPreviouslyOpenedContainerScreen(AbstractContainerScreen<?> previouslyOpenedContainerScreen) {
+        this.previouslyOpenedContainerScreen = previouslyOpenedContainerScreen;
     }
 
     @Override
@@ -778,7 +785,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Override
     public void onClose() {
         super.onClose();
-        this.renderable.onScreenClose();
+        if (this.previouslyOpenedContainerScreen != null) {
+            this.previouslyOpenedContainerScreen.onClose();
+            this.previouslyOpenedContainerScreen = null;
+        }
     }
 
     @Override
