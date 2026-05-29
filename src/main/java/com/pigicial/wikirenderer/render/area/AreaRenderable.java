@@ -456,8 +456,7 @@ public class AreaRenderable extends DefaultRenderable<AreaPropertyBundle> implem
     @Override
     public void dispose() {
         super.dispose();
-        mesh.subMeshes.values().forEach(MeshRenderSection::close);
-        mesh.subMeshes.clear();
+        mesh.dispose();
     }
 
     @Override

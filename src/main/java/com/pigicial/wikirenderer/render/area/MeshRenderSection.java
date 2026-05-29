@@ -43,6 +43,7 @@ public class MeshRenderSection implements AutoCloseable {
     private volatile boolean dirty;
     protected volatile boolean isBuilding = false;
     protected volatile boolean forceUpdate = false;
+    protected volatile boolean buildAttempted = false;
 
     public MeshRenderSection(int sectionX, int sectionY, int sectionZ) {
         this.sectionX = sectionX;
@@ -172,7 +173,7 @@ public class MeshRenderSection implements AutoCloseable {
             }
 
             if (newlyBuiltMeshes.isEmpty()) {
-                reset();
+                close();
                 setNotDirty();
                 this.blockEntities = blockEntities;
                 return;
@@ -210,6 +211,7 @@ public class MeshRenderSection implements AutoCloseable {
         dirty = false;
         isBuilding = false;
         forceUpdate = false;
+        buildAttempted = true;
     }
 
     public void setDirty(boolean force) {
@@ -219,10 +221,6 @@ public class MeshRenderSection implements AutoCloseable {
 
     public boolean isForceUpdate() {
         return forceUpdate;
-    }
-
-    public void reset() {
-        close();
     }
 
     @Override
@@ -238,6 +236,14 @@ public class MeshRenderSection implements AutoCloseable {
         if (animationCompletionTimings != null) {
             animationCompletionTimings.clear();
         }
+    }
+
+    public void markBuildNotAttempted() {
+        buildAttempted = false;
+    }
+
+    public boolean hasBuildBeenAttempted() {
+        return buildAttempted;
     }
 
     public void reSortTransparencyAndSubmit(WorldBlockMesh mesh) {

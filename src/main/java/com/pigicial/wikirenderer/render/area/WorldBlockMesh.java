@@ -237,7 +237,10 @@ public class WorldBlockMesh {
                 ? MeshState.REBUILDING
                 : MeshState.BUILDING;
 
-        this.subMeshes.values().forEach(MeshRenderSection::reset);
+        this.subMeshes.values().forEach(section -> {
+            section.close();
+            section.markBuildNotAttempted();
+        });
         this.subMeshes.clear();
 
         this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
@@ -273,7 +276,7 @@ public class WorldBlockMesh {
         if (currentlyFullyBuilding) {
             int amountBuilt = 0;
             for (MeshRenderSection sections : this.subMeshes.values()) {
-                if (!sections.isBuilding) amountBuilt++;
+                if (sections.hasBuildBeenAttempted()) amountBuilt++;
             }
             this.fullBuildProgress = (float) amountBuilt / this.subMeshes.size();
 
@@ -432,7 +435,7 @@ public class WorldBlockMesh {
     }
 
     public void dispose() {
-        subMeshes.values().forEach(MeshRenderSection::reset);
+        subMeshes.values().forEach(MeshRenderSection::close);
         subMeshes.clear();
         resortBufferPack.close();
     }
