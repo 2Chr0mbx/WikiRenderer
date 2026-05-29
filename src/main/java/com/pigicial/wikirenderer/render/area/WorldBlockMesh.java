@@ -415,7 +415,7 @@ public class WorldBlockMesh {
         if (this.sortFuture != null && !this.sortFuture.isDone()) return;
 
         this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
-        if (ShaderCheck.isUsingShaders() || true) {
+        if (ShaderCheck.isUsingShaders()) {
             this.sortFuture = CompletableFuture.completedFuture(null);
             this.reSortMeshSections();
             this.sortFuture = null;

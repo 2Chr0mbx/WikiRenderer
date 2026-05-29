@@ -260,11 +260,14 @@ public class MeshRenderSection implements AutoCloseable {
         if (indexBuffer == null) return;
         ByteBuffer sortedTranslucencyIndexBuffer = indexBuffer.byteBuffer();
 
-        if (currentBuffer.getIndexBuffer() == null) {
-            currentBuffer.setIndexBuffer(RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-IBuf", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST, sortedTranslucencyIndexBuffer));
-        } else {
-            RenderSystem.getDevice().createCommandEncoder().writeToBuffer(currentBuffer.getIndexBuffer().slice(), sortedTranslucencyIndexBuffer);
-        }
+        Minecraft.getInstance().execute(() -> {
+            if (currentBuffer.getIndexBuffer() == null) {
+                currentBuffer.setIndexBuffer(RenderSystem.getDevice().createBuffer(() -> "WorldMesh Sub-IBuf", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_COPY_DST, sortedTranslucencyIndexBuffer));
+            } else {
+                RenderSystem.getDevice().createCommandEncoder().writeToBuffer(currentBuffer.getIndexBuffer().slice(), sortedTranslucencyIndexBuffer);
+            }
+        });
+
     }
 
     public static long getSectionIndex(int sectionX, int sectionY, int sectionZ) {
