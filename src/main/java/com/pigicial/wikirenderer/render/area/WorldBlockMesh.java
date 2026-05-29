@@ -273,19 +273,28 @@ public class WorldBlockMesh {
     }
 
     private void updateBuildingStatus() {
-        if (currentlyFullyBuilding) {
-            int amountBuilt = 0;
-            for (MeshRenderSection sections : this.subMeshes.values()) {
-                if (sections.hasBuildBeenAttempted()) amountBuilt++;
-            }
-            this.fullBuildProgress = (float) amountBuilt / this.subMeshes.size();
-
-            if (amountBuilt == this.subMeshes.size()) {
-                currentlyFullyBuilding = false;
-                buildingCancelled = false;
-                this.state = MeshState.READY;
-            }
+        int amountBuilt = 0;
+        for (MeshRenderSection sections : this.subMeshes.values()) {
+            if (sections.hasBuildBeenAttempted()) amountBuilt++;
         }
+
+        if (amountBuilt == this.subMeshes.size()) {
+            currentlyFullyBuilding = false;
+            if (buildingCancelled) {
+                state = MeshState.CANCELLED;
+                buildingCancelled = false;
+                return;
+            }
+
+            if (state == MeshState.CANCELLED) {
+                return;
+            }
+
+            buildingCancelled = false;
+            state = MeshState.READY;
+        }
+
+        this.fullBuildProgress = (float) amountBuilt / this.subMeshes.size();
     }
 
     private void updateOutdatedMeshSections() {
