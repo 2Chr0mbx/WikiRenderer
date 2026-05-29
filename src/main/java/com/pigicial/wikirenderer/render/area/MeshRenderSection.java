@@ -174,6 +174,7 @@ public class MeshRenderSection implements AutoCloseable {
             if (newlyBuiltMeshes.isEmpty()) {
                 reset();
                 setNotDirty();
+                this.blockEntities = blockEntities;
                 return;
             }
 
