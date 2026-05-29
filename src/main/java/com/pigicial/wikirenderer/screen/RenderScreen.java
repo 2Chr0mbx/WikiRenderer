@@ -410,11 +410,15 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 return Component.empty();
             } else if (this.currentAnimationExportData.getRemainingFrames() > 0) {
                 return Translate.gui("export_remaining_frames", this.currentAnimationExportData.getRemainingFrames());
-            } else if (this.currentAnimationExportData.getCurrentFFmpegFrame() != null) {
-                String frame = this.currentAnimationExportData.getCurrentFFmpegFrame();
+            } else if (this.currentAnimationExportData.getCurrentFrame() != null) {
+                String frame = this.currentAnimationExportData.getCurrentFrame();
                 int totalFrames = currentAnimationExportData.getAnimationFrames();
-                String exportFps = currentAnimationExportData.getCurrentFFmpegFps();
-                return Translate.gui("ffmpeg_data", frame, totalFrames, exportFps);
+                if (this.currentAnimationExportData instanceof FFmpegAnimationHandler) {
+                    String exportFps = currentAnimationExportData.getCurrentFFmpegFps();
+                    return Translate.gui("ffmpeg_data", frame, totalFrames, exportFps);
+                } else {
+                    return Translate.gui("gifski_data", frame, totalFrames);
+                }
             } else {
                 if (this.currentAnimationExportData instanceof LiveRenderFFmpegFFmpegAnimationHandler) {
                     return Translate.gui("setting_up_second_ffmpeg_pass");
@@ -430,6 +434,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             if (!buildGifskiLoadingOrFailedSection()) {
                 return;
             }
+            WikiRendererUI.intPercentageControl(this, rightColumn, globalProperties.gifskiQuality, "gifski_quality");
             WikiRendererUI.booleanControl(rightColumn, globalProperties.saveIndividualFrames, "save_individual_frames");
         } else {
             if (!buildFFmpegLoadingOrRequirementsSections()) {

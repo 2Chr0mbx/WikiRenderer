@@ -33,7 +33,7 @@ public abstract class AnimationHandler implements AutoCloseable {
     protected boolean closed = false;
     protected boolean finished = false;
 
-    private String currentFFmpegFrame = null;
+    private String currentFrame = null;
     private String currentFFmpegFps = null;
 
     protected AnimationHandler(RenderScreen screen, Renderable<?> renderable, int framesToRender) {
@@ -96,13 +96,13 @@ public abstract class AnimationHandler implements AutoCloseable {
         return this.remainingAnimationFrames;
     }
 
-    public void setFFmpegData(String frame, String fps) {
-        this.currentFFmpegFrame = frame;
+    public void setProgressData(String frame, String fps) {
+        this.currentFrame = frame;
         this.currentFFmpegFps = fps;
     }
 
-    public String getCurrentFFmpegFrame() {
-        return currentFFmpegFrame;
+    public String getCurrentFrame() {
+        return currentFrame;
     }
 
     public String getCurrentFFmpegFps() {

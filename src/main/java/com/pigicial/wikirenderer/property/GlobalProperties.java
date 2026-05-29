@@ -39,7 +39,7 @@ public class GlobalProperties implements SerializablePropertyBundle {
     public FFmpegAnimationHandlingMode animationHandlingMode = FFmpegAnimationHandlingMode.LIVE_FFMPEG;
     public AnimationFormat animationFormat = AnimationFormat.GIF;
     public Property<Boolean> saveIndividualFrames = Property.of(false);
-    public Property<Integer> gifskiQuality = IntProperty.of(100, 0, 100);
+    public IntProperty gifskiQuality = IntProperty.of(100, 1, 100);
 
     @Override
     public String getConfigFileName() {

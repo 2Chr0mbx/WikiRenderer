@@ -90,7 +90,8 @@ public class MemoryBasedGifskiAnimationHandler extends AnimationHandler {
 
                     GifskiDispatcher.exportAnimation(
                             exportPath,
-                            this.framesFolder
+                            this.framesFolder,
+                            this
                     ).whenComplete((animationFile, animationThrowable) -> {
                         Path framesFolderToLinkTo = keepingFiles ? this.framesFolder : null;
                         this.finishAndCleanup(animationFile, framesFolderToLinkTo);

@@ -100,6 +100,8 @@
   "gui.wikirenderer.setting_up_second_ffmpeg_pass": "Setting up second FFmpeg Pass...",
   "gui.wikirenderer.setting_up_ffmpeg": "Setting up FFmpeg...",
   "gui.wikirenderer.setting_up_gifski": "Setting up Gifski...",
+  "gui.wikirenderer.gifski_data": "Gifski Save Progress: %d/%d",
+  "gui.wikirenderer.gifski_quality": "GIF Quality",
   "gui.wikirenderer.format.mp4": "MP4",
   "gui.wikirenderer.format.apng": "APNG",
   "gui.wikirenderer.format.webp": "WEBP",

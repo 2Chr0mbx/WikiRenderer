@@ -185,7 +185,7 @@ public class FFmpegDispatcher {
             try {
                 String frame = extractValue(line, "frame=");
                 String fps = extractValue(line, "fps=");
-                handler.setFFmpegData(frame, fps);
+                handler.setProgressData(frame, fps);
 
             } catch (Exception ignored) {
                 // FFmpeg lines can be messy, ignore malformed status updates
