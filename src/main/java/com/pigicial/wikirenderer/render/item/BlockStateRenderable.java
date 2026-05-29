@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.BlockEntityAccessor;
 import com.pigicial.wikirenderer.property.GlobalProperties;
-import com.pigicial.wikirenderer.render.CameraOrientationUtil;
+import com.pigicial.wikirenderer.render.CameraUtil;
 import com.pigicial.wikirenderer.render.particle.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.batch.DynamicBatchLabelProvider;
@@ -118,7 +118,7 @@ public class BlockStateRenderable
 		BlockEntityRenderState renderState = this.blockEntity == null ? null : this.client.getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, null);
 		if (renderState != null) {
 			renderState.lightCoords = LightTexture.FULL_BRIGHT;
-			this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), CameraOrientationUtil.createRenderState(this));
+			this.client.getBlockEntityRenderDispatcher().submit(renderState, matrices, this.client.gameRenderer.getSubmitNodeStorage(), CameraUtil.createRenderState(this));
         }
 
         // renders the main stuff
