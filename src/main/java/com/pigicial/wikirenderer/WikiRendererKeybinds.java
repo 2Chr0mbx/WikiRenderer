@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer;
 
 import com.pigicial.wikirenderer.command.subcommands.RenderBlockSubCommand;
 import com.pigicial.wikirenderer.command.subcommands.RenderEntitySubCommand;
-import com.pigicial.wikirenderer.compat.REISearchFocus;
+import com.pigicial.wikirenderer.util.compatibility.REISearchFocus;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
 import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
 import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;

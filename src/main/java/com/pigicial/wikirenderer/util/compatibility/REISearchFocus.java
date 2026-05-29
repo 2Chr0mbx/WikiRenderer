@@ -1,4 +1,4 @@
-package com.pigicial.wikirenderer.compat;
+package com.pigicial.wikirenderer.util.compatibility;
 
 import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.gui.widgets.TextField;
