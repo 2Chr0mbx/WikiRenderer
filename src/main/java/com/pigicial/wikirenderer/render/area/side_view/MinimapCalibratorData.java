@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer.render.area.side_view;
 
 import com.pigicial.wikirenderer.render.area.AreaPropertyBundle;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
-import com.pigicial.wikirenderer.render.export.ImageCropper;
+import com.pigicial.wikirenderer.render.export.CropData;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
@@ -36,7 +36,7 @@ public record MinimapCalibratorData(
 ) {
 
     // this is a little but not entirely black magic to me
-    public static MinimapCalibratorData getCalibrationData(AreaRenderable renderable, @Nullable ImageCropper.CropData cropData, NativeImage image) {
+    public static MinimapCalibratorData getCalibrationData(AreaRenderable renderable, @Nullable CropData cropData, NativeImage image) {
         Map<ViewportCorner, Vec3> corners = MinimapCalibratorData.getViewportCorners(renderable);
         Vec3 originTopLeft = corners.get(ViewportCorner.TOP_LEFT);
 

@@ -1,26 +1,26 @@
-package com.pigicial.wikirenderer.render.export.ffmpeg;
+package com.pigicial.wikirenderer.render.export.animation.gifski;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.render.export.ExportPathSpec;
-import com.pigicial.wikirenderer.render.export.FileIO;
-import com.pigicial.wikirenderer.render.export.ImageCropper;
-import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
+import com.pigicial.wikirenderer.render.export.*;
+import com.pigicial.wikirenderer.render.export.animation.AnimationHandler;
 import com.pigicial.wikirenderer.screen.RenderScreen;
+import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.client.Minecraft;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class MemoryBasedAnimationHandler extends AnimationHandler {
+public class MemoryBasedGifskiAnimationHandler extends AnimationHandler {
     private final List<CompletableFuture<NativeImage>> frameExportFutures = new ArrayList<>();
 
-    public MemoryBasedAnimationHandler(RenderScreen screen, Renderable<?> renderable, int framesToRender) {
+    public MemoryBasedGifskiAnimationHandler(RenderScreen screen, Renderable<?> renderable, int framesToRender) {
         super(screen, renderable, framesToRender);
     }
 
@@ -54,9 +54,12 @@ public class MemoryBasedAnimationHandler extends AnimationHandler {
                         Boolean overwriteValue = globalProperties.overwriteLatest.get();
                         globalProperties.overwriteLatest.set(false);
 
-                        // make files all at the end
+                        CropData cropData = ImageCropper.combineCropDataIfNecessary(this.renderable, this.collectedCropData);
+
                         for (int i = 0, frameExportFuturesSize = frameExportFutures.size(); i < frameExportFuturesSize; i++) {
-                            NativeImage image = frameExportFutures.get(i).join();
+                            NativeImage rawImage = frameExportFutures.get(i).join();
+                            NativeImage image = cropData == null ? rawImage : ImageCropper.cropTransparentAndCloseSource(rawImage, cropData);
+
                             fileFutures.add(FileIO.saveImage(image, ExportPathSpec.forced(this.framesFolderName, "seq_" + i))
                                     .whenComplete((f, t_) -> image.close()));
                         }
@@ -64,5 +67,34 @@ public class MemoryBasedAnimationHandler extends AnimationHandler {
                         this.mergeFilesIntoFinalResult(fileFutures, overwriteValue);
                     });
         }
+    }
+
+    protected final void mergeFilesIntoFinalResult(List<CompletableFuture<File>> fileFutures, boolean overwriteValue) {
+        this.finished = true;
+        ExportPathSpec defaultExportPath = this.renderable.getExportPath();
+        ExportPathSpec exportPath = defaultExportPath.differentFileName(renderable.getCustomFileName());
+
+        CompletableFuture.allOf(fileFutures.toArray(CompletableFuture[]::new))
+                .whenComplete((v_, throwable) -> {
+                    GlobalProperties globalProperties = GlobalProperties.get();
+                    globalProperties.overwriteLatest.set(overwriteValue);
+
+                    boolean keepingFiles = globalProperties.saveIndividualFrames.get();
+                    if (throwable != null || closed) {
+                        FileIO.deleteSequenceFilesFromPath(this.framesFolder);
+                        return;
+                    }
+
+                    this.screen.exportAnimationButton.setMessage(Translate.gui("converting"));
+                    Minecraft.getInstance().execute(() -> screen.notify(Translate.gui("converting_image_sequence")));
+
+                    GifskiDispatcher.exportAnimation(
+                            exportPath,
+                            this.framesFolder
+                    ).whenComplete((animationFile, animationThrowable) -> {
+                        Path framesFolderToLinkTo = keepingFiles ? this.framesFolder : null;
+                        this.finishAndCleanup(animationFile, framesFolderToLinkTo);
+                    });
+                });
     }
 }

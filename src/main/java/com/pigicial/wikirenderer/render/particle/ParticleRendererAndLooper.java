@@ -7,7 +7,7 @@ import com.pigicial.wikirenderer.property.DefaultPropertyBundle;
 import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.CameraOrientationUtil;
 import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
+import com.pigicial.wikirenderer.render.export.animation.AnimationHandler;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;

@@ -1,11 +1,10 @@
-package com.pigicial.wikirenderer.render.export.ffmpeg;
+package com.pigicial.wikirenderer.render.export.animation;
 
 import com.pigicial.wikirenderer.WikiRenderer;
-import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.Renderable;
+import com.pigicial.wikirenderer.render.export.CropData;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
-import com.pigicial.wikirenderer.render.export.ImageCropper;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.Translate;
 import net.minecraft.client.Minecraft;
@@ -19,10 +18,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public abstract class AnimationHandler implements AutoCloseable {
-    protected final List<ImageCropper.CropData> collectedCropData = Collections.synchronizedList(new ArrayList<>());
+    protected final List<CropData> collectedCropData = Collections.synchronizedList(new ArrayList<>());
 
     protected final RenderScreen screen;
     protected final Renderable<?> renderable;
@@ -33,7 +31,7 @@ public abstract class AnimationHandler implements AutoCloseable {
     private final int animationFrames;
     protected int remainingAnimationFrames;
     protected boolean closed = false;
-    private boolean finished = false;
+    protected boolean finished = false;
 
     private String currentFFmpegFrame = null;
     private String currentFFmpegFps = null;
@@ -48,35 +46,6 @@ public abstract class AnimationHandler implements AutoCloseable {
     }
 
     public abstract void renderAndSaveFrame(float effectiveTickDelta);
-
-    protected final void mergeFilesIntoFinalResult(List<CompletableFuture<File>> fileFutures, boolean overwriteValue) {
-        this.finished = true;
-        ExportPathSpec defaultExportPath = this.renderable.getExportPath();
-        ExportPathSpec exportPath = defaultExportPath.differentFileName(renderable.getCustomFileName());
-
-        CompletableFuture.allOf(fileFutures.toArray(CompletableFuture[]::new))
-                .whenComplete((v_, throwable) -> {
-                    GlobalProperties globalProperties = GlobalProperties.get();
-                    globalProperties.overwriteLatest.set(overwriteValue);
-
-                    boolean keepingFiles = globalProperties.saveIndividualFrames.get();
-                    if (throwable != null || closed) {
-                        FileIO.deleteSequenceFilesFromPath(this.framesFolder);
-                        return;
-                    }
-
-                    this.screen.exportAnimationButton.setMessage(Translate.gui("converting"));
-                    Minecraft.getInstance().execute(() -> screen.notify(Translate.gui("converting_image_sequence")));
-
-                    FFmpegDispatcher.exportAnimation(
-                            exportPath,
-                            this.framesFolder,
-                            globalProperties.animationFormat,
-                            this,
-                            ImageCropper.getFFmpegCropSize(renderable, collectedCropData)
-                    ).whenComplete((animationFile, animationThrowable) -> this.finishAndCleanup(animationFile, keepingFiles ? this.framesFolder : null));
-                });
-    }
 
     protected void finishAndCleanup(File animationFile, @Nullable Path framesFolderToLinkTo) {
         this.screen.exportAnimationButton.active = true;

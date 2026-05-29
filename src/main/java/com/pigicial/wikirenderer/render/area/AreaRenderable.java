@@ -21,7 +21,7 @@ import com.pigicial.wikirenderer.render.entity.EntityVertexBounds;
 import com.pigicial.wikirenderer.render.entity.options.EntityTypeSpecificOverrides;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
-import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
+import com.pigicial.wikirenderer.render.export.animation.AnimationHandler;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
 import com.pigicial.wikirenderer.render.particle.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.particle.ParticleRendererAndLooper;
