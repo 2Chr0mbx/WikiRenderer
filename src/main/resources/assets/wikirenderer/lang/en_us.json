@@ -93,6 +93,7 @@
   "gui.wikirenderer.animation_frames": "Animation Frames",
   "gui.wikirenderer.animation_framerate": "Animation Framerate",
   "gui.wikirenderer.export_animation": "Export Animation",
+  "gui.wikirenderer.shader_animations_unsupported": "Animation Exports are not supported with Shaders.",
   "gui.wikirenderer.exporting": "Exporting...",
   "gui.wikirenderer.converting": "Converting...",
   "gui.wikirenderer.export_remaining_frames": "Remaining Frames: %d",
