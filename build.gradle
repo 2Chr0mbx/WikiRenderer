@@ -31,6 +31,7 @@ repositories {
             includeGroup("maven.modrinth")
         }
     }
+    maven { url "https://maven.shedaniel.me/"}
     mavenLocal()
 
     maven { url = "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
@@ -53,6 +54,7 @@ dependencies {
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:${project.devauth_version}")
     compileOnly "maven.modrinth:iris:${project.iris_version}"
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${project.rei_version}"
 }
 
 def gifskiVersion = project.gifski_version

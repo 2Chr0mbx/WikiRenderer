@@ -2,6 +2,7 @@ package com.pigicial.wikirenderer;
 
 import com.pigicial.wikirenderer.command.subcommands.RenderBlockSubCommand;
 import com.pigicial.wikirenderer.command.subcommands.RenderEntitySubCommand;
+import com.pigicial.wikirenderer.compat.REISearchFocus;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
 import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
 import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
@@ -15,6 +16,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
@@ -42,6 +44,8 @@ public class WikiRendererKeybinds {
     public static final KeyMapping KEYBIND_RENDER_TARGETED_BLOCK = new KeyMapping("key.wikirenderer.render_targeted_block", GLFW.GLFW_KEY_L, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_INVENTORY = new KeyMapping("key.wikirenderer.render_inventory", GLFW.GLFW_KEY_SEMICOLON, CATEGORY);
     public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY_ITEMS = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_K, CATEGORY);
+
+    private static final boolean REI_LOADED = FabricLoader.getInstance().isModLoaded("roughlyenoughitems");
 
     public static void registerKeyBinds() {
         KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA);
@@ -82,6 +86,8 @@ public class WikiRendererKeybinds {
         });
 
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> ScreenKeyboardEvents.afterKeyPress(screen).register((s, key) -> {
+            if (isTypingInAnyTextField(s)) return;
+
             if (KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY.matches(key)) {
                 ItemStack hoveredSlot = getHoveredSlot(client);
                 if (hoveredSlot != null) {
@@ -110,6 +116,12 @@ public class WikiRendererKeybinds {
                 }
             }
         }));
+    }
+
+    private static boolean isTypingInAnyTextField(Screen screen) {
+        if (screen.getFocused() instanceof EditBox) return true;
+        if (REI_LOADED && REISearchFocus.isSearchFieldFocused()) return true;
+        return false;
     }
 
     @Nullable
