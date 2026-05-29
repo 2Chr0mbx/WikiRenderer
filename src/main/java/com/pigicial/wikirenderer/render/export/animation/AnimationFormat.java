@@ -1,7 +1,7 @@
 package com.pigicial.wikirenderer.render.export.animation;
 
 public enum AnimationFormat {
-    GIF("gif", new String[]{}),
+    GIF("gif", new String[]{"-plays", "0"}),
     MP4("mp4", new String[]{"-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p"}),
     APNG("apng", new String[]{"-plays", "0", "-pix_fmt", "rgba"}),
     WEBP("webp", new String[]{"-plays", "0", "-loop", "0", "-pix_fmt", "rgba"}),

@@ -309,6 +309,7 @@
   "gui.wikirenderer.hud.area_selection.clear_hint": "To clear, press %s or %s while sneaking",
   "gui.wikirenderer.click_to_open": "Click to open!",
   "gui.wikirenderer.export_failed": "Failed to export image",
+  "gui.wikirenderer.animation_export_failed": "Failed to export animation",
 
   "message.wikirenderer.loading_texture": "Loading player head texture...",
   "message.wikirenderer.loading_texture_fail": "Invalid texture ID or base64.",

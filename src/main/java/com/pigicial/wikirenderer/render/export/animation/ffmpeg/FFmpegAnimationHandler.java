@@ -44,7 +44,7 @@ public abstract class FFmpegAnimationHandler extends AnimationHandler {
                             globalProperties.animationFormat,
                             this,
                             ImageCropper.getFFmpegCropSize(renderable, collectedCropData)
-                    ).whenComplete((animationFile, animationThrowable) -> this.finishAndCleanup(animationFile, keepingFiles ? this.framesFolder : null));
+                    ).whenComplete((animationFile, animationThrowable) -> this.finishAndCleanup(animationFile, animationThrowable, keepingFiles ? this.framesFolder : null));
                 });
     }
 }

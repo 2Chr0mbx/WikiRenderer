@@ -151,12 +151,12 @@ public final class LiveRenderFFmpegFFmpegAnimationHandler extends FFmpegAnimatio
             } catch (Exception e) {
                 throw new RuntimeException("FFmpeg export failed", e);
             }
-        }).whenComplete((f, animationThrowable) -> this.finishAndCleanup(f, null));
+        }).whenComplete((f, animationThrowable) -> this.finishAndCleanup(f, animationThrowable, null));
     }
 
     @Override
-    protected void finishAndCleanup(File animationFile, @Nullable Path framesFolderToLinkTo) {
-        super.finishAndCleanup(animationFile, framesFolderToLinkTo);
+    protected void finishAndCleanup(@Nullable File animationFile, @Nullable Throwable error, @Nullable Path framesFolderToLinkTo) {
+        super.finishAndCleanup(animationFile, error, framesFolderToLinkTo);
         try {
             this.session.close();
         } catch (Exception e) {

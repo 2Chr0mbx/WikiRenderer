@@ -7,6 +7,7 @@ import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.Translate;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
@@ -47,7 +48,7 @@ public abstract class AnimationHandler implements AutoCloseable {
 
     public abstract void renderAndSaveFrame(float effectiveTickDelta);
 
-    protected void finishAndCleanup(File animationFile, @Nullable Path framesFolderToLinkTo) {
+    protected void finishAndCleanup(@Nullable File animationFile, @Nullable Throwable error, @Nullable Path framesFolderToLinkTo) {
         this.screen.exportAnimationButton.active = true;
         this.screen.exportAnimationButton.setMessage(Translate.gui("export_animation"));
         if (this.screen.refreshCustomFFmpegPathButton != null) {
@@ -59,6 +60,15 @@ public abstract class AnimationHandler implements AutoCloseable {
         this.closed = true;
         this.collectedCropData.clear();
         WikiRenderer.currentAnimationHandler = null;
+
+        if (animationFile == null || error != null) {
+            WikiRenderer.LOGGER.error("Failed to render animation", error);
+            Minecraft.getInstance().execute(() -> screen.notify(
+                    Translate.gui("animation_export_failed").withStyle(ChatFormatting.RED),
+                    Component.literal(String.valueOf(error == null ? "No Error" : error.getMessage())).withStyle(ChatFormatting.GRAY)
+            ));
+            return;
+        }
 
         Minecraft.getInstance().execute(() -> screen.notify(
                 () -> Util.getPlatform().openFile(animationFile),

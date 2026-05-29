@@ -94,7 +94,7 @@ public class MemoryBasedGifskiAnimationHandler extends AnimationHandler {
                             this
                     ).whenComplete((animationFile, animationThrowable) -> {
                         Path framesFolderToLinkTo = keepingFiles ? this.framesFolder : null;
-                        this.finishAndCleanup(animationFile, framesFolderToLinkTo);
+                        this.finishAndCleanup(animationFile, animationThrowable, framesFolderToLinkTo);
                     });
                 });
     }
