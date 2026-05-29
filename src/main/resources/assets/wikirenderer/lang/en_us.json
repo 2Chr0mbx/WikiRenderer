@@ -223,6 +223,7 @@
   "gui.wikirenderer.hide_tooltip_background": "Hide Tooltip Background",
   "gui.wikirenderer.file_name": "File Name",
 
+  "gui.wikirenderer.mesh_hidden": "Hidden",
   "gui.wikirenderer.mesh_building": "Building - %d%%",
   "gui.wikirenderer.mesh_cancelled": "Cancelled - %d%%",
   "gui.wikirenderer.mesh_rebuilding": "Rebuilding - %d%%",
