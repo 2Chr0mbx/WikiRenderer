@@ -164,11 +164,6 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     @Override
-    public boolean supportsAutomaticRotations() {
-        return !this.perPixel90DegreeRendering.get();
-    }
-
-    @Override
     public void buildMainGUIControls(Renderable<?> r, RenderScreen screen, FlowLayout container) {
         AreaRenderable renderable = (AreaRenderable) r;
         WikiRendererUI.text(container, "transform_options", false);
@@ -184,12 +179,14 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
 
         if (!this.perPixel90DegreeRendering.get()) {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-                builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
+                ButtonComponent dimetricButton = WikiRendererUI.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(30D);
-                }).margins(Insets.right(5)));
+                });
+                dimetricButton.margins(dimetricButton.margins().get().add(0, 0, 0, 5));
+                builder.row.child(dimetricButton);
 
-                builder.row.child(UIComponents.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+                builder.row.child(WikiRendererUI.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                     this.rotation.setToDefault();
                     this.slant.set(35.264);
                 }));
@@ -198,25 +195,26 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.intControl(screen, container, rotation, "rotation");
             WikiRendererUI.doubleControl(screen, container, slant, "slant");
             WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed");
+            WikiRendererUI.conditionalBooleanControl(container, GlobalProperties.get().syncRotationToAnimation, "sync_rotation_to_animation", () -> !rotationSpeed.isDefault());
             WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
             container.child(this.buildResetButton());
         } else {
             try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-                builder.row.child(UIComponents.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
+                builder.row.child(WikiRendererUI.button(Translate.gui("cycle_rotation"), (ButtonComponent button) -> {
                     this.sideViewRotation = this.sideViewRotation.nextRotation();
                     screen.guiRebuildScheduled = true;
                 }));
 
-                builder.row.child(UIComponents.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
+                builder.row.child(WikiRendererUI.button(Translate.gui("cycle_slant"), (ButtonComponent button) -> {
                     this.sideViewSlant = this.sideViewSlant.nextSlant();
                     screen.guiRebuildScheduled = true;
                 }));
             }
-            container.child(UIComponents.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
+            container.child(WikiRendererUI.button(Translate.gui("reset_rotation_and_slant"), (ButtonComponent button) -> {
                 this.sideViewRotation = MeshSideRotation.NORTH;
                 this.sideViewSlant = MeshSideSlant.ABOVE;
                 screen.guiRebuildScheduled = true;
-            }).margins(Insets.right(5)));
+            }));
 
             WikiRendererUI.booleanControl(container, this.useWalkabilityFilter, "walkability_filter");
             this.useWalkabilityFilter.addRebuildListener(screen);
@@ -276,11 +274,13 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         WorldBlockMesh mesh = renderable.mesh;
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-            ButtonComponent buildMeshButton = (ButtonComponent) UIComponents.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild(true)).margins(Insets.top(5));
+            ButtonComponent buildMeshButton = WikiRendererUI.button(Translate.gui("rebuild_mesh"), (ButtonComponent button) -> mesh.scheduleRebuild(true));
             builder.row.child(buildMeshButton);
 
-            ButtonComponent stopBuildingButton = (ButtonComponent) UIComponents.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding()).margins(Insets.of(5, 0, 5, 0));
+            ButtonComponent stopBuildingButton = WikiRendererUI.button(Translate.gui("stop_building"), (ButtonComponent button) -> mesh.stopBuilding());
+            stopBuildingButton.margins(stopBuildingButton.margins().get().withLeft(5));
             stopBuildingButton.active = false;
+
             builder.row.child(stopBuildingButton);
 
             WikiRendererUI.dynamicText(builder.row, () -> {
@@ -305,10 +305,10 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                 stopBuildingButton.active = mesh.getMeshState() == WorldBlockMesh.MeshState.BUILDING || mesh.getMeshState() == WorldBlockMesh.MeshState.REBUILDING;
 
                 return meshStatusText;
-            }).margins(Insets.of(10, 0, 10, 0));
+            }).margins(Insets.of(8, 0, 10, 0));
         }
 
-        container.child(UIComponents.button(Translate.gui("copy_render_command"), button -> {
+        container.child(WikiRendererUI.button(Translate.gui("copy_render_command"), button -> {
             screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
 
             String command = mesh.bounds.generateAreaCommand();
@@ -416,7 +416,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
     }
 
     private UIComponent buildResetBlockAndEntityOverridesButton(AreaRenderable renderable) {
-        return UIComponents.button(Translate.gui("reset_block_and_entity_overrides"), (ButtonComponent button) -> {
+        return WikiRendererUI.button(Translate.gui("reset_block_and_entity_overrides"), (ButtonComponent button) -> {
             this.hideMesh.setToDefault();
             this.hideFluids.setToDefault();
             this.hideBeaconBeams.setToDefault();
@@ -447,7 +447,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             this.useFullBrightGamma.setToDefault();
             this.useNightVision.setToDefault();
 
-        }).margins(Insets.of(5, 0, 0, 0));
+        });
     }
 
     @Override
@@ -462,7 +462,9 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             WikiRendererUI.booleanControl(container, this.lightUpSurroundingBlocks, "light_up_surrounding_blocks");
             this.lightUpSurroundingBlocks.futureListen(screen, (p, b) -> renderable.mesh.scheduleRebuild(true));
         }
+
         WikiRendererUI.booleanControl(container, GlobalProperties.get().tickParticles, "particles");
+        this.buildLoopParticlesOption(container);
     }
 
     @Override
