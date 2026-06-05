@@ -91,7 +91,13 @@ public class WikiRendererKeybinds {
         });
 
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> ScreenKeyboardEvents.afterKeyPress(screen).register((s, key) -> {
-            if (isTypingInAnyTextField(s)) return;
+            if (isTypingInAnyTextField(s)) {
+                return;
+            }
+
+            if (Minecraft.getInstance().options.keyDebugModifier.isDown()) {
+                return;
+            }
 
             if (KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY.matches(key)) {
                 ItemStack hoveredSlot = getHoveredSlot(client);
@@ -136,8 +142,7 @@ public class WikiRendererKeybinds {
 
     private static boolean isTypingInAnyTextField(Screen screen) {
         if (screen.getFocused() instanceof EditBox) return true;
-        if (REI_LOADED && REISearchFocus.isSearchFieldFocused()) return true;
-        return false;
+        return REI_LOADED && REISearchFocus.isSearchFieldFocused();
     }
 
     @Nullable
