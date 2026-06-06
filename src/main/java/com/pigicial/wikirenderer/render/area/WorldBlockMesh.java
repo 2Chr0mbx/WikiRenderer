@@ -52,7 +52,6 @@ public class WorldBlockMesh {
     public final MeshBounds bounds;
     private AreaRenderable renderable;
 
-    protected final SectionBufferBuilderPack resortBufferPack = new SectionBufferBuilderPack();
     public final Map<Long, MeshRenderSection> subMeshes = new ConcurrentHashMap<>();
 
     private MeshState state = MeshState.NEW;
@@ -446,7 +445,6 @@ public class WorldBlockMesh {
     public void dispose() {
         subMeshes.values().forEach(MeshRenderSection::close);
         subMeshes.clear();
-        resortBufferPack.close();
     }
 
     public enum MeshState {

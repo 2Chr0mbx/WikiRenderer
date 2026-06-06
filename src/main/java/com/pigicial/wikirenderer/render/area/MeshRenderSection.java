@@ -35,8 +35,9 @@ public class MeshRenderSection implements AutoCloseable {
     private final int sectionZ;
     private double distanceFromCenter;
 
+    private final SectionBufferBuilderPack resortBufferPack = new SectionBufferBuilderPack();
     private final Map<ChunkSectionLayer, SectionBuffers> buffers = new EnumMap<>(ChunkSectionLayer.class);
-    private Map<ChunkSectionLayer, MeshData> builtMeshes = new HashMap<>();
+    private volatile Map<ChunkSectionLayer, MeshData> builtMeshes = new HashMap<>();
 
     protected Map<BlockPos, BlockEntity> blockEntities = new ConcurrentHashMap<>();
     protected List<Integer> animationCompletionTimings = new LinkedList<>();
@@ -44,6 +45,7 @@ public class MeshRenderSection implements AutoCloseable {
     protected volatile boolean isBuilding = false;
     protected volatile boolean forceUpdate = false;
     protected volatile boolean buildAttempted = false;
+    protected volatile boolean isResorting = false;
 
     public MeshRenderSection(int sectionX, int sectionY, int sectionZ) {
         this.sectionX = sectionX;
@@ -225,6 +227,7 @@ public class MeshRenderSection implements AutoCloseable {
 
     @Override
     public void close() {
+        this.resortBufferPack.close();
         this.buffers.forEach((layer, buffers) -> buffers.close());
         this.buffers.clear();
         this.builtMeshes.forEach((layer, meshData) -> meshData.close());
@@ -247,17 +250,33 @@ public class MeshRenderSection implements AutoCloseable {
     }
 
     public void reSortTransparencyAndSubmit(WorldBlockMesh mesh) {
+        if (isResorting) return;
+        isResorting = true;
+
         MeshData translucentMeshData = this.builtMeshes.get(ChunkSectionLayer.TRANSLUCENT);
-        if (translucentMeshData == null) return;
+        if (translucentMeshData == null) {
+            isResorting = false;
+            return;
+        }
 
         SectionBuffers currentBuffer = this.buffers.get(ChunkSectionLayer.TRANSLUCENT);
-        if (currentBuffer == null) return;
+        if (currentBuffer == null) {
+            isResorting = false;
+            return;
+        }
 
-        MeshData.SortState transparencyState = translucentMeshData.sortQuads(mesh.resortBufferPack.buffer(ChunkSectionLayer.TRANSLUCENT), mesh.orthographicTransparencySorting);
-        if (transparencyState == null) return;
+        MeshData.SortState transparencyState = translucentMeshData.sortQuads(resortBufferPack.buffer(ChunkSectionLayer.TRANSLUCENT), mesh.orthographicTransparencySorting);
+        if (transparencyState == null) {
+            isResorting = false;
+            return;
+        }
 
-        ByteBufferBuilder.Result indexBuffer = transparencyState.buildSortedIndexBuffer(mesh.resortBufferPack.buffer(ChunkSectionLayer.TRANSLUCENT), mesh.orthographicTransparencySorting);
-        if (indexBuffer == null) return;
+        ByteBufferBuilder.Result indexBuffer = transparencyState.buildSortedIndexBuffer(resortBufferPack.buffer(ChunkSectionLayer.TRANSLUCENT), mesh.orthographicTransparencySorting);
+        if (indexBuffer == null) {
+            isResorting = false;
+            return;
+        }
+
         ByteBuffer sortedTranslucencyIndexBuffer = indexBuffer.byteBuffer();
 
         Minecraft.getInstance().execute(() -> {
@@ -266,8 +285,8 @@ public class MeshRenderSection implements AutoCloseable {
             } else {
                 RenderSystem.getDevice().createCommandEncoder().writeToBuffer(currentBuffer.getIndexBuffer().slice(), sortedTranslucencyIndexBuffer);
             }
+            isResorting = false;
         });
-
     }
 
     public static long getSectionIndex(int sectionX, int sectionY, int sectionZ) {
