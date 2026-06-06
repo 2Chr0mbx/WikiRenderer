@@ -316,7 +316,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         }));
 
         WikiRendererUI.text(container, "block_visibility", true);
-        container.child(this.buildResetBlockAndEntityOverridesButton(renderable));
+        container.child(this.buildResetBlockAndEntityOverridesButton(screen, renderable));
         WikiRendererUI.booleanControl(container, this.hideMesh, "hide_blocks");
         this.hideMesh.addRebuildListener(screen);
         if (!this.hideMesh.get()) {
@@ -415,7 +415,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         }
     }
 
-    private UIComponent buildResetBlockAndEntityOverridesButton(AreaRenderable renderable) {
+    private UIComponent buildResetBlockAndEntityOverridesButton(RenderScreen screen, AreaRenderable renderable) {
         return WikiRendererUI.button(Translate.gui("reset_block_and_entity_overrides"), (ButtonComponent button) -> {
             this.hideMesh.setToDefault();
             this.hideFluids.setToDefault();
@@ -446,7 +446,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             this.emulateDaylight.setToDefault();
             this.useFullBrightGamma.setToDefault();
             this.useNightVision.setToDefault();
-
+            screen.guiRebuildScheduled = true;
         });
     }
 
