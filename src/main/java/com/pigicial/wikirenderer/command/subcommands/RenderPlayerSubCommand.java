@@ -39,7 +39,7 @@ public class RenderPlayerSubCommand extends WikiRendererSubCommand {
                     this.renderSelf();
                     return 0;
                 })
-                .then(literal("self").executes(_ -> {
+                .then(literal("self").executes(context -> {
                     this.renderSelf();
                     return 0;
                 }))

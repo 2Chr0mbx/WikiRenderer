@@ -11,10 +11,10 @@ import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.ItemBlockUtil;
 import com.pigicial.wikirenderer.util.Translate;
-import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -130,11 +130,11 @@ public class ItemRenderablePropertyBundle extends DefaultCroppablePropertyBundle
             WikiRendererUI.booleanControl(container, overrideDyeColors, "override_dye_color");
             overrideDyeColors.addRebuildListener(screen);
             if (overrideDyeColors.get()) {
-                TextBoxComponent colorField = WikiRendererUI.labelledTextField(container, "#000000", "dye_color", Sizing.fixed(50));
+                EditBox colorField = WikiRendererUI.labelledTextField(container, "#000000", "dye_color", Sizing.fixed(50));
                 colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
                 colorField.setValue(String.format("#%06x", dyeColorOverride & 0xFFFFFF));
                 colorField.moveCursorToStart(false);
-                colorField.onChanged().subscribe(s -> {
+                colorField.setResponder(s -> {
                     String text = s.startsWith("#") ? s.substring(1) : s;
                     if (text.length() < 6) {
                         return;

@@ -48,7 +48,7 @@ public class GuiGraphicsMixin {
     }
 
     // see https://github.com/skyblock-wiki/WikiRenderer/issues/20
-    @Inject(method = "componentHoverEffect(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Style;II)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderComponentHoverEffect", at = @At("HEAD"), cancellable = true)
     private void wikirenderer$onComponentHoverEffect(Font font, Style hoveredStyle, int xMouse, int yMouse, CallbackInfo ci) {
         if (hoveredStyle == null) {
             ci.cancel();
