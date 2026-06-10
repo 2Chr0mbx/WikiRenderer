@@ -15,6 +15,7 @@ import com.pigicial.wikirenderer.render.area.side_view.MeshSideRotation;
 import com.pigicial.wikirenderer.render.area.side_view.MeshSideSlant;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
+import com.pigicial.wikirenderer.util.ClipboardUtil;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.DropdownComponent;
@@ -22,8 +23,6 @@ import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
-import io.wispforest.owo.ui.core.Color;
-import io.wispforest.owo.ui.core.Insets;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
@@ -39,8 +38,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4fStack;
 
-import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -308,12 +305,12 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
             }).margins(Insets.of(8, 0, 10, 0));
         }
 
-        container.child(WikiRendererUI.button(Translate.gui("copy_render_command"), button -> {
-            screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
-
-            String command = mesh.bounds.generateAreaCommand();
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(command), (clipboard, contents) -> {});
-        }));
+        if (ClipboardUtil.hasClipboardAccess()) {
+            container.child(WikiRendererUI.button(Translate.gui("copy_render_command"), _ -> {
+                screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
+                ClipboardUtil.setClipboard(mesh.bounds.generateAreaCommand());
+            }));
+        }
 
         WikiRendererUI.text(container, "block_visibility", true);
         container.child(this.buildResetBlockAndEntityOverridesButton(screen, renderable));
