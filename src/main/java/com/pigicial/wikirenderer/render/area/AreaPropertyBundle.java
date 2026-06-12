@@ -238,25 +238,25 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_five"), button -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, -5);
-                                    //renderable.mesh.scheduleRebuild(true);
+                                    renderable.mesh.refreshWalkabilityFilter();
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("minus_one"), button -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, -1);
-                                    //renderable.mesh.scheduleRebuild(true);
+                                    renderable.mesh.refreshWalkabilityFilter();
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_one"), button -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, 1);
-                                    //renderable.mesh.scheduleRebuild(true);
+                                    renderable.mesh.refreshWalkabilityFilter();
                                 }
                             }, renderable.mesh::canRebuild));
                             rowBuilder.row.child(new ConditionalButton(Translate.gui("plus_five"), button -> {
                                 if (renderable.mesh.canRebuild()) {
                                     expandableMeshBounds.move(renderable.mesh, expansionSide, sideViewRotation, 5);
-                                    //renderable.mesh.scheduleRebuild(true);
+                                    renderable.mesh.refreshWalkabilityFilter();
                                 }
                             }, renderable.mesh::canRebuild));
 
