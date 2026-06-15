@@ -25,8 +25,8 @@ import java.util.List;
 
 public class EntityRenderBoundsUtil {
 
-    private static final EntityVertexPositionTracker.BufferSource BUFFER_SOURCE = new EntityVertexPositionTracker.BufferSource();
-    private static final EntityVertexPositionTracker.OutlineBufferSource OUTLINE_BUFFER_SOURCE = new EntityVertexPositionTracker.OutlineBufferSource();
+    public static final EntityVertexPositionTracker.BufferSource BUFFER_SOURCE = new EntityVertexPositionTracker.BufferSource();
+    public static final EntityVertexPositionTracker.OutlineBufferSource OUTLINE_BUFFER_SOURCE = new EntityVertexPositionTracker.OutlineBufferSource();
 
     private static final ModelFeatureRenderer MODEL_FEATURE_RENDERER = new ModelFeatureRenderer();
     private static final ModelPartFeatureRenderer MODEL_PART_FEATURE_RENDERER = new ModelPartFeatureRenderer();
@@ -40,10 +40,16 @@ public class EntityRenderBoundsUtil {
 
     @Nullable
     public static EntityVertexBounds getPositionOffsetBasedBounds(Entity entity) {
-        float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, tickDelta);
-        CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
-        return getPositionOffsetBasedBounds(entity, entityRenderState, cameraRenderState);
+        try {
+            WikiRenderer.inBoundsCalculation = true;
+            float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+            EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, tickDelta);
+            CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
+
+            return getPositionOffsetBasedBounds(entity, entityRenderState, cameraRenderState);
+        } finally {
+            WikiRenderer.inBoundsCalculation = false;
+        }
     }
 
     @Nullable
@@ -55,9 +61,15 @@ public class EntityRenderBoundsUtil {
     // this gets the actual bounds of the rendered entity, rather than relying on extremely flaky and inconsistent bounding box data
     @Nullable
     public static EntityVertexBounds getBounds(EntityRenderState renderState, CameraRenderState cameraRenderState, double xOffset, double yOffset, double zOffset) {
-        SubmitNodeStorage tempStorage = new SubmitNodeStorage();
-        Minecraft.getInstance().getEntityRenderDispatcher().submit(renderState, cameraRenderState, xOffset, yOffset, zOffset, new PoseStack(), tempStorage);
-        return submitVertexData(tempStorage);
+        try {
+            WikiRenderer.inBoundsCalculation = true;
+            SubmitNodeStorage tempStorage = new SubmitNodeStorage();
+            Minecraft.getInstance().getEntityRenderDispatcher().submit(renderState, cameraRenderState, xOffset, yOffset, zOffset, new PoseStack(), tempStorage);
+
+            return submitVertexData(tempStorage);
+        } finally {
+            WikiRenderer.inBoundsCalculation = false;
+        }
     }
 
     @Nullable
@@ -99,50 +111,60 @@ public class EntityRenderBoundsUtil {
     }
 
     private static EntityVertexBounds submitVertexData(SubmitNodeStorage tempStorage) {
-        EntityVertexPositionTracker.BOUNDS = null;
-        for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-            MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
-            EntityVertexPositionTracker.renderingText = true;
-            NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
-            TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
-            EntityVertexPositionTracker.renderingText = false;
-            LEASH_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
-            ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
-            BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
-            CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+        try {
+            WikiRenderer.inBoundsCalculation = true;
+            EntityVertexPositionTracker.BOUNDS = null;
+            for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
+                MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+                MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+                FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
+                EntityVertexPositionTracker.renderingText = true;
+                NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+                TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+                EntityVertexPositionTracker.renderingText = false;
+                LEASH_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+                ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
+                BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
+                CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+            }
+            return EntityVertexPositionTracker.BOUNDS;
+        } finally {
+            WikiRenderer.inBoundsCalculation = false;
         }
-        return EntityVertexPositionTracker.BOUNDS;
     }
 
     public static boolean isNametagOnlyRenderedData(Entity entity) {
-        EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
-        CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
+        try {
+            WikiRenderer.inBoundsCalculation = true;
+            EntityRenderState entityRenderState = Minecraft.getInstance().getEntityRenderDispatcher().extractEntity(entity, 0);
+            CameraRenderState cameraRenderState = ((LevelRendererAccessor) Minecraft.getInstance().levelRenderer).wikirenderer$getLevelRenderState().cameraRenderState;
 
-        SubmitNodeStorage tempStorage = new SubmitNodeStorage();
-        Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, cameraRenderState, 0, 0, 0, new PoseStack(), tempStorage);
+            SubmitNodeStorage tempStorage = new SubmitNodeStorage();
+            Minecraft.getInstance().getEntityRenderDispatcher().submit(entityRenderState, cameraRenderState, 0, 0, 0, new PoseStack(), tempStorage);
 
-        EntityVertexPositionTracker.BOUNDS = null;
-        for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-            MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
-            FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
-
-            TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
-            ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
-            BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
-            CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
-        }
-
-        if (EntityVertexPositionTracker.BOUNDS == null) {
+            EntityVertexPositionTracker.BOUNDS = null;
             for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
-                NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+                MODEL_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+                MODEL_PART_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE, BUFFER_SOURCE);
+                FLAME_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getAtlasManager());
+
+                TEXT_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
+                ITEM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, OUTLINE_BUFFER_SOURCE);
+                BLOCK_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().getBlockRenderer(), OUTLINE_BUFFER_SOURCE);
+                CUSTOM_FEATURE_RENDERER.render(collection, BUFFER_SOURCE);
             }
 
-            return EntityVertexPositionTracker.BOUNDS != null;
-        }
+            if (EntityVertexPositionTracker.BOUNDS == null) {
+                for (SubmitNodeCollection collection : tempStorage.getSubmitsPerOrder().values()) {
+                    NAME_TAG_FEATURE_RENDERER.render(collection, BUFFER_SOURCE, Minecraft.getInstance().font);
+                }
 
-        return false;
+                return EntityVertexPositionTracker.BOUNDS != null;
+            }
+
+            return false;
+        } finally {
+            WikiRenderer.inBoundsCalculation = false;
+        }
     }
 }
