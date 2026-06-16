@@ -306,7 +306,7 @@ public class AreaPropertyBundle extends DefaultCroppablePropertyBundle implement
         }
 
         if (ClipboardUtil.hasTextClipboardAccess()) {
-            container.child(WikiRendererUI.button(Translate.gui("copy_render_command"), _ -> {
+            container.child(WikiRendererUI.button(Translate.gui("copy_render_command"), button -> {
                 screen.notify(Translate.gui("copied_coordinates_command_to_clipboard"));
                 ClipboardUtil.setClipboard(mesh.bounds.generateAreaCommand());
             }));

@@ -127,8 +127,8 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Nullable public AnimationHandler currentAnimationExportData = null;
     @Nullable public Button refreshCustomFFmpegPathButton;
 
-    @Nullable private TextBoxComponent animationFramesField;
-    @Nullable private TextBoxComponent animationFramerateField;
+    @Nullable private EditBox animationFramesField;
+    @Nullable private EditBox animationFramerateField;
 
     public EditBox fileNameField = null;
     private double[] scrollOffsetData = null;
@@ -474,7 +474,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.animationFramesField = WikiRendererUI.labelledTextField(rightColumn,
                     String.valueOf(globalProperties.exportFrames.get()), "animation_frames", Sizing.fixed(30));
             this.animationFramesField.setFilter(s -> WikiRenderer.currentAnimationHandler == null && s.matches("\\d*"));
-            this.animationFramesField.onChanged().subscribe(s -> {
+            this.animationFramesField.setResponder(s -> {
                 if (!s.isBlank()) {
                     globalProperties.exportFrames.set(Integer.parseInt(s));
                 }
@@ -484,7 +484,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             this.animationFramerateField = WikiRendererUI.labelledTextField(rightColumn,
                     String.valueOf(globalProperties.exportFramerate.get()), "animation_framerate", Sizing.fixed(30));
             this.animationFramerateField.setFilter(s -> WikiRenderer.currentAnimationHandler == null && s.matches("\\d*"));
-            this.animationFramerateField.onChanged().subscribe(s -> {
+            this.animationFramerateField.setResponder(s -> {
                 if (!s.isBlank()) {
                     globalProperties.exportFramerate.set(Integer.parseInt(s));
                 }
@@ -544,7 +544,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         }
     }
 
-    private boolean isFieldValid(TextBoxComponent text, IntProperty property) {
+    private boolean isFieldValid(EditBox text, IntProperty property) {
         if (text == null) {
             return false;
         }

@@ -78,7 +78,7 @@ public interface PropertyBundle {
             }));
 
             if (ClipboardUtil.hasImageClipboardAccess()) {
-                builder.row.child(UIComponents.button(Translate.gui("export_to_clipboard"), _ -> {
+                builder.row.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
                     screen.notify(Translate.gui("copied_to_clipboard"));
 
                     float tickDelta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
