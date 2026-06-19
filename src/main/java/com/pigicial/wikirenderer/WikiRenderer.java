@@ -8,11 +8,12 @@ import com.pigicial.wikirenderer.command.WikiRendererCommand;
 import com.pigicial.wikirenderer.components.AreaSelectionComponent;
 import com.pigicial.wikirenderer.components.IOStateComponent;
 import com.pigicial.wikirenderer.render.OrthographicSort;
-import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
+import com.pigicial.wikirenderer.render.export.animation.AnimationHandler;
+import com.pigicial.wikirenderer.render.particle.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import com.pigicial.wikirenderer.render.area.MeshWorldOverrides;
 import com.pigicial.wikirenderer.render.export.FileIO;
-import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
+import com.pigicial.wikirenderer.render.skyblock.frame_based.SkyBlockTimingDataCacher;
 import com.pigicial.wikirenderer.util.DrawType;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
@@ -33,6 +34,8 @@ import org.joml.Matrix4fStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 @Environment(EnvType.CLIENT)
 public class WikiRenderer implements ClientModInitializer {
 
@@ -44,6 +47,7 @@ public class WikiRenderer implements ClientModInitializer {
     public static ParticleDisplayCondition particleDisplayCondition = ParticleDisplayCondition.SHOW_ALL;
     public static DrawType currentDrawType = null;
 
+    public static List<Integer> animationTimingDataRequestedToFill = null;
     public static MeshWorldOverrides currentWorldOverrides;
     public static boolean inAreaRenderDraw = false;
     public static boolean inEntityDraw = false;
@@ -55,6 +59,7 @@ public class WikiRenderer implements ClientModInitializer {
     public static boolean skipWorldRender = false;
     public static boolean skipTooltipBackgroundRender = false;
     public static boolean overrideGlint = false;
+    public static boolean inBoundsCalculation = false;
 
     public static RenderTarget mainTargetOverride = null;
 
@@ -68,6 +73,7 @@ public class WikiRenderer implements ClientModInitializer {
     public void onInitializeClient() {
         ClientCommandRegistrationCallback.EVENT.register(WikiRendererCommand::register);
         WikiRendererKeybinds.registerKeyBinds();
+        SkyBlockTimingDataCacher.getInstance().startTickEvent();
 
         String ioStateId = "io-state";
         String areaSelectionHintId = "area-selection-hint";

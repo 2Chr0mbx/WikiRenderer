@@ -2,19 +2,26 @@ package com.pigicial.wikirenderer;
 
 import com.pigicial.wikirenderer.command.subcommands.RenderBlockSubCommand;
 import com.pigicial.wikirenderer.command.subcommands.RenderEntitySubCommand;
+import com.pigicial.wikirenderer.util.compatibility.REISearchFocus;
 import com.pigicial.wikirenderer.mixin.access.AbstractContainerScreenAccessor;
 import com.pigicial.wikirenderer.mixin.access.CreativeModeInventoryScreenAccessor;
+import com.pigicial.wikirenderer.property.GlobalProperties;
 import com.pigicial.wikirenderer.render.area.AreaSelectionHelper;
 import com.pigicial.wikirenderer.render.item.ItemRenderable;
 import com.pigicial.wikirenderer.render.item.TooltipRenderable;
 import com.pigicial.wikirenderer.render.screen.ContainerScreenRenderable;
+import com.pigicial.wikirenderer.render.skyblock.frame_based.SkyBlockTimingDataCacher;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.ScreenSchedulerAndSaver;
 import com.pigicial.wikirenderer.screen.SelectRenderTaskScreen;
+import com.pigicial.wikirenderer.textures.PlayerTextureUtils;
+import com.pigicial.wikirenderer.textures.TextureData;
+import com.pigicial.wikirenderer.util.Translate;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
@@ -42,6 +49,8 @@ public class WikiRendererKeybinds {
     public static final KeyMapping KEYBIND_RENDER_TARGETED_BLOCK = new KeyMapping("key.wikirenderer.render_targeted_block", GLFW.GLFW_KEY_L, CATEGORY);
     public static final KeyMapping KEYBIND_RENDER_INVENTORY = new KeyMapping("key.wikirenderer.render_inventory", GLFW.GLFW_KEY_SEMICOLON, CATEGORY);
     public static final KeyMapping KEYBIND_BATCH_RENDER_INVENTORY_ITEMS = new KeyMapping("key.wikirenderer.batch_render_inventory", GLFW.GLFW_KEY_K, CATEGORY);
+
+    private static final boolean REI_LOADED = FabricLoader.getInstance().isModLoaded("roughlyenoughitems");
 
     public static void registerKeyBinds() {
         KeyBindingHelper.registerKeyBinding(KEYBIND_SELECT_AREA);
@@ -82,34 +91,58 @@ public class WikiRendererKeybinds {
         });
 
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> ScreenKeyboardEvents.afterKeyPress(screen).register((s, key) -> {
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY).getValue()) {
+            if (isTypingInAnyTextField(s)) {
+                return;
+            }
+
+            if (Minecraft.getInstance().options.keyDebugModifier.isDown()) {
+                return;
+            }
+
+            if (KEYBIND_RENDER_HOVERED_ITEM_OR_VIEWED_ENTITY.matches(key)) {
                 ItemStack hoveredSlot = getHoveredSlot(client);
                 if (hoveredSlot != null) {
+                    if (GlobalProperties.get().sbFrameRenderingKeybindOverrides.get()) {
+                        TextureData textureData = PlayerTextureUtils.getTextureDataFromPlayerHead(hoveredSlot);
+                        if (textureData == null) {
+                            Translate.sendMessage("sb_player_head_mark_first_fail");
+                        } else {
+                            Translate.sendMessage("sb_player_head_mark_first_success");
+                            SkyBlockTimingDataCacher.getInstance().markTextureAsFirst(textureData);
+                        }
+
+                        return;
+                    }
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ItemRenderable(hoveredSlot)));
                 }
             }
 
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP).getValue()) {
+            if (KEYBIND_RENDER_HOVERED_ITEM_TOOLTIP.matches(key)) {
                 ItemStack hoveredSlot = getHoveredSlot(client);
                 if (hoveredSlot != null) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new TooltipRenderable(hoveredSlot)));
                 }
             }
 
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_BATCH_RENDER_INVENTORY_ITEMS).getValue()) {
+            if (KEYBIND_BATCH_RENDER_INVENTORY_ITEMS.matches(key)) {
                 List<ItemStack> items = getItems(client);
                 if (items != null && !items.isEmpty()) {
                     Minecraft.getInstance().setScreen(new SelectRenderTaskScreen(items));
                 }
             }
 
-            if (key.key() == KeyBindingHelper.getBoundKeyOf(KEYBIND_RENDER_INVENTORY).getValue()) {
+            if (KEYBIND_RENDER_INVENTORY.matches(key)) {
                 Screen currentScreen = client.screen;
                 if (currentScreen instanceof AbstractContainerScreen<?> containerScreen) {
                     ScreenSchedulerAndSaver.openImmediately(new RenderScreen(new ContainerScreenRenderable(containerScreen)));
                 }
             }
         }));
+    }
+
+    private static boolean isTypingInAnyTextField(Screen screen) {
+        if (screen.getFocused() instanceof EditBox) return true;
+        return REI_LOADED && REISearchFocus.isSearchFieldFocused();
     }
 
     @Nullable

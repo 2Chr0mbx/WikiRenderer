@@ -5,7 +5,9 @@ import io.wispforest.owo.ui.core.OwoUIGraphics;
 import io.wispforest.owo.ui.core.Size;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.UIComponent;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 public class DynamicComponent extends FlowLayout {
@@ -22,13 +24,33 @@ public class DynamicComponent extends FlowLayout {
     }
 
     @Override
+    public boolean isInBoundingBox(double x, double y) {
+        return exists && super.isInBoundingBox(x, y);
+    }
+
+    @Override
+    public List<ClientTooltipComponent> tooltip() {
+        return exists ? super.tooltip() : List.of();
+    }
+
+    @Override
+    public void inflate(Size space) {
+        if (!exists) {
+            // not doing this can cause the component to sometimes not appear
+            this.space = space;
+            component.inflate(this.calculateChildSpace(space));
+        } else {
+            super.inflate(space);
+        }
+    }
+
+    @Override
     public Size fullSize() {
         if (!exists) {
             int gap = 0;
             if (this.parent() instanceof FlowLayout flow) {
                 gap = flow.gap();
             }
-            // return a negative height to offset the gap the parent FlowLayout adds
             return Size.of(-gap, -gap);
         }
         return super.fullSize();
@@ -56,8 +78,8 @@ public class DynamicComponent extends FlowLayout {
 
     @Override
     protected void parentUpdate(float delta, int mouseX, int mouseY) {
-        super.parentUpdate(delta, mouseX, mouseY);
         update();
+        super.parentUpdate(delta, mouseX, mouseY);
     }
 
     @Override

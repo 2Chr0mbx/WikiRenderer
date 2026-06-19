@@ -116,7 +116,7 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
                 batchRenderable.currentIndex + 1,
                 batchRenderable.delegates.size(),
                 Math.max(0, batchRenderable.delegates.size() - batchRenderable.currentIndex - 1)
-                )).margins(Insets.bottom(20));
+                )).margins(Insets.of(4, 13, 0, 0));
 
         this.actualProperties.buildMainGUIControls(batchRenderable.currentDelegate, screen, container);
     }
@@ -154,8 +154,9 @@ public class BatchPropertyBundle extends DefaultCroppablePropertyBundle {
         BatchRenderable<?> batchRenderable = (BatchRenderable<?>) renderable;
         if (!batchRenderable.delegates.isEmpty() && this.batchRenderable.currentDelegate instanceof DynamicBatchLabelProvider labelProvider) {
             screen.fileNameField = WikiRendererUI.labelledTextField(container, fileNameFormatter, "batch.file_name_preset", Sizing.fixed(120));
-            screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
+            screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"|?*\\\\\\x00-\\x1F]*$")); // file name regex
             screen.fileNameField.setResponder(renderable::setCustomFileName);
+
             WikiRendererUI.text(container, "batch.label_presets", 10);
             for (String exampleKey : labelProvider.buildPresetExamples()) {
                 WikiRendererUI.text(container, exampleKey, false);

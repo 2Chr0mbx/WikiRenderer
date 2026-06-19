@@ -3,12 +3,11 @@ package com.pigicial.wikirenderer.property;
 import com.mojang.math.Axis;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.Renderable;
-import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
+import com.pigicial.wikirenderer.render.export.animation.AnimationHandler;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.ButtonComponent;
-import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import net.minecraft.client.Minecraft;
@@ -70,20 +69,24 @@ public class DefaultPropertyBundle implements PropertyBundle {
         return this.slant.get();
     }
 
+    public double getUsedScale() {
+        return this.scale.get();
+    }
+
     public void modifyRotation(int amount) {
         if (this.allowRotatingWithMouse.get()) {
             this.rotation.modify(amount);
         }
     }
 
+    public void modifyScale(double amount) {
+        this.scale.modify(amount);
+    }
+
     public void modifySlant(double amount) {
         if (this.allowRotatingWithMouse.get()) {
             this.slant.modify(amount);
         }
-    }
-
-    public boolean supportsAutomaticRotations() {
-        return true;
     }
 
     @Override
@@ -93,15 +96,16 @@ public class DefaultPropertyBundle implements PropertyBundle {
         WikiRendererUI.intControl(screen, container, rotation, "rotation");
         WikiRendererUI.doubleControl(screen, container, slant, "slant");
         WikiRendererUI.intControl(screen, container, rotationSpeed, "rotation_speed");
+        WikiRendererUI.conditionalBooleanControl(container, GlobalProperties.get().syncRotationToAnimation, "sync_rotation_to_animation", () -> !rotationSpeed.isDefault());
         WikiRendererUI.booleanControl(container, allowRotatingWithMouse, "allow_rotating_with_mouse");
 
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(container)) {
-            builder.row.child(UIComponents.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
+            builder.row.child(WikiRendererUI.button(Translate.gui("dimetric_recommended"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(30D);
             }).margins(Insets.right(5)));
 
-            builder.row.child(UIComponents.button(Translate.gui("isometric"), (ButtonComponent button) -> {
+            builder.row.child(WikiRendererUI.button(Translate.gui("isometric"), (ButtonComponent button) -> {
                 this.rotation.setToDefault();
                 this.slant.set(35.264);
             }));
@@ -115,7 +119,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
     }
 
     protected ButtonComponent buildResetButton(Runnable runnable) {
-        return (ButtonComponent) UIComponents.button(Translate.gui("reset_transformations"), (ButtonComponent button) -> {
+        return WikiRendererUI.button(Translate.gui("reset_transformations"), (ButtonComponent button) -> {
             this.xOffset.setToDefault();
             this.yOffset.setToDefault();
             this.scale.setToDefault();
@@ -123,7 +127,7 @@ public class DefaultPropertyBundle implements PropertyBundle {
             this.slant.setToDefault();
             this.rotationSpeed.setToDefault();
             runnable.run();
-        }).margins(Insets.of(5, 0, 0, 0));
+        });
     }
 
     @Override
