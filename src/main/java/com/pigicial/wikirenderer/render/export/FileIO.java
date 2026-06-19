@@ -3,8 +3,11 @@ package com.pigicial.wikirenderer.render.export;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
+import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.util.Translate;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Util;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +30,11 @@ public class FileIO {
         try (ForkJoinPool pool = ForkJoinPool.commonPool()) {
             pool.submit(() -> {
                 File imageFile = path.resolveFile("png");
-                imageFile.getParentFile().mkdirs();
+
+                File exportDirectory = imageFile.getParentFile();
+                if (exportDirectory.mkdirs()) {
+                    WikiRenderer.LOGGER.info("Made export directory {} to save file {}", exportDirectory, imageFile.getName());
+                }
 
                 try {
                     image.writeToFile(imageFile);
@@ -45,14 +52,18 @@ public class FileIO {
         return future;
     }
 
-    public static CompletableFuture<File> saveText(String text, ExportPathSpec path) {
+    public static CompletableFuture<File> saveText(String text, ExportPathSpec path, String extension) {
         CompletableFuture<File> future = new CompletableFuture<>();
 
         TASK_COUNT.incrementAndGet();
         try (ForkJoinPool pool = ForkJoinPool.commonPool()) {
             pool.submit(() -> {
-                File textFile = path.resolveFile("txt");
-                textFile.getParentFile().mkdirs();
+                File textFile = path.resolveFile(extension);
+
+                File exportDirectory = textFile.getParentFile();
+                if (exportDirectory.mkdirs()) {
+                    WikiRenderer.LOGGER.info("Made export directory {} for file {}", exportDirectory, textFile.getName());
+                }
 
                 try {
                     Files.writeString(
@@ -70,8 +81,19 @@ public class FileIO {
             });
         }
 
-
         return future;
+    }
+
+    public static void saveTextAndNotify(String text, ExportPathSpec path, RenderScreen renderScreen, String key) {
+        saveTextAndNotify(text, path, "txt", renderScreen, key);
+    }
+
+    public static void saveTextAndNotify(String text, ExportPathSpec path, String extension, RenderScreen renderScreen, String key) {
+        FileIO.saveText(text, path, extension).whenComplete((textFile, t) -> Minecraft.getInstance().execute(() -> renderScreen.notify(
+                () -> Util.getPlatform().openFile(textFile),
+                Translate.gui(key),
+                Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
+        )));
     }
 
     public static void deleteSequenceFilesFromPath(Path sequencePath) {

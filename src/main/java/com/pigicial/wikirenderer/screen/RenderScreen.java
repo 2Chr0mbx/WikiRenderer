@@ -12,7 +12,6 @@ import com.pigicial.wikirenderer.components.NotificationComponent;
 import com.pigicial.wikirenderer.property.*;
 import com.pigicial.wikirenderer.property.config.WikiRendererConfigs;
 import com.pigicial.wikirenderer.render.DefaultRenderable;
-import com.pigicial.wikirenderer.render.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.render.Renderable;
 import com.pigicial.wikirenderer.render.TickingRenderable;
 import com.pigicial.wikirenderer.render.area.AreaRenderable;
@@ -21,14 +20,23 @@ import com.pigicial.wikirenderer.render.batch.BatchPropertyBundle;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.FileIO;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
-import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
-import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandlingMode;
-import com.pigicial.wikirenderer.render.export.ffmpeg.FFmpegDispatcher;
-import com.pigicial.wikirenderer.render.export.ffmpeg.MemoryGuard;
-import com.pigicial.wikirenderer.render.export.ffmpeg.live.LiveRenderFFmpegAnimationHandler;
+import com.pigicial.wikirenderer.render.export.animation.AnimationFormat;
+import com.pigicial.wikirenderer.render.export.animation.AnimationHandler;
+import com.pigicial.wikirenderer.render.export.animation.MemoryGuard;
+import com.pigicial.wikirenderer.render.export.animation.ffmpeg.FFmpegAnimationHandler;
+import com.pigicial.wikirenderer.render.export.animation.ffmpeg.FFmpegAnimationHandlingMode;
+import com.pigicial.wikirenderer.render.export.animation.ffmpeg.FFmpegDispatcher;
+import com.pigicial.wikirenderer.render.export.animation.ffmpeg.live.LiveRenderFFmpegFFmpegAnimationHandler;
+import com.pigicial.wikirenderer.render.export.animation.gifski.GifskiDispatcher;
+import com.pigicial.wikirenderer.render.export.animation.gifski.MemoryBasedGifskiAnimationHandler;
 import com.pigicial.wikirenderer.render.item.AnimationTimingsProvider;
+import com.pigicial.wikirenderer.render.particle.ParticleDisplayCondition;
+import com.pigicial.wikirenderer.render.skyblock.frame_based.DyedArmorFrameBasedRenderable;
+import com.pigicial.wikirenderer.render.skyblock.frame_based.FrameBasedRenderable;
+import com.pigicial.wikirenderer.render.skyblock.frame_based.ItemFrameBasedRenderable;
 import com.pigicial.wikirenderer.textures.TextureDataProvider;
 import com.pigicial.wikirenderer.util.Translate;
+import com.pigicial.wikirenderer.util.compatibility.ShaderCheck;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.UIComponents;
@@ -40,7 +48,6 @@ import io.wispforest.owo.ui.util.FocusHandler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -48,6 +55,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.gui.render.state.BlitRenderState;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -62,7 +70,6 @@ import org.joml.Matrix4fStack;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -115,21 +122,28 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     public boolean hasBothColumns = false;
 
     public boolean openingFile = false;
-    public ButtonComponent exportButton = null;
-    private Consumer<File> exportCallback = null;
-
-    public Button exportAnimationButton;
+    @Nullable public ButtonComponent exportButton = null;
+    @Nullable public Button exportAnimationButton = null;
     @Nullable public AnimationHandler currentAnimationExportData = null;
     @Nullable public Button refreshCustomFFmpegPathButton;
+
+    @Nullable private EditBox animationFramesField;
+    @Nullable private EditBox animationFramerateField;
 
     public EditBox fileNameField = null;
     private double[] scrollOffsetData = null;
     public int mouseX;
     public int mouseY;
 
+    private AbstractContainerScreen<?> previouslyOpenedContainerScreen = null;
+
     public RenderScreen(Renderable<?> renderable) {
         this.renderable = renderable;
         this.memoryGuard.update();
+    }
+
+    public void setPreviouslyOpenedContainerScreen(AbstractContainerScreen<?> previouslyOpenedContainerScreen) {
+        this.previouslyOpenedContainerScreen = previouslyOpenedContainerScreen;
     }
 
     @Override
@@ -221,11 +235,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     protected void build(FlowLayout rootComponent) {
-        this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
         WikiRenderer.particleDisplayCondition = this.renderable.getParticleDisplayCondition();
 
-        this.leftColumn.margins(Insets.top(20));
-        this.rightColumn.margins(Insets.top(20));
+        this.leftColumn.margins(Insets.top(12));
+        this.rightColumn.margins(Insets.top(12));
 
         for (Property<?> propertyListener : propertyListeners) {
             propertyListener.removeListeners(this);
@@ -256,7 +269,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         this.renderable.getProperties().buildFileNameGUIControls(this.renderable, this, this.rightColumn);
 
         WikiRendererUI.text(rightColumn, "animation_options", true);
-        this.buildFFmpegSection();
+        this.buildAnimationSection();
     }
 
     private void buildDefaultRenderOptionsGUIControls() {
@@ -264,7 +277,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         EditBox colorField = WikiRendererUI.labelledTextField(rightColumn, "#000000", "background_color", Sizing.fixed(50));
         colorField.setFilter(s -> s.matches("^#([A-Fa-f\\d]{0,6})$"));
-        colorField.setValue(String.format("#%06X", globalProperties.backgroundColor & 0xFFFFFF));
+        colorField.setValue(String.format("#%06x", globalProperties.backgroundColor & 0xFFFFFF));
         colorField.moveCursorToStart(false);
         colorField.setResponder(s -> {
             String text = s.startsWith("#") ? s.substring(1) : s;
@@ -277,6 +290,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
         WikiRendererUI.booleanControl(rightColumn, globalProperties.showBackgroundColorInExports, "show_background_color_in_exports");
         WikiRendererUI.booleanControl(rightColumn, globalProperties.tickTextureAnimations, "texture_animations");
+        WikiRendererUI.conditionalBooleanControl(rightColumn, globalProperties.syncTextureAnimationsToAnimation, "sync_texture_animations", globalProperties.tickTextureAnimations::get);
     }
 
     private void buildFFmpegCustomPathSection() {
@@ -327,17 +341,39 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         });
     }
 
-    private void buildFFmpegSection() {
+    private boolean buildGifskiLoadingOrFailedSection() {
+        if (!GifskiDispatcher.wasGifskiCopiedToTempPath()) {
+            WikiRendererUI.text(rightColumn, "copying_gifski", false);
+            GifskiDispatcher.createGifskiTemporaryPath().whenComplete((aBoolean, throwable) -> {
+                this.guiRebuildScheduled = true;
+                if (throwable != null) {
+                    this.minecraft.execute(() -> this.notify(
+                            Translate.gui("no_gifski").withStyle(ChatFormatting.RED),
+                            Component.literal(String.valueOf(throwable.getMessage())).withStyle(ChatFormatting.GRAY)
+                    ));
+                }
+            });
+            return false;
+        }
+
+        if (!GifskiDispatcher.isGifskiAvailable()) {
+            WikiRendererUI.text(rightColumn, "no_gifski", true);
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean buildFFmpegLoadingOrRequirementsSections() {
         if (!FFmpegDispatcher.wasFFmpegDetected()) {
+            WikiRendererUI.text(rightColumn, "detecting_ffmpeg", 5);
             this.buildFFmpegCustomPathSection();
-            WikiRendererUI.text(rightColumn, "detecting_ffmpeg", false);
             this.detectFFmpeg(false);
-            return;
+            return false;
         }
 
         if (!FFmpegDispatcher.ffmpegAvailable()) {
-            this.buildFFmpegCustomPathSection();
-            WikiRendererUI.text(rightColumn, "no_ffmpeg_1", true);
+            WikiRendererUI.text(rightColumn, "no_ffmpeg_1", 5);
             WikiRendererUI.text(rightColumn, "no_ffmpeg_2", false);
             WikiRendererUI.text(rightColumn, "no_ffmpeg_3", false)
                     .cursorStyle(CursorStyle.HAND)
@@ -351,48 +387,38 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         }, "https://ffmpeg.org/download.html", true));
                         return true;
                     });
+            this.buildFFmpegCustomPathSection();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void buildAnimationSection() {
+        if (ShaderCheck.isUsingShaders()) {
+            // they don't work due to LevelRendererMixin skipping the world render from skipWorldRender
+            WikiRendererUI.text(rightColumn, "shader_animations_unsupported", 5);
             return;
         }
 
         GlobalProperties globalProperties = GlobalProperties.get();
-
-        if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
-            Property<Boolean> animatedCropProperty = croppablePropertyBundle.getFFmpegCropProperty();
-            WikiRendererUI.booleanControl(rightColumn, animatedCropProperty, "crop");
-        }
-
-        WikiRendererUI.labelledTextField(this, rightColumn, globalProperties.exportFrames, "animation_frames", Sizing.fixed(30));
-        WikiRendererUI.labelledTextField(this, rightColumn, globalProperties.exportFramerate, "animation_framerate", Sizing.fixed(30));
-
-        if (renderable.getProperties() instanceof DefaultPropertyBundle defaultBundle) {
-            if (defaultBundle.supportsAutomaticRotations()) {
-                WikiRendererUI.booleanControl(rightColumn, globalProperties.syncRotationToAnimation, "sync_rotation_to_animation");
-            }
-        }
-
-        WikiRendererUI.booleanControl(rightColumn, globalProperties.syncTextureAnimationsToAnimation, "sync_texture_animations");
-        WikiRendererUI.booleanControl(rightColumn, globalProperties.syncEnchantmentGlintsToExport, "sync_enchantment_glints");
-        WikiRendererUI.booleanControl(rightColumn, globalProperties.speedUpEnchantmentGlints, "speed_up_enchantment_glints");
-        globalProperties.speedUpEnchantmentGlints.futureListen(this, (p, v) -> guiRebuildScheduled = true);
-
-        if (globalProperties.speedUpEnchantmentGlints.get()) {
-            rightColumn.child(UIComponents.button(Translate.gui("enchantment_glint_preset"), button -> {
-                int seconds = 120000 / 8000;
-                int framerate = 20;
-                globalProperties.exportFramerate.set(framerate);
-                globalProperties.exportFrames.set(seconds * framerate);
-            }).margins(Insets.vertical(5)));
-        }
-
-        WikiRendererUI.booleanControl(rightColumn, globalProperties.setAnimationFpsCap, "render_with_game_timings");
-
         try (WikiRendererUI.RowBuilder builder = WikiRendererUI.autoNewLineRow(rightColumn)) {
             this.exportAnimationButton = UIComponents.button(Translate.gui("export_animation"), button -> this.queueAnimationExport());
-            builder.row.child(this.exportAnimationButton.margins(Insets.right(5)));
 
+            if (WikiRenderer.currentAnimationHandler != null) {
+                exportAnimationButton.active = false;
+            }
+            if (renderable instanceof ItemFrameBasedRenderable frameBasedRenderable) {
+                if (frameBasedRenderable.getTimingData() == null) {
+                    exportAnimationButton.active = false;
+                }
+            }
+
+            builder.row.child(this.exportAnimationButton.margins(Insets.right(5)));
             builder.row.child(UIComponents.button(Translate.gui("format." + globalProperties.animationFormat.extension), button -> {
                 globalProperties.animationFormat = globalProperties.animationFormat.next();
                 button.setMessage(Translate.gui("format." + globalProperties.animationFormat.extension));
+                guiRebuildScheduled = true;
             }).horizontalSizing(Sizing.fixed(35)));
         }
 
@@ -401,55 +427,151 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                 return Component.empty();
             } else if (this.currentAnimationExportData.getRemainingFrames() > 0) {
                 return Translate.gui("export_remaining_frames", this.currentAnimationExportData.getRemainingFrames());
-            } else if (this.currentAnimationExportData.getCurrentFFmpegFrame() != null) {
-                String frame = this.currentAnimationExportData.getCurrentFFmpegFrame();
+            } else if (this.currentAnimationExportData.getCurrentFrame() != null) {
+                String frame = this.currentAnimationExportData.getCurrentFrame();
                 int totalFrames = currentAnimationExportData.getAnimationFrames();
-                String exportFps = currentAnimationExportData.getCurrentFFmpegFps();
-                return Translate.gui("ffmpeg_data", frame, totalFrames, exportFps);
-            } else {
-                if (this.currentAnimationExportData instanceof LiveRenderFFmpegAnimationHandler) {
-                    return Translate.gui("setting_up_second_ffmpeg_pass");
+                if (this.currentAnimationExportData instanceof FFmpegAnimationHandler) {
+                    String exportFps = currentAnimationExportData.getCurrentFFmpegFps();
+                    return Translate.gui("ffmpeg_data", frame, totalFrames, exportFps);
                 } else {
+                    return Translate.gui("gifski_data", frame, totalFrames);
+                }
+            } else {
+                if (this.currentAnimationExportData instanceof LiveRenderFFmpegFFmpegAnimationHandler) {
+                    return Translate.gui("setting_up_second_ffmpeg_pass");
+                } else if (this.currentAnimationExportData instanceof FFmpegAnimationHandler) {
                     return Translate.gui("setting_up_ffmpeg");
+                } else {
+                    return Translate.gui("setting_up_gifski");
                 }
             }
         });
 
-        if (renderable instanceof AnimationTimingsProvider timingsProvider) {
-            timingsProvider.buildTimingsSection(rightColumn);
+        if (globalProperties.animationFormat == AnimationFormat.GIF) {
+            if (!buildGifskiLoadingOrFailedSection()) {
+                return;
+            }
+            WikiRendererUI.intPercentageControl(this, rightColumn, globalProperties.gifskiQuality, "gifski_quality");
+            WikiRendererUI.booleanControl(rightColumn, globalProperties.saveIndividualFrames, "save_individual_frames");
+        } else {
+            if (!buildFFmpegLoadingOrRequirementsSections()) {
+                return;
+            }
         }
 
-        WikiRendererUI.conditionalBooleanControl(rightColumn, globalProperties.saveIndividualFrames, "save_individual_frames", () -> globalProperties.animationHandlingMode.savesFramesToFiles());
-        WikiRendererUI.dynamicText(rightColumn, () -> switch (globalProperties.animationHandlingMode) {
-            case DISK_INSTANT_SAVE -> Translate.gui("animation_mode_selected_instant_file_save");
-            case MEMORY_CACHE -> Translate.gui("animation_mode_selected_save_in_memory");
-            case LIVE_FFMPEG -> Translate.gui("animation_mode_selected_live_ffmpeg");
-        }).margins(Insets.of(10, 0, 5, 0));
+        WikiRendererUI.booleanControl(rightColumn, globalProperties.setAnimationFpsCap, "render_with_game_timings");
+        if (renderable instanceof FrameBasedRenderable<?, ?, ?>) {
+            WikiRendererUI.text(rightColumn, "frame_options_override_notice", 5);
+            if (renderable instanceof DyedArmorFrameBasedRenderable && globalProperties.animationFormat == AnimationFormat.GIF) {
+                WikiRendererUI.text(rightColumn, "armor_data_gif_force_crop_scale_notice", 5);
+            }
+        } else {
+            if (renderable.getProperties() instanceof CroppablePropertyBundle croppablePropertyBundle) {
+                Property<Boolean> animatedCropProperty = croppablePropertyBundle.getFFmpegCropProperty();
+                WikiRendererUI.booleanControl(rightColumn, animatedCropProperty, "crop");
+            }
 
-        rightColumn.child(UIComponents.dropdown(Sizing.content())
-                .button(Translate.gui("animation_mode_name_live_ffmpeg"), b -> globalProperties.animationHandlingMode = AnimationHandlingMode.LIVE_FFMPEG)
-                .text(Translate.gui("animation_mode_description_live_ffmpeg_1"))
-                .text(Translate.gui("animation_mode_description_live_ffmpeg_2"))
-                .button(Translate.gui("animation_mode_name_instant_file_save"), b -> globalProperties.animationHandlingMode = AnimationHandlingMode.DISK_INSTANT_SAVE)
-                .text(Translate.gui("animation_mode_description_instant_file_save_1"))
-                .text(Translate.gui("animation_mode_description_instant_file_save_2"))
-                .button(Translate.gui("animation_mode_name_save_in_memory"), b -> globalProperties.animationHandlingMode = AnimationHandlingMode.MEMORY_CACHE)
-                .text(Translate.gui("animation_mode_description_save_in_memory_1"))
-                .text(Translate.gui("animation_mode_description_save_in_memory_2"))
+            this.animationFramesField = WikiRendererUI.labelledTextField(rightColumn,
+                    String.valueOf(globalProperties.exportFrames.get()), "animation_frames", Sizing.fixed(30));
+            this.animationFramesField.setFilter(s -> WikiRenderer.currentAnimationHandler == null && s.matches("\\d*"));
+            this.animationFramesField.setResponder(s -> {
+                if (!s.isBlank()) {
+                    globalProperties.exportFrames.set(Integer.parseInt(s));
+                }
+                updateAnimationExportButtonFromFields();
+            });
 
-                .closeWhenNotHovered(false)
-                .padding(Insets.of(5))
-                .surface(Surface.blur(10, 20))
-        );
+            this.animationFramerateField = WikiRendererUI.labelledTextField(rightColumn,
+                    String.valueOf(globalProperties.exportFramerate.get()), "animation_framerate", Sizing.fixed(30));
+            this.animationFramerateField.setFilter(s -> WikiRenderer.currentAnimationHandler == null && s.matches("\\d*"));
+            this.animationFramerateField.setResponder(s -> {
+                if (!s.isBlank()) {
+                    globalProperties.exportFramerate.set(Integer.parseInt(s));
+                }
+                updateAnimationExportButtonFromFields();
+            });
 
-        this.buildFFmpegCustomPathSection();
+            WikiRendererUI.booleanControl(rightColumn, globalProperties.syncEnchantmentGlintsToExport, "sync_enchantment_glints");
+            WikiRendererUI.booleanControl(rightColumn, globalProperties.speedUpEnchantmentGlints, "speed_up_enchantment_glints");
+            globalProperties.speedUpEnchantmentGlints.futureListen(this, (p, v) -> guiRebuildScheduled = true);
+
+            if (globalProperties.speedUpEnchantmentGlints.get()) {
+                rightColumn.child(UIComponents.button(Translate.gui("enchantment_glint_preset"), button -> {
+                    int seconds = 120000 / 8000;
+                    int framerate = 20;
+                    globalProperties.exportFramerate.set(framerate);
+                    globalProperties.exportFrames.set(seconds * framerate);
+                }).margins(Insets.vertical(5)));
+            }
+
+            if (renderable instanceof AnimationTimingsProvider timingsProvider) {
+                timingsProvider.buildTimingsSection(rightColumn);
+            }
+        }
+
+        if (globalProperties.animationFormat != AnimationFormat.GIF) {
+            WikiRendererUI.conditionalBooleanControl(rightColumn, globalProperties.saveIndividualFrames, "save_individual_frames", () -> globalProperties.animationHandlingMode.savesFramesToFiles());
+            WikiRendererUI.dynamicText(rightColumn, () -> switch (globalProperties.animationHandlingMode) {
+                case DISK_INSTANT_SAVE -> Translate.gui("animation_mode_selected_instant_file_save");
+                case MEMORY_CACHE -> Translate.gui("animation_mode_selected_save_in_memory");
+                case LIVE_FFMPEG -> Translate.gui("animation_mode_selected_live_ffmpeg");
+            }).margins(Insets.of(10, 0, 5, 0));
+
+            rightColumn.child(UIComponents.dropdown(Sizing.content())
+                    .button(Translate.gui("animation_mode_name_live_ffmpeg"), b -> globalProperties.animationHandlingMode = FFmpegAnimationHandlingMode.LIVE_FFMPEG)
+                    .text(Translate.gui("animation_mode_description_live_ffmpeg_1"))
+                    .text(Translate.gui("animation_mode_description_live_ffmpeg_2"))
+                    .button(Translate.gui("animation_mode_name_instant_file_save"), b -> globalProperties.animationHandlingMode = FFmpegAnimationHandlingMode.DISK_INSTANT_SAVE)
+                    .text(Translate.gui("animation_mode_description_instant_file_save_1"))
+                    .text(Translate.gui("animation_mode_description_instant_file_save_2"))
+                    .button(Translate.gui("animation_mode_name_save_in_memory"), b -> globalProperties.animationHandlingMode = FFmpegAnimationHandlingMode.MEMORY_CACHE)
+                    .text(Translate.gui("animation_mode_description_save_in_memory_1"))
+                    .text(Translate.gui("animation_mode_description_save_in_memory_2"))
+
+                    .closeWhenNotHovered(false)
+                    .padding(Insets.of(5))
+                    .surface(Surface.blur(10, 20))
+            );
+
+            this.buildFFmpegCustomPathSection();
+        }
+    }
+
+    private void updateAnimationExportButtonFromFields() {
+        if (this.exportAnimationButton != null) {
+            boolean valid = isFieldValid(animationFramesField, GlobalProperties.get().exportFrames) && isFieldValid(animationFramerateField, GlobalProperties.get().exportFramerate);
+            this.exportAnimationButton.active = valid && WikiRenderer.currentAnimationHandler == null;
+        }
+    }
+
+    private boolean isFieldValid(EditBox text, IntProperty property) {
+        if (text == null) {
+            return false;
+        }
+
+        String value = text.getValue();
+        if (value.isBlank()) {
+            return false;
+        }
+
+        try {
+            int number = Integer.parseInt(value);
+            return number != 0 && number >= property.min() && number <= property.max();
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public void queueAnimationExport() {
+        renderable.onAnimationStart();
+
         GlobalProperties globalProperties = GlobalProperties.get();
-        int framesStoreInMemory = globalProperties.animationHandlingMode.isStoredInMemory() ? globalProperties.exportFrames.get() : 1;
+        int framesStoreInMemory = globalProperties.animationHandlingMode.isStoredInMemory() || globalProperties.animationFormat == AnimationFormat.GIF ? globalProperties.exportFrames.get() : 1;
         if (this.memoryGuard.canFitInRam(memoryGuard.estimateMemoryMBUsage(renderable, framesStoreInMemory)) || this.minecraft.hasControlDown()) {
-            this.currentAnimationExportData = globalProperties.animationHandlingMode.createAnimationHandler(this, renderable);
+            this.currentAnimationExportData = globalProperties.animationFormat == AnimationFormat.GIF
+                    ? new MemoryBasedGifskiAnimationHandler(this, renderable, GlobalProperties.get().exportFrames.get())
+                    : globalProperties.animationHandlingMode.createAnimationHandler(this, renderable);
+
             WikiRenderer.currentAnimationHandler = this.currentAnimationExportData;
 
             if (globalProperties.setAnimationFpsCap.get()) {
@@ -457,8 +579,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             }
             WikiRenderer.skipWorldRender = true;
 
-            this.exportAnimationButton.active = false;
-            this.exportAnimationButton.setMessage(Translate.gui("exporting"));
+            if (this.exportAnimationButton != null) {
+                this.exportAnimationButton.active = false;
+                this.exportAnimationButton.setMessage(Translate.gui("exporting"));
+            }
             if (this.refreshCustomFFmpegPathButton != null) {
                 this.refreshCustomFFmpegPathButton.active = false;
                 this.refreshCustomFFmpegPathButton.setMessage(Translate.gui("exporting"));
@@ -523,7 +647,7 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
             drawGuiBackground(graphics);
 
             if (this.exportAnimationButton != null) {
-                int framesStoreInMemory = globalProperties.animationHandlingMode.isStoredInMemory() ? globalProperties.exportFrames.get() : 1;
+                int framesStoreInMemory = globalProperties.animationHandlingMode.isStoredInMemory() || globalProperties.animationFormat == AnimationFormat.GIF ? globalProperties.exportFrames.get() : 1;
                 int memoryMB = memoryGuard.estimateMemoryMBUsage(renderable, framesStoreInMemory);
                 List<ClientTooltipComponent> tooltip = this.memoryGuard.getStatusTooltip(memoryMB)
                         .stream()
@@ -558,14 +682,14 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         ExportPathSpec exportPath = customFileName == null || customFileName.isBlank() ? defaultExportPath : defaultExportPath.differentFileName(customFileName);
 
         String areaRunCommandIfPossible;
-        AtomicReference<MinimapCalibratorData> data = new AtomicReference<>();
+        AtomicReference<MinimapCalibratorData> minimapCalibratorData = new AtomicReference<>();
         Consumer<MinimapCalibratorData> dataConsumer = null;
         if (renderable instanceof AreaRenderable areaRenderable
             && areaRenderable.getProperties().perPixel90DegreeRendering.get()
             && areaRenderable.getProperties().exportSideViewMinimapData.get()
             && areaRenderable.getProperties().areMinimapSettingsExportable()) {
 
-            dataConsumer = data::set;
+            dataConsumer = minimapCalibratorData::set;
             areaRunCommandIfPossible = areaRenderable.mesh.bounds.generateAreaCommand();
         } else {
             areaRunCommandIfPossible = null;
@@ -584,10 +708,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         return;
                     }
 
-                    if (this.exportCallback != null) {
-                        this.exportCallback.accept(imageFile);
-                    }
-
                     if (popupText) {
                         this.minecraft.execute(() -> this.notify(
                                 () -> Util.getPlatform().openFile(imageFile),
@@ -596,21 +716,13 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
                         ));
                     }
 
-                    if (data.get() != null) {
-                        String fileText = data.get().toFileText(imageFile.getName(), areaRunCommandIfPossible);
+                    if (minimapCalibratorData.get() != null) {
+                        String fileText = minimapCalibratorData.get().toFileText(imageFile.getName(), areaRunCommandIfPossible);
                         ExportPathSpec minimapExportPath = customFileName == null || customFileName.isBlank()
                                 ? defaultExportPath.differentFileName("area_render_minimap_data")
                                 : defaultExportPath.differentFileName(customFileName + "_area_render_minimap_data");
 
-                        FileIO.saveText(fileText, minimapExportPath).whenComplete((textFile, textThrowable) -> {
-                            if (popupText) {
-                                this.minecraft.execute(() -> this.notify(
-                                        () -> Util.getPlatform().openFile(textFile),
-                                        Translate.gui("exported_minimap_data_as"),
-                                        Component.literal(ExportPathSpec.exportRoot().relativize(textFile.toPath()).toString())
-                                ));
-                            }
-                        });
+                        FileIO.saveTextAndNotify(fileText, minimapExportPath, this, "exported_minimap_data_as");
                     }
                 });
     }
@@ -716,13 +828,11 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (!(this.renderable.getProperties() instanceof DefaultPropertyBundle properties)) {
-            return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
-        }
-
-        if (this.isInViewport(mouseX)) {
-            properties.scale.modify((int) (verticalAmount * Math.max(1, properties.scale.get() * 0.075)));
-            return true;
+        if (this.renderable.getProperties() instanceof DefaultPropertyBundle properties) {
+            if (this.isInViewport(mouseX)) {
+                properties.modifyScale((int) (verticalAmount * Math.max(1, properties.getUsedScale() * 0.075)));
+                return true;
+            }
         }
 
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
@@ -750,14 +860,6 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
         return true;
     }
 
-    public void scheduleCapture() {
-        this.captureScheduled = true;
-    }
-
-    public void setExportCallback(Consumer<File> exportCallback) {
-        this.exportCallback = exportCallback;
-    }
-
     @Override
     public boolean isPauseScreen() {
         return false;
@@ -766,7 +868,10 @@ public class RenderScreen extends BaseOwoScreen<FlowLayout> {
     @Override
     public void onClose() {
         super.onClose();
-        this.renderable.onScreenClose();
+        if (this.previouslyOpenedContainerScreen != null) {
+            this.previouslyOpenedContainerScreen.onClose();
+            this.previouslyOpenedContainerScreen = null;
+        }
     }
 
     @Override

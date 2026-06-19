@@ -42,17 +42,6 @@ public class ChunkScannedMeshBounds implements MeshBounds {
     }
 
     @Override
-    public int getSizeForSubMesh() {
-        HorizontalMiniChunk firstChunk = chunksToGrabBlocksFrom.stream().findAny().orElseThrow();
-        int chunkSize = (firstChunk.endX - firstChunk.startX) + 1;
-        // the region size needs to be an interval of the mini chunk size, otherwise certain mini chunks can be missing
-        while (chunkSize < 64) {
-            chunkSize *= 2;
-        }
-        return chunkSize;
-    }
-
-    @Override
     public AABB buildBoundingBox() {
         return new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
     }
@@ -70,9 +59,19 @@ public class ChunkScannedMeshBounds implements MeshBounds {
     @Override
     public List<Iterable<BlockPos>> buildBlockPositionsForSubMesh(BlockPos from, BlockPos to) {
         List<Iterable<BlockPos>> miniChunkBlocksForThisMesh = new ArrayList<>();
-        for (HorizontalMiniChunk chunk : this.chunksToGrabBlocksFrom) {
-            if (chunk.isWithinLargerMesh(from.getX(), from.getZ(), to.getX(), to.getZ())) {
-                miniChunkBlocksForThisMesh.add(BlockPos.betweenClosed(chunk.startX, from.getY(), chunk.startZ, chunk.endX, to.getY(), chunk.endZ));
+        for (HorizontalMiniChunk miniChunk : this.chunksToGrabBlocksFrom) {
+            int interMinX = Math.max(miniChunk.startX, from.getX());
+            int interMaxX = Math.min(miniChunk.endX, to.getX());
+            int interMinY = Math.max(this.minY, from.getY());
+            int interMaxY = Math.min(this.maxY, to.getY());
+            int interMinZ = Math.max(miniChunk.startZ, from.getZ());
+            int interMaxZ = Math.min(miniChunk.endZ, to.getZ());
+
+            if (interMinX <= interMaxX && interMinY <= interMaxY && interMinZ <= interMaxZ) {
+                miniChunkBlocksForThisMesh.add(BlockPos.betweenClosed(
+                        interMinX, interMinY, interMinZ,
+                        interMaxX, interMaxY, interMaxZ
+                ));
             }
         }
 

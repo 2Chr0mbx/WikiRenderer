@@ -2,7 +2,7 @@ package com.pigicial.wikirenderer.mixin.texture;
 
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.property.GlobalProperties;
-import com.pigicial.wikirenderer.render.export.ffmpeg.AnimationHandler;
+import com.pigicial.wikirenderer.render.export.animation.AnimationHandler;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.renderer.rendertype.TextureTransform;
 import net.minecraft.util.Util;

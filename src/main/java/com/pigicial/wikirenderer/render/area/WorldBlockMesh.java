@@ -8,25 +8,22 @@ import com.mojang.blaze3d.textures.AddressMode;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.vertex.*;
-import com.pigicial.wikirenderer.util.compatibility.ShaderCheck;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.render.OrthographicSort;
 import com.pigicial.wikirenderer.render.area.bounds.MeshBounds;
 import com.pigicial.wikirenderer.render.area.side_view.WalkabilityFilter;
-import com.pigicial.wikirenderer.util.AnimationTimingUtil;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.impl.client.indigo.renderer.IndigoRenderer;
-import net.fabricmc.fabric.impl.client.indigo.renderer.render.WorldMesherRenderContext;
+import com.pigicial.wikirenderer.util.compatibility.ShaderCheck;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.renderer.DynamicUniforms;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.state.BeaconRenderState;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -35,23 +32,15 @@ import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.chunk.SectionBuffers;
 import net.minecraft.client.renderer.state.CameraRenderState;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 // todo: not a fan of how entities are handled in AreaRenderable and blocks are here, maybe they should be merged
 public class WorldBlockMesh {
@@ -63,16 +52,17 @@ public class WorldBlockMesh {
     public final MeshBounds bounds;
     private AreaRenderable renderable;
 
-    private final List<Integer> animationCompletionTimings = new LinkedList<>();
+    public final Map<Long, MeshRenderSection> subMeshes = new ConcurrentHashMap<>();
 
-    public final List<MeshSection> builtSubMeshes = new ArrayList<>();
     private MeshState state = MeshState.NEW;
-    private CompletableFuture<Void> buildFuture = null;
-    private float buildProgress = 0;
-    private boolean buildCancelRequested = false;
-    private final Map<BlockPos, BlockEntity> blockEntities = new ConcurrentHashMap<>();
+    protected OrthographicSort orthographicTransparencySorting = null;
+    private volatile CompletableFuture<Void> sortFuture = null;
 
-    private OrthographicSort orthographicTransparencySorting = null;
+    private boolean currentlyFullyBuilding = false; // initial build or rebuilds, not automatic ones from chunk updates
+    private float fullBuildProgress = 0;
+    protected volatile boolean buildingCancelled = false;
+    private boolean isAutomaticUpdateScheduled = false;
+
     private float lastUsedRotation;
     private double lastUsedSlant;
 
@@ -92,10 +82,25 @@ public class WorldBlockMesh {
         this.renderable = renderable;
     }
 
+    public MeshState getMeshState() {
+        return this.state;
+    }
+
+    public float getBuildProgress() {
+        return this.fullBuildProgress;
+    }
+
+    public boolean canRebuild() {
+        return !currentlyFullyBuilding;
+    }
+
     public void drawBlocks(PoseStack matrices, Runnable preTranslucencyTask) {
         if (!this.getMeshState().canRender) {
             throw new IllegalStateException("World mesh not prepared!");
         }
+
+        this.updateBuildingStatus();
+        this.updateOutdatedMeshSections();
 
         if (terrainSampler == null) {
             Options options = Minecraft.getInstance().options;
@@ -115,68 +120,78 @@ public class WorldBlockMesh {
                 // anything smaller than 15 you probably wont see transparency issues (i.e. rendering the skyblock hub)
                 this.lastUsedRotation = currentRotation;
                 this.lastUsedSlant = currentSlant;
-
-                for (MeshSection meshSection : builtSubMeshes) {
-                    meshSection.reSortTransparencyData(this.orthographicTransparencySorting);
-                }
+                scheduleReSort();
             }
         }
 
-        List<ChunkSectionsToRender> preparedSections = new ArrayList<>();
-        for (MeshSection meshSection : builtSubMeshes) {
-            preparedSections.add(renderBlockLayers(meshSection.getBuffers(), matrices.last().pose()));
-        }
+        ChunkSectionsToRender sections = renderBlockLayers(matrices.last().pose());
 
         for (ChunkSectionLayerGroup sectionLayer : new ChunkSectionLayerGroup[]{ChunkSectionLayerGroup.OPAQUE, ChunkSectionLayerGroup.TRANSLUCENT, ChunkSectionLayerGroup.TRIPWIRE}) {
             if (sectionLayer == ChunkSectionLayerGroup.TRANSLUCENT) {
                 preTranslucencyTask.run();
             }
             overrideTerrainTransparencyRenderPipelines = sectionLayer == ChunkSectionLayerGroup.OPAQUE;
-            for (ChunkSectionsToRender sections : preparedSections) {
-                sections.renderGroup(sectionLayer, terrainSampler);
-            }
+            sections.renderGroup(sectionLayer, terrainSampler);
         }
     }
 
-    private ChunkSectionsToRender renderBlockLayers(Map<ChunkSectionLayer, SectionBuffers> bufferStorage, Matrix4fc posMatrix) {
+    private ChunkSectionsToRender renderBlockLayers(Matrix4fc posMatrix) {
         EnumMap<ChunkSectionLayer, List<RenderPass.Draw<GpuBufferSlice[]>>> enumMap = new EnumMap<>(ChunkSectionLayer.class);
-        int maxIndicesRequired = 0;
-
         for (ChunkSectionLayer layer : ChunkSectionLayer.values()) {
             enumMap.put(layer, new ArrayList<>());
         }
 
+        List<MeshRenderSection> sortedSections = new ArrayList<>(subMeshes.values());
+
+        if (orthographicTransparencySorting instanceof OrthographicSort orthoSort) {
+            sortedSections.sort(Comparator.comparingDouble(s -> {
+                BlockPos from = s.getFrom();
+                BlockPos to = s.getTo();
+                float cx = (from.getX() + to.getX()) / 2f;
+                float cy = (from.getY() + to.getY()) / 2f;
+                float cz = (from.getZ() + to.getZ()) / 2f;
+                return orthoSort.projectDepth(cx, cy, cz);
+            }));
+        }
+
         List<DynamicUniforms.ChunkSectionInfo> list = new ArrayList<>();
-        GpuTextureView gpuTextureView = Minecraft.getInstance().getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS).getTextureView();
+        GpuTextureView gpuTextureView = Minecraft.getInstance().getTextureManager()
+                .getTexture(TextureAtlas.LOCATION_BLOCKS).getTextureView();
         int width = gpuTextureView.getWidth(0);
         int height = gpuTextureView.getHeight(0);
+        int maxIndicesRequired = 0;
 
-        int infoIndex = -1;
+        for (MeshRenderSection meshSection : sortedSections) {
+            Map<ChunkSectionLayer, SectionBuffers> bufferStorage = meshSection.getBuffers();
+            int infoIndex = -1;
 
-        for (ChunkSectionLayer layer : ChunkSectionLayer.values()) {
-            SectionBuffers buffers = bufferStorage.get(layer);
-            if (buffers != null) {
-                if (infoIndex == -1) {
-                    infoIndex = 0;
-                    list.add(new DynamicUniforms.ChunkSectionInfo(new Matrix4f(posMatrix), 0, 0, 0, 1.0F, width, height));
-                }
-
-                GpuBuffer gpuBuffer = null;
-                VertexFormat.IndexType indexType = null;
-                if (buffers.getIndexBuffer() == null) {
-                    if (buffers.getIndexCount() > maxIndicesRequired) {
-                        maxIndicesRequired = buffers.getIndexCount();
+            for (ChunkSectionLayer layer : ChunkSectionLayer.values()) {
+                SectionBuffers buffers = bufferStorage.get(layer);
+                if (buffers != null) {
+                    if (infoIndex == -1) {
+                        infoIndex = list.size();
+                        list.add(new DynamicUniforms.ChunkSectionInfo(
+                                new Matrix4f(posMatrix), 0, 0, 0, 1.0F, width, height));
                     }
-                } else {
-                    gpuBuffer = buffers.getIndexBuffer();
-                    indexType = buffers.getIndexType();
-                }
 
-                int sectionIndex = infoIndex;
-                enumMap.put(layer, List.of(new RenderPass.Draw<>(0, buffers.getVertexBuffer(), gpuBuffer, indexType, 0, buffers.getIndexCount(),
-                        (transforms, uniformUploader) -> uniformUploader.upload("ChunkSection", transforms[sectionIndex]))));
-            } else {
-                enumMap.put(layer, List.of());
+                    GpuBuffer gpuBuffer = null;
+                    VertexFormat.IndexType indexType = null;
+                    if (buffers.getIndexBuffer() == null) {
+                        if (buffers.getIndexCount() > maxIndicesRequired) {
+                            maxIndicesRequired = buffers.getIndexCount();
+                        }
+                    } else {
+                        gpuBuffer = buffers.getIndexBuffer();
+                        indexType = buffers.getIndexType();
+                    }
+
+                    int sectionIndex = infoIndex;
+                    enumMap.get(layer).add(new RenderPass.Draw<>(
+                            0, buffers.getVertexBuffer(), gpuBuffer, indexType, 0,
+                            buffers.getIndexCount(),
+                            (transforms, uniformUploader) ->
+                                    uniformUploader.upload("ChunkSection", transforms[sectionIndex])));
+                }
             }
         }
 
@@ -186,107 +201,186 @@ public class WorldBlockMesh {
     }
 
     public void drawBlockEntities(PoseStack standardStack, SubmitNodeStorage nodeStorage, CameraRenderState cameraRenderState, float tickDelta) {
+        BlockPos minCorner = bounds.getMinCorner();
+        standardStack.pushPose();
+        standardStack.translate(-minCorner.getX(), -minCorner.getY(), -minCorner.getZ());
+
         BlockEntityRenderDispatcher blockEntityDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
-        this.blockEntities.forEach((blockPos, entity) -> {
-            BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
-            if (state instanceof BeaconRenderState && AreaPropertyBundle.INSTANCE.hideBeaconBeams.get()) {
-                return;
-            }
+        for (MeshRenderSection renderSection : this.subMeshes.values()) {
+            renderSection.blockEntities.forEach((blockPos, entity) -> {
+                BlockEntityRenderState state = blockEntityDispatcher.tryExtractRenderState(entity, tickDelta, null);
+                if (state instanceof BeaconRenderState && AreaPropertyBundle.INSTANCE.hideBeaconBeams.get()) {
+                    return;
+                }
 
-            standardStack.pushPose();
-            standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+                standardStack.pushPose();
+                standardStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
-            if (state != null) {
-                blockEntityDispatcher.submit(state, standardStack, nodeStorage, cameraRenderState);
-            }
+                if (state != null) {
+                    blockEntityDispatcher.submit(state, standardStack, nodeStorage, cameraRenderState);
+                }
 
-            standardStack.popPose();
-        });
+                standardStack.popPose();
+            });
+        }
+
+        standardStack.popPose();
         renderable.drawSubmittedRenderFeatures();
     }
 
-    public MeshState getMeshState() {
-        return this.state;
-    }
-
-    public float getBuildProgress() {
-        return this.buildProgress;
-    }
-
-    public boolean canRebuild() {
-        return this.buildFuture == null;
-    }
-
     public synchronized void scheduleRebuild(boolean async) {
-        if (this.buildFuture != null) return;
+        if (currentlyFullyBuilding) return;
 
-        this.buildProgress = 0;
+        this.fullBuildProgress = 0;
         this.state = this.state != MeshState.NEW
                 ? MeshState.REBUILDING
                 : MeshState.BUILDING;
 
-        this.blockEntities.clear();
-        this.builtSubMeshes.forEach(MeshSection::close);
-        this.builtSubMeshes.clear();
+        this.subMeshes.values().forEach(section -> {
+            section.close();
+            section.markBuildNotAttempted();
+        });
+        this.subMeshes.clear();
 
         this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
+
+        this.currentlyFullyBuilding = true;
         if (ShaderCheck.isUsingShaders() || !async) {
-            this.buildFuture = CompletableFuture.completedFuture(null);
-            this.buildMesh();
+            this.compileMesh();
         } else {
-            this.buildFuture = CompletableFuture.runAsync(this::buildMesh);
+            CompletableFuture.runAsync(this::compileMesh);
         }
     }
 
     public synchronized void stopBuilding() {
-        this.buildCancelRequested = true;
+        this.buildingCancelled = true;
         this.state = MeshState.CANCELLED;
     }
 
-    private synchronized void buildMesh() {
-        Minecraft client = Minecraft.getInstance();
+    public void setDirty(int sectionX, int sectionY, int sectionZ, boolean force) {
+        long sectionIndex = MeshRenderSection.getSectionIndex(sectionX, sectionY, sectionZ);
+        MeshRenderSection renderSection = this.subMeshes.get(sectionIndex);
 
-        HashMap<BlockPos, BlockEntity> blockEntities = new HashMap<>();
+        if (renderSection == null && force) {
+            renderSection = createRenderSection(sectionX, sectionY, sectionZ);
+            this.subMeshes.put(sectionIndex, renderSection);
+        }
 
-        // large islands like the crimson isle hit a verticies limit, therefore we split into smaller (but still fairly large) meshes
-        record SubMesh(double distance, List<Iterable<BlockPos>> positions) { }
+        if (renderSection != null) {
+            renderSection.setDirty(force);
+        }
+    }
 
-        List<SubMesh> unsortedSubMeshes = new ArrayList<>();
-        int scanningAreas = 0;
-        int regionSize = this.bounds.getSizeForSubMesh();
+    private void updateBuildingStatus() {
+        int amountBuilt = 0;
+        for (MeshRenderSection sections : this.subMeshes.values()) {
+            if (sections.hasBuildBeenAttempted()) amountBuilt++;
+        }
+
+        if (amountBuilt == this.subMeshes.size()) {
+            currentlyFullyBuilding = false;
+            if (buildingCancelled) {
+                state = MeshState.CANCELLED;
+                buildingCancelled = false;
+                return;
+            }
+
+            if (state == MeshState.CANCELLED) {
+                return;
+            }
+
+            buildingCancelled = false;
+            state = MeshState.READY;
+        }
+
+        this.fullBuildProgress = (float) amountBuilt / this.subMeshes.size();
+    }
+
+    private void updateOutdatedMeshSections() {
+        if (isAutomaticUpdateScheduled || currentlyFullyBuilding) return;
+
+        boolean allowAutoUpdate = !renderable.getProperties().freezeBlocks.get();
+        boolean hasDirty = subMeshes.values().stream().anyMatch(section -> section.isDirty() && (allowAutoUpdate || section.isForceUpdate()));
+        if (!hasDirty) return;
+
+        isAutomaticUpdateScheduled = true;
+        if (ShaderCheck.isUsingShaders()) {
+            this.compileOutdatedMeshSections();
+            isAutomaticUpdateScheduled = false;
+        } else {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    this.compileOutdatedMeshSections();
+                } finally {
+                    isAutomaticUpdateScheduled = false;
+                }
+            });
+        }
+    }
+
+    private void compileOutdatedMeshSections() {
+        if (this.currentlyFullyBuilding) return;
+        boolean allowAutoUpdate = !renderable.getProperties().freezeBlocks.get();
+
+        for (MeshRenderSection section : this.subMeshes.values()) {
+            if (section.isDirty() && (allowAutoUpdate || section.isForceUpdate())) {
+                section.buildAndSubmit(this);
+            }
+        }
+    }
+
+    // Based on SectionCompiler#compile and then SectionRenderDispatcher.RenderSection.RebuildTask#doTask (which calls compile)
+    private void compileMesh() {
+        if (buildingCancelled) {
+            currentlyFullyBuilding = false;
+            return;
+        }
+        currentlyFullyBuilding = true;
+
+        List<MeshRenderSection> unsortedSubMeshes = new ArrayList<>();
+
         BlockPos minCorner = this.bounds.getMinCorner();
         BlockPos maxCorner = this.bounds.getMaxCorner();
-        int middleX = maxCorner.getX() - (maxCorner.getX() - minCorner.getX()) / 2;
-        int middleZ = maxCorner.getZ() - (maxCorner.getZ() - minCorner.getZ()) / 2;
 
-        int currentScanIndex = 0;
-        for (int x = minCorner.getX(); x <= maxCorner.getX(); x += regionSize) {
-            for (int z = minCorner.getZ(); z <= maxCorner.getZ(); z += regionSize) {
-                BlockPos subFrom = new BlockPos(x, minCorner.getY(), z);
-                BlockPos subTo = new BlockPos(
-                        Math.min(x + regionSize - 1, maxCorner.getX()),
-                        maxCorner.getY(),
-                        Math.min(z + regionSize - 1, maxCorner.getZ())
-                );
+        int minSectionX = MeshRenderSection.getSection(minCorner.getX());
+        int minSectionY = MeshRenderSection.getSection(minCorner.getY());
+        int minSectionZ = MeshRenderSection.getSection(minCorner.getZ());
+        int maxSectionX = MeshRenderSection.getSection(maxCorner.getX());
+        int maxSectionY = MeshRenderSection.getSection(maxCorner.getY());
+        int maxSectionZ = MeshRenderSection.getSection(maxCorner.getZ());
 
-                int subMiddleX = subTo.getX() - (subTo.getX() - subFrom.getX()) / 2;
-                int subMiddleZ = subTo.getZ() - (subTo.getZ() - subFrom.getZ()) / 2;
-                double distance = Math.pow(middleX - subMiddleX, 2) + Math.pow(middleZ - subMiddleZ, 2);
+        for (int sectionX = minSectionX; sectionX <= maxSectionX; sectionX += 1) {
+            for (int sectionY = minSectionY; sectionY <= maxSectionY; sectionY += 1) {
+                for (int sectionZ = minSectionZ; sectionZ <= maxSectionZ; sectionZ += 1) {
+                    long sectionIndex = MeshRenderSection.getSectionIndex(sectionX, sectionY, sectionZ);
+                    int finalSectionX = sectionX;
+                    int finalSectionY = sectionY;
+                    int finalSectionZ = sectionZ;
 
-                List<Iterable<BlockPos>> positions = bounds.buildBlockPositionsForSubMesh(subFrom, subTo);
-                scanningAreas += positions.size();
-                unsortedSubMeshes.add(new SubMesh(distance, positions));
+                    MeshRenderSection section = this.subMeshes.computeIfAbsent(sectionIndex, l -> createRenderSection(finalSectionX, finalSectionY, finalSectionZ));
+                    unsortedSubMeshes.add(section);
+                }
             }
         }
 
-        List<SubMesh> subMeshes = unsortedSubMeshes.stream().sorted(Comparator.comparing(mesh -> mesh.distance)).toList();
+        List<MeshRenderSection> subMeshes = unsortedSubMeshes.stream().sorted(Comparator.comparing(MeshRenderSection::getDistanceFromCenter)).toList();
 
-        if (buildCancelRequested) {
-            this.buildFuture = null;
-            this.buildCancelRequested = false;
+        if (buildingCancelled) {
+            currentlyFullyBuilding = false;
             return;
         }
 
+        this.refreshWalkabilityFilter();
+
+        ModelBlockRenderer.enableCaching();
+        for (MeshRenderSection renderSection : subMeshes) {
+            renderSection.buildAndSubmit(this);
+        }
+        ModelBlockRenderer.clearCache();
+    }
+
+    protected void refreshWalkabilityFilter() {
+        this.world.setWalkabilityFilter(null);
         WalkabilityFilter walkabilityFilter = null;
         AreaPropertyBundle properties = AreaPropertyBundle.INSTANCE;
         if (properties.perPixel90DegreeRendering.get()) {
@@ -296,130 +390,63 @@ public class WorldBlockMesh {
             }
         }
         this.world.setWalkabilityFilter(walkabilityFilter);
-
-        AtomicInteger subMeshesUploaded = new AtomicInteger();
-        AtomicInteger subMeshesToBeUploaded = new AtomicInteger();
-        AtomicBoolean cancelled = new AtomicBoolean(false);
-
-        this.animationCompletionTimings.clear();
-
-        Object lock = new Object();
-        for (SubMesh data : subMeshes) {
-
-            SectionBufferBuilderPack bufferBuilderPack = new SectionBufferBuilderPack();
-            BlockRenderDispatcher blockRenderDispatcher = client.getBlockRenderer();
-            PoseStack poseStack = new PoseStack();
-            HashMap<ChunkSectionLayer, BufferBuilder> builderStorage = new HashMap<>();
-
-            WorldMesherRenderContext renderContext = Renderer.get() instanceof IndigoRenderer
-                    ? new WorldMesherRenderContext(this.world, layer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, layer))
-                    : null;
-
-            for (Iterable<BlockPos> positions : data.positions) {
-                if (cancelled.get()) {
-                    bufferBuilderPack.close();
-                    return;
-                }
-
-                currentScanIndex++;
-                this.buildProgress = (float) currentScanIndex / (float) scanningAreas;
-                for (BlockPos pos : positions) {
-
-                    BlockState state = world.getBlockState(pos);
-                    if (state.isAir()) continue;
-                    if (state.is(Blocks.LIGHT)) continue; // axiom fix
-
-                    BlockPos renderPos = pos.subtract(minCorner);
-                    if (world.getBlockEntity(pos) != null) {
-                        blockEntities.put(renderPos, world.getBlockEntity(pos));
-                    }
-
-                    if (!world.getFluidState(pos).isEmpty()) {
-                        FluidState fluidState = world.getFluidState(pos);
-                        ChunkSectionLayer fluidLayer = ItemBlockRenderTypes.getRenderLayer(fluidState);
-
-                        poseStack.pushPose();
-                        poseStack.translate(-(pos.getX() & 15), -(pos.getY() & 15), -(pos.getZ() & 15));
-                        poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
-                        blockRenderDispatcher.renderLiquid(pos, world, new FluidVertexConsumer(this.getOrCreateBuilder(bufferBuilderPack, builderStorage, fluidLayer), poseStack.last().pose(), poseStack.last().normal()), state, fluidState);
-                        poseStack.popPose();
-                    }
-
-                    if (state.getRenderShape() == RenderShape.MODEL) {
-                        poseStack.pushPose();
-                        poseStack.translate(renderPos.getX(), renderPos.getY(), renderPos.getZ());
-
-                        BlockStateModel model = blockRenderDispatcher.getBlockModel(state);
-                        long randomSeed = state.getSeed(pos);
-                        AnimationTimingUtil.scanTicksToFullyAnimateBlock(model, animationCompletionTimings, randomSeed);
-
-                        if (renderContext != null) {
-                            renderContext.tessellateBlock(state, pos, model, poseStack);
-                        } else {
-                            boolean cull = true; // for later searching
-                            blockRenderDispatcher.getModelRenderer().render(this.world, model, state, pos, poseStack, blockLayer -> this.getOrCreateBuilder(bufferBuilderPack, builderStorage, blockLayer), cull, randomSeed, OverlayTexture.NO_OVERLAY);
-                        }
-
-                        poseStack.popPose();
-                    }
-                }
-            }
-
-            if (cancelled.get()) {
-                bufferBuilderPack.close();
-                return;
-            }
-
-            subMeshesToBeUploaded.incrementAndGet();
-            Minecraft.getInstance().execute((() -> {
-                subMeshesToBeUploaded.decrementAndGet();
-
-                if (cancelled.get() || buildCancelRequested) {
-                    cancelled.set(true);
-                    bufferBuilderPack.close();
-                    if (buildCancelRequested && subMeshesToBeUploaded.get() == 0) {
-                        this.buildFuture = null;
-                        this.buildCancelRequested = false;
-                    }
-                    return;
-                }
-
-                Map<ChunkSectionLayer, MeshData> builtMeshes = new HashMap<>();
-
-                builderStorage.forEach((layer, bufferBuilder) -> {
-                    MeshData builtData = bufferBuilder.build();
-                    if (builtData != null) {
-                        builtMeshes.put(layer, builtData);
-                    }
-                });
-
-                MeshSection meshSection = new MeshSection(bufferBuilderPack, builtMeshes, this.orthographicTransparencySorting);
-                meshSection.upload();
-                this.builtSubMeshes.add(meshSection);
-
-                synchronized (lock) {
-                    subMeshesUploaded.getAndIncrement();
-                    if (subMeshesUploaded.get() == subMeshes.size()) {
-                        this.buildFuture = null;
-                        this.state = MeshState.READY;
-
-                    }
-                }
-            }));
-
-        }
-
-        this.world.setWalkabilityFilter(null);
-        this.blockEntities.putAll(blockEntities);
     }
 
-    private VertexConsumer getOrCreateBuilder(SectionBufferBuilderPack bufferBuilderPack, Map<ChunkSectionLayer, BufferBuilder> builderStorage, ChunkSectionLayer layer) {
-        return builderStorage.computeIfAbsent(layer, renderLayer ->
-                new BufferBuilder(bufferBuilderPack.buffer(layer), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK));
+    private MeshRenderSection createRenderSection(int sectionX, int sectionY, int sectionZ) {
+        BlockPos minCorner = this.bounds.getMinCorner();
+        BlockPos maxCorner = this.bounds.getMaxCorner();
+        int middleX = maxCorner.getX() - (maxCorner.getX() - minCorner.getX()) / 2;
+        int middleZ = maxCorner.getZ() - (maxCorner.getZ() - minCorner.getZ()) / 2;
+
+        MeshRenderSection section = new MeshRenderSection(sectionX, sectionY, sectionZ);
+
+        BlockPos from = section.getFrom();
+        BlockPos to = section.getTo();
+
+        int subMiddleX = to.getX() - (to.getX() - from.getX()) / 2;
+        int subMiddleZ = to.getZ() - (to.getZ() - from.getZ()) / 2;
+        double distance = Math.pow(middleX - subMiddleX, 2) + Math.pow(middleZ - subMiddleZ, 2);
+
+        section.setDistanceFromCenter(distance);
+
+        return section;
+    }
+
+    private synchronized void scheduleReSort() {
+        if (this.sortFuture != null && !this.sortFuture.isDone()) return;
+
+        this.orthographicTransparencySorting = WikiRenderer.orthographicSorting;
+        if (ShaderCheck.isUsingShaders()) {
+            this.sortFuture = CompletableFuture.completedFuture(null);
+            this.reSortMeshSections();
+            this.sortFuture = null;
+        } else {
+            this.sortFuture = CompletableFuture.runAsync(this::reSortMeshSections).whenComplete((v, t) -> this.sortFuture = null);
+        }
+    }
+
+    // Based on SectionRenderDispatcher.RenderSection.ResortTransparencyTask#doTask
+    private void reSortMeshSections() {
+        for (MeshRenderSection section : subMeshes.values()) {
+            section.reSortTransparencyAndSubmit(this);
+        }
+    }
+
+    protected BufferBuilder getOrBeginLayer(Map<ChunkSectionLayer, BufferBuilder> startedLayers, SectionBufferBuilderPack buffers, ChunkSectionLayer layer) {
+        return startedLayers.computeIfAbsent(layer, l -> new BufferBuilder(buffers.buffer(layer), VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK));
     }
 
     public Optional<List<Integer>> getAnimationCompletionTimings() {
-        return animationCompletionTimings.isEmpty() ? Optional.empty() : Optional.of(animationCompletionTimings);
+        List<Integer> timings = new ArrayList<>();
+        for (MeshRenderSection section : subMeshes.values()) {
+            timings.addAll(section.animationCompletionTimings);
+        }
+        return timings.isEmpty() ? Optional.empty() : Optional.of(timings);
+    }
+
+    public void dispose() {
+        subMeshes.values().forEach(MeshRenderSection::close);
+        subMeshes.clear();
     }
 
     public enum MeshState {

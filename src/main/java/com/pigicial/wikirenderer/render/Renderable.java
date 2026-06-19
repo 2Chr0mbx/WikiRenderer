@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.pigicial.wikirenderer.property.CroppablePropertyBundle;
 import com.pigicial.wikirenderer.property.PropertyBundle;
 import com.pigicial.wikirenderer.render.export.ExportPathSpec;
+import com.pigicial.wikirenderer.render.particle.ParticleDisplayCondition;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -49,8 +50,6 @@ public interface Renderable<P extends PropertyBundle> {
 
     default void dispose() {}
 
-    default void onScreenClose() {}
-
     default int getExportResolution() {
         return getProperties().getExportResolution(this);
     }
@@ -78,4 +77,6 @@ public interface Renderable<P extends PropertyBundle> {
     default int optionallyOverrideExportHeight(int height) {
         return height;
     }
+
+    default void onAnimationStart() {}
 }

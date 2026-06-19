@@ -20,9 +20,6 @@
   "entrypoints": {
     "client": [
       "com.pigicial.wikirenderer.WikiRenderer"
-    ],
-    "exo": [
-      "com.pigicial.wikirenderer.util.WikiRendererChannel"
     ]
   },
   "mixins": [

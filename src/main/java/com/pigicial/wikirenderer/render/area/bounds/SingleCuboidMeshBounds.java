@@ -1,5 +1,7 @@
 package com.pigicial.wikirenderer.render.area.bounds;
 
+import com.pigicial.wikirenderer.render.area.MeshRenderSection;
+import com.pigicial.wikirenderer.render.area.WorldBlockMesh;
 import com.pigicial.wikirenderer.render.area.side_view.ExpansionSide;
 import com.pigicial.wikirenderer.render.area.side_view.MeshSideRotation;
 import net.minecraft.core.BlockPos;
@@ -25,11 +27,6 @@ public class SingleCuboidMeshBounds implements ExpandableMeshBounds {
     }
 
     @Override
-    public int getSizeForSubMesh() {
-        return 64;
-    }
-
-    @Override
     public AABB buildBoundingBox() {
         return AABB.encapsulatingFullBlocks(min, max);
     }
@@ -50,8 +47,12 @@ public class SingleCuboidMeshBounds implements ExpandableMeshBounds {
     }
 
     @Override
-    public void move(ExpansionSide side, MeshSideRotation currentRotation, int multiplier) {
+    public void move(WorldBlockMesh mesh, ExpansionSide side, MeshSideRotation currentRotation, int multiplier) {
+        BlockPos oldMin = this.min;
+        BlockPos oldMax = this.max;
+
         this.modifyBounds(side.getDirection(currentRotation), multiplier);
+        this.dirtyDifference(mesh, oldMin, oldMax, this.min, this.max, multiplier >= 1);
     }
 
     private void modifyBounds(Vec3i worldFacing, int multiplier) {
@@ -77,9 +78,52 @@ public class SingleCuboidMeshBounds implements ExpandableMeshBounds {
         int minY = Math.min(min.getY(), max.getY());
         int maxY = Math.max(min.getY(), max.getY());
         int minZ = Math.min(min.getZ(), max.getZ());
-        int maxZ = Math.max(min.getZ(), max.getZ());
+        int maxZ = Math.max(min.getZ(), max.getZ()); // /wikirender area pos -4 -4 -1 16 36 17
 
         this.min = new BlockPos(minX, minY, minZ);
         this.max = new BlockPos(maxX, maxY, maxZ);
+    }
+
+    // todo: spamming expand can cause some chunks to fail to update
+    private void dirtyDifference(WorldBlockMesh mesh, BlockPos oldMin, BlockPos oldMax, BlockPos newMin, BlockPos newMax, boolean increasing) {
+        AABB oldBox = AABB.encapsulatingFullBlocks(oldMin, oldMax);
+        AABB newBox = AABB.encapsulatingFullBlocks(newMin, newMax);
+
+        AABB dirtyZone = increasing ? getBoxDelta(newBox, oldBox) : getBoxDelta(oldBox, newBox);
+        if (dirtyZone == null) return;
+
+        int minSX = MeshRenderSection.getSection((int) Math.floor(dirtyZone.minX));
+        int minSY = MeshRenderSection.getSection((int) Math.floor(dirtyZone.minY));
+        int minSZ = MeshRenderSection.getSection((int) Math.floor(dirtyZone.minZ));
+        int maxSX = MeshRenderSection.getSection((int) Math.ceil(dirtyZone.maxX) - 1);
+        int maxSY = MeshRenderSection.getSection((int) Math.ceil(dirtyZone.maxY) - 1);
+        int maxSZ = MeshRenderSection.getSection((int) Math.ceil(dirtyZone.maxZ) - 1);
+
+        for (int x = minSX; x <= maxSX; x++) {
+            for (int y = minSY; y <= maxSY; y++) {
+                for (int z = minSZ; z <= maxSZ; z++) {
+                    mesh.setDirty(x, y, z, true);
+                }
+            }
+        }
+    }
+
+    private AABB getBoxDelta(AABB big, AABB small) {
+        double minY = Math.max(big.minY, small.minY);
+        double maxY = Math.min(big.maxY, small.maxY);
+
+        if (big.minX < small.minX) {
+            return new AABB(big.minX, minY, big.minZ, small.minX, maxY, big.maxZ);
+        }
+        if (big.maxX > small.maxX) {
+            return new AABB(small.maxX, minY, big.minZ, big.maxX, maxY, big.maxZ);
+        }
+        if (big.minZ < small.minZ) {
+            return new AABB(big.minX, minY, big.minZ, big.maxX, maxY, small.minZ);
+        }
+        if (big.maxZ > small.maxZ) {
+            return new AABB(big.minX, minY, small.maxZ, big.maxX, maxY, big.maxZ);
+        }
+        return null;
     }
 }

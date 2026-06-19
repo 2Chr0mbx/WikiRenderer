@@ -5,6 +5,8 @@ import com.pigicial.wikirenderer.property.DoubleProperty;
 import com.pigicial.wikirenderer.property.IntProperty;
 import com.pigicial.wikirenderer.property.Property;
 import com.pigicial.wikirenderer.util.Translate;
+import io.wispforest.owo.ui.base.BaseUIComponent;
+import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.component.UIComponents;
@@ -14,13 +16,31 @@ import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.core.UIComponent;
 import io.wispforest.owo.ui.core.VerticalAlignment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.FormattedCharSequence;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class WikiRendererUI {
+
+    private static void addTooltipIfPossible(UIComponent component, String key) {
+        MutableComponent tooltip = Translate.guiIfExists(key + ".tooltip");
+        if (tooltip != null) {
+            List<ClientTooltipComponent> components = new ArrayList<>();
+            for (FormattedCharSequence line : Minecraft.getInstance().font.split(tooltip, 300)) {
+                components.add(ClientTooltipComponent.create(line));
+            }
+            component.tooltip(components);
+        }
+    }
 
     public static EditBox labelledTextField(FlowLayout container, String content, String key, Sizing sizing) {
         try (RowBuilder builder = rowBuilder(container)) {
@@ -28,7 +48,11 @@ public class WikiRendererUI {
             textBox.setMaxLength(100); // allow more characters
             textBox.text(content); // fixes if it truncates early
             builder.row.child(textBox);
-            builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
+
+            BaseUIComponent label = UIComponents.label(Translate.gui(key)).margins(Insets.left(8));
+            addTooltipIfPossible(label, key);
+            builder.row.child(label);
+
             return textBox;
         }
     }
@@ -36,9 +60,11 @@ public class WikiRendererUI {
     public static void labelledTextField(RenderScreen screen, FlowLayout container, IntProperty property, String key, Sizing sizing) {
         try (RowBuilder builder = rowBuilder(container)) {
             TextBoxComponent textBox = new IntegerPropertyTextFieldComponent(screen, sizing, property, false);
-
             builder.row.child(textBox);
-            builder.row.child(UIComponents.label(Translate.gui(key)).margins(Insets.left(8)));
+
+            BaseUIComponent label = new AutoResizingLabelComponent(Translate.gui(key), textBox.width() - 10).margins(Insets.left(8));
+            addTooltipIfPossible(label, key);
+            builder.row.child(label);
         }
     }
 
@@ -58,10 +84,14 @@ public class WikiRendererUI {
         container.child(new DynamicComponent(row, displayCondition));
     }
 
-    public static void intPercentageControl(RenderScreen screen, FlowLayout container, IntProperty property, String name) {
+    public static void intPercentageControl(RenderScreen screen, FlowLayout container, IntProperty property, String key) {
         try (RowBuilder builder = rowBuilder(container)) {
             builder.row.child(new IntegerPropertyTextFieldComponent(screen, Sizing.fixed(45), property, true));
-            builder.row.child(new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(name), property).margins(Insets.horizontal(5)));
+
+            UIComponent slider = new PropertySliderComponent(screen, Sizing.expand(100), Translate.gui(key), property).margins(Insets.horizontal(5));
+            addTooltipIfPossible(slider, key);
+
+            builder.row.child(slider);
             builder.row.child(new ResetPropertyButton(property).margins(Insets.right(5)));
         }
     }
@@ -75,21 +105,32 @@ public class WikiRendererUI {
     }
 
     public static void booleanControl(FlowLayout container, Property<Boolean> property, String key, Object... args) {
-        container.child(new PropertyCheckboxComponent(Translate.gui(key, args), property).margins(Insets.top(5)));
+        UIComponent checkbox = new PropertyCheckboxComponent(Translate.gui(key, args), property).margins(Insets.of(2, 1, 0, 0));
+        addTooltipIfPossible(checkbox, key);
+        container.child(checkbox);
     }
 
     public static void conditionalBooleanControl(FlowLayout container, Property<Boolean> property, String key, Supplier<Boolean> displayCondition) {
-        UIComponent checkbox = new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.top(5));
+        UIComponent checkbox = new PropertyCheckboxComponent(Translate.gui(key), property).margins(Insets.of(2, 1, 0, 0));
+        addTooltipIfPossible(checkbox, key);
         container.child(new DynamicComponent(checkbox, displayCondition));
+    }
+
+    public static ButtonComponent button(Component message, Consumer<ButtonComponent> onPress) {
+        ButtonComponent button = UIComponents.button(message, onPress);
+        button.margins(Insets.of(2, 3, 0, 0));
+        return button;
     }
 
     public static LabelComponent text(FlowLayout container, String key, boolean extraVerticalMargins) {
         LabelComponent label = new AutoResizingLabelComponent(Translate.gui(key));
         label.shadow(true);
         if (extraVerticalMargins) {
-            label.margins(Insets.top(20));
+            label.margins(Insets.top(15));
         }
         label.margins(label.margins().get().withBottom(5));
+
+        addTooltipIfPossible(label, key);
 
         container.child(label);
         return label;
@@ -117,10 +158,18 @@ public class WikiRendererUI {
 
     public static DynamicLabelComponent dynamicText(FlowLayout container, Supplier<Component> content) {
         DynamicLabelComponent label = new DynamicLabelComponent(content).shadow(false);
-        label.margins(Insets.bottom(5));
+        label.margins(Insets.of(3, 5, 0, 0));
 
         container.child(label);
         return label;
+    }
+
+    public static void dynamicConditionalText(FlowLayout container, Supplier<Boolean> predicate, Supplier<Component> content) {
+        DynamicLabelComponent label = new DynamicLabelComponent(content);
+        label.shadow(false);
+        label.margins(Insets.vertical(5));
+
+        container.child(new DynamicComponent(label, predicate));
     }
 
     public static void drawExportProgressBar(GuiGraphics context, int x, int y, int drawWidth, int barWidth, double speed) {
@@ -140,13 +189,13 @@ public class WikiRendererUI {
 
     public static FlowLayout row() {
         FlowLayout layout = UIContainers.horizontalFlow(Sizing.fill(100), Sizing.content());
-        layout.margins(Insets.of(5, 5, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
+        layout.margins(Insets.of(3, 3, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
         return layout;
     }
 
     public static RowBuilder autoNewLineRow(FlowLayout container) {
         FlowLayout layout = UIContainers.ltrTextFlow(Sizing.fill(100), Sizing.content());
-        layout.margins(Insets.of(5, 5, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
+        layout.margins(Insets.of(3, 3, 0, 0)).verticalAlignment(VerticalAlignment.CENTER);
         return new RowBuilder(layout, container);
     }
 

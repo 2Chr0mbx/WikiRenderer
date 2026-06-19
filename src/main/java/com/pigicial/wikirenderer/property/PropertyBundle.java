@@ -4,22 +4,26 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.pigicial.wikirenderer.WikiRenderer;
 import com.pigicial.wikirenderer.mixin.access.NativeImageInvoker;
 import com.pigicial.wikirenderer.render.Renderable;
+import com.pigicial.wikirenderer.render.export.ExportPathSpec;
 import com.pigicial.wikirenderer.render.export.RenderableDispatcher;
+import com.pigicial.wikirenderer.render.particle.ParticleRendererAndLooper;
 import com.pigicial.wikirenderer.screen.RenderScreen;
 import com.pigicial.wikirenderer.screen.WikiRendererUI;
+import com.pigicial.wikirenderer.util.ClipboardUtil;
 import com.pigicial.wikirenderer.util.ImageTransferable;
 import com.pigicial.wikirenderer.util.Translate;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.util.Util;
 import org.joml.Matrix4fStack;
 
-import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
@@ -36,6 +40,24 @@ public interface PropertyBundle {
 
     }
 
+    default void buildLoopParticlesOption(FlowLayout container) {
+        GlobalProperties globalProperties = GlobalProperties.get();
+
+        WikiRendererUI.conditionalBooleanControl(container, globalProperties.loopParticles, "loop_particles",
+                () -> globalProperties.tickParticles.get() && globalProperties.setAnimationFpsCap.get() && globalProperties.exportFramerate.get() == 20);
+
+        WikiRendererUI.dynamicConditionalText(container, () -> globalProperties.tickParticles.get() && globalProperties.loopParticles.get() && globalProperties.setAnimationFpsCap.get() && globalProperties.exportFramerate.get() == 20, () -> {
+            int existingTotal = ParticleRendererAndLooper.getAtLeastPartiallySavedParticleCount();
+            int fullySavedTotal = ParticleRendererAndLooper.getFullySavedParticleCount();
+            if (existingTotal == fullySavedTotal) {
+                return Translate.gui("loop_particles_ready").withStyle(ChatFormatting.GREEN);
+            } else {
+                int percentage = (int) (100D * (fullySavedTotal / (double) existingTotal));
+                return Translate.gui("loop_particles_not_ready", percentage + "%").withStyle(ChatFormatting.RED);
+            }
+        });
+    }
+
     default void buildExportOptionGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         GlobalProperties globalProperties = GlobalProperties.get();
         WikiRendererUI.booleanControl(container, globalProperties.saveIntoRoot, "dump_into_root");
@@ -45,11 +67,17 @@ public interface PropertyBundle {
             screen.exportButton = UIComponents.button(Translate.gui("export"), button -> screen.captureScheduled = true);
             builder.row.child(screen.exportButton);
 
-            builder.row.child(UIComponents.button(Translate.gui("open_folder"), button ->
-                    Util.getPlatform().openFile(renderable.getExportPath().resolveOffset().toFile())
-            ));
+            builder.row.child(UIComponents.button(Translate.gui("open_folder"), button -> {
+                ExportPathSpec defaultExportPath = renderable.getExportPath();
+                ExportPathSpec exportPath = defaultExportPath.differentFileName(renderable.getCustomFileName());
+                File file = exportPath.resolveOffset().toFile();
+                if (file.mkdirs()) {
+                    WikiRenderer.LOGGER.info("Made possible export directory (open file button pressed) {}", file);
+                }
+                Util.getPlatform().openFile(file);
+            }));
 
-            if (!GraphicsEnvironment.isHeadless()) {
+            if (ClipboardUtil.hasImageClipboardAccess()) {
                 builder.row.child(UIComponents.button(Translate.gui("export_to_clipboard"), button -> {
                     screen.notify(Translate.gui("copied_to_clipboard"));
 
@@ -63,7 +91,7 @@ public interface PropertyBundle {
                                     ((NativeImageInvoker) (Object) image).wikirenderer$write(channel);
 
                                     ImageTransferable transferable = new ImageTransferable(javax.imageio.ImageIO.read(new ByteArrayInputStream(stream.toByteArray())));
-                                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, transferable);
+                                    ClipboardUtil.setClipboard(transferable);
                                 } catch (IOException e) {
                                     WikiRenderer.LOGGER.error("mfw", e);
                                 }
@@ -93,7 +121,7 @@ public interface PropertyBundle {
 
     default void buildFileNameGUIControls(Renderable<?> renderable, RenderScreen screen, FlowLayout container) {
         screen.fileNameField = WikiRendererUI.labelledTextField(container, renderable.getCustomFileName(), "file_name", Sizing.expand(90));
-        screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"/\\\\|?*\\x00-\\x1F]*$")); // file name regex
+        screen.fileNameField.setFilter(s -> s.matches("^[^<>:\"|?*\\\\\\x00-\\x1F]*$")); // file name regex
         screen.fileNameField.setResponder(renderable::setCustomFileName);
     }
 
